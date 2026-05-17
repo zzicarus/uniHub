@@ -1,30 +1,43 @@
-// This is a basic Flutter widget test.
-//
-// To perform an interaction with a widget in your test, use the WidgetTester
-// utility in the flutter_test package. For example, you can send tap and scroll
-// gestures. You can also use WidgetTester to find child widgets in the widget
-// tree, read text, and verify that the values of widget properties are correct.
-
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-
-import 'package:uni_hub/main.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:uni_hub/src/core/app/app.dart';
+import 'package:uni_hub/src/core/plugin/plugin_registry.dart';
+import 'package:uni_hub/src/plugins/thoughts/thoughts_plugin.dart';
 
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
-    await tester.pumpWidget(const MyApp());
+  testWidgets('App smoke test - home page renders', (tester) async {
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          pluginRegistryProvider.overrideWith((ref) {
+            final registry = PluginRegistry();
+            registry.register(ThoughtsPlugin());
+            return registry;
+          }),
+        ],
+        child: const UniHubApp(),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('UniHub'), findsWidgets);
+  });
 
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
-
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
-    await tester.pump();
-
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+  testWidgets('Navigation to Thoughts page works', (tester) async {
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          pluginRegistryProvider.overrideWith((ref) {
+            final registry = PluginRegistry();
+            registry.register(ThoughtsPlugin());
+            return registry;
+          }),
+        ],
+        child: const UniHubApp(),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Thoughts'));
+    await tester.pumpAndSettle();
+    expect(find.text('Thoughts'), findsWidgets);
   });
 }
