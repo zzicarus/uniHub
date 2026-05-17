@@ -11,9 +11,9 @@ void main() {
       database.close();
     });
 
-    test('has no tables by default', () {
+    test('has ThoughtsTable registered', () {
       final database = AppDatabase(NativeDatabase.memory());
-      expect(database.allTables, isEmpty);
+      expect(database.allTables, isNotEmpty);
       database.close();
     });
 

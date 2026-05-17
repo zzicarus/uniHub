@@ -8,6 +8,7 @@ class NavEntry {
   final String routeName;
   final String path;
   final Map<String, String> routeParams;
+  final Map<String, String> queryParams;
   final List<NavEntry>? children;
 
   const NavEntry({
@@ -16,6 +17,7 @@ class NavEntry {
     required this.routeName,
     required this.path,
     this.routeParams = const {},
+    this.queryParams = const {},
     this.children,
   });
 }
