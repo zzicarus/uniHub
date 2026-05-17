@@ -5,10 +5,7 @@ import 'package:uni_hub/src/core/search/search_service.dart';
 
 /// A test plugin that returns controlled search results.
 class _SearchTestPlugin extends UniHubPlugin {
-  _SearchTestPlugin({
-    required this.pluginId,
-    required this.results,
-  });
+  _SearchTestPlugin({required this.pluginId, required this.results});
 
   @override
   String get id => pluginId;

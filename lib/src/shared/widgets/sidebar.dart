@@ -3,8 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/plugin/plugin_interface.dart';
 import '../../core/plugin/plugin_registry.dart';
-import '../../core/theme/app_tokens.dart';
 import '../../core/router/route_names.dart';
+import '../../core/theme/app_tokens.dart';
 
 class Sidebar extends ConsumerWidget {
   const Sidebar({super.key});
@@ -14,64 +14,174 @@ class Sidebar extends ConsumerWidget {
     final registry = ref.watch(pluginRegistryProvider);
     final location = GoRouterState.of(context).uri.toString();
     final theme = Theme.of(context);
-    final navEntries = registry.navEntries;
 
-    return SizedBox(
-      width: AppDesktopSizes.sidebarWidth,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          const SizedBox(height: AppSpacing.lg),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-            child: Row(
-              children: [
-                Icon(Icons.hub_outlined, color: AppColors.primary, size: 28),
-                const SizedBox(width: AppSpacing.sm),
-                Text('UniHub', style: theme.textTheme.titleLarge),
-              ],
-            ),
-          ),
-          const SizedBox(height: AppSpacing.lg),
-          const Divider(height: 1),
-          const SizedBox(height: AppSpacing.xs),
-          _NavItem(
-            icon: Icons.home_rounded,
-            label: 'Home',
-            isSelected: location == '/',
-            onTap: () => context.goNamed(RouteNames.home),
-          ),
-          ...navEntries.map(
-            (entry) => entry.children != null && entry.children!.isNotEmpty
-                ? _ExpandableNavItem(
-                    label: entry.label,
-                    icon: entry.icon,
-                    path: entry.path,
-                    children: entry.children!,
-                    currentLocation: location,
-                  )
-                : _NavItem(
-                    icon: entry.icon,
-                    label: entry.label,
-                    isSelected: location == entry.path,
-                    onTap: () {
-                      context.goNamed(
-                        entry.routeName,
-                        pathParameters: entry.routeParams,
-                      );
-                    },
+    return Material(
+      color: AppColors.surface,
+      child: SizedBox(
+        width: AppDesktopSizes.sidebarWidth,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const SizedBox(height: AppSpacing.xxl),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl),
+              child: Row(
+                children: [
+                  const _LogoMark(),
+                  const SizedBox(width: AppSpacing.sm),
+                  Text(
+                    'uniHub',
+                    style: theme.textTheme.titleLarge?.copyWith(
+                      fontSize: 24,
+                      fontWeight: FontWeight.w800,
+                    ),
                   ),
+                ],
+              ),
+            ),
+            const SizedBox(height: AppSpacing.xxl),
+            Expanded(
+              child: ListView(
+                padding: EdgeInsets.zero,
+                children: [
+                  _NavItem(
+                    icon: Icons.home_rounded,
+                    label: '首页',
+                    isSelected: location == '/',
+                    onTap: () => context.goNamed(RouteNames.home),
+                  ),
+                  ...registry.navEntries.map(
+                    (entry) =>
+                        entry.children != null && entry.children!.isNotEmpty
+                        ? _ExpandableNavItem(
+                            label: entry.label,
+                            icon: entry.icon,
+                            path: entry.path,
+                            children: entry.children!,
+                            currentLocation: location,
+                          )
+                        : _NavItem(
+                            icon: entry.icon,
+                            label: entry.label,
+                            isSelected:
+                                location == entry.path ||
+                                location.startsWith('${entry.path}/'),
+                            onTap: () {
+                              context.goNamed(
+                                entry.routeName,
+                                pathParameters: entry.routeParams,
+                              );
+                            },
+                          ),
+                  ),
+                  const _NavItem(
+                    icon: Icons.check_box_outlined,
+                    label: '待办',
+                    isSelected: false,
+                  ),
+                  const _NavItem(
+                    icon: Icons.description_outlined,
+                    label: '笔记',
+                    isSelected: false,
+                  ),
+                  const _NavItem(
+                    icon: Icons.calendar_month_outlined,
+                    label: '日历',
+                    isSelected: false,
+                  ),
+                  const _NavItem(
+                    icon: Icons.star_border_rounded,
+                    label: '收藏',
+                    isSelected: false,
+                  ),
+                  const SizedBox(height: AppSpacing.lg),
+                  const Padding(
+                    padding: EdgeInsets.symmetric(horizontal: AppSpacing.xl),
+                    child: Divider(),
+                  ),
+                  _NavItem(
+                    icon: Icons.settings_outlined,
+                    label: '设置',
+                    isSelected: location == '/settings',
+                    onTap: () => context.goNamed(RouteNames.settings),
+                  ),
+                  const SizedBox(height: AppSpacing.xl),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(
+                      AppSpacing.xl,
+                      0,
+                      AppSpacing.xl,
+                      AppSpacing.xl,
+                    ),
+                    child: Row(
+                      children: [
+                        const CircleAvatar(
+                          radius: 20,
+                          backgroundColor: AppColors.blueSoft,
+                          child: Icon(
+                            Icons.person_rounded,
+                            size: 22,
+                            color: AppColors.primary,
+                          ),
+                        ),
+                        const SizedBox(width: AppSpacing.sm),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text('Alex', style: theme.textTheme.titleSmall),
+                              Text(
+                                '专注记录 · 持续进步',
+                                style: theme.textTheme.bodySmall,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ],
+                          ),
+                        ),
+                        const Icon(
+                          Icons.keyboard_arrow_down_rounded,
+                          size: 18,
+                          color: AppColors.textTertiary,
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _LogoMark extends StatelessWidget {
+  const _LogoMark();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 42,
+      height: 42,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [Color(0xFF9AAEFF), AppColors.primary],
+        ),
+      ),
+      child: const Center(
+        child: Text(
+          'U',
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 24,
+            height: 1,
+            fontWeight: FontWeight.w800,
           ),
-          const Spacer(),
-          const Divider(),
-          _NavItem(
-            icon: Icons.settings_outlined,
-            label: 'Settings',
-            isSelected: location == '/settings',
-            onTap: () => context.goNamed(RouteNames.settings),
-          ),
-          const SizedBox(height: AppSpacing.sm),
-        ],
+        ),
       ),
     );
   }
@@ -93,8 +203,7 @@ class _ExpandableNavItem extends ConsumerStatefulWidget {
   });
 
   @override
-  ConsumerState<_ExpandableNavItem> createState() =>
-      _ExpandableNavItemState();
+  ConsumerState<_ExpandableNavItem> createState() => _ExpandableNavItemState();
 }
 
 class _ExpandableNavItemState extends ConsumerState<_ExpandableNavItem> {
@@ -150,12 +259,14 @@ class _ExpandableNavItemState extends ConsumerState<_ExpandableNavItem> {
         _NavItem(
           icon: widget.icon,
           label: widget.label,
-          isSelected: isAnyChildSelected ||
-              widget.currentLocation == widget.path,
+          isSelected:
+              isAnyChildSelected ||
+              widget.currentLocation == widget.path ||
+              widget.currentLocation.startsWith('${widget.path}/'),
           trailing: AnimatedRotation(
             turns: _expanded ? 0.25 : 0.0,
-            duration: const Duration(milliseconds: 200),
-            child: const Icon(Icons.chevron_right, size: 18),
+            duration: const Duration(milliseconds: 180),
+            child: const Icon(Icons.chevron_right_rounded, size: 18),
           ),
           onTap: _toggle,
         ),
@@ -193,7 +304,7 @@ class _ExpandableNavItemState extends ConsumerState<_ExpandableNavItem> {
           crossFadeState: _expanded
               ? CrossFadeState.showSecond
               : CrossFadeState.showFirst,
-          duration: const Duration(milliseconds: 200),
+          duration: const Duration(milliseconds: 180),
         ),
       ],
     );
@@ -204,7 +315,7 @@ class _NavItem extends StatelessWidget {
   final IconData icon;
   final String label;
   final bool isSelected;
-  final VoidCallback onTap;
+  final VoidCallback? onTap;
   final Widget? trailing;
   final bool compact;
 
@@ -212,7 +323,7 @@ class _NavItem extends StatelessWidget {
     required this.icon,
     required this.label,
     required this.isSelected,
-    required this.onTap,
+    this.onTap,
     this.trailing,
     this.compact = false,
   });
@@ -220,19 +331,24 @@ class _NavItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final foreground = isSelected ? AppColors.primary : AppColors.textSecondary;
+    final isEnabled = onTap != null;
+    final foreground = isSelected
+        ? AppColors.primary
+        : isEnabled
+        ? AppColors.textSecondary
+        : AppColors.textTertiary;
     final bgColor = isSelected ? AppColors.primarySoft : Colors.transparent;
 
     return Padding(
       padding: EdgeInsets.symmetric(
-        horizontal: compact ? AppSpacing.xs : AppSpacing.sm,
-        vertical: 2,
+        horizontal: compact ? AppSpacing.lg : AppSpacing.xl,
+        vertical: AppSpacing.xs / 2,
       ),
       child: Material(
         color: bgColor,
-        borderRadius: BorderRadius.circular(AppRadius.sm),
+        borderRadius: BorderRadius.circular(AppRadius.md),
         child: InkWell(
-          borderRadius: BorderRadius.circular(AppRadius.sm),
+          borderRadius: BorderRadius.circular(AppRadius.md),
           onTap: onTap,
           child: SizedBox(
             height: compact
@@ -242,14 +358,14 @@ class _NavItem extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
               child: Row(
                 children: [
-                  Icon(icon, color: foreground, size: compact ? 20 : 22),
+                  Icon(icon, color: foreground, size: compact ? 19 : 22),
                   const SizedBox(width: AppSpacing.md),
                   Expanded(
                     child: Text(
                       label,
                       style: theme.textTheme.titleSmall?.copyWith(
                         color: foreground,
-                        fontSize: compact ? 13 : null,
+                        fontSize: compact ? 13 : 15,
                       ),
                       overflow: TextOverflow.ellipsis,
                     ),

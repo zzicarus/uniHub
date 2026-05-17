@@ -21,13 +21,15 @@ class ThoughtsRepository {
     String? color,
   }) async {
     final now = DateTime.now();
-    final id = await _dao.insert(ThoughtsTableCompanion(
-      content: Value(content),
-      tags: Value(tags),
-      color: Value(color),
-      createdAt: Value(now),
-      updatedAt: Value(now),
-    ));
+    final id = await _dao.insert(
+      ThoughtsTableCompanion(
+        content: Value(content),
+        tags: Value(tags),
+        color: Value(color),
+        createdAt: Value(now),
+        updatedAt: Value(now),
+      ),
+    );
     final created = await _dao.getById(id);
     return created!;
   }
@@ -42,12 +44,10 @@ class ThoughtsRepository {
     await _dao.updateById(
       id,
       ThoughtsTableCompanion(
-        content:
-            content != null ? Value(content) : const Value.absent(),
+        content: content != null ? Value(content) : const Value.absent(),
         tags: tags != null ? Value(tags) : const Value.absent(),
         color: color != null ? Value(color) : const Value.absent(),
-        isPinned:
-            isPinned != null ? Value(isPinned) : const Value.absent(),
+        isPinned: isPinned != null ? Value(isPinned) : const Value.absent(),
         updatedAt: Value(DateTime.now()),
       ),
     );

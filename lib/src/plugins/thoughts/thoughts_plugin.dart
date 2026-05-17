@@ -13,12 +13,12 @@ class ThoughtsPlugin extends UniHubPlugin {
   String get id => 'thoughts';
 
   @override
-  String get name => 'Thoughts';
+  String get name => '想法';
 
   @override
   List<NavEntry> get navEntries => [
     NavEntry(
-      label: 'Thoughts',
+      label: '想法',
       icon: Icons.lightbulb_outline,
       routeName: RouteNames.thoughts,
       path: '/thoughts',

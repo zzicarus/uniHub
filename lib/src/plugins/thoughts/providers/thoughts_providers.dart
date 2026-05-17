@@ -18,8 +18,9 @@ final tagFilterProvider = StateProvider<String?>((ref) => null);
 
 final archiveFilterProvider = StateProvider<bool>((ref) => false);
 
-final thoughtsListProvider =
-    FutureProvider<List<ThoughtsTableData>>((ref) async {
+final thoughtsListProvider = FutureProvider<List<ThoughtsTableData>>((
+  ref,
+) async {
   final repo = ref.watch(thoughtsRepositoryProvider);
   final tagFilter = ref.watch(tagFilterProvider);
   final archived = ref.watch(archiveFilterProvider);
@@ -29,15 +30,22 @@ final thoughtsListProvider =
   if (tagFilter != null && tagFilter.isNotEmpty) {
     return thoughts.where((t) {
       final tagList =
-          t.tags?.split(',').map((s) => s.trim()).where((s) => s.isNotEmpty).toList() ?? [];
+          t.tags
+              ?.split(',')
+              .map((s) => s.trim())
+              .where((s) => s.isNotEmpty)
+              .toList() ??
+          [];
       return tagList.contains(tagFilter);
     }).toList();
   }
   return thoughts;
 });
 
-final thoughtProvider =
-    FutureProvider.family<ThoughtsTableData?, int>((ref, id) async {
+final thoughtProvider = FutureProvider.family<ThoughtsTableData?, int>((
+  ref,
+  id,
+) async {
   final repo = ref.watch(thoughtsRepositoryProvider);
   return repo.getThought(id);
 });

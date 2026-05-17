@@ -21,11 +21,13 @@ void main() {
     group('insert and getById', () {
       test('inserts a thought and retrieves it by id', () async {
         final now = DateTime.now();
-        final id = await dao.insert(ThoughtsTableCompanion(
-          content: const Value('Test thought'),
-          createdAt: Value(now),
-          updatedAt: Value(now),
-        ));
+        final id = await dao.insert(
+          ThoughtsTableCompanion(
+            content: const Value('Test thought'),
+            createdAt: Value(now),
+            updatedAt: Value(now),
+          ),
+        );
 
         final result = await dao.getById(id);
         expect(result, isNotNull);
@@ -37,13 +39,15 @@ void main() {
 
       test('inserts a thought with tags and color', () async {
         final now = DateTime.now();
-        final id = await dao.insert(ThoughtsTableCompanion(
-          content: const Value('Tagged thought'),
-          tags: const Value('flutter,dart'),
-          color: const Value('#2563EB'),
-          createdAt: Value(now),
-          updatedAt: Value(now),
-        ));
+        final id = await dao.insert(
+          ThoughtsTableCompanion(
+            content: const Value('Tagged thought'),
+            tags: const Value('flutter,dart'),
+            color: const Value('#2563EB'),
+            createdAt: Value(now),
+            updatedAt: Value(now),
+          ),
+        );
 
         final result = await dao.getById(id);
         expect(result!.tags, 'flutter,dart');
@@ -62,39 +66,50 @@ void main() {
         expect(results, isEmpty);
       });
 
-      test('returns thoughts ordered by isPinned desc, createdAt desc', () async {
-        final now = DateTime.now();
-        await dao.insert(ThoughtsTableCompanion(
-          content: const Value('First'),
-          createdAt: Value(now.subtract(const Duration(minutes: 10))),
-          updatedAt: Value(now.subtract(const Duration(minutes: 10))),
-        ));
-        await dao.insert(ThoughtsTableCompanion(
-          content: const Value('Second'),
-          createdAt: Value(now.subtract(const Duration(minutes: 5))),
-          updatedAt: Value(now.subtract(const Duration(minutes: 5))),
-        ));
+      test(
+        'returns thoughts ordered by isPinned desc, createdAt desc',
+        () async {
+          final now = DateTime.now();
+          await dao.insert(
+            ThoughtsTableCompanion(
+              content: const Value('First'),
+              createdAt: Value(now.subtract(const Duration(minutes: 10))),
+              updatedAt: Value(now.subtract(const Duration(minutes: 10))),
+            ),
+          );
+          await dao.insert(
+            ThoughtsTableCompanion(
+              content: const Value('Second'),
+              createdAt: Value(now.subtract(const Duration(minutes: 5))),
+              updatedAt: Value(now.subtract(const Duration(minutes: 5))),
+            ),
+          );
 
-        final results = await dao.getAll();
-        expect(results, hasLength(2));
-        expect(results[0].content, 'Second');
-        expect(results[1].content, 'First');
-      });
+          final results = await dao.getAll();
+          expect(results, hasLength(2));
+          expect(results[0].content, 'Second');
+          expect(results[1].content, 'First');
+        },
+      );
 
       test('pinned items come first', () async {
         final now = DateTime.now();
-        await dao.insert(ThoughtsTableCompanion(
-          content: const Value('Normal'),
-          createdAt: Value(now),
-          updatedAt: Value(now),
-        ));
+        await dao.insert(
+          ThoughtsTableCompanion(
+            content: const Value('Normal'),
+            createdAt: Value(now),
+            updatedAt: Value(now),
+          ),
+        );
 
-        await dao.insert(ThoughtsTableCompanion(
-          content: const Value('Pinned'),
-          isPinned: const Value(true),
-          createdAt: Value(now.subtract(const Duration(hours: 1))),
-          updatedAt: Value(now.subtract(const Duration(hours: 1))),
-        ));
+        await dao.insert(
+          ThoughtsTableCompanion(
+            content: const Value('Pinned'),
+            isPinned: const Value(true),
+            createdAt: Value(now.subtract(const Duration(hours: 1))),
+            updatedAt: Value(now.subtract(const Duration(hours: 1))),
+          ),
+        );
 
         final results = await dao.getAll();
         expect(results, hasLength(2));
@@ -104,18 +119,22 @@ void main() {
 
       test('getAll with archived=true returns only archived', () async {
         final now = DateTime.now();
-        await dao.insert(ThoughtsTableCompanion(
-          content: const Value('Active'),
-          createdAt: Value(now),
-          updatedAt: Value(now),
-        ));
+        await dao.insert(
+          ThoughtsTableCompanion(
+            content: const Value('Active'),
+            createdAt: Value(now),
+            updatedAt: Value(now),
+          ),
+        );
 
-        await dao.insert(ThoughtsTableCompanion(
-          content: const Value('Archived'),
-          createdAt: Value(now.subtract(const Duration(hours: 1))),
-          updatedAt: Value(now.subtract(const Duration(hours: 1))),
-          archivedAt: Value(now.subtract(const Duration(minutes: 30))),
-        ));
+        await dao.insert(
+          ThoughtsTableCompanion(
+            content: const Value('Archived'),
+            createdAt: Value(now.subtract(const Duration(hours: 1))),
+            updatedAt: Value(now.subtract(const Duration(hours: 1))),
+            archivedAt: Value(now.subtract(const Duration(minutes: 30))),
+          ),
+        );
 
         final activeResults = await dao.getAll(archived: false);
         expect(activeResults, hasLength(1));
@@ -130,16 +149,21 @@ void main() {
     group('updateById', () {
       test('updates thought content', () async {
         final now = DateTime.now();
-        final id = await dao.insert(ThoughtsTableCompanion(
-          content: const Value('Original'),
-          createdAt: Value(now),
-          updatedAt: Value(now),
-        ));
+        final id = await dao.insert(
+          ThoughtsTableCompanion(
+            content: const Value('Original'),
+            createdAt: Value(now),
+            updatedAt: Value(now),
+          ),
+        );
 
-        await dao.updateById(id, ThoughtsTableCompanion(
-          content: const Value('Updated'),
-          updatedAt: Value(DateTime.now()),
-        ));
+        await dao.updateById(
+          id,
+          ThoughtsTableCompanion(
+            content: const Value('Updated'),
+            updatedAt: Value(DateTime.now()),
+          ),
+        );
 
         final result = await dao.getById(id);
         expect(result!.content, 'Updated');
@@ -147,17 +171,22 @@ void main() {
 
       test('updates multiple fields', () async {
         final now = DateTime.now();
-        final id = await dao.insert(ThoughtsTableCompanion(
-          content: const Value('Original'),
-          createdAt: Value(now),
-          updatedAt: Value(now),
-        ));
+        final id = await dao.insert(
+          ThoughtsTableCompanion(
+            content: const Value('Original'),
+            createdAt: Value(now),
+            updatedAt: Value(now),
+          ),
+        );
 
-        await dao.updateById(id, ThoughtsTableCompanion(
-          content: const Value('Updated'),
-          tags: const Value('new,tags'),
-          updatedAt: Value(DateTime.now()),
-        ));
+        await dao.updateById(
+          id,
+          ThoughtsTableCompanion(
+            content: const Value('Updated'),
+            tags: const Value('new,tags'),
+            updatedAt: Value(DateTime.now()),
+          ),
+        );
 
         final result = await dao.getById(id);
         expect(result!.content, 'Updated');
@@ -168,11 +197,13 @@ void main() {
     group('delete', () {
       test('deletes a thought', () async {
         final now = DateTime.now();
-        final id = await dao.insert(ThoughtsTableCompanion(
-          content: const Value('To delete'),
-          createdAt: Value(now),
-          updatedAt: Value(now),
-        ));
+        final id = await dao.insert(
+          ThoughtsTableCompanion(
+            content: const Value('To delete'),
+            createdAt: Value(now),
+            updatedAt: Value(now),
+          ),
+        );
 
         await dao.delete(id);
         final result = await dao.getById(id);
@@ -183,11 +214,13 @@ void main() {
     group('archive and restore', () {
       test('archive sets archivedAt', () async {
         final now = DateTime.now();
-        final id = await dao.insert(ThoughtsTableCompanion(
-          content: const Value('To archive'),
-          createdAt: Value(now),
-          updatedAt: Value(now),
-        ));
+        final id = await dao.insert(
+          ThoughtsTableCompanion(
+            content: const Value('To archive'),
+            createdAt: Value(now),
+            updatedAt: Value(now),
+          ),
+        );
 
         await dao.archive(id);
         final result = await dao.getById(id);
@@ -196,11 +229,13 @@ void main() {
 
       test('restore clears archivedAt', () async {
         final now = DateTime.now();
-        final id = await dao.insert(ThoughtsTableCompanion(
-          content: const Value('To archive and restore'),
-          createdAt: Value(now),
-          updatedAt: Value(now),
-        ));
+        final id = await dao.insert(
+          ThoughtsTableCompanion(
+            content: const Value('To archive and restore'),
+            createdAt: Value(now),
+            updatedAt: Value(now),
+          ),
+        );
 
         await dao.archive(id);
         final archived = await dao.getById(id);
@@ -215,11 +250,13 @@ void main() {
     group('togglePin', () {
       test('pins and unpins a thought', () async {
         final now = DateTime.now();
-        final id = await dao.insert(ThoughtsTableCompanion(
-          content: const Value('Toggle pin'),
-          createdAt: Value(now),
-          updatedAt: Value(now),
-        ));
+        final id = await dao.insert(
+          ThoughtsTableCompanion(
+            content: const Value('Toggle pin'),
+            createdAt: Value(now),
+            updatedAt: Value(now),
+          ),
+        );
 
         await dao.togglePin(id, true);
         var result = await dao.getById(id);

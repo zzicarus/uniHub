@@ -22,9 +22,7 @@ void main() {
   group('ThoughtsRepository', () {
     group('createThought', () {
       test('creates a thought and returns it', () async {
-        final thought = await repo.createThought(
-          content: 'Hello world',
-        );
+        final thought = await repo.createThought(content: 'Hello world');
 
         expect(thought.content, 'Hello world');
         expect(thought.id, greaterThan(0));

@@ -12,8 +12,7 @@ class ThoughtsEditorPage extends ConsumerStatefulWidget {
   const ThoughtsEditorPage({required this.thoughtId, super.key});
 
   @override
-  ConsumerState<ThoughtsEditorPage> createState() =>
-      _ThoughtsEditorPageState();
+  ConsumerState<ThoughtsEditorPage> createState() => _ThoughtsEditorPageState();
 }
 
 class _ThoughtsEditorPageState extends ConsumerState<ThoughtsEditorPage> {
@@ -98,9 +97,7 @@ class _ThoughtsEditorPageState extends ConsumerState<ThoughtsEditorPage> {
           ),
           FilledButton(
             onPressed: () => Navigator.of(context).pop(true),
-            style: FilledButton.styleFrom(
-              backgroundColor: AppColors.error,
-            ),
+            style: FilledButton.styleFrom(backgroundColor: AppColors.error),
             child: const Text('删除'),
           ),
         ],
@@ -190,186 +187,190 @@ class _ThoughtsEditorPageState extends ConsumerState<ThoughtsEditorPage> {
         }
       },
       child: Scaffold(
-      appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          tooltip: '返回（自动保存）',
-          onPressed: _goBack,
-        ),
-        title: Text(
-          _isArchived ? '编辑想法（已归档）' : '编辑想法',
-          style: theme.textTheme.titleMedium,
-        ),
-        actions: [
-          if (!_isArchived)
-            PopupMenuButton<String>(
-              icon: const Icon(Icons.more_vert),
-              onSelected: (value) {
-                switch (value) {
-                  case 'delete':
-                    _delete();
-                    break;
-                }
-              },
-              itemBuilder: (context) => [
-                PopupMenuItem(
-                  value: 'delete',
-                  child: Row(
-                    children: [
-                      const Icon(Icons.delete_outline,
-                          size: 20, color: AppColors.error),
-                      const SizedBox(width: AppSpacing.sm),
-                      Text('删除',
-                          style: TextStyle(color: AppColors.error)),
-                    ],
+        appBar: AppBar(
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back),
+            tooltip: '返回（自动保存）',
+            onPressed: _goBack,
+          ),
+          title: Text(
+            _isArchived ? '编辑想法（已归档）' : '编辑想法',
+            style: theme.textTheme.titleMedium,
+          ),
+          actions: [
+            if (!_isArchived)
+              PopupMenuButton<String>(
+                icon: const Icon(Icons.more_vert),
+                onSelected: (value) {
+                  switch (value) {
+                    case 'delete':
+                      _delete();
+                      break;
+                  }
+                },
+                itemBuilder: (context) => [
+                  PopupMenuItem(
+                    value: 'delete',
+                    child: Row(
+                      children: [
+                        const Icon(
+                          Icons.delete_outline,
+                          size: 20,
+                          color: AppColors.error,
+                        ),
+                        const SizedBox(width: AppSpacing.sm),
+                        Text('删除', style: TextStyle(color: AppColors.error)),
+                      ],
+                    ),
                   ),
-                ),
-              ],
-            ),
-        ],
-      ),
-      body: SafeArea(
-        child: ListView(
-          padding: const EdgeInsets.all(AppSpacing.lg),
-          children: [
-            // Content editor
-            TextField(
-              controller: _contentController,
-              minLines: 5,
-              maxLines: null,
-              textInputAction: TextInputAction.newline,
-              onChanged: (_) => _markDirty(),
-              decoration: const InputDecoration(
-                hintText: '记录你的想法...',
-                border: InputBorder.none,
-                contentPadding: EdgeInsets.zero,
+                ],
               ),
-              style: theme.textTheme.bodyLarge,
-            ),
-
-            const SizedBox(height: AppSpacing.lg),
-
-            // Tags section
-            Text('标签', style: theme.textTheme.labelMedium),
-            const SizedBox(height: AppSpacing.xs),
-            Wrap(
-              spacing: AppSpacing.xxs,
-              runSpacing: AppSpacing.xxs,
-              children: [
-                ..._tagChips.map((tag) {
-                  return Chip(
-                    label: Text(tag),
-                    labelStyle: const TextStyle(fontSize: 12),
-                    deleteIcon: const Icon(Icons.close, size: 14),
-                    onDeleted: () => _removeChip(tag),
-                    materialTapTargetSize:
-                        MaterialTapTargetSize.shrinkWrap,
-                    visualDensity: VisualDensity.compact,
-                    padding: EdgeInsets.zero,
-                  );
-                }),
-              ],
-            ),
-            const SizedBox(height: AppSpacing.xs),
-            TextField(
-              controller: _tagTextController,
-              onChanged: _handleTagInput,
-              decoration: const InputDecoration(
-                hintText: '添加标签（空格或逗号分隔）',
-                isDense: true,
-              ),
-              style: theme.textTheme.bodySmall,
-            ),
-
-            const SizedBox(height: AppSpacing.lg),
-
-            // Color selector
-            Text('颜色', style: theme.textTheme.labelMedium),
-            const SizedBox(height: AppSpacing.xs),
-            Wrap(
-              spacing: AppSpacing.sm,
-              runSpacing: AppSpacing.sm,
-              children: [
-                _ColorDot(
-                  color: null,
-                  label: '默认',
-                  isSelected: _selectedColor == null,
-                  onTap: () {
-                    setState(() {
-                      _selectedColor = null;
-                      _isDirty = true;
-                    });
-                  },
+          ],
+        ),
+        body: SafeArea(
+          child: ListView(
+            padding: const EdgeInsets.all(AppSpacing.lg),
+            children: [
+              // Content editor
+              TextField(
+                controller: _contentController,
+                minLines: 5,
+                maxLines: null,
+                textInputAction: TextInputAction.newline,
+                onChanged: (_) => _markDirty(),
+                decoration: const InputDecoration(
+                  hintText: '记录你的想法...',
+                  border: InputBorder.none,
+                  contentPadding: EdgeInsets.zero,
                 ),
-                ..._availableColors.map((c) {
-                  return _ColorDot(
-                    color: c,
-                    label: null,
-                    isSelected: _selectedColor == _colorToHex(c),
+                style: theme.textTheme.bodyLarge,
+              ),
+
+              const SizedBox(height: AppSpacing.lg),
+
+              // Tags section
+              Text('标签', style: theme.textTheme.labelMedium),
+              const SizedBox(height: AppSpacing.xs),
+              Wrap(
+                spacing: AppSpacing.xxs,
+                runSpacing: AppSpacing.xxs,
+                children: [
+                  ..._tagChips.map((tag) {
+                    return Chip(
+                      label: Text(tag),
+                      labelStyle: const TextStyle(fontSize: 12),
+                      deleteIcon: const Icon(Icons.close, size: 14),
+                      onDeleted: () => _removeChip(tag),
+                      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      visualDensity: VisualDensity.compact,
+                      padding: EdgeInsets.zero,
+                    );
+                  }),
+                ],
+              ),
+              const SizedBox(height: AppSpacing.xs),
+              TextField(
+                controller: _tagTextController,
+                onChanged: _handleTagInput,
+                decoration: const InputDecoration(
+                  hintText: '添加标签（空格或逗号分隔）',
+                  isDense: true,
+                ),
+                style: theme.textTheme.bodySmall,
+              ),
+
+              const SizedBox(height: AppSpacing.lg),
+
+              // Color selector
+              Text('颜色', style: theme.textTheme.labelMedium),
+              const SizedBox(height: AppSpacing.xs),
+              Wrap(
+                spacing: AppSpacing.sm,
+                runSpacing: AppSpacing.sm,
+                children: [
+                  _ColorDot(
+                    color: null,
+                    label: '默认',
+                    isSelected: _selectedColor == null,
                     onTap: () {
                       setState(() {
-                        _selectedColor = _colorToHex(c);
+                        _selectedColor = null;
                         _isDirty = true;
                       });
                     },
-                  );
-                }),
-              ],
-            ),
-
-            const SizedBox(height: AppSpacing.lg),
-
-            // Pin toggle
-            if (!_isArchived)
-              SwitchListTile(
-                contentPadding: EdgeInsets.zero,
-                title: const Text('置顶'),
-                value: _isPinned,
-                onChanged: _togglePin,
-                activeThumbColor: AppColors.warning,
-                secondary: const Icon(Icons.push_pin_outlined),
+                  ),
+                  ..._availableColors.map((c) {
+                    return _ColorDot(
+                      color: c,
+                      label: null,
+                      isSelected: _selectedColor == _colorToHex(c),
+                      onTap: () {
+                        setState(() {
+                          _selectedColor = _colorToHex(c);
+                          _isDirty = true;
+                        });
+                      },
+                    );
+                  }),
+                ],
               ),
 
-            const Divider(height: AppSpacing.xl),
+              const SizedBox(height: AppSpacing.lg),
 
-            // Actions
-            if (_isArchived) ...[
-              SizedBox(
-                width: double.infinity,
-                child: OutlinedButton.icon(
-                  onPressed: _restore,
-                  icon: const Icon(Icons.unarchive_outlined, size: 18),
-                  label: const Text('恢复'),
+              // Pin toggle
+              if (!_isArchived)
+                SwitchListTile(
+                  contentPadding: EdgeInsets.zero,
+                  title: const Text('置顶'),
+                  value: _isPinned,
+                  onChanged: _togglePin,
+                  activeThumbColor: AppColors.warning,
+                  secondary: const Icon(Icons.push_pin_outlined),
                 ),
-              ),
-            ] else ...[
-              SizedBox(
-                width: double.infinity,
-                child: OutlinedButton.icon(
-                  onPressed: _archive,
-                  icon: const Icon(Icons.archive_outlined, size: 18),
-                  label: const Text('归档'),
-                ),
-              ),
-              const SizedBox(height: AppSpacing.sm),
-              SizedBox(
-                width: double.infinity,
-                child: OutlinedButton.icon(
-                  onPressed: _delete,
-                  icon: const Icon(Icons.delete_outline,
-                      size: 18, color: AppColors.error),
-                  label: const Text('删除'),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: AppColors.error,
-                    side: const BorderSide(color: AppColors.error),
+
+              const Divider(height: AppSpacing.xl),
+
+              // Actions
+              if (_isArchived) ...[
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton.icon(
+                    onPressed: _restore,
+                    icon: const Icon(Icons.unarchive_outlined, size: 18),
+                    label: const Text('恢复'),
                   ),
                 ),
-              ),
+              ] else ...[
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton.icon(
+                    onPressed: _archive,
+                    icon: const Icon(Icons.archive_outlined, size: 18),
+                    label: const Text('归档'),
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.sm),
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton.icon(
+                    onPressed: _delete,
+                    icon: const Icon(
+                      Icons.delete_outline,
+                      size: 18,
+                      color: AppColors.error,
+                    ),
+                    label: const Text('删除'),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: AppColors.error,
+                      side: const BorderSide(color: AppColors.error),
+                    ),
+                  ),
+                ),
+              ],
+              const SizedBox(height: AppSpacing.lg),
             ],
-            const SizedBox(height: AppSpacing.lg),
-          ],
+          ),
         ),
-      ),
       ),
     );
   }
@@ -406,9 +407,10 @@ class _ColorDot extends StatelessWidget {
         ),
         child: color == null
             ? const Center(
-                child: Text('A',
-                    style: TextStyle(
-                        fontSize: 12, color: AppColors.textTertiary)),
+                child: Text(
+                  'A',
+                  style: TextStyle(fontSize: 12, color: AppColors.textTertiary),
+                ),
               )
             : null,
       ),

@@ -1,24 +1,30 @@
 import 'package:flutter/material.dart';
 
 abstract final class AppColors {
-  static const primary = Color(0xFF2563EB);
-  static const primaryDark = Color(0xFF1D4ED8);
+  static const primary = Color(0xFF4F6BFF);
+  static const primaryDark = Color(0xFF3151EA);
   static const secondary = Color(0xFF14B8A6);
   static const accent = Color(0xFFF59E0B);
   static const success = Color(0xFF22C55E);
   static const warning = Color(0xFFF59E0B);
   static const error = Color(0xFFEF4444);
 
-  static const background = Color(0xFFF8FAFC);
+  static const background = Color(0xFFF7F9FD);
   static const surface = Color(0xFFFFFFFF);
+  static const surfaceElevated = Color(0xFFFCFDFF);
   static const surfaceMuted = Color(0xFFF1F5F9);
   static const surfaceSubtle = Color(0xFFF8FAFC);
-  static const border = Color(0xFFE2E8F0);
-  static const primarySoft = Color(0xFFEFF4FF);
+  static const border = Color(0xFFE4E9F2);
+  static const borderSoft = Color(0xFFF0F3F8);
+  static const primarySoft = Color(0xFFEFF3FF);
   static const secondarySoft = Color(0xFFEFFCF9);
   static const accentSoft = Color(0xFFFFF7E6);
   static const purple = Color(0xFF7C3AED);
   static const purpleSoft = Color(0xFFF3E8FF);
+  static const blueSoft = Color(0xFFEDF5FF);
+  static const greenSoft = Color(0xFFEFF9F2);
+  static const yellowSoft = Color(0xFFFFF8E5);
+  static const roseSoft = Color(0xFFFFF1F5);
   static const successSoft = Color(0xFFEFF9F2);
   static const errorSoft = Color(0xFFFFF1F2);
 
@@ -65,11 +71,14 @@ abstract final class AppSizes {
   static const listItem = 56.0;
   static const listItemLarge = 72.0;
   static const statusIcon = 48.0;
+  static const cardMinHeight = 148.0;
+  static const dashboardCardHeight = 118.0;
 }
 
 abstract final class AppDesktopSizes {
-  static const sidebarWidth = 240.0;
+  static const sidebarWidth = 260.0;
   static const rightRailWidth = 300.0;
+  static const rightRailWideWidth = 330.0;
   static const topBarHeight = 56.0;
   static const navItemHeight = 48.0;
   static const compactButtonHeight = 36.0;

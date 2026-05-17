@@ -4,22 +4,17 @@ import 'app_tokens.dart';
 
 abstract final class AppTheme {
   static ThemeData get light {
-    const colorScheme = ColorScheme(
-      brightness: Brightness.light,
-      primary: AppColors.primary,
-      onPrimary: Colors.white,
-      secondary: AppColors.secondary,
-      onSecondary: Colors.white,
-      error: AppColors.error,
-      onError: Colors.white,
-      surface: AppColors.surface,
-      onSurface: AppColors.textPrimary,
-    );
-
     final base = ThemeData(
       useMaterial3: true,
-      colorScheme: colorScheme,
+      colorScheme: ColorScheme.fromSeed(
+        seedColor: AppColors.primary,
+        brightness: Brightness.light,
+        primary: AppColors.primary,
+        surface: AppColors.surface,
+      ),
       scaffoldBackgroundColor: AppColors.background,
+      canvasColor: AppColors.background,
+      fontFamilyFallback: AppFonts.fallback,
     );
 
     return base.copyWith(
@@ -39,12 +34,13 @@ abstract final class AppTheme {
       ),
       cardTheme: CardThemeData(
         color: AppColors.surface,
-        elevation: 0,
+        elevation: 8,
+        shadowColor: AppColors.textPrimary.withValues(alpha: 0.04),
         margin: EdgeInsets.zero,
         surfaceTintColor: Colors.transparent,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppRadius.sm),
-          side: const BorderSide(color: AppColors.border),
+          borderRadius: BorderRadius.circular(AppRadius.lg),
+          side: const BorderSide(color: AppColors.borderSoft),
         ),
       ),
       filledButtonTheme: FilledButtonThemeData(
@@ -60,7 +56,7 @@ abstract final class AppTheme {
             fontWeight: FontWeight.w600,
           ),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppRadius.md),
+            borderRadius: BorderRadius.circular(AppRadius.sm),
           ),
         ),
       ),
@@ -76,7 +72,7 @@ abstract final class AppTheme {
             fontWeight: FontWeight.w600,
           ),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppRadius.md),
+            borderRadius: BorderRadius.circular(AppRadius.sm),
           ),
         ),
       ),
@@ -93,7 +89,7 @@ abstract final class AppTheme {
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: AppColors.surfaceMuted,
+        fillColor: AppColors.surface,
         contentPadding: const EdgeInsets.symmetric(
           horizontal: AppSpacing.md,
           vertical: AppSpacing.sm,
@@ -139,7 +135,7 @@ abstract final class AppTheme {
         ),
       ),
       dividerTheme: const DividerThemeData(
-        color: AppColors.border,
+        color: AppColors.borderSoft,
         thickness: 1,
         space: 1,
       ),

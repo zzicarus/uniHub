@@ -21,9 +21,9 @@ class ThoughtsDao {
   }
 
   Future<ThoughtsTableData?> getById(int id) {
-    return (_db.select(_db.thoughtsTable)
-      ..where((t) => t.id.equals(id)))
-      .getSingleOrNull();
+    return (_db.select(
+      _db.thoughtsTable,
+    )..where((t) => t.id.equals(id))).getSingleOrNull();
   }
 
   Future<int> insert(ThoughtsTableCompanion entry) {
@@ -31,42 +31,37 @@ class ThoughtsDao {
   }
 
   Future<int> updateById(int id, ThoughtsTableCompanion entry) {
-    return (_db.update(_db.thoughtsTable)
-      ..where((t) => t.id.equals(id)))
-      .write(entry);
+    return (_db.update(
+      _db.thoughtsTable,
+    )..where((t) => t.id.equals(id))).write(entry);
   }
 
   Future<int> delete(int id) {
-    return (_db.delete(_db.thoughtsTable)
-      ..where((t) => t.id.equals(id)))
-      .go();
+    return (_db.delete(_db.thoughtsTable)..where((t) => t.id.equals(id))).go();
   }
 
   Future<int> archive(int id) {
     final now = DateTime.now();
-    return (_db.update(_db.thoughtsTable)
-      ..where((t) => t.id.equals(id)))
-      .write(ThoughtsTableCompanion(
-        archivedAt: Value(now),
-        updatedAt: Value(now),
-      ));
+    return (_db.update(_db.thoughtsTable)..where((t) => t.id.equals(id))).write(
+      ThoughtsTableCompanion(archivedAt: Value(now), updatedAt: Value(now)),
+    );
   }
 
   Future<int> restore(int id) {
-    return (_db.update(_db.thoughtsTable)
-      ..where((t) => t.id.equals(id)))
-      .write(ThoughtsTableCompanion(
+    return (_db.update(_db.thoughtsTable)..where((t) => t.id.equals(id))).write(
+      ThoughtsTableCompanion(
         archivedAt: const Value(null),
         updatedAt: Value(DateTime.now()),
-      ));
+      ),
+    );
   }
 
   Future<int> togglePin(int id, bool pinned) {
-    return (_db.update(_db.thoughtsTable)
-      ..where((t) => t.id.equals(id)))
-      .write(ThoughtsTableCompanion(
+    return (_db.update(_db.thoughtsTable)..where((t) => t.id.equals(id))).write(
+      ThoughtsTableCompanion(
         isPinned: Value(pinned),
         updatedAt: Value(DateTime.now()),
-      ));
+      ),
+    );
   }
 }
