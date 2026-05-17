@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../theme/app_tokens.dart';
+import 'dashboard_providers.dart';
+import '../plugin/plugin_interface.dart';
+import '../plugin/plugin_registry.dart';
 
 class HomePage extends ConsumerWidget {
   const HomePage({super.key});
@@ -21,24 +25,30 @@ class HomePage extends ConsumerWidget {
                     padding: const EdgeInsets.all(AppSpacing.xxl),
                     child: ConstrainedBox(
                       constraints: const BoxConstraints(maxWidth: 920),
-                      child: const Column(
+                      child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          _HomeHeader(),
-                          SizedBox(height: AppSpacing.xxl),
-                          _QuickCaptureCard(),
-                          SizedBox(height: AppSpacing.xxl),
-                          _SectionTitle(title: '今日聚焦'),
-                          SizedBox(height: AppSpacing.md),
-                          _FocusGrid(),
-                          SizedBox(height: AppSpacing.xxl),
-                          _SectionTitle(title: '最近想法', trailing: '查看全部'),
-                          SizedBox(height: AppSpacing.md),
-                          _RecentThoughtsGrid(),
-                          SizedBox(height: AppSpacing.xxl),
-                          _SectionTitle(title: '快捷入口'),
-                          SizedBox(height: AppSpacing.md),
-                          _ShortcutGrid(),
+                          const _HomeHeader(),
+                          const SizedBox(height: AppSpacing.xxl),
+                          const _QuickCaptureCard(),
+                          const SizedBox(height: AppSpacing.xxl),
+                          const _SectionTitle(title: '今日聚焦'),
+                          const SizedBox(height: AppSpacing.md),
+                          const _FocusGrid(),
+                          const SizedBox(height: AppSpacing.xxl),
+                          _SectionTitle(
+                            title: '最近想法',
+                            trailing: '查看全部',
+                            onTap: () => context.go('/thoughts'),
+                          ),
+                          const SizedBox(height: AppSpacing.md),
+                          const _RecentThoughtsGrid(),
+                          const SizedBox(height: AppSpacing.xxl),
+                          const _SectionTitle(title: '快捷入口'),
+                          const SizedBox(height: AppSpacing.md),
+                          _ShortcutGrid(
+                            onThoughtsTap: () => context.go('/thoughts'),
+                          ),
                         ],
                       ),
                     ),
@@ -53,6 +63,8 @@ class HomePage extends ConsumerWidget {
     );
   }
 }
+
+// ─── Header ─────────────────────────────────────────────────────────
 
 class _HomeHeader extends StatelessWidget {
   const _HomeHeader();
@@ -88,7 +100,8 @@ class _HomeHeader extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: AppSpacing.xs),
-              Text('快速记录、整理与找回你的信息', style: theme.textTheme.bodyLarge),
+              Text('快速记录、整理与找回你的信息',
+                  style: theme.textTheme.bodyLarge),
             ],
           ),
         ),
@@ -107,21 +120,29 @@ class _SearchBox extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return Container(
-      width: 260,
-      height: AppSizes.inputHeight,
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(AppRadius.md),
-        border: Border.all(color: AppColors.border),
-      ),
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
-      child: Row(
-        children: [
-          const Icon(Icons.search_rounded, color: AppColors.textTertiary),
-          const SizedBox(width: AppSpacing.xs),
-          Text('Ctrl + K 全局搜索', style: theme.textTheme.bodyMedium),
-        ],
+    return InkWell(
+      borderRadius: BorderRadius.circular(AppRadius.md),
+      onTap: () {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('全局搜索即将上线')),
+        );
+      },
+      child: Container(
+        width: 260,
+        height: AppSizes.inputHeight,
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(AppRadius.md),
+          border: Border.all(color: AppColors.border),
+        ),
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+        child: Row(
+          children: [
+            const Icon(Icons.search_rounded, color: AppColors.textTertiary),
+            const SizedBox(width: AppSpacing.xs),
+            Text('Ctrl + K 全局搜索', style: theme.textTheme.bodyMedium),
+          ],
+        ),
       ),
     );
   }
@@ -162,12 +183,60 @@ class _NotificationButton extends StatelessWidget {
   }
 }
 
-class _QuickCaptureCard extends StatelessWidget {
+// ─── Quick Capture Card ─────────────────────────────────────────────
+
+class _QuickCaptureCard extends ConsumerStatefulWidget {
   const _QuickCaptureCard();
+
+  @override
+  ConsumerState<_QuickCaptureCard> createState() => _QuickCaptureCardState();
+}
+
+class _QuickCaptureCardState extends ConsumerState<_QuickCaptureCard> {
+  late final TextEditingController _controller;
+  bool _submitting = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = TextEditingController();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  Future<void> _submit() async {
+    final content = _controller.text.trim();
+    if (content.isEmpty || _submitting) return;
+
+    setState(() => _submitting = true);
+    try {
+      final registry = ref.read(pluginRegistryProvider);
+      await registry.quickCreate(ref, content: content);
+      if (!mounted) return;
+      _controller.clear();
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('想法已记录'),
+          duration: Duration(seconds: 2),
+        ),
+      );
+      ref.invalidate(dashboardItemsProvider);
+      ref.invalidate(dashboardPinnedProvider);
+      ref.invalidate(dashboardStatsProvider);
+    } finally {
+      if (mounted) setState(() => _submitting = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final isEmpty = _controller.text.trim().isEmpty;
+
     return _Panel(
       padding: const EdgeInsets.all(AppSpacing.xl),
       child: Row(
@@ -186,38 +255,56 @@ class _QuickCaptureCard extends StatelessWidget {
                 Text('快速记录想法', style: theme.textTheme.titleMedium),
                 const SizedBox(height: AppSpacing.sm),
                 Container(
-                  height: 68,
-                  alignment: Alignment.centerLeft,
+                  constraints: const BoxConstraints(minHeight: 68),
                   padding: const EdgeInsets.symmetric(
                     horizontal: AppSpacing.lg,
+                    vertical: AppSpacing.sm,
                   ),
                   decoration: BoxDecoration(
                     color: AppColors.surface,
                     borderRadius: BorderRadius.circular(AppRadius.md),
                     border: Border.all(color: AppColors.border),
                   ),
-                  child: Text(
-                    '快速记录你的想法...',
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      color: AppColors.textTertiary,
+                  child: TextField(
+                    controller: _controller,
+                    maxLines: null,
+                    minLines: 1,
+                    textInputAction: TextInputAction.newline,
+                    style: theme.textTheme.bodyMedium,
+                    decoration: const InputDecoration(
+                      hintText: '快速记录你的想法...',
+                      hintStyle: TextStyle(color: AppColors.textTertiary),
+                      border: InputBorder.none,
+                      isDense: true,
+                      contentPadding: EdgeInsets.zero,
                     ),
                   ),
                 ),
                 const SizedBox(height: AppSpacing.md),
                 Row(
                   children: [
-                    const _PillButton(icon: Icons.sell_outlined, label: '添加标签'),
-                    const SizedBox(width: AppSpacing.sm),
-                    const _PillButton(icon: Icons.image_outlined, label: '图片'),
+                    const _PillButton(
+                        icon: Icons.sell_outlined, label: '添加标签'),
                     const SizedBox(width: AppSpacing.sm),
                     const _PillButton(
-                      icon: Icons.check_box_outlined,
-                      label: '待办',
-                    ),
+                        icon: Icons.image_outlined, label: '图片'),
+                    const SizedBox(width: AppSpacing.sm),
+                    const _PillButton(
+                        icon: Icons.check_box_outlined, label: '待办'),
                     const Spacer(),
                     FilledButton.icon(
-                      onPressed: () {},
-                      icon: const Icon(Icons.send_rounded, size: 18),
+                      onPressed:
+                          (isEmpty || _submitting) ? null : _submit,
+                      icon: _submitting
+                          ? const SizedBox(
+                              width: 18,
+                              height: 18,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Colors.white,
+                              ),
+                            )
+                          : const Icon(Icons.send_rounded, size: 18),
                       label: const Text('记录想法'),
                     ),
                   ],
@@ -231,14 +318,26 @@ class _QuickCaptureCard extends StatelessWidget {
   }
 }
 
-class _FocusGrid extends StatelessWidget {
+// ─── Focus Grid ─────────────────────────────────────────────────────
+
+class _FocusGrid extends ConsumerWidget {
   const _FocusGrid();
 
   @override
-  Widget build(BuildContext context) {
-    return const Row(
+  Widget build(BuildContext context, WidgetRef ref) {
+    final statsAsync = ref.watch(dashboardStatsProvider);
+    final thoughtsCount = statsAsync.whenOrNull(
+          data: (stats) {
+            final thoughts =
+                stats.where((s) => s.pluginId == 'thoughts').firstOrNull;
+            return thoughts?.count ?? 0;
+          },
+        ) ??
+        0;
+
+    return Row(
       children: [
-        Expanded(
+        const Expanded(
           child: _MetricCard(
             title: '今日待办',
             value: '5',
@@ -248,8 +347,8 @@ class _FocusGrid extends StatelessWidget {
             icon: Icons.check_circle_outline_rounded,
           ),
         ),
-        SizedBox(width: AppSpacing.md),
-        Expanded(
+        const SizedBox(width: AppSpacing.md),
+        const Expanded(
           child: _MetricCard(
             title: '最近笔记',
             value: '3',
@@ -259,11 +358,11 @@ class _FocusGrid extends StatelessWidget {
             icon: Icons.description_outlined,
           ),
         ),
-        SizedBox(width: AppSpacing.md),
+        const SizedBox(width: AppSpacing.md),
         Expanded(
           child: _MetricCard(
             title: '灵感想法',
-            value: '8',
+            value: '$thoughtsCount',
             note: '条未整理',
             color: AppColors.warning,
             background: AppColors.yellowSoft,
@@ -275,59 +374,130 @@ class _FocusGrid extends StatelessWidget {
   }
 }
 
-class _RecentThoughtsGrid extends StatelessWidget {
+// ─── Recent Thoughts Grid ───────────────────────────────────────────
+
+class _RecentThoughtsGrid extends ConsumerWidget {
   const _RecentThoughtsGrid();
 
   @override
-  Widget build(BuildContext context) {
-    return GridView.count(
-      crossAxisCount: 4,
-      crossAxisSpacing: AppSpacing.md,
-      mainAxisSpacing: AppSpacing.md,
-      childAspectRatio: 0.82,
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      children: const [
-        _ThoughtPreviewCard(
-          title: '产品想法：轻量级个人信息中心',
-          body: '打造一个以个人为中心的信息枢纽，帮助用户快速记录、整理与找回想法、待办和笔记。',
-          tag: '产品想法',
-          time: '今天 08:47',
-          color: AppColors.purple,
-          background: AppColors.purpleSoft,
-          pinned: true,
+  Widget build(BuildContext context, WidgetRef ref) {
+    final itemsAsync = ref.watch(dashboardItemsProvider);
+
+    return itemsAsync.when(
+      loading: () => _buildLoadingGrid(),
+      error: (error, stack) => _buildErrorState(ref, error),
+      data: (items) {
+        if (items.isEmpty) return _buildEmptyState();
+        return _buildDataGrid(context, items);
+      },
+    );
+  }
+
+  Widget _buildLoadingGrid() {
+    return Wrap(
+      spacing: AppSpacing.md,
+      runSpacing: AppSpacing.md,
+      children: List.generate(
+        4,
+        (_) => SizedBox(
+          width: 200,
+          height: 244,
+          child: Container(
+            decoration: BoxDecoration(
+              color: AppColors.surfaceMuted,
+              borderRadius: BorderRadius.circular(AppRadius.md),
+            ),
+            child: const Center(child: CircularProgressIndicator()),
+          ),
         ),
-        _ThoughtPreviewCard(
-          title: '读书笔记：《原子习惯》',
-          body: '习惯是复利效应。微小改变，带来巨大回报。',
-          tag: '阅读笔记',
-          time: '昨天 22:15',
-          color: AppColors.success,
-          background: AppColors.greenSoft,
+      ),
+    );
+  }
+
+  Widget _buildErrorState(WidgetRef ref, Object error) {
+    return _Panel(
+      child: Padding(
+        padding: const EdgeInsets.all(AppSpacing.xl),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.error_outline, color: AppColors.error, size: 32),
+            const SizedBox(height: AppSpacing.sm),
+            Text(
+              '加载失败',
+              style: TextStyle(color: AppColors.textSecondary),
+            ),
+            const SizedBox(height: AppSpacing.sm),
+            FilledButton.tonalIcon(
+              onPressed: () {
+                ref.invalidate(dashboardItemsProvider);
+              },
+              icon: const Icon(Icons.refresh, size: 18),
+              label: const Text('重试'),
+            ),
+          ],
         ),
-        _ThoughtPreviewCard(
-          title: '采购清单',
-          body: '鸡蛋、牛奶、燕麦片、蓝莓、卫生纸。',
-          tag: '生活',
-          time: '昨天 18:36',
-          color: AppColors.warning,
-          background: AppColors.accentSoft,
+      ),
+    );
+  }
+
+  Widget _buildEmptyState() {
+    return _Panel(
+      child: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(AppSpacing.xxl),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.lightbulb_outline,
+                  color: AppColors.textTertiary.withValues(alpha: 0.5),
+                  size: 48),
+              const SizedBox(height: AppSpacing.md),
+              Text(
+                '还没有想法，点击上方快速记录第一条吧',
+                style: TextStyle(color: AppColors.textTertiary),
+              ),
+            ],
+          ),
         ),
-        _ThoughtPreviewCard(
-          title: '本周复盘',
-          body: '本周完成了产品原型设计，与团队讨论了核心功能优先级。',
-          tag: '复盘',
-          time: '5月18日 21:30',
-          color: AppColors.primary,
-          background: AppColors.blueSoft,
-        ),
-      ],
+      ),
+    );
+  }
+
+  Widget _buildDataGrid(BuildContext context, List<DashboardItem> items) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final spacing = AppSpacing.md;
+        const columns = 4;
+        final cardWidth =
+            (constraints.maxWidth - (columns - 1) * spacing) / columns;
+        final cardHeight = cardWidth / 0.82;
+
+        return Wrap(
+          spacing: spacing,
+          runSpacing: spacing,
+          children: items.map((item) {
+            return SizedBox(
+              width: cardWidth,
+              height: cardHeight,
+              child: _ThoughtPreviewCard(
+                item: item,
+                onTap: () => context.go(item.routePath),
+              ),
+            );
+          }).toList(),
+        );
+      },
     );
   }
 }
 
+// ─── Shortcut Grid ──────────────────────────────────────────────────
+
 class _ShortcutGrid extends StatelessWidget {
-  const _ShortcutGrid();
+  final VoidCallback? onThoughtsTap;
+
+  const _ShortcutGrid({this.onThoughtsTap});
 
   @override
   Widget build(BuildContext context) {
@@ -337,29 +507,30 @@ class _ShortcutGrid extends StatelessWidget {
       childAspectRatio: 2.55,
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
-      children: const [
+      children: [
         _ShortcutCard(
           icon: Icons.lightbulb_outline,
           title: '想法',
           subtitle: '随时记录灵感',
           color: AppColors.purple,
           background: AppColors.purpleSoft,
+          onTap: onThoughtsTap,
         ),
-        _ShortcutCard(
+        const _ShortcutCard(
           icon: Icons.check_circle_outline_rounded,
           title: '待办',
           subtitle: '管理任务清单',
           color: AppColors.success,
           background: AppColors.greenSoft,
         ),
-        _ShortcutCard(
+        const _ShortcutCard(
           icon: Icons.article_outlined,
           title: '笔记',
           subtitle: '沉淀知识',
           color: AppColors.primary,
           background: AppColors.blueSoft,
         ),
-        _ShortcutCard(
+        const _ShortcutCard(
           icon: Icons.search_rounded,
           title: '搜索',
           subtitle: '查找全部内容',
@@ -370,6 +541,8 @@ class _ShortcutGrid extends StatelessWidget {
     );
   }
 }
+
+// ─── Home Right Rail ────────────────────────────────────────────────
 
 class _HomeRightRail extends StatelessWidget {
   const _HomeRightRail();
@@ -403,7 +576,8 @@ class _HomeRightRail extends StatelessWidget {
                 SizedBox(width: AppSpacing.xxs),
                 Text(
                   '你的数据，仅你可见',
-                  style: TextStyle(color: AppColors.textTertiary, fontSize: 12),
+                  style: TextStyle(
+                      color: AppColors.textTertiary, fontSize: 12),
                 ),
               ],
             ),
@@ -414,43 +588,73 @@ class _HomeRightRail extends StatelessWidget {
   }
 }
 
-class _PinnedPanel extends StatelessWidget {
+// ─── Pinned Panel ───────────────────────────────────────────────────
+
+class _PinnedPanel extends ConsumerWidget {
   const _PinnedPanel();
 
   @override
-  Widget build(BuildContext context) {
-    return const _Panel(
+  Widget build(BuildContext context, WidgetRef ref) {
+    final pinnedAsync = ref.watch(dashboardPinnedProvider);
+
+    return _Panel(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _PanelHeader(title: '置顶', icon: Icons.push_pin_outlined),
-          SizedBox(height: AppSpacing.md),
-          _CompactListItem(
-            icon: Icons.bookmark_rounded,
-            color: AppColors.purple,
-            background: AppColors.purpleSoft,
-            title: '人生愿景清单',
-            subtitle: '目标 · 长期',
-          ),
-          _CompactListItem(
-            icon: Icons.folder_rounded,
-            color: AppColors.warning,
-            background: AppColors.yellowSoft,
-            title: '旅行计划：日本关西',
-            subtitle: '计划 · 6月',
-          ),
-          _CompactListItem(
-            icon: Icons.article_rounded,
-            color: AppColors.success,
-            background: AppColors.greenSoft,
-            title: '如何打造高效的个人系统',
-            subtitle: '笔记 · 5月10日',
+          const _PanelHeader(title: '置顶', icon: Icons.push_pin_outlined),
+          const SizedBox(height: AppSpacing.md),
+          pinnedAsync.when(
+            loading: () => const Padding(
+              padding: EdgeInsets.all(AppSpacing.md),
+              child: Center(
+                child: SizedBox(
+                  width: 24,
+                  height: 24,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                ),
+              ),
+            ),
+            error: (error, stack) =>
+                const SizedBox.shrink(),
+            data: (items) {
+              if (items.isEmpty) {
+                return Padding(
+                  padding: const EdgeInsets.all(AppSpacing.md),
+                  child: Text(
+                    '暂无置顶内容',
+                    style: TextStyle(
+                      color: AppColors.textTertiary,
+                      fontSize: 13,
+                    ),
+                  ),
+                );
+              }
+              return Column(
+                children: items.map((item) {
+                  final title = _firstLine(item.content);
+                  final subtitle =
+                      item.tags.isNotEmpty ? item.tags.first : '想法';
+                  final color = _itemColor(item);
+                  final background = _itemBackground(color);
+                  return _CompactListItem(
+                    icon: Icons.lightbulb_outline,
+                    color: color,
+                    background: background,
+                    title: title,
+                    subtitle: subtitle,
+                    onTap: () => context.go(item.routePath),
+                  );
+                }).toList(),
+              );
+            },
           ),
         ],
       ),
     );
   }
 }
+
+// ─── Todo Panel ─────────────────────────────────────────────────────
 
 class _TodoPanel extends StatelessWidget {
   const _TodoPanel();
@@ -474,38 +678,51 @@ class _TodoPanel extends StatelessWidget {
   }
 }
 
-class _DataPanel extends StatelessWidget {
+// ─── Data Panel ─────────────────────────────────────────────────────
+
+class _DataPanel extends ConsumerWidget {
   const _DataPanel();
 
   @override
-  Widget build(BuildContext context) {
-    return const _Panel(
+  Widget build(BuildContext context, WidgetRef ref) {
+    final statsAsync = ref.watch(dashboardStatsProvider);
+    final thoughtsCount = statsAsync.whenOrNull(
+          data: (stats) {
+            final thoughts =
+                stats.where((s) => s.pluginId == 'thoughts').firstOrNull;
+            return thoughts?.count ?? 0;
+          },
+        ) ??
+        -1;
+
+    return _Panel(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _PanelHeader(title: '数据概览', icon: Icons.bar_chart_rounded),
-          SizedBox(height: AppSpacing.md),
+          const _PanelHeader(
+              title: '数据概览', icon: Icons.bar_chart_rounded),
+          const SizedBox(height: AppSpacing.md),
           _DataLine(
             icon: Icons.lightbulb_outline,
             label: '想法',
-            value: '128',
-            change: '+18%',
+            value: thoughtsCount >= 0 ? '$thoughtsCount' : '—',
+            change: '—',
             color: AppColors.purple,
             background: AppColors.purpleSoft,
           ),
-          _DataLine(
+          const _DataLine(
             icon: Icons.check_circle_outline,
             label: '待办',
             value: '24',
-            change: '-8%',
+            change: '—',
             color: AppColors.success,
             background: AppColors.greenSoft,
           ),
-          _DataLine(
+          const _DataLine(
             icon: Icons.article_outlined,
             label: '笔记',
             value: '56',
-            change: '+12%',
+            change: '—',
             color: AppColors.primary,
             background: AppColors.blueSoft,
           ),
@@ -515,11 +732,14 @@ class _DataPanel extends StatelessWidget {
   }
 }
 
+// ─── Reusable Section / Panel Widgets ───────────────────────────────
+
 class _SectionTitle extends StatelessWidget {
   final String title;
   final String? trailing;
+  final VoidCallback? onTap;
 
-  const _SectionTitle({required this.title, this.trailing});
+  const _SectionTitle({required this.title, this.trailing, this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -528,10 +748,18 @@ class _SectionTitle extends StatelessWidget {
       children: [
         Expanded(child: Text(title, style: theme.textTheme.titleLarge)),
         if (trailing != null)
-          Text(
-            '$trailing  →',
-            style: theme.textTheme.labelLarge?.copyWith(
-              color: AppColors.primary,
+          InkWell(
+            borderRadius: BorderRadius.circular(AppRadius.xs),
+            onTap: onTap,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(
+                  horizontal: AppSpacing.xs, vertical: AppSpacing.xxs),
+              child: Text(
+                '$trailing  →',
+                style: theme.textTheme.labelLarge?.copyWith(
+                  color: AppColors.primary,
+                ),
+              ),
             ),
           ),
       ],
@@ -666,8 +894,10 @@ class _MetricCard extends StatelessWidget {
                       ),
                       const SizedBox(width: AppSpacing.xs),
                       Padding(
-                        padding: const EdgeInsets.only(bottom: AppSpacing.xxs),
-                        child: Text(note, style: theme.textTheme.bodySmall),
+                        padding:
+                            const EdgeInsets.only(bottom: AppSpacing.xxs),
+                        child:
+                            Text(note, style: theme.textTheme.bodySmall),
                       ),
                     ],
                   ),
@@ -681,7 +911,8 @@ class _MetricCard extends StatelessWidget {
                 color: background,
                 borderRadius: BorderRadius.circular(AppRadius.lg),
               ),
-              child: Icon(icon, color: color.withValues(alpha: 0.65), size: 32),
+              child: Icon(icon,
+                  color: color.withValues(alpha: 0.65), size: 32),
             ),
           ],
         ),
@@ -691,80 +922,93 @@ class _MetricCard extends StatelessWidget {
 }
 
 class _ThoughtPreviewCard extends StatelessWidget {
-  final String title;
-  final String body;
-  final String tag;
-  final String time;
-  final Color color;
-  final Color background;
-  final bool pinned;
+  final DashboardItem item;
+  final VoidCallback onTap;
 
   const _ThoughtPreviewCard({
-    required this.title,
-    required this.body,
-    required this.tag,
-    required this.time,
-    required this.color,
-    required this.background,
-    this.pinned = false,
+    required this.item,
+    required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return Container(
-      padding: const EdgeInsets.all(AppSpacing.md),
-      decoration: BoxDecoration(
-        color: background.withValues(alpha: 0.62),
+    final title = _firstLine(item.content);
+    final body = _restLines(item.content);
+    final tag = item.tags.isNotEmpty ? item.tags.first : '';
+    final time = _formatTimestamp(item.createdAt);
+    final color = _itemColor(item);
+    final background = _itemBackground(color);
+
+    return Material(
+      borderRadius: BorderRadius.circular(AppRadius.md),
+      child: InkWell(
         borderRadius: BorderRadius.circular(AppRadius.md),
-        border: Border.all(color: color.withValues(alpha: 0.16)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.all(AppSpacing.md),
+          decoration: BoxDecoration(
+            color: background.withValues(alpha: 0.62),
+            borderRadius: BorderRadius.circular(AppRadius.md),
+            border: Border.all(color: color.withValues(alpha: 0.16)),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Expanded(child: Text(time, style: theme.textTheme.bodySmall)),
-              Icon(
-                pinned ? Icons.star_rounded : Icons.star_border_rounded,
-                color: pinned ? AppColors.warning : AppColors.textTertiary,
-                size: 18,
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(time, style: theme.textTheme.bodySmall),
+                  ),
+                  Icon(
+                    item.isPinned
+                        ? Icons.star_rounded
+                        : Icons.star_border_rounded,
+                    color: item.isPinned
+                        ? AppColors.warning
+                        : AppColors.textTertiary,
+                    size: 18,
+                  ),
+                ],
               ),
+              const SizedBox(height: AppSpacing.md),
+              Text(
+                title,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: theme.textTheme.titleSmall,
+              ),
+              const SizedBox(height: AppSpacing.sm),
+              Expanded(
+                child: Text(
+                  body,
+                  maxLines: 5,
+                  overflow: TextOverflow.ellipsis,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+              ),
+              if (tag.isNotEmpty)
+                Container(
+                  margin: const EdgeInsets.only(top: AppSpacing.sm),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.xs,
+                    vertical: AppSpacing.xxs,
+                  ),
+                  decoration: BoxDecoration(
+                    color: color.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(AppRadius.full),
+                  ),
+                  child: Text(
+                    tag,
+                    style: theme.textTheme.labelMedium?.copyWith(
+                        color: color),
+                  ),
+                ),
             ],
           ),
-          const SizedBox(height: AppSpacing.md),
-          Text(
-            title,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-            style: theme.textTheme.titleSmall,
-          ),
-          const SizedBox(height: AppSpacing.sm),
-          Expanded(
-            child: Text(
-              body,
-              maxLines: 5,
-              overflow: TextOverflow.ellipsis,
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: AppColors.textSecondary,
-              ),
-            ),
-          ),
-          Container(
-            padding: const EdgeInsets.symmetric(
-              horizontal: AppSpacing.xs,
-              vertical: AppSpacing.xxs,
-            ),
-            decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(AppRadius.full),
-            ),
-            child: Text(
-              tag,
-              style: theme.textTheme.labelMedium?.copyWith(color: color),
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }
@@ -776,6 +1020,7 @@ class _ShortcutCard extends StatelessWidget {
   final String subtitle;
   final Color color;
   final Color background;
+  final VoidCallback? onTap;
 
   const _ShortcutCard({
     required this.icon,
@@ -783,32 +1028,41 @@ class _ShortcutCard extends StatelessWidget {
     required this.subtitle,
     required this.color,
     required this.background,
+    this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return _Panel(
-      padding: const EdgeInsets.all(AppSpacing.md),
-      child: Row(
-        children: [
-          _IconBubble(icon: icon, color: color, background: background),
-          const SizedBox(width: AppSpacing.md),
-          Expanded(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(title, style: theme.textTheme.titleSmall),
-                Text(
-                  subtitle,
-                  style: theme.textTheme.bodySmall,
-                  overflow: TextOverflow.ellipsis,
+    return Material(
+      borderRadius: BorderRadius.circular(AppRadius.lg),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(AppRadius.lg),
+        onTap: onTap,
+        child: _Panel(
+          padding: const EdgeInsets.all(AppSpacing.md),
+          child: Row(
+            children: [
+              _IconBubble(
+                  icon: icon, color: color, background: background),
+              const SizedBox(width: AppSpacing.md),
+              Expanded(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(title, style: theme.textTheme.titleSmall),
+                    Text(
+                      subtitle,
+                      style: theme.textTheme.bodySmall,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
@@ -839,6 +1093,7 @@ class _CompactListItem extends StatelessWidget {
   final Color background;
   final String title;
   final String subtitle;
+  final VoidCallback? onTap;
 
   const _CompactListItem({
     required this.icon,
@@ -846,6 +1101,7 @@ class _CompactListItem extends StatelessWidget {
     required this.background,
     required this.title,
     required this.subtitle,
+    this.onTap,
   });
 
   @override
@@ -853,29 +1109,36 @@ class _CompactListItem extends StatelessWidget {
     final theme = Theme.of(context);
     return Padding(
       padding: const EdgeInsets.only(bottom: AppSpacing.md),
-      child: Row(
-        children: [
-          _IconBubble(icon: icon, color: color, background: background),
-          const SizedBox(width: AppSpacing.md),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: theme.textTheme.titleSmall,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                Text(
-                  subtitle,
-                  style: theme.textTheme.bodySmall,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ],
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        child: Row(
+          children: [
+            _IconBubble(
+                icon: icon, color: color, background: background),
+            const SizedBox(width: AppSpacing.md),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: theme.textTheme.titleSmall,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  Text(
+                    subtitle,
+                    style: theme.textTheme.bodySmall,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
             ),
-          ),
-          const Icon(Icons.more_vert_rounded, color: AppColors.textTertiary),
-        ],
+            if (onTap != null)
+              const Icon(Icons.more_vert_rounded,
+                  color: AppColors.textTertiary),
+          ],
+        ),
       ),
     );
   }
@@ -886,7 +1149,11 @@ class _TodoLine extends StatelessWidget {
   final String time;
   final bool done;
 
-  const _TodoLine({required this.title, required this.time, this.done = false});
+  const _TodoLine({
+    required this.title,
+    required this.time,
+    this.done = false,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -896,7 +1163,9 @@ class _TodoLine extends StatelessWidget {
       child: Row(
         children: [
           Icon(
-            done ? Icons.check_box_rounded : Icons.check_box_outline_blank,
+            done
+                ? Icons.check_box_rounded
+                : Icons.check_box_outline_blank,
             size: 20,
             color: done ? AppColors.primary : AppColors.textTertiary,
           ),
@@ -937,7 +1206,6 @@ class _DataLine extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isPositive = change.startsWith('+');
     return Padding(
       padding: const EdgeInsets.only(bottom: AppSpacing.md),
       child: Row(
@@ -961,11 +1229,77 @@ class _DataLine extends StatelessWidget {
           Text(
             change,
             style: theme.textTheme.labelMedium?.copyWith(
-              color: isPositive ? AppColors.success : AppColors.error,
+              color: AppColors.textTertiary,
             ),
           ),
         ],
       ),
     );
   }
+}
+
+// ─── Formatting Helpers ─────────────────────────────────────────────
+
+String _firstLine(String text) {
+  final trimmed = text.trim();
+  final firstLine = trimmed.split(RegExp(r'\s*\n\s*')).first;
+  if (firstLine.length <= 20) return firstLine;
+  return '${firstLine.substring(0, 20)}...';
+}
+
+String _restLines(String text) {
+  final trimmed = text.trim();
+  final lines = trimmed.split(RegExp(r'\s*\n\s*'));
+  if (lines.length <= 1) return trimmed;
+  return lines.skip(1).join('\n').trim();
+}
+
+String _formatTimestamp(DateTime dt) {
+  final now = DateTime.now();
+  final today = DateTime(now.year, now.month, now.day);
+  final yesterday = today.subtract(const Duration(days: 1));
+  final date = DateTime(dt.year, dt.month, dt.day);
+
+  if (date == today) {
+    return '今天 ${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
+  } else if (date == yesterday) {
+    return '昨天 ${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
+  } else if (dt.year == now.year) {
+    return '${dt.month}月${dt.day}日 ${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
+  }
+  return '${dt.year}-${dt.month.toString().padLeft(2, '0')}-${dt.day.toString().padLeft(2, '0')}';
+}
+
+const _accentPalette = [
+  AppColors.warning,
+  AppColors.success,
+  AppColors.primary,
+  AppColors.purple,
+  AppColors.error,
+  AppColors.secondary,
+];
+
+const _backgroundPalette = [
+  AppColors.yellowSoft,
+  AppColors.greenSoft,
+  AppColors.blueSoft,
+  AppColors.purpleSoft,
+  AppColors.roseSoft,
+  AppColors.secondarySoft,
+];
+
+Color _itemColor(DashboardItem item) {
+  if (item.colorHex != null && item.colorHex!.isNotEmpty) {
+    final cleaned = item.colorHex!.replaceFirst('#', '');
+    final normalized = cleaned.length == 6 ? 'FF$cleaned' : cleaned;
+    final intVal = int.tryParse(normalized, radix: 16);
+    if (intVal != null) return Color(intVal);
+  }
+  final idx = item.itemId.hashCode.abs();
+  return _accentPalette[idx % _accentPalette.length];
+}
+
+Color _itemBackground(Color color) {
+  final idx = color.toARGB32().abs();
+  return _backgroundPalette[idx % _backgroundPalette.length];
 }
