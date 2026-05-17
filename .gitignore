@@ -118,8 +118,20 @@ app.*.symbols
 !/packages/flutter_tools/test/data/dart_dependencies_test/**/.packages
 !/dev/ci/**/Gemfile.lock
 
-# AI related
+# AI tools config
 .agents/
+.claude/
 .codex/
 .serena/
 .trellis/
+
+# IDE
+.idea/
+.vscode/
+*.iml
+
+# Environment & secrets
+.env
+.env.*
+*.key
+key.properties
