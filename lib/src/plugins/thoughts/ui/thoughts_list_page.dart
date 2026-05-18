@@ -21,6 +21,7 @@ class _ThoughtsListPageState extends ConsumerState<ThoughtsListPage> {
   final _tagChips = <String>[];
   bool _isSubmitting = false;
   bool _hasContent = false;
+  bool _isPinned = false;
 
   @override
   void initState() {
@@ -77,13 +78,18 @@ class _ThoughtsListPageState extends ConsumerState<ThoughtsListPage> {
     try {
       final repo = ref.read(thoughtsRepositoryProvider);
       final tags = _tagChips.isNotEmpty ? _tagChips.join(',') : null;
-      await repo.createThought(content: content, tags: tags);
+      await repo.createThought(
+        content: content,
+        tags: tags,
+        isPinned: _isPinned,
+      );
       ref.invalidate(thoughtsListProvider);
       _contentController.clear();
       if (mounted) {
         setState(() {
           _tagChips.clear();
           _hasContent = false;
+          _isPinned = false;
         });
       }
     } finally {
@@ -100,14 +106,9 @@ class _ThoughtsListPageState extends ConsumerState<ThoughtsListPage> {
     );
   }
 
-  void _setTagFilter(String? tag) {
-    ref.read(tagFilterProvider.notifier).state = tag;
-  }
-
   @override
   Widget build(BuildContext context) {
     final thoughtsAsync = ref.watch(thoughtsListProvider);
-    final tagFilter = ref.watch(tagFilterProvider);
     final isArchived = ref.watch(archiveFilterProvider);
 
     return Focus(
@@ -146,17 +147,16 @@ class _ThoughtsListPageState extends ConsumerState<ThoughtsListPage> {
                                 tagChips: _tagChips,
                                 isSubmitting: _isSubmitting,
                                 canSubmit: _hasContent,
+                                isPinned: _isPinned,
                                 onSubmit: _submit,
                                 onTagInput: _handleTagInput,
                                 onRemoveChip: _removeChip,
+                                onTogglePin: () =>
+                                    setState(() => _isPinned = !_isPinned),
                               ),
                               const SizedBox(height: AppSpacing.xxl),
                             ],
-                            _ThoughtsToolbar(
-                              tagFilter: tagFilter,
-                              isArchived: isArchived,
-                              onClearTag: () => _setTagFilter(null),
-                            ),
+                            _ThoughtsToolbar(isArchived: isArchived),
                             const SizedBox(height: AppSpacing.lg),
                             thoughtsAsync.when(
                               loading: () => const _LoadingState(),
@@ -164,9 +164,10 @@ class _ThoughtsListPageState extends ConsumerState<ThoughtsListPage> {
                               data: (thoughts) => _ThoughtsContent(
                                 thoughts: thoughts,
                                 isArchived: isArchived,
-                                tagFilter: tagFilter,
                                 onOpen: _navigateToEditor,
-                                onTagTap: _setTagFilter,
+                                onTagTap: (tag) =>
+                                    ref.read(tagFilterProvider.notifier).state =
+                                        tag,
                               ),
                             ),
                           ],
@@ -236,9 +237,11 @@ class _ThoughtComposer extends StatelessWidget {
   final List<String> tagChips;
   final bool isSubmitting;
   final bool canSubmit;
+  final bool isPinned;
   final Future<void> Function() onSubmit;
   final ValueChanged<String> onTagInput;
   final ValueChanged<String> onRemoveChip;
+  final VoidCallback? onTogglePin;
 
   const _ThoughtComposer({
     required this.contentController,
@@ -246,9 +249,11 @@ class _ThoughtComposer extends StatelessWidget {
     required this.tagChips,
     required this.isSubmitting,
     required this.canSubmit,
+    required this.isPinned,
     required this.onSubmit,
     required this.onTagInput,
     required this.onRemoveChip,
+    this.onTogglePin,
   });
 
   @override
@@ -320,9 +325,11 @@ class _ThoughtComposer extends StatelessWidget {
                     const SizedBox(width: AppSpacing.sm),
                     const _PillButton(icon: Icons.image_outlined, label: '图片'),
                     const SizedBox(width: AppSpacing.sm),
-                    const _PillButton(
-                      icon: Icons.push_pin_outlined,
-                      label: '设为置顶',
+                    _PillButton(
+                      icon: isPinned ? Icons.push_pin : Icons.push_pin_outlined,
+                      label: isPinned ? '已置顶' : '设为置顶',
+                      selected: isPinned,
+                      onTap: onTogglePin,
                     ),
                     const Spacer(),
                     FilledButton.icon(
@@ -341,37 +348,55 @@ class _ThoughtComposer extends StatelessWidget {
   }
 }
 
-class _ThoughtsToolbar extends StatelessWidget {
-  final String? tagFilter;
+class _ThoughtsToolbar extends ConsumerWidget {
   final bool isArchived;
-  final VoidCallback onClearTag;
 
-  const _ThoughtsToolbar({
-    required this.tagFilter,
-    required this.isArchived,
-    required this.onClearTag,
-  });
+  const _ThoughtsToolbar({required this.isArchived});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
+    final tagFilter = ref.watch(tagFilterProvider);
+    final tagStats = ref.watch(tagStatsProvider);
+    final allThoughtsAsync = ref.watch(allThoughtsProvider);
+    final totalThoughts = allThoughtsAsync.valueOrNull?.length ?? 0;
+
+    final sortedTags = tagStats.entries.toList()
+      ..sort((a, b) => b.value.compareTo(a.value));
+
     return Row(
       children: [
-        _FilterChip(label: '全部', value: '132', selected: tagFilter == null),
-        const SizedBox(width: AppSpacing.sm),
-        const _FilterChip(label: '灵感', value: '48'),
-        const SizedBox(width: AppSpacing.sm),
-        const _FilterChip(label: '工作', value: '39'),
-        const SizedBox(width: AppSpacing.sm),
-        const _FilterChip(label: '生活', value: '31'),
-        const SizedBox(width: AppSpacing.sm),
-        if (tagFilter != null && tagFilter!.isNotEmpty)
-          Chip(
-            label: Text('#$tagFilter'),
-            deleteIcon: const Icon(Icons.close, size: 14),
-            onDeleted: onClearTag,
-            backgroundColor: AppColors.primary.withValues(alpha: 0.12),
-            side: BorderSide.none,
+        _FilterChip(
+          label: '全部',
+          value: totalThoughts.toString(),
+          selected: tagFilter == null,
+          onTap: () => ref.read(tagFilterProvider.notifier).state = null,
+        ),
+        ...sortedTags.map((entry) {
+          return Padding(
+            padding: const EdgeInsets.only(left: AppSpacing.sm),
+            child: _FilterChip(
+              label: entry.key,
+              value: entry.value.toString(),
+              selected: tagFilter == entry.key,
+              onTap: () =>
+                  ref.read(tagFilterProvider.notifier).state = entry.key,
+            ),
+          );
+        }),
+        if (tagFilter != null && tagFilter.isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.only(left: AppSpacing.sm),
+            child: Chip(
+              label: Text('#$tagFilter'),
+              deleteIcon: const Icon(Icons.close, size: 14),
+              onDeleted: () =>
+                  ref.read(tagFilterProvider.notifier).state = null,
+              backgroundColor: AppColors.primary.withValues(alpha: 0.12),
+              side: BorderSide.none,
+              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              visualDensity: VisualDensity.compact,
+            ),
           ),
         const Spacer(),
         Container(
@@ -398,23 +423,22 @@ class _ThoughtsToolbar extends StatelessWidget {
   }
 }
 
-class _ThoughtsContent extends StatelessWidget {
+class _ThoughtsContent extends ConsumerWidget {
   final List<ThoughtsTableData> thoughts;
   final bool isArchived;
-  final String? tagFilter;
   final ValueChanged<int> onOpen;
   final ValueChanged<String> onTagTap;
 
   const _ThoughtsContent({
     required this.thoughts,
     required this.isArchived,
-    required this.tagFilter,
     required this.onOpen,
     required this.onTagTap,
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final tagFilter = ref.watch(tagFilterProvider);
     if (thoughts.isEmpty) {
       return _EmptyState(isArchived: isArchived, tagFilter: tagFilter);
     }
@@ -700,27 +724,48 @@ class _IconBubble extends StatelessWidget {
 class _PillButton extends StatelessWidget {
   final IconData icon;
   final String label;
+  final VoidCallback? onTap;
+  final bool selected;
 
-  const _PillButton({required this.icon, required this.label});
+  const _PillButton({
+    required this.icon,
+    required this.label,
+    this.onTap,
+    this.selected = false,
+  });
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return Container(
-      height: AppDesktopSizes.compactButtonHeight,
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(AppRadius.sm),
-        border: Border.all(color: AppColors.border),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 18, color: AppColors.textSecondary),
-          const SizedBox(width: AppSpacing.xs),
-          Text(label, style: theme.textTheme.labelMedium),
-        ],
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        height: AppDesktopSizes.compactButtonHeight,
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
+        decoration: BoxDecoration(
+          color: selected ? AppColors.yellowSoft : AppColors.surface,
+          borderRadius: BorderRadius.circular(AppRadius.sm),
+          border: Border.all(
+            color: selected ? AppColors.warning : AppColors.border,
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              icon,
+              size: 18,
+              color: selected ? AppColors.warning : AppColors.textSecondary,
+            ),
+            const SizedBox(width: AppSpacing.xs),
+            Text(
+              label,
+              style: theme.textTheme.labelMedium?.copyWith(
+                color: selected ? AppColors.warning : null,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -776,42 +821,47 @@ class _FilterChip extends StatelessWidget {
   final String label;
   final String value;
   final bool selected;
+  final VoidCallback? onTap;
 
   const _FilterChip({
     required this.label,
     required this.value,
     this.selected = false,
+    this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return Container(
-      height: AppDesktopSizes.compactButtonHeight,
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
-      decoration: BoxDecoration(
-        color: selected ? AppColors.primary : AppColors.surface,
-        borderRadius: BorderRadius.circular(AppRadius.full),
-        border: Border.all(
-          color: selected ? AppColors.primary : AppColors.border,
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        height: AppDesktopSizes.compactButtonHeight,
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+        decoration: BoxDecoration(
+          color: selected ? AppColors.primary : AppColors.surface,
+          borderRadius: BorderRadius.circular(AppRadius.full),
+          border: Border.all(
+            color: selected ? AppColors.primary : AppColors.border,
+          ),
         ),
-      ),
-      child: Row(
-        children: [
-          Text(
-            label,
-            style: theme.textTheme.labelMedium?.copyWith(
-              color: selected ? Colors.white : AppColors.textSecondary,
+        child: Row(
+          children: [
+            Text(
+              label,
+              style: theme.textTheme.labelMedium?.copyWith(
+                color: selected ? Colors.white : AppColors.textSecondary,
+              ),
             ),
-          ),
-          const SizedBox(width: AppSpacing.xs),
-          Text(
-            value,
-            style: theme.textTheme.labelMedium?.copyWith(
-              color: selected ? Colors.white70 : AppColors.textTertiary,
+            const SizedBox(width: AppSpacing.xs),
+            Text(
+              value,
+              style: theme.textTheme.labelMedium?.copyWith(
+                color: selected ? Colors.white70 : AppColors.textTertiary,
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

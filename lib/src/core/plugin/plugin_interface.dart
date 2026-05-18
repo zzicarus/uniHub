@@ -71,13 +71,17 @@ abstract class UniHubPlugin {
 
   /// Return recent items for the dashboard home page.
   /// The [ref] parameter accepts any Riverpod ref (WidgetRef or provider Ref).
-  Future<List<DashboardItem>> getRecentItems(dynamic ref,
-      {int count = 4}) async => [];
+  Future<List<DashboardItem>> getRecentItems(
+    dynamic ref, {
+    int count = 4,
+  }) async => [];
 
   /// Return pinned items for the dashboard right rail.
   /// The [ref] parameter accepts any Riverpod ref (WidgetRef or provider Ref).
-  Future<List<DashboardItem>> getPinnedItems(dynamic ref,
-      {int count = 3}) async => [];
+  Future<List<DashboardItem>> getPinnedItems(
+    dynamic ref, {
+    int count = 3,
+  }) async => [];
 
   /// Return stats (count) for the dashboard.
   /// The [ref] parameter accepts any Riverpod ref (WidgetRef or provider Ref).
@@ -85,6 +89,9 @@ abstract class UniHubPlugin {
 
   /// Quick-create an item from the dashboard. Returns the created item.
   /// The [ref] parameter accepts any Riverpod ref (WidgetRef or provider Ref).
-  Future<DashboardItem?> quickCreate(dynamic ref,
-      {required String content, String? tags}) async => null;
+  Future<DashboardItem?> quickCreate(
+    dynamic ref, {
+    required String content,
+    String? tags,
+  }) async => null;
 }

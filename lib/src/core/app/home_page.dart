@@ -79,29 +79,9 @@ class _HomeHeader extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
-                children: [
-                  Flexible(
-                    child: Text(
-                      '早上好，Alex',
-                      style: theme.textTheme.headlineMedium?.copyWith(
-                        fontSize: 30,
-                        fontWeight: FontWeight.w800,
-                      ),
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                  const SizedBox(width: AppSpacing.sm),
-                  const Icon(
-                    Icons.wb_sunny_rounded,
-                    color: AppColors.warning,
-                    size: 28,
-                  ),
-                ],
-              ),
+              _buildGreeting(theme),
               const SizedBox(height: AppSpacing.xs),
-              Text('快速记录、整理与找回你的信息',
-                  style: theme.textTheme.bodyLarge),
+              Text('快速记录、整理与找回你的信息', style: theme.textTheme.bodyLarge),
             ],
           ),
         ),
@@ -109,6 +89,42 @@ class _HomeHeader extends StatelessWidget {
         const _SearchBox(),
         const SizedBox(width: AppSpacing.md),
         const _NotificationButton(),
+      ],
+    );
+  }
+
+  Widget _buildGreeting(ThemeData theme) {
+    final hour = DateTime.now().hour;
+    String greeting;
+    IconData greetingIcon;
+    Color iconColor;
+    if (hour >= 6 && hour < 12) {
+      greeting = '早上好，Alex';
+      greetingIcon = Icons.wb_sunny_rounded;
+      iconColor = AppColors.warning;
+    } else if (hour >= 12 && hour < 18) {
+      greeting = '下午好，Alex';
+      greetingIcon = Icons.wb_cloudy_rounded;
+      iconColor = AppColors.textSecondary;
+    } else {
+      greeting = '晚上好，Alex';
+      greetingIcon = Icons.nights_stay_rounded;
+      iconColor = AppColors.primary;
+    }
+    return Row(
+      children: [
+        Flexible(
+          child: Text(
+            greeting,
+            style: theme.textTheme.headlineMedium?.copyWith(
+              fontSize: 30,
+              fontWeight: FontWeight.w800,
+            ),
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
+        const SizedBox(width: AppSpacing.sm),
+        Icon(greetingIcon, color: iconColor, size: 28),
       ],
     );
   }
@@ -123,9 +139,9 @@ class _SearchBox extends StatelessWidget {
     return InkWell(
       borderRadius: BorderRadius.circular(AppRadius.md),
       onTap: () {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('全局搜索即将上线')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('全局搜索即将上线')));
       },
       child: Container(
         width: 260,
@@ -219,10 +235,7 @@ class _QuickCaptureCardState extends ConsumerState<_QuickCaptureCard> {
       if (!mounted) return;
       _controller.clear();
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('想法已记录'),
-          duration: Duration(seconds: 2),
-        ),
+        const SnackBar(content: Text('想法已记录'), duration: Duration(seconds: 2)),
       );
       ref.invalidate(dashboardItemsProvider);
       ref.invalidate(dashboardPinnedProvider);
@@ -283,18 +296,17 @@ class _QuickCaptureCardState extends ConsumerState<_QuickCaptureCard> {
                 const SizedBox(height: AppSpacing.md),
                 Row(
                   children: [
-                    const _PillButton(
-                        icon: Icons.sell_outlined, label: '添加标签'),
+                    const _PillButton(icon: Icons.sell_outlined, label: '添加标签'),
+                    const SizedBox(width: AppSpacing.sm),
+                    const _PillButton(icon: Icons.image_outlined, label: '图片'),
                     const SizedBox(width: AppSpacing.sm),
                     const _PillButton(
-                        icon: Icons.image_outlined, label: '图片'),
-                    const SizedBox(width: AppSpacing.sm),
-                    const _PillButton(
-                        icon: Icons.check_box_outlined, label: '待办'),
+                      icon: Icons.check_box_outlined,
+                      label: '待办',
+                    ),
                     const Spacer(),
                     FilledButton.icon(
-                      onPressed:
-                          (isEmpty || _submitting) ? null : _submit,
+                      onPressed: (isEmpty || _submitting) ? null : _submit,
                       icon: _submitting
                           ? const SizedBox(
                               width: 18,
@@ -326,10 +338,12 @@ class _FocusGrid extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final statsAsync = ref.watch(dashboardStatsProvider);
-    final thoughtsCount = statsAsync.whenOrNull(
+    final thoughtsCount =
+        statsAsync.whenOrNull(
           data: (stats) {
-            final thoughts =
-                stats.where((s) => s.pluginId == 'thoughts').firstOrNull;
+            final thoughts = stats
+                .where((s) => s.pluginId == 'thoughts')
+                .firstOrNull;
             return thoughts?.count ?? 0;
           },
         ) ??
@@ -340,6 +354,7 @@ class _FocusGrid extends ConsumerWidget {
         const Expanded(
           child: _MetricCard(
             title: '今日待办',
+            // TODO: 待插件实现后替换为真实数据
             value: '5',
             note: '项待完成',
             color: AppColors.success,
@@ -351,6 +366,7 @@ class _FocusGrid extends ConsumerWidget {
         const Expanded(
           child: _MetricCard(
             title: '最近笔记',
+            // TODO: 待插件实现后替换为真实数据
             value: '3',
             note: '条新笔记',
             color: AppColors.primary,
@@ -423,10 +439,7 @@ class _RecentThoughtsGrid extends ConsumerWidget {
           children: [
             const Icon(Icons.error_outline, color: AppColors.error, size: 32),
             const SizedBox(height: AppSpacing.sm),
-            Text(
-              '加载失败',
-              style: TextStyle(color: AppColors.textSecondary),
-            ),
+            Text('加载失败', style: TextStyle(color: AppColors.textSecondary)),
             const SizedBox(height: AppSpacing.sm),
             FilledButton.tonalIcon(
               onPressed: () {
@@ -449,9 +462,11 @@ class _RecentThoughtsGrid extends ConsumerWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(Icons.lightbulb_outline,
-                  color: AppColors.textTertiary.withValues(alpha: 0.5),
-                  size: 48),
+              Icon(
+                Icons.lightbulb_outline,
+                color: AppColors.textTertiary.withValues(alpha: 0.5),
+                size: 48,
+              ),
               const SizedBox(height: AppSpacing.md),
               Text(
                 '还没有想法，点击上方快速记录第一条吧',
@@ -576,8 +591,7 @@ class _HomeRightRail extends StatelessWidget {
                 SizedBox(width: AppSpacing.xxs),
                 Text(
                   '你的数据，仅你可见',
-                  style: TextStyle(
-                      color: AppColors.textTertiary, fontSize: 12),
+                  style: TextStyle(color: AppColors.textTertiary, fontSize: 12),
                 ),
               ],
             ),
@@ -614,8 +628,7 @@ class _PinnedPanel extends ConsumerWidget {
                 ),
               ),
             ),
-            error: (error, stack) =>
-                const SizedBox.shrink(),
+            error: (error, stack) => const SizedBox.shrink(),
             data: (items) {
               if (items.isEmpty) {
                 return Padding(
@@ -632,8 +645,9 @@ class _PinnedPanel extends ConsumerWidget {
               return Column(
                 children: items.map((item) {
                   final title = _firstLine(item.content);
-                  final subtitle =
-                      item.tags.isNotEmpty ? item.tags.first : '想法';
+                  final subtitle = item.tags.isNotEmpty
+                      ? item.tags.first
+                      : '想法';
                   final color = _itemColor(item);
                   final background = _itemBackground(color);
                   return _CompactListItem(
@@ -666,6 +680,7 @@ class _TodoPanel extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _PanelHeader(title: '今日待办', icon: Icons.check_box_outlined),
+          // TODO: 待插件实现后替换为真实数据
           SizedBox(height: AppSpacing.md),
           _TodoLine(title: '完成产品原型评审', time: '09:30'),
           _TodoLine(title: '回复合作伙伴邮件', time: '11:00'),
@@ -686,10 +701,12 @@ class _DataPanel extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final statsAsync = ref.watch(dashboardStatsProvider);
-    final thoughtsCount = statsAsync.whenOrNull(
+    final thoughtsCount =
+        statsAsync.whenOrNull(
           data: (stats) {
-            final thoughts =
-                stats.where((s) => s.pluginId == 'thoughts').firstOrNull;
+            final thoughts = stats
+                .where((s) => s.pluginId == 'thoughts')
+                .firstOrNull;
             return thoughts?.count ?? 0;
           },
         ) ??
@@ -699,8 +716,7 @@ class _DataPanel extends ConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const _PanelHeader(
-              title: '数据概览', icon: Icons.bar_chart_rounded),
+          const _PanelHeader(title: '数据概览', icon: Icons.bar_chart_rounded),
           const SizedBox(height: AppSpacing.md),
           _DataLine(
             icon: Icons.lightbulb_outline,
@@ -713,6 +729,7 @@ class _DataPanel extends ConsumerWidget {
           const _DataLine(
             icon: Icons.check_circle_outline,
             label: '待办',
+            // TODO: 待插件实现后替换为真实数据
             value: '24',
             change: '—',
             color: AppColors.success,
@@ -721,6 +738,7 @@ class _DataPanel extends ConsumerWidget {
           const _DataLine(
             icon: Icons.article_outlined,
             label: '笔记',
+            // TODO: 待插件实现后替换为真实数据
             value: '56',
             change: '—',
             color: AppColors.primary,
@@ -753,7 +771,9 @@ class _SectionTitle extends StatelessWidget {
             onTap: onTap,
             child: Padding(
               padding: const EdgeInsets.symmetric(
-                  horizontal: AppSpacing.xs, vertical: AppSpacing.xxs),
+                horizontal: AppSpacing.xs,
+                vertical: AppSpacing.xxs,
+              ),
               child: Text(
                 '$trailing  →',
                 style: theme.textTheme.labelLarge?.copyWith(
@@ -894,10 +914,8 @@ class _MetricCard extends StatelessWidget {
                       ),
                       const SizedBox(width: AppSpacing.xs),
                       Padding(
-                        padding:
-                            const EdgeInsets.only(bottom: AppSpacing.xxs),
-                        child:
-                            Text(note, style: theme.textTheme.bodySmall),
+                        padding: const EdgeInsets.only(bottom: AppSpacing.xxs),
+                        child: Text(note, style: theme.textTheme.bodySmall),
                       ),
                     ],
                   ),
@@ -911,8 +929,7 @@ class _MetricCard extends StatelessWidget {
                 color: background,
                 borderRadius: BorderRadius.circular(AppRadius.lg),
               ),
-              child: Icon(icon,
-                  color: color.withValues(alpha: 0.65), size: 32),
+              child: Icon(icon, color: color.withValues(alpha: 0.65), size: 32),
             ),
           ],
         ),
@@ -925,10 +942,7 @@ class _ThoughtPreviewCard extends StatelessWidget {
   final DashboardItem item;
   final VoidCallback onTap;
 
-  const _ThoughtPreviewCard({
-    required this.item,
-    required this.onTap,
-  });
+  const _ThoughtPreviewCard({required this.item, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -957,9 +971,7 @@ class _ThoughtPreviewCard extends StatelessWidget {
             children: [
               Row(
                 children: [
-                  Expanded(
-                    child: Text(time, style: theme.textTheme.bodySmall),
-                  ),
+                  Expanded(child: Text(time, style: theme.textTheme.bodySmall)),
                   Icon(
                     item.isPinned
                         ? Icons.star_rounded
@@ -1002,8 +1014,7 @@ class _ThoughtPreviewCard extends StatelessWidget {
                   ),
                   child: Text(
                     tag,
-                    style: theme.textTheme.labelMedium?.copyWith(
-                        color: color),
+                    style: theme.textTheme.labelMedium?.copyWith(color: color),
                   ),
                 ),
             ],
@@ -1043,8 +1054,7 @@ class _ShortcutCard extends StatelessWidget {
           padding: const EdgeInsets.all(AppSpacing.md),
           child: Row(
             children: [
-              _IconBubble(
-                  icon: icon, color: color, background: background),
+              _IconBubble(icon: icon, color: color, background: background),
               const SizedBox(width: AppSpacing.md),
               Expanded(
                 child: Column(
@@ -1114,8 +1124,7 @@ class _CompactListItem extends StatelessWidget {
         borderRadius: BorderRadius.circular(AppRadius.md),
         child: Row(
           children: [
-            _IconBubble(
-                icon: icon, color: color, background: background),
+            _IconBubble(icon: icon, color: color, background: background),
             const SizedBox(width: AppSpacing.md),
             Expanded(
               child: Column(
@@ -1135,8 +1144,10 @@ class _CompactListItem extends StatelessWidget {
               ),
             ),
             if (onTap != null)
-              const Icon(Icons.more_vert_rounded,
-                  color: AppColors.textTertiary),
+              const Icon(
+                Icons.more_vert_rounded,
+                color: AppColors.textTertiary,
+              ),
           ],
         ),
       ),
@@ -1149,11 +1160,7 @@ class _TodoLine extends StatelessWidget {
   final String time;
   final bool done;
 
-  const _TodoLine({
-    required this.title,
-    required this.time,
-    this.done = false,
-  });
+  const _TodoLine({required this.title, required this.time, this.done = false});
 
   @override
   Widget build(BuildContext context) {
@@ -1163,9 +1170,7 @@ class _TodoLine extends StatelessWidget {
       child: Row(
         children: [
           Icon(
-            done
-                ? Icons.check_box_rounded
-                : Icons.check_box_outline_blank,
+            done ? Icons.check_box_rounded : Icons.check_box_outline_blank,
             size: 20,
             color: done ? AppColors.primary : AppColors.textTertiary,
           ),

@@ -17,52 +17,52 @@ class ThoughtsPlugin extends UniHubPlugin {
 
   @override
   List<NavEntry> get navEntries => [
-        NavEntry(
-          label: '想法',
-          icon: Icons.lightbulb_outline,
+    NavEntry(
+      label: '想法',
+      icon: Icons.lightbulb_outline,
+      routeName: RouteNames.thoughts,
+      path: '/thoughts',
+      children: [
+        const NavEntry(
+          label: '所有想法',
+          icon: Icons.list,
           routeName: RouteNames.thoughts,
           path: '/thoughts',
-          children: [
-            const NavEntry(
-              label: '所有想法',
-              icon: Icons.list,
-              routeName: RouteNames.thoughts,
-              path: '/thoughts',
-            ),
-            const NavEntry(
-              label: '归档',
-              icon: Icons.archive_outlined,
-              routeName: RouteNames.thoughts,
-              path: '/thoughts',
-              queryParams: {'filter': 'archived'},
-            ),
-          ],
         ),
-      ];
+        const NavEntry(
+          label: '归档',
+          icon: Icons.archive_outlined,
+          routeName: RouteNames.thoughts,
+          path: '/thoughts',
+          queryParams: {'filter': 'archived'},
+        ),
+      ],
+    ),
+  ];
 
   @override
   List<GoRoute> get routes => [
-        GoRoute(
-          path: '/thoughts',
-          name: RouteNames.thoughts,
-          builder: (context, state) {
-            final filter = state.uri.queryParameters['filter'];
-            final isArchived = filter == 'archived';
-            return _ThoughtsListPageWithFilter(
-              key: ValueKey('thoughts-$filter'),
-              isArchived: isArchived,
-            );
-          },
-        ),
-        GoRoute(
-          path: '/thoughts/:id',
-          name: RouteNames.thoughtEditor,
-          builder: (context, state) {
-            final id = int.parse(state.pathParameters['id']!);
-            return ThoughtsEditorPage(thoughtId: id);
-          },
-        ),
-      ];
+    GoRoute(
+      path: '/thoughts',
+      name: RouteNames.thoughts,
+      builder: (context, state) {
+        final filter = state.uri.queryParameters['filter'];
+        final isArchived = filter == 'archived';
+        return _ThoughtsListPageWithFilter(
+          key: ValueKey('thoughts-$filter'),
+          isArchived: isArchived,
+        );
+      },
+    ),
+    GoRoute(
+      path: '/thoughts/:id',
+      name: RouteNames.thoughtEditor,
+      builder: (context, state) {
+        final id = int.parse(state.pathParameters['id']!);
+        return ThoughtsEditorPage(thoughtId: id);
+      },
+    ),
+  ];
 
   @override
   List<Type> get tables => [ThoughtsTable];
@@ -73,42 +73,51 @@ class ThoughtsPlugin extends UniHubPlugin {
   // ─── Dashboard methods ───────────────────────────────────────────
 
   @override
-  Future<List<DashboardItem>> getRecentItems(dynamic ref, {int count = 4}) async {
+  Future<List<DashboardItem>> getRecentItems(
+    dynamic ref, {
+    int count = 4,
+  }) async {
     final repo = ref.read(thoughtsRepositoryProvider);
     final thoughts = await repo.getThoughts(archived: false);
     thoughts.sort((a, b) => b.createdAt.compareTo(a.createdAt));
     final recent = thoughts.take(count).toList();
     return recent
-        .map((t) => DashboardItem(
-              pluginId: id,
-              itemId: t.id.toString(),
-              content: t.content,
-              tags: _parseTags(t.tags),
-              colorHex: t.color,
-              isPinned: t.isPinned,
-              createdAt: t.createdAt,
-              routePath: '/thoughts/${t.id}',
-            ))
+        .map(
+          (t) => DashboardItem(
+            pluginId: id,
+            itemId: t.id.toString(),
+            content: t.content,
+            tags: _parseTags(t.tags),
+            colorHex: t.color,
+            isPinned: t.isPinned,
+            createdAt: t.createdAt,
+            routePath: '/thoughts/${t.id}',
+          ),
+        )
         .toList();
   }
 
   @override
-  Future<List<DashboardItem>> getPinnedItems(dynamic ref, {int count = 3}) async {
+  Future<List<DashboardItem>> getPinnedItems(
+    dynamic ref, {
+    int count = 3,
+  }) async {
     final repo = ref.read(thoughtsRepositoryProvider);
     final thoughts = await repo.getThoughts(archived: false);
-    final pinned =
-        thoughts.where((t) => t.isPinned).take(count).toList();
+    final pinned = thoughts.where((t) => t.isPinned).take(count).toList();
     return pinned
-        .map((t) => DashboardItem(
-              pluginId: id,
-              itemId: t.id.toString(),
-              content: t.content,
-              tags: _parseTags(t.tags),
-              colorHex: t.color,
-              isPinned: true,
-              createdAt: t.createdAt,
-              routePath: '/thoughts/${t.id}',
-            ))
+        .map(
+          (t) => DashboardItem(
+            pluginId: id,
+            itemId: t.id.toString(),
+            content: t.content,
+            tags: _parseTags(t.tags),
+            colorHex: t.color,
+            isPinned: true,
+            createdAt: t.createdAt,
+            routePath: '/thoughts/${t.id}',
+          ),
+        )
         .toList();
   }
 
@@ -120,8 +129,11 @@ class ThoughtsPlugin extends UniHubPlugin {
   }
 
   @override
-  Future<DashboardItem?> quickCreate(dynamic ref,
-      {required String content, String? tags}) async {
+  Future<DashboardItem?> quickCreate(
+    dynamic ref, {
+    required String content,
+    String? tags,
+  }) async {
     final repo = ref.read(thoughtsRepositoryProvider);
     final created = await repo.createThought(content: content, tags: tags);
     return DashboardItem(

@@ -16,6 +16,31 @@ final thoughtsRepositoryProvider = Provider<ThoughtsRepository>((ref) {
 
 final tagFilterProvider = StateProvider<String?>((ref) => null);
 
+/// All thoughts without tag filter, used for tag stats
+final allThoughtsProvider = FutureProvider<List<ThoughtsTableData>>((
+  ref,
+) async {
+  final repo = ref.watch(thoughtsRepositoryProvider);
+  final archived = ref.watch(archiveFilterProvider);
+  return repo.getThoughts(archived: archived);
+});
+
+final tagStatsProvider = Provider<Map<String, int>>((ref) {
+  final thoughtsAsync = ref.watch(allThoughtsProvider);
+  final thoughts = thoughtsAsync.valueOrNull ?? const <ThoughtsTableData>[];
+  final stats = <String, int>{};
+  for (final t in thoughts) {
+    final tags = (t.tags ?? '')
+        .split(',')
+        .map((s) => s.trim())
+        .where((s) => s.isNotEmpty);
+    for (final tag in tags) {
+      stats[tag] = (stats[tag] ?? 0) + 1;
+    }
+  }
+  return stats;
+});
+
 final archiveFilterProvider = StateProvider<bool>((ref) => false);
 
 final thoughtsListProvider = FutureProvider<List<ThoughtsTableData>>((

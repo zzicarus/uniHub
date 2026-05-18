@@ -19,6 +19,7 @@ class ThoughtsRepository {
     required String content,
     String? tags,
     String? color,
+    bool isPinned = false,
   }) async {
     final now = DateTime.now();
     final id = await _dao.insert(
@@ -26,6 +27,7 @@ class ThoughtsRepository {
         content: Value(content),
         tags: Value(tags),
         color: Value(color),
+        isPinned: Value(isPinned),
         createdAt: Value(now),
         updatedAt: Value(now),
       ),

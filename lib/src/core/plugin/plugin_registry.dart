@@ -22,8 +22,10 @@ class PluginRegistry {
     }
   }
 
-  Future<List<DashboardItem>> getDashboardItems(dynamic ref,
-      {int count = 4}) async {
+  Future<List<DashboardItem>> getDashboardItems(
+    dynamic ref, {
+    int count = 4,
+  }) async {
     final items = <DashboardItem>[];
     for (final p in _plugins) {
       final pluginItems = await p.getRecentItems(ref, count: count);
@@ -33,8 +35,10 @@ class PluginRegistry {
     return items.take(count).toList();
   }
 
-  Future<List<DashboardItem>> getDashboardPinned(dynamic ref,
-      {int count = 3}) async {
+  Future<List<DashboardItem>> getDashboardPinned(
+    dynamic ref, {
+    int count = 3,
+  }) async {
     final items = <DashboardItem>[];
     for (final p in _plugins) {
       final pluginItems = await p.getPinnedItems(ref, count: count);
@@ -53,8 +57,11 @@ class PluginRegistry {
     return stats;
   }
 
-  Future<DashboardItem?> quickCreate(dynamic ref,
-      {required String content, String? tags}) async {
+  Future<DashboardItem?> quickCreate(
+    dynamic ref, {
+    required String content,
+    String? tags,
+  }) async {
     for (final p in _plugins) {
       if (p.id == 'thoughts') {
         return await p.quickCreate(ref, content: content, tags: tags);
