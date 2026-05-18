@@ -1,12 +1,14 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import '../../../core/database/app_database.dart';
-import '../../../core/router/route_names.dart';
 import '../../../core/theme/app_tokens.dart';
+import '../data/thought_image_service.dart';
 import '../providers/thoughts_providers.dart';
 import 'widgets/thought_card.dart';
+import 'widgets/thought_editor_drawer.dart';
 
 class ThoughtsListPage extends ConsumerStatefulWidget {
   const ThoughtsListPage({super.key});
@@ -19,9 +21,12 @@ class _ThoughtsListPageState extends ConsumerState<ThoughtsListPage> {
   final _contentController = TextEditingController();
   final _tagTextController = TextEditingController();
   final _tagChips = <String>[];
+  final _scaffoldKey = GlobalKey<ScaffoldState>();
   bool _isSubmitting = false;
   bool _hasContent = false;
   bool _isPinned = false;
+  int? _selectedThoughtId;
+  final _pendingImages = <String>[];
 
   @override
   void initState() {
@@ -70,6 +75,20 @@ class _ThoughtsListPageState extends ConsumerState<ThoughtsListPage> {
     });
   }
 
+  Future<void> _pickImageForComposer() async {
+    final svc = ref.read(thoughtImageServiceProvider);
+    final path = await svc.pickImage();
+    if (path != null) {
+      setState(() => _pendingImages.add(path));
+    }
+  }
+
+  void _removePendingImage(int index) {
+    final path = _pendingImages[index];
+    ref.read(thoughtImageServiceProvider).deleteImage(path);
+    setState(() => _pendingImages.removeAt(index));
+  }
+
   Future<void> _submit() async {
     final content = _contentController.text.trim();
     if (content.isEmpty || _isSubmitting) return;
@@ -82,6 +101,9 @@ class _ThoughtsListPageState extends ConsumerState<ThoughtsListPage> {
         content: content,
         tags: tags,
         isPinned: _isPinned,
+        imagePaths: _pendingImages.isNotEmpty
+            ? ThoughtImageService.encodeImagePaths(_pendingImages)
+            : null,
       );
       ref.invalidate(thoughtsListProvider);
       _contentController.clear();
@@ -90,6 +112,7 @@ class _ThoughtsListPageState extends ConsumerState<ThoughtsListPage> {
           _tagChips.clear();
           _hasContent = false;
           _isPinned = false;
+          _pendingImages.clear();
         });
       }
     } finally {
@@ -99,11 +122,21 @@ class _ThoughtsListPageState extends ConsumerState<ThoughtsListPage> {
     }
   }
 
-  void _navigateToEditor(int id) {
-    context.goNamed(
-      RouteNames.thoughtEditor,
-      pathParameters: {'id': id.toString()},
-    );
+  void _openEditor(int id) {
+    setState(() => _selectedThoughtId = id);
+    _scaffoldKey.currentState?.openEndDrawer();
+  }
+
+  Future<void> _quickArchive(int id) async {
+    final repo = ref.read(thoughtsRepositoryProvider);
+    await repo.archiveThought(id);
+    ref.invalidate(thoughtsListProvider);
+  }
+
+  Future<void> _quickRestore(int id) async {
+    final repo = ref.read(thoughtsRepositoryProvider);
+    await repo.restoreThought(id);
+    ref.invalidate(thoughtsListProvider);
   }
 
   @override
@@ -122,7 +155,19 @@ class _ThoughtsListPageState extends ConsumerState<ThoughtsListPage> {
         return KeyEventResult.ignored;
       },
       child: Scaffold(
+        key: _scaffoldKey,
         backgroundColor: AppColors.background,
+        endDrawer: _selectedThoughtId != null
+            ? Drawer(
+                width: MediaQuery.of(context).size.width * 0.55,
+                child: ThoughtEditorDrawer(thoughtId: _selectedThoughtId!),
+              )
+            : null,
+        onEndDrawerChanged: (opened) {
+          if (!opened && mounted) {
+            setState(() => _selectedThoughtId = null);
+          }
+        },
         body: SafeArea(
           child: LayoutBuilder(
             builder: (context, constraints) {
@@ -148,11 +193,14 @@ class _ThoughtsListPageState extends ConsumerState<ThoughtsListPage> {
                                 isSubmitting: _isSubmitting,
                                 canSubmit: _hasContent,
                                 isPinned: _isPinned,
+                                pendingImages: _pendingImages,
                                 onSubmit: _submit,
                                 onTagInput: _handleTagInput,
                                 onRemoveChip: _removeChip,
                                 onTogglePin: () =>
                                     setState(() => _isPinned = !_isPinned),
+                                onPickImage: _pickImageForComposer,
+                                onRemoveImage: _removePendingImage,
                               ),
                               const SizedBox(height: AppSpacing.xxl),
                             ],
@@ -164,10 +212,12 @@ class _ThoughtsListPageState extends ConsumerState<ThoughtsListPage> {
                               data: (thoughts) => _ThoughtsContent(
                                 thoughts: thoughts,
                                 isArchived: isArchived,
-                                onOpen: _navigateToEditor,
+                                onOpen: _openEditor,
                                 onTagTap: (tag) =>
                                     ref.read(tagFilterProvider.notifier).state =
                                         tag,
+                                onArchive: _quickArchive,
+                                onRestore: _quickRestore,
                               ),
                             ),
                           ],
@@ -238,10 +288,13 @@ class _ThoughtComposer extends StatelessWidget {
   final bool isSubmitting;
   final bool canSubmit;
   final bool isPinned;
+  final List<String> pendingImages;
   final Future<void> Function() onSubmit;
   final ValueChanged<String> onTagInput;
   final ValueChanged<String> onRemoveChip;
   final VoidCallback? onTogglePin;
+  final VoidCallback? onPickImage;
+  final void Function(int index)? onRemoveImage;
 
   const _ThoughtComposer({
     required this.contentController,
@@ -250,10 +303,13 @@ class _ThoughtComposer extends StatelessWidget {
     required this.isSubmitting,
     required this.canSubmit,
     required this.isPinned,
+    required this.pendingImages,
     required this.onSubmit,
     required this.onTagInput,
     required this.onRemoveChip,
     this.onTogglePin,
+    this.onPickImage,
+    this.onRemoveImage,
   });
 
   @override
@@ -306,6 +362,45 @@ class _ThoughtComposer extends StatelessWidget {
                     }).toList(),
                   ),
                 ],
+                if (pendingImages.isNotEmpty) ...[
+                  const SizedBox(height: AppSpacing.md),
+                  SizedBox(
+                    height: 60,
+                    child: ListView.separated(
+                      scrollDirection: Axis.horizontal,
+                      itemCount: pendingImages.length,
+                      separatorBuilder: (_, _) => const SizedBox(width: AppSpacing.sm),
+                      itemBuilder: (_, i) {
+                        return Stack(
+                          children: [
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(AppRadius.xs),
+                              child: Image.file(
+                                File(pendingImages[i]),
+                                width: 60, height: 60,
+                                fit: BoxFit.cover,
+                              ),
+                            ),
+                            Positioned(
+                              top: 1, right: 1,
+                              child: GestureDetector(
+                                onTap: () => onRemoveImage?.call(i),
+                                child: Container(
+                                  decoration: const BoxDecoration(
+                                    color: Colors.black54,
+                                    shape: BoxShape.circle,
+                                  ),
+                                  padding: const EdgeInsets.all(2),
+                                  child: const Icon(Icons.close, size: 12, color: Colors.white),
+                                ),
+                              ),
+                            ),
+                          ],
+                        );
+                      },
+                    ),
+                  ),
+                ],
                 const SizedBox(height: AppSpacing.md),
                 Row(
                   children: [
@@ -323,7 +418,13 @@ class _ThoughtComposer extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(width: AppSpacing.sm),
-                    const _PillButton(icon: Icons.image_outlined, label: '图片'),
+                    _PillButton(
+                      icon: Icons.image_outlined,
+                      label: pendingImages.isNotEmpty
+                          ? '图片 (${pendingImages.length})'
+                          : '图片',
+                      onTap: onPickImage,
+                    ),
                     const SizedBox(width: AppSpacing.sm),
                     _PillButton(
                       icon: isPinned ? Icons.push_pin : Icons.push_pin_outlined,
@@ -428,12 +529,16 @@ class _ThoughtsContent extends ConsumerWidget {
   final bool isArchived;
   final ValueChanged<int> onOpen;
   final ValueChanged<String> onTagTap;
+  final Future<void> Function(int id)? onArchive;
+  final Future<void> Function(int id)? onRestore;
 
   const _ThoughtsContent({
     required this.thoughts,
     required this.isArchived,
     required this.onOpen,
     required this.onTagTap,
+    this.onArchive,
+    this.onRestore,
   });
 
   @override
@@ -456,7 +561,13 @@ class _ThoughtsContent extends ConsumerWidget {
             count: pinned.length,
           ),
           const SizedBox(height: AppSpacing.md),
-          _ThoughtGrid(thoughts: pinned, onOpen: onOpen, onTagTap: onTagTap),
+          _ThoughtGrid(
+            thoughts: pinned,
+            onOpen: onOpen,
+            onTagTap: onTagTap,
+            onArchive: isArchived ? null : onArchive,
+            onRestore: isArchived ? onRestore : null,
+          ),
           const SizedBox(height: AppSpacing.xl),
         ],
         _SectionLabel(
@@ -469,6 +580,8 @@ class _ThoughtsContent extends ConsumerWidget {
           thoughts: isArchived ? thoughts : unpinned,
           onOpen: onOpen,
           onTagTap: onTagTap,
+          onArchive: isArchived ? null : onArchive,
+          onRestore: isArchived ? onRestore : null,
         ),
       ],
     );
@@ -479,11 +592,15 @@ class _ThoughtGrid extends StatelessWidget {
   final List<ThoughtsTableData> thoughts;
   final ValueChanged<int> onOpen;
   final ValueChanged<String> onTagTap;
+  final Future<void> Function(int id)? onArchive;
+  final Future<void> Function(int id)? onRestore;
 
   const _ThoughtGrid({
     required this.thoughts,
     required this.onOpen,
     required this.onTagTap,
+    this.onArchive,
+    this.onRestore,
   });
 
   @override
@@ -510,8 +627,11 @@ class _ThoughtGrid extends StatelessWidget {
               color: t.color,
               isPinned: t.isPinned,
               createdAt: t.createdAt,
+              imagePaths: t.imagePaths,
               onTap: () => onOpen(t.id),
               onTagTap: onTagTap,
+              onArchive: onArchive != null ? () => onArchive!(t.id) : null,
+              onRestore: onRestore != null ? () => onRestore!(t.id) : null,
             );
           },
         );

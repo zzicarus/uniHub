@@ -20,6 +20,7 @@ class ThoughtsRepository {
     String? tags,
     String? color,
     bool isPinned = false,
+    String? imagePaths,
   }) async {
     final now = DateTime.now();
     final id = await _dao.insert(
@@ -28,6 +29,7 @@ class ThoughtsRepository {
         tags: Value(tags),
         color: Value(color),
         isPinned: Value(isPinned),
+        imagePaths: Value(imagePaths),
         createdAt: Value(now),
         updatedAt: Value(now),
       ),
@@ -42,6 +44,7 @@ class ThoughtsRepository {
     String? tags,
     String? color,
     bool? isPinned,
+    String? imagePaths,
   }) async {
     await _dao.updateById(
       id,
@@ -50,6 +53,9 @@ class ThoughtsRepository {
         tags: tags != null ? Value(tags) : const Value.absent(),
         color: color != null ? Value(color) : const Value.absent(),
         isPinned: isPinned != null ? Value(isPinned) : const Value.absent(),
+        imagePaths: imagePaths != null
+            ? Value(imagePaths)
+            : const Value.absent(),
         updatedAt: Value(DateTime.now()),
       ),
     );

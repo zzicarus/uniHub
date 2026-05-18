@@ -99,6 +99,17 @@ class $ThoughtsTableTable extends ThoughtsTable
     type: DriftSqlType.dateTime,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _imagePathsMeta = const VerificationMeta(
+    'imagePaths',
+  );
+  @override
+  late final GeneratedColumn<String> imagePaths = GeneratedColumn<String>(
+    'image_paths',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -109,6 +120,7 @@ class $ThoughtsTableTable extends ThoughtsTable
     createdAt,
     updatedAt,
     archivedAt,
+    imagePaths,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -173,6 +185,12 @@ class $ThoughtsTableTable extends ThoughtsTable
         archivedAt.isAcceptableOrUnknown(data['archived_at']!, _archivedAtMeta),
       );
     }
+    if (data.containsKey('image_paths')) {
+      context.handle(
+        _imagePathsMeta,
+        imagePaths.isAcceptableOrUnknown(data['image_paths']!, _imagePathsMeta),
+      );
+    }
     return context;
   }
 
@@ -214,6 +232,10 @@ class $ThoughtsTableTable extends ThoughtsTable
         DriftSqlType.dateTime,
         data['${effectivePrefix}archived_at'],
       ),
+      imagePaths: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}image_paths'],
+      ),
     );
   }
 
@@ -233,6 +255,7 @@ class ThoughtsTableData extends DataClass
   final DateTime createdAt;
   final DateTime updatedAt;
   final DateTime? archivedAt;
+  final String? imagePaths;
   const ThoughtsTableData({
     required this.id,
     required this.content,
@@ -242,6 +265,7 @@ class ThoughtsTableData extends DataClass
     required this.createdAt,
     required this.updatedAt,
     this.archivedAt,
+    this.imagePaths,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -260,6 +284,9 @@ class ThoughtsTableData extends DataClass
     if (!nullToAbsent || archivedAt != null) {
       map['archived_at'] = Variable<DateTime>(archivedAt);
     }
+    if (!nullToAbsent || imagePaths != null) {
+      map['image_paths'] = Variable<String>(imagePaths);
+    }
     return map;
   }
 
@@ -277,6 +304,9 @@ class ThoughtsTableData extends DataClass
       archivedAt: archivedAt == null && nullToAbsent
           ? const Value.absent()
           : Value(archivedAt),
+      imagePaths: imagePaths == null && nullToAbsent
+          ? const Value.absent()
+          : Value(imagePaths),
     );
   }
 
@@ -294,6 +324,7 @@ class ThoughtsTableData extends DataClass
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
       updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
       archivedAt: serializer.fromJson<DateTime?>(json['archivedAt']),
+      imagePaths: serializer.fromJson<String?>(json['imagePaths']),
     );
   }
   @override
@@ -308,6 +339,7 @@ class ThoughtsTableData extends DataClass
       'createdAt': serializer.toJson<DateTime>(createdAt),
       'updatedAt': serializer.toJson<DateTime>(updatedAt),
       'archivedAt': serializer.toJson<DateTime?>(archivedAt),
+      'imagePaths': serializer.toJson<String?>(imagePaths),
     };
   }
 
@@ -320,6 +352,7 @@ class ThoughtsTableData extends DataClass
     DateTime? createdAt,
     DateTime? updatedAt,
     Value<DateTime?> archivedAt = const Value.absent(),
+    Value<String?> imagePaths = const Value.absent(),
   }) => ThoughtsTableData(
     id: id ?? this.id,
     content: content ?? this.content,
@@ -329,6 +362,7 @@ class ThoughtsTableData extends DataClass
     createdAt: createdAt ?? this.createdAt,
     updatedAt: updatedAt ?? this.updatedAt,
     archivedAt: archivedAt.present ? archivedAt.value : this.archivedAt,
+    imagePaths: imagePaths.present ? imagePaths.value : this.imagePaths,
   );
   ThoughtsTableData copyWithCompanion(ThoughtsTableCompanion data) {
     return ThoughtsTableData(
@@ -342,6 +376,9 @@ class ThoughtsTableData extends DataClass
       archivedAt: data.archivedAt.present
           ? data.archivedAt.value
           : this.archivedAt,
+      imagePaths: data.imagePaths.present
+          ? data.imagePaths.value
+          : this.imagePaths,
     );
   }
 
@@ -355,7 +392,8 @@ class ThoughtsTableData extends DataClass
           ..write('isPinned: $isPinned, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt, ')
-          ..write('archivedAt: $archivedAt')
+          ..write('archivedAt: $archivedAt, ')
+          ..write('imagePaths: $imagePaths')
           ..write(')'))
         .toString();
   }
@@ -370,6 +408,7 @@ class ThoughtsTableData extends DataClass
     createdAt,
     updatedAt,
     archivedAt,
+    imagePaths,
   );
   @override
   bool operator ==(Object other) =>
@@ -382,7 +421,8 @@ class ThoughtsTableData extends DataClass
           other.isPinned == this.isPinned &&
           other.createdAt == this.createdAt &&
           other.updatedAt == this.updatedAt &&
-          other.archivedAt == this.archivedAt);
+          other.archivedAt == this.archivedAt &&
+          other.imagePaths == this.imagePaths);
 }
 
 class ThoughtsTableCompanion extends UpdateCompanion<ThoughtsTableData> {
@@ -394,6 +434,7 @@ class ThoughtsTableCompanion extends UpdateCompanion<ThoughtsTableData> {
   final Value<DateTime> createdAt;
   final Value<DateTime> updatedAt;
   final Value<DateTime?> archivedAt;
+  final Value<String?> imagePaths;
   const ThoughtsTableCompanion({
     this.id = const Value.absent(),
     this.content = const Value.absent(),
@@ -403,6 +444,7 @@ class ThoughtsTableCompanion extends UpdateCompanion<ThoughtsTableData> {
     this.createdAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
     this.archivedAt = const Value.absent(),
+    this.imagePaths = const Value.absent(),
   });
   ThoughtsTableCompanion.insert({
     this.id = const Value.absent(),
@@ -413,6 +455,7 @@ class ThoughtsTableCompanion extends UpdateCompanion<ThoughtsTableData> {
     required DateTime createdAt,
     required DateTime updatedAt,
     this.archivedAt = const Value.absent(),
+    this.imagePaths = const Value.absent(),
   }) : content = Value(content),
        createdAt = Value(createdAt),
        updatedAt = Value(updatedAt);
@@ -425,6 +468,7 @@ class ThoughtsTableCompanion extends UpdateCompanion<ThoughtsTableData> {
     Expression<DateTime>? createdAt,
     Expression<DateTime>? updatedAt,
     Expression<DateTime>? archivedAt,
+    Expression<String>? imagePaths,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -435,6 +479,7 @@ class ThoughtsTableCompanion extends UpdateCompanion<ThoughtsTableData> {
       if (createdAt != null) 'created_at': createdAt,
       if (updatedAt != null) 'updated_at': updatedAt,
       if (archivedAt != null) 'archived_at': archivedAt,
+      if (imagePaths != null) 'image_paths': imagePaths,
     });
   }
 
@@ -447,6 +492,7 @@ class ThoughtsTableCompanion extends UpdateCompanion<ThoughtsTableData> {
     Value<DateTime>? createdAt,
     Value<DateTime>? updatedAt,
     Value<DateTime?>? archivedAt,
+    Value<String?>? imagePaths,
   }) {
     return ThoughtsTableCompanion(
       id: id ?? this.id,
@@ -457,6 +503,7 @@ class ThoughtsTableCompanion extends UpdateCompanion<ThoughtsTableData> {
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
       archivedAt: archivedAt ?? this.archivedAt,
+      imagePaths: imagePaths ?? this.imagePaths,
     );
   }
 
@@ -487,6 +534,9 @@ class ThoughtsTableCompanion extends UpdateCompanion<ThoughtsTableData> {
     if (archivedAt.present) {
       map['archived_at'] = Variable<DateTime>(archivedAt.value);
     }
+    if (imagePaths.present) {
+      map['image_paths'] = Variable<String>(imagePaths.value);
+    }
     return map;
   }
 
@@ -500,7 +550,8 @@ class ThoughtsTableCompanion extends UpdateCompanion<ThoughtsTableData> {
           ..write('isPinned: $isPinned, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt, ')
-          ..write('archivedAt: $archivedAt')
+          ..write('archivedAt: $archivedAt, ')
+          ..write('imagePaths: $imagePaths')
           ..write(')'))
         .toString();
   }
@@ -527,6 +578,7 @@ typedef $$ThoughtsTableTableCreateCompanionBuilder =
       required DateTime createdAt,
       required DateTime updatedAt,
       Value<DateTime?> archivedAt,
+      Value<String?> imagePaths,
     });
 typedef $$ThoughtsTableTableUpdateCompanionBuilder =
     ThoughtsTableCompanion Function({
@@ -538,6 +590,7 @@ typedef $$ThoughtsTableTableUpdateCompanionBuilder =
       Value<DateTime> createdAt,
       Value<DateTime> updatedAt,
       Value<DateTime?> archivedAt,
+      Value<String?> imagePaths,
     });
 
 class $$ThoughtsTableTableFilterComposer
@@ -586,6 +639,11 @@ class $$ThoughtsTableTableFilterComposer
 
   ColumnFilters<DateTime> get archivedAt => $composableBuilder(
     column: $table.archivedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get imagePaths => $composableBuilder(
+    column: $table.imagePaths,
     builder: (column) => ColumnFilters(column),
   );
 }
@@ -638,6 +696,11 @@ class $$ThoughtsTableTableOrderingComposer
     column: $table.archivedAt,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<String> get imagePaths => $composableBuilder(
+    column: $table.imagePaths,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$ThoughtsTableTableAnnotationComposer
@@ -672,6 +735,11 @@ class $$ThoughtsTableTableAnnotationComposer
 
   GeneratedColumn<DateTime> get archivedAt => $composableBuilder(
     column: $table.archivedAt,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get imagePaths => $composableBuilder(
+    column: $table.imagePaths,
     builder: (column) => column,
   );
 }
@@ -719,6 +787,7 @@ class $$ThoughtsTableTableTableManager
                 Value<DateTime> createdAt = const Value.absent(),
                 Value<DateTime> updatedAt = const Value.absent(),
                 Value<DateTime?> archivedAt = const Value.absent(),
+                Value<String?> imagePaths = const Value.absent(),
               }) => ThoughtsTableCompanion(
                 id: id,
                 content: content,
@@ -728,6 +797,7 @@ class $$ThoughtsTableTableTableManager
                 createdAt: createdAt,
                 updatedAt: updatedAt,
                 archivedAt: archivedAt,
+                imagePaths: imagePaths,
               ),
           createCompanionCallback:
               ({
@@ -739,6 +809,7 @@ class $$ThoughtsTableTableTableManager
                 required DateTime createdAt,
                 required DateTime updatedAt,
                 Value<DateTime?> archivedAt = const Value.absent(),
+                Value<String?> imagePaths = const Value.absent(),
               }) => ThoughtsTableCompanion.insert(
                 id: id,
                 content: content,
@@ -748,6 +819,7 @@ class $$ThoughtsTableTableTableManager
                 createdAt: createdAt,
                 updatedAt: updatedAt,
                 archivedAt: archivedAt,
+                imagePaths: imagePaths,
               ),
           withReferenceMapper: (p0) => p0
               .map((e) => (e.readTable(table), BaseReferences(db, table, e)))

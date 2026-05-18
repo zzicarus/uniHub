@@ -9,4 +9,5 @@ class ThoughtsTable extends Table {
   DateTimeColumn get createdAt => dateTime()();
   DateTimeColumn get updatedAt => dateTime()();
   DateTimeColumn? get archivedAt => dateTime().nullable()();
+  TextColumn get imagePaths => text().nullable()();
 }

@@ -68,7 +68,7 @@ class ThoughtsPlugin extends UniHubPlugin {
   List<Type> get tables => [ThoughtsTable];
 
   @override
-  int get schemaVersion => 1;
+  int get schemaVersion => 2;
 
   // ─── Dashboard methods ───────────────────────────────────────────
 
@@ -91,7 +91,7 @@ class ThoughtsPlugin extends UniHubPlugin {
             colorHex: t.color,
             isPinned: t.isPinned,
             createdAt: t.createdAt,
-            routePath: '/thoughts/${t.id}',
+            routePath: '/thoughts',
           ),
         )
         .toList();
@@ -115,7 +115,7 @@ class ThoughtsPlugin extends UniHubPlugin {
             colorHex: t.color,
             isPinned: true,
             createdAt: t.createdAt,
-            routePath: '/thoughts/${t.id}',
+            routePath: '/thoughts',
           ),
         )
         .toList();
@@ -144,7 +144,7 @@ class ThoughtsPlugin extends UniHubPlugin {
       colorHex: created.color,
       isPinned: created.isPinned,
       createdAt: created.createdAt,
-      routePath: '/thoughts/${created.id}',
+      routePath: '/thoughts',
     );
   }
 

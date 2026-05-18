@@ -3,6 +3,7 @@ import '../../../core/database/app_database.dart';
 import '../../../core/database/database_provider.dart';
 import '../data/thoughts_dao.dart';
 import '../data/thoughts_repository.dart';
+import '../data/thought_image_service.dart';
 
 final thoughtsDaoProvider = Provider<ThoughtsDao>((ref) {
   final db = ref.watch(appDatabaseProvider);
@@ -12,6 +13,10 @@ final thoughtsDaoProvider = Provider<ThoughtsDao>((ref) {
 final thoughtsRepositoryProvider = Provider<ThoughtsRepository>((ref) {
   final dao = ref.watch(thoughtsDaoProvider);
   return ThoughtsRepository(dao);
+});
+
+final thoughtImageServiceProvider = Provider<ThoughtImageService>((ref) {
+  return ThoughtImageService();
 });
 
 final tagFilterProvider = StateProvider<String?>((ref) => null);

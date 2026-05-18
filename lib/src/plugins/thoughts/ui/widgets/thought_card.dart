@@ -1,16 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_tokens.dart';
+import '../../data/thought_image_service.dart';
 
-class ThoughtCard extends ConsumerWidget {
+class ThoughtCard extends ConsumerStatefulWidget {
   final int id;
   final String content;
   final String? tags;
   final String? color;
   final bool isPinned;
   final DateTime createdAt;
+  final String? imagePaths;
   final VoidCallback onTap;
   final void Function(String tag) onTagTap;
+  final VoidCallback? onArchive;
+  final VoidCallback? onRestore;
 
   const ThoughtCard({
     required this.id,
@@ -19,100 +23,156 @@ class ThoughtCard extends ConsumerWidget {
     required this.color,
     required this.isPinned,
     required this.createdAt,
+    this.imagePaths,
     required this.onTap,
     required this.onTagTap,
+    this.onArchive,
+    this.onRestore,
     super.key,
   });
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<ThoughtCard> createState() => _ThoughtCardState();
+}
+
+class _ThoughtCardState extends ConsumerState<ThoughtCard> {
+  bool _hovered = false;
+
+  @override
+  Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final tagList = (tags ?? '')
+    final tagList = (widget.tags ?? '')
         .split(',')
         .map((s) => s.trim())
         .where((s) => s.isNotEmpty)
         .toList();
-    final accent = color != null ? _hexToColor(color!) : _cardAccent(id);
-    final background = color != null
+    final accent = widget.color != null
+        ? _hexToColor(widget.color!)
+        : _cardAccent(widget.id);
+    final background = widget.color != null
         ? accent.withValues(alpha: 0.08)
-        : _cardBackground(id);
+        : _cardBackground(widget.id);
+    final images = ThoughtImageService.decodeImagePaths(widget.imagePaths);
 
-    return Material(
-      color: background,
-      borderRadius: BorderRadius.circular(AppRadius.md),
-      child: InkWell(
+    return MouseRegion(
+      onEnter: (_) => setState(() => _hovered = true),
+      onExit: (_) => setState(() => _hovered = false),
+      child: Material(
+        color: background,
         borderRadius: BorderRadius.circular(AppRadius.md),
-        onTap: onTap,
-        child: Container(
-          constraints: const BoxConstraints(minHeight: AppSizes.cardMinHeight),
-          padding: const EdgeInsets.all(AppSpacing.md),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(AppRadius.md),
-            border: Border.all(color: accent.withValues(alpha: 0.16)),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      _formatTimestamp(createdAt),
-                      style: theme.textTheme.bodySmall,
-                      overflow: TextOverflow.ellipsis,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(AppRadius.md),
+          onTap: widget.onTap,
+          child: Container(
+            constraints: const BoxConstraints(minHeight: AppSizes.cardMinHeight),
+            padding: const EdgeInsets.all(AppSpacing.md),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(AppRadius.md),
+              border: Border.all(color: accent.withValues(alpha: 0.16)),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // ── Timestamp + Actions ──
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        _formatTimestamp(widget.createdAt),
+                        style: theme.textTheme.bodySmall,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    if (widget.onRestore != null && _hovered)
+                      _ActionIcon(
+                        icon: Icons.unarchive_outlined,
+                        color: AppColors.textSecondary,
+                        onTap: widget.onRestore,
+                      ),
+                    if (widget.onArchive != null && _hovered && !widget.isPinned)
+                      _ActionIcon(
+                        icon: Icons.archive_outlined,
+                        color: AppColors.textSecondary,
+                        onTap: widget.onArchive,
+                      ),
+                    Icon(
+                      widget.isPinned
+                          ? Icons.star_rounded
+                          : Icons.more_horiz_rounded,
+                      size: 18,
+                      color: widget.isPinned
+                          ? AppColors.warning
+                          : AppColors.textTertiary,
+                    ),
+                  ],
+                ),
+                const SizedBox(height: AppSpacing.md),
+
+                // ── Title ──
+                Text(
+                  _titleOf(widget.content),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.sm),
+
+                // ── Body ──
+                Expanded(
+                  child: Text(
+                    widget.content,
+                    maxLines: 4,
+                    overflow: TextOverflow.ellipsis,
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: AppColors.textSecondary,
+                      height: 1.55,
                     ),
                   ),
-                  Icon(
-                    isPinned ? Icons.star_rounded : Icons.more_horiz_rounded,
-                    size: 18,
-                    color: isPinned
-                        ? AppColors.warning
-                        : AppColors.textTertiary,
+                ),
+
+                // ── Image indicator ──
+                if (images.isNotEmpty) ...[
+                  const SizedBox(height: AppSpacing.sm),
+                  Row(
+                    children: [
+                      const Icon(Icons.image_outlined, size: 14, color: AppColors.textTertiary),
+                      const SizedBox(width: AppSpacing.xxs),
+                      Text(
+                        '${images.length} 张图片',
+                        style: theme.textTheme.labelMedium?.copyWith(
+                          color: AppColors.textTertiary,
+                          fontSize: 11,
+                        ),
+                      ),
+                    ],
                   ),
                 ],
-              ),
-              const SizedBox(height: AppSpacing.md),
-              Text(
-                _titleOf(content),
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: theme.textTheme.titleSmall?.copyWith(
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
-              const SizedBox(height: AppSpacing.sm),
-              Expanded(
-                child: Text(
-                  content,
-                  maxLines: 4,
-                  overflow: TextOverflow.ellipsis,
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: AppColors.textSecondary,
-                    height: 1.55,
+
+                // ── Tags ──
+                if (tagList.isNotEmpty) ...[
+                  const SizedBox(height: AppSpacing.sm),
+                  Wrap(
+                    spacing: AppSpacing.xs,
+                    runSpacing: AppSpacing.xs,
+                    children: tagList.map((tag) {
+                      return ActionChip(
+                        label: Text(tag),
+                        onPressed: () => widget.onTagTap(tag),
+                        backgroundColor: accent.withValues(alpha: 0.11),
+                        side: BorderSide.none,
+                        labelStyle: theme.textTheme.labelMedium?.copyWith(
+                          color: accent,
+                        ),
+                        materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        visualDensity: VisualDensity.compact,
+                      );
+                    }).toList(),
                   ),
-                ),
-              ),
-              if (tagList.isNotEmpty) ...[
-                const SizedBox(height: AppSpacing.sm),
-                Wrap(
-                  spacing: AppSpacing.xs,
-                  runSpacing: AppSpacing.xs,
-                  children: tagList.map((tag) {
-                    return ActionChip(
-                      label: Text(tag),
-                      onPressed: () => onTagTap(tag),
-                      backgroundColor: accent.withValues(alpha: 0.11),
-                      side: BorderSide.none,
-                      labelStyle: theme.textTheme.labelMedium?.copyWith(
-                        color: accent,
-                      ),
-                      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                      visualDensity: VisualDensity.compact,
-                    );
-                  }).toList(),
-                ),
+                ],
               ],
-            ],
+            ),
           ),
         ),
       ),
@@ -170,5 +230,33 @@ class ThoughtCard extends ConsumerWidget {
       return '${dt.month}月${dt.day}日 ${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
     }
     return '${dt.year}-${dt.month.toString().padLeft(2, '0')}-${dt.day.toString().padLeft(2, '0')}';
+  }
+}
+
+class _ActionIcon extends StatelessWidget {
+  final IconData icon;
+  final Color color;
+  final VoidCallback? onTap;
+
+  const _ActionIcon({required this.icon, required this.color, this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(right: AppSpacing.xxs),
+      child: GestureDetector(
+        onTap: onTap,
+        child: Container(
+          width: 28,
+          height: 28,
+          decoration: BoxDecoration(
+            color: AppColors.surface,
+            borderRadius: BorderRadius.circular(AppRadius.xs),
+            border: Border.all(color: AppColors.border),
+          ),
+          child: Icon(icon, size: 16, color: color),
+        ),
+      ),
+    );
   }
 }
