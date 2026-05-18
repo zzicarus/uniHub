@@ -32,7 +32,7 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
-    expect(find.text('早上好，Alex'), findsOneWidget);
+    expect(find.textContaining(RegExp(r'(早上好|下午好|晚上好)，Alex')), findsOneWidget);
   });
 
   testWidgets('Navigation to Thoughts page works', (tester) async {

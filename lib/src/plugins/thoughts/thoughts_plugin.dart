@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/plugin/plugin_interface.dart';
 import '../../core/router/route_names.dart';
+import 'data/thought_content_codec.dart';
 import 'data/thoughts_table.dart';
 import 'providers/thoughts_providers.dart';
 import 'ui/thoughts_list_page.dart';
@@ -86,7 +87,7 @@ class ThoughtsPlugin extends UniHubPlugin {
           (t) => DashboardItem(
             pluginId: id,
             itemId: t.id.toString(),
-            content: t.content,
+            content: ThoughtContentCodec.plainTextFromStored(t.content),
             tags: _parseTags(t.tags),
             colorHex: t.color,
             isPinned: t.isPinned,
@@ -110,7 +111,7 @@ class ThoughtsPlugin extends UniHubPlugin {
           (t) => DashboardItem(
             pluginId: id,
             itemId: t.id.toString(),
-            content: t.content,
+            content: ThoughtContentCodec.plainTextFromStored(t.content),
             tags: _parseTags(t.tags),
             colorHex: t.color,
             isPinned: true,
@@ -135,11 +136,15 @@ class ThoughtsPlugin extends UniHubPlugin {
     String? tags,
   }) async {
     final repo = ref.read(thoughtsRepositoryProvider);
-    final created = await repo.createThought(content: content, tags: tags);
+    final doc = ThoughtContentCodec.documentFromStored(content);
+    final created = await repo.createThought(
+      content: ThoughtContentCodec.encodeDocument(doc),
+      tags: tags,
+    );
     return DashboardItem(
       pluginId: id,
       itemId: created.id.toString(),
-      content: created.content,
+      content: ThoughtContentCodec.plainTextFromStored(created.content),
       tags: _parseTags(created.tags),
       colorHex: created.color,
       isPinned: created.isPinned,

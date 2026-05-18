@@ -2,13 +2,16 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_quill/flutter_quill.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/database/app_database.dart';
 import '../../../core/theme/app_tokens.dart';
+import '../data/thought_content_codec.dart';
 import '../data/thought_image_service.dart';
 import '../providers/thoughts_providers.dart';
 import 'widgets/thought_card.dart';
 import 'widgets/thought_editor_drawer.dart';
+import 'widgets/thought_rich_editor.dart';
 
 class ThoughtsListPage extends ConsumerStatefulWidget {
   const ThoughtsListPage({super.key});
@@ -18,7 +21,7 @@ class ThoughtsListPage extends ConsumerStatefulWidget {
 }
 
 class _ThoughtsListPageState extends ConsumerState<ThoughtsListPage> {
-  final _contentController = TextEditingController();
+  late QuillController _contentController;
   final _tagTextController = TextEditingController();
   final _tagChips = <String>[];
   final _scaffoldKey = GlobalKey<ScaffoldState>();
@@ -31,19 +34,38 @@ class _ThoughtsListPageState extends ConsumerState<ThoughtsListPage> {
   @override
   void initState() {
     super.initState();
-    _contentController.addListener(_syncContentState);
+    _contentController = _createContentController();
   }
 
   @override
   void dispose() {
-    _contentController.removeListener(_syncContentState);
     _contentController.dispose();
     _tagTextController.dispose();
     super.dispose();
   }
 
+  QuillController _createContentController() {
+    return ThoughtRichEditor.createController(
+      document: Document(),
+      onImagePaste: (bytes) async {
+        final path = await ref
+            .read(thoughtImageServiceProvider)
+            .saveImageBytes(bytes);
+        if (mounted) {
+          setState(() => _pendingImages.add(path));
+        }
+        return ThoughtContentCodec.imageSourceForPath(path);
+      },
+    );
+  }
+
   void _syncContentState() {
-    final hasContent = _contentController.text.trim().isNotEmpty;
+    final encoded = ThoughtContentCodec.encodeDocument(
+      _contentController.document,
+    );
+    final hasContent =
+        _contentController.document.toPlainText().trim().isNotEmpty ||
+        ThoughtContentCodec.imagePathsFromStored(encoded).isNotEmpty;
     if (hasContent != _hasContent) {
       setState(() => _hasContent = hasContent);
     }
@@ -80,18 +102,32 @@ class _ThoughtsListPageState extends ConsumerState<ThoughtsListPage> {
     final path = await svc.pickImage();
     if (path != null) {
       setState(() => _pendingImages.add(path));
+      _insertImage(_contentController, path);
     }
   }
 
   void _removePendingImage(int index) {
     final path = _pendingImages[index];
     ref.read(thoughtImageServiceProvider).deleteImage(path);
+    final updatedDocument = ThoughtContentCodec.removeImage(
+      _contentController.document,
+      path,
+    );
+    _contentController.dispose();
+    _contentController = _createContentController();
+    _contentController.document = updatedDocument;
     setState(() => _pendingImages.removeAt(index));
+    _syncContentState();
   }
 
   Future<void> _submit() async {
-    final content = _contentController.text.trim();
-    if (content.isEmpty || _isSubmitting) return;
+    final content = ThoughtContentCodec.encodeDocument(
+      _contentController.document,
+    );
+    final hasContent =
+        _contentController.document.toPlainText().trim().isNotEmpty ||
+        ThoughtContentCodec.imagePathsFromStored(content).isNotEmpty;
+    if (!hasContent || _isSubmitting) return;
 
     setState(() => _isSubmitting = true);
     try {
@@ -101,12 +137,16 @@ class _ThoughtsListPageState extends ConsumerState<ThoughtsListPage> {
         content: content,
         tags: tags,
         isPinned: _isPinned,
-        imagePaths: _pendingImages.isNotEmpty
-            ? ThoughtImageService.encodeImagePaths(_pendingImages)
-            : null,
+        imagePaths: ThoughtImageService.encodeImagePaths(
+          ThoughtContentCodec.mergeImagePaths(
+            ThoughtImageService.encodeImagePaths(_pendingImages),
+            content,
+          ),
+        ),
       );
       ref.invalidate(thoughtsListProvider);
-      _contentController.clear();
+      _contentController.dispose();
+      _contentController = _createContentController();
       if (mounted) {
         setState(() {
           _tagChips.clear();
@@ -120,6 +160,22 @@ class _ThoughtsListPageState extends ConsumerState<ThoughtsListPage> {
         setState(() => _isSubmitting = false);
       }
     }
+  }
+
+  void _insertImage(QuillController controller, String path) {
+    final index = controller.selection.baseOffset;
+    final length = controller.selection.extentOffset - index;
+    final safeIndex = index < 0 ? controller.document.length - 1 : index;
+    controller
+      ..skipRequestKeyboard = true
+      ..replaceText(
+        safeIndex,
+        length < 0 ? 0 : length,
+        BlockEmbed.image(ThoughtContentCodec.imageSourceForPath(path)),
+        null,
+      )
+      ..moveCursorToPosition(safeIndex + 1);
+    _syncContentState();
   }
 
   void _openEditor(int id) {
@@ -201,6 +257,15 @@ class _ThoughtsListPageState extends ConsumerState<ThoughtsListPage> {
                                     setState(() => _isPinned = !_isPinned),
                                 onPickImage: _pickImageForComposer,
                                 onRemoveImage: _removePendingImage,
+                                imageService: ref.read(
+                                  thoughtImageServiceProvider,
+                                ),
+                                onContentChanged: _syncContentState,
+                                onImageAdded: (path) {
+                                  if (!_pendingImages.contains(path)) {
+                                    setState(() => _pendingImages.add(path));
+                                  }
+                                },
                               ),
                               const SizedBox(height: AppSpacing.xxl),
                             ],
@@ -282,7 +347,7 @@ class _ThoughtsHeader extends StatelessWidget {
 }
 
 class _ThoughtComposer extends StatelessWidget {
-  final TextEditingController contentController;
+  final QuillController contentController;
   final TextEditingController tagTextController;
   final List<String> tagChips;
   final bool isSubmitting;
@@ -295,6 +360,9 @@ class _ThoughtComposer extends StatelessWidget {
   final VoidCallback? onTogglePin;
   final VoidCallback? onPickImage;
   final void Function(int index)? onRemoveImage;
+  final ThoughtImageService imageService;
+  final VoidCallback onContentChanged;
+  final ValueChanged<String> onImageAdded;
 
   const _ThoughtComposer({
     required this.contentController,
@@ -307,6 +375,9 @@ class _ThoughtComposer extends StatelessWidget {
     required this.onSubmit,
     required this.onTagInput,
     required this.onRemoveChip,
+    required this.imageService,
+    required this.onContentChanged,
+    required this.onImageAdded,
     this.onTogglePin,
     this.onPickImage,
     this.onRemoveImage,
@@ -332,19 +403,23 @@ class _ThoughtComposer extends StatelessWidget {
               children: [
                 Text('快速记录想法', style: theme.textTheme.titleMedium),
                 const SizedBox(height: AppSpacing.md),
-                TextField(
-                  controller: contentController,
-                  minLines: 2,
-                  maxLines: 5,
-                  textInputAction: TextInputAction.newline,
-                  decoration: InputDecoration(
-                    hintText: '快速记录你的想法、灵感或闪念...',
-                    fillColor: AppColors.surface,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(AppRadius.md),
+                DecoratedBox(
+                  decoration: BoxDecoration(
+                    color: AppColors.surface,
+                    borderRadius: BorderRadius.circular(AppRadius.md),
+                    border: Border.all(color: AppColors.border),
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(AppRadius.md),
+                    child: ThoughtRichEditor(
+                      controller: contentController,
+                      imageService: imageService,
+                      minHeight: 112,
+                      placeholder: '快速记录你的想法、灵感或闪念...',
+                      onChanged: (_) => onContentChanged(),
+                      onImageAdded: onImageAdded,
                     ),
                   ),
-                  style: theme.textTheme.bodyLarge,
                 ),
                 if (tagChips.isNotEmpty) ...[
                   const SizedBox(height: AppSpacing.md),
@@ -369,7 +444,8 @@ class _ThoughtComposer extends StatelessWidget {
                     child: ListView.separated(
                       scrollDirection: Axis.horizontal,
                       itemCount: pendingImages.length,
-                      separatorBuilder: (_, _) => const SizedBox(width: AppSpacing.sm),
+                      separatorBuilder: (_, _) =>
+                          const SizedBox(width: AppSpacing.sm),
                       itemBuilder: (_, i) {
                         return Stack(
                           children: [
@@ -377,12 +453,14 @@ class _ThoughtComposer extends StatelessWidget {
                               borderRadius: BorderRadius.circular(AppRadius.xs),
                               child: Image.file(
                                 File(pendingImages[i]),
-                                width: 60, height: 60,
+                                width: 60,
+                                height: 60,
                                 fit: BoxFit.cover,
                               ),
                             ),
                             Positioned(
-                              top: 1, right: 1,
+                              top: 1,
+                              right: 1,
                               child: GestureDetector(
                                 onTap: () => onRemoveImage?.call(i),
                                 child: Container(
@@ -391,7 +469,11 @@ class _ThoughtComposer extends StatelessWidget {
                                     shape: BoxShape.circle,
                                   ),
                                   padding: const EdgeInsets.all(2),
-                                  child: const Icon(Icons.close, size: 12, color: Colors.white),
+                                  child: const Icon(
+                                    Icons.close,
+                                    size: 12,
+                                    color: Colors.white,
+                                  ),
                                 ),
                               ),
                             ),
@@ -702,7 +784,7 @@ class _PinnedThoughtsPanel extends StatelessWidget {
           else
             ...thoughts.map(
               (t) => _CompactThoughtItem(
-                title: _titleOf(t.content),
+                title: ThoughtContentCodec.titleFromStored(t.content),
                 subtitle: _formatTimestamp(t.createdAt),
               ),
             ),
@@ -1218,12 +1300,6 @@ List<String> _parseTags(String? tags) {
       .map((s) => s.trim())
       .where((s) => s.isNotEmpty)
       .toList();
-}
-
-String _titleOf(String content) {
-  final firstLine = content.trim().split(RegExp(r'\s*\n\s*')).first;
-  if (firstLine.length <= 18) return firstLine;
-  return '${firstLine.substring(0, 18)}...';
 }
 
 String _formatTimestamp(DateTime dt) {

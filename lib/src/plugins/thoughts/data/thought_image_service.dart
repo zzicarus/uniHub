@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:image_picker/image_picker.dart';
 import 'package:path/path.dart' as p;
@@ -16,19 +17,21 @@ class ThoughtImageService {
     );
     if (image == null) return null;
 
-    final appDir = await getApplicationDocumentsDirectory();
-    final imagesDir = Directory(p.join(appDir.path, 'thought_images'));
-    if (!await imagesDir.exists()) {
-      await imagesDir.create(recursive: true);
-    }
-
     final ext = p.extension(image.path).isNotEmpty
         ? p.extension(image.path)
         : '.jpg';
-    final fileName = '${DateTime.now().millisecondsSinceEpoch}$ext';
-    final savedPath = p.join(imagesDir.path, fileName);
+    final savedPath = await _newImagePath(ext);
     await File(image.path).copy(savedPath);
 
+    return savedPath;
+  }
+
+  Future<String> saveImageBytes(
+    Uint8List bytes, {
+    String extension = '.png',
+  }) async {
+    final savedPath = await _newImagePath(extension);
+    await File(savedPath).writeAsBytes(bytes, flush: true);
     return savedPath;
   }
 
@@ -58,4 +61,19 @@ class ThoughtImageService {
   static String encodeImagePaths(List<String> paths) {
     return jsonEncode(paths);
   }
+
+  Future<String> _newImagePath(String extension) async {
+    final appDir = await getApplicationDocumentsDirectory();
+    final imagesDir = Directory(p.join(appDir.path, 'thought_images'));
+    if (!await imagesDir.exists()) {
+      await imagesDir.create(recursive: true);
+    }
+
+    final ext = extension.startsWith('.') ? extension : '.$extension';
+    final fileName =
+        '${DateTime.now().microsecondsSinceEpoch}_${_counter++}$ext';
+    return p.join(imagesDir.path, fileName);
+  }
+
+  static int _counter = 0;
 }

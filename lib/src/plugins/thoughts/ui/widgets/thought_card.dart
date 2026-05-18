@@ -1,7 +1,9 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_tokens.dart';
-import '../../data/thought_image_service.dart';
+import '../../data/thought_content_codec.dart';
 
 class ThoughtCard extends ConsumerStatefulWidget {
   final int id;
@@ -52,7 +54,12 @@ class _ThoughtCardState extends ConsumerState<ThoughtCard> {
     final background = widget.color != null
         ? accent.withValues(alpha: 0.08)
         : _cardBackground(widget.id);
-    final images = ThoughtImageService.decodeImagePaths(widget.imagePaths);
+    final images = ThoughtContentCodec.mergeImagePaths(
+      widget.imagePaths,
+      widget.content,
+    );
+    final title = ThoughtContentCodec.titleFromStored(widget.content);
+    final body = ThoughtContentCodec.plainTextFromStored(widget.content);
 
     return MouseRegion(
       onEnter: (_) => setState(() => _hovered = true),
@@ -64,7 +71,9 @@ class _ThoughtCardState extends ConsumerState<ThoughtCard> {
           borderRadius: BorderRadius.circular(AppRadius.md),
           onTap: widget.onTap,
           child: Container(
-            constraints: const BoxConstraints(minHeight: AppSizes.cardMinHeight),
+            constraints: const BoxConstraints(
+              minHeight: AppSizes.cardMinHeight,
+            ),
             padding: const EdgeInsets.all(AppSpacing.md),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(AppRadius.md),
@@ -89,7 +98,9 @@ class _ThoughtCardState extends ConsumerState<ThoughtCard> {
                         color: AppColors.textSecondary,
                         onTap: widget.onRestore,
                       ),
-                    if (widget.onArchive != null && _hovered && !widget.isPinned)
+                    if (widget.onArchive != null &&
+                        _hovered &&
+                        !widget.isPinned)
                       _ActionIcon(
                         icon: Icons.archive_outlined,
                         color: AppColors.textSecondary,
@@ -110,7 +121,7 @@ class _ThoughtCardState extends ConsumerState<ThoughtCard> {
 
                 // ── Title ──
                 Text(
-                  _titleOf(widget.content),
+                  title,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                   style: theme.textTheme.titleSmall?.copyWith(
@@ -122,7 +133,7 @@ class _ThoughtCardState extends ConsumerState<ThoughtCard> {
                 // ── Body ──
                 Expanded(
                   child: Text(
-                    widget.content,
+                    body,
                     maxLines: 4,
                     overflow: TextOverflow.ellipsis,
                     style: theme.textTheme.bodySmall?.copyWith(
@@ -132,21 +143,39 @@ class _ThoughtCardState extends ConsumerState<ThoughtCard> {
                   ),
                 ),
 
-                // ── Image indicator ──
+                // ── Images ──
                 if (images.isNotEmpty) ...[
                   const SizedBox(height: AppSpacing.sm),
-                  Row(
-                    children: [
-                      const Icon(Icons.image_outlined, size: 14, color: AppColors.textTertiary),
-                      const SizedBox(width: AppSpacing.xxs),
-                      Text(
-                        '${images.length} 张图片',
-                        style: theme.textTheme.labelMedium?.copyWith(
-                          color: AppColors.textTertiary,
-                          fontSize: 11,
-                        ),
-                      ),
-                    ],
+                  SizedBox(
+                    height: 54,
+                    child: ListView.separated(
+                      scrollDirection: Axis.horizontal,
+                      itemCount: images.take(4).length,
+                      separatorBuilder: (_, _) =>
+                          const SizedBox(width: AppSpacing.xs),
+                      itemBuilder: (_, index) {
+                        final file = File(images[index]);
+                        return ClipRRect(
+                          borderRadius: BorderRadius.circular(AppRadius.xs),
+                          child: file.existsSync()
+                              ? Image.file(
+                                  file,
+                                  width: 64,
+                                  height: 54,
+                                  fit: BoxFit.cover,
+                                )
+                              : Container(
+                                  width: 64,
+                                  height: 54,
+                                  color: AppColors.surfaceMuted,
+                                  child: const Icon(
+                                    Icons.broken_image_outlined,
+                                    size: 18,
+                                  ),
+                                ),
+                        );
+                      },
+                    ),
                   ),
                 ],
 
@@ -208,12 +237,6 @@ class _ThoughtCardState extends ConsumerState<ThoughtCard> {
       AppColors.secondarySoft,
     ];
     return backgrounds[index % backgrounds.length].withValues(alpha: 0.62);
-  }
-
-  String _titleOf(String text) {
-    final firstLine = text.trim().split(RegExp(r'\s*\n\s*')).first;
-    if (firstLine.length <= 20) return firstLine;
-    return '${firstLine.substring(0, 20)}...';
   }
 
   String _formatTimestamp(DateTime dt) {

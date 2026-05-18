@@ -5,9 +5,9 @@ import 'package:uni_hub/src/core/database/app_database.dart';
 
 void main() {
   group('AppDatabase', () {
-    test('creates with schema version 1', () {
+    test('creates with schema version 2', () {
       final database = AppDatabase(NativeDatabase.memory());
-      expect(database.schemaVersion, 1);
+      expect(database.schemaVersion, 2);
       database.close();
     });
 

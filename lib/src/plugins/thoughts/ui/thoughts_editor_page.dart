@@ -1,10 +1,15 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_quill/flutter_quill.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/theme/app_tokens.dart';
+import '../data/thought_content_codec.dart';
+import '../data/thought_image_service.dart';
 import '../providers/thoughts_providers.dart';
+import 'widgets/thought_rich_editor.dart';
 
 class ThoughtsEditorPage extends ConsumerStatefulWidget {
   final int thoughtId;
@@ -16,14 +21,22 @@ class ThoughtsEditorPage extends ConsumerStatefulWidget {
 }
 
 class _ThoughtsEditorPageState extends ConsumerState<ThoughtsEditorPage> {
-  final _contentController = TextEditingController();
+  late QuillController _contentController;
   final _tagTextController = TextEditingController();
   final _tagChips = <String>[];
+  final _images = <String>[];
   String? _selectedColor;
   bool _isPinned = false;
   bool _isArchived = false;
   bool _isDirty = false;
   bool _isLoaded = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _contentController = _createController(Document());
+    unawaited(_loadThought());
+  }
 
   @override
   void dispose() {
@@ -32,32 +45,55 @@ class _ThoughtsEditorPageState extends ConsumerState<ThoughtsEditorPage> {
     super.dispose();
   }
 
+  QuillController _createController(Document document) {
+    return ThoughtRichEditor.createController(
+      document: document,
+      onImagePaste: (bytes) async {
+        final path = await ref
+            .read(thoughtImageServiceProvider)
+            .saveImageBytes(bytes);
+        if (mounted && !_images.contains(path)) {
+          setState(() => _images.add(path));
+        }
+        _markDirty();
+        return ThoughtContentCodec.imageSourceForPath(path);
+      },
+    );
+  }
+
   void _markDirty() {
     if (!_isDirty) {
       setState(() => _isDirty = true);
     }
   }
 
-  void _loadThought() {
+  Future<void> _loadThought() async {
     if (_isLoaded) return;
-    final thoughtAsync = ref.read(thoughtProvider(widget.thoughtId));
-    thoughtAsync.whenData((thought) {
-      if (thought != null && !_isLoaded) {
-        setState(() {
-          _contentController.text = thought.content;
-          _tagChips.addAll(
-            (thought.tags ?? '')
-                .split(',')
-                .map((s) => s.trim())
-                .where((s) => s.isNotEmpty),
-          );
-          _selectedColor = thought.color;
-          _isPinned = thought.isPinned;
-          _isArchived = thought.archivedAt != null;
-          _isLoaded = true;
-          _isDirty = false;
-        });
-      }
+    final thought = await ref.read(thoughtProvider(widget.thoughtId).future);
+    if (thought == null || _isLoaded || !mounted) return;
+    final controller = _createController(
+      ThoughtContentCodec.documentFromStored(thought.content),
+    );
+    _contentController.dispose();
+    setState(() {
+      _contentController = controller;
+      _tagChips.addAll(
+        (thought.tags ?? '')
+            .split(',')
+            .map((s) => s.trim())
+            .where((s) => s.isNotEmpty),
+      );
+      _images.addAll(
+        ThoughtContentCodec.mergeImagePaths(
+          thought.imagePaths,
+          thought.content,
+        ),
+      );
+      _selectedColor = thought.color;
+      _isPinned = thought.isPinned;
+      _isArchived = thought.archivedAt != null;
+      _isLoaded = true;
+      _isDirty = false;
     });
   }
 
@@ -67,10 +103,11 @@ class _ThoughtsEditorPageState extends ConsumerState<ThoughtsEditorPage> {
     final tags = _tagChips.isNotEmpty ? _tagChips.join(',') : null;
     await repo.updateThought(
       widget.thoughtId,
-      content: _contentController.text.trim(),
+      content: ThoughtContentCodec.encodeDocument(_contentController.document),
       tags: tags,
       color: _selectedColor,
       isPinned: _isPinned,
+      imagePaths: ThoughtImageService.encodeImagePaths(_images),
     );
     ref.invalidate(thoughtProvider(widget.thoughtId));
     ref.invalidate(thoughtsListProvider);
@@ -106,6 +143,7 @@ class _ThoughtsEditorPageState extends ConsumerState<ThoughtsEditorPage> {
 
     if (confirmed == true && mounted) {
       final repo = ref.read(thoughtsRepositoryProvider);
+      await ref.read(thoughtImageServiceProvider).deleteImages(_images);
       await repo.deleteThought(widget.thoughtId);
       ref.invalidate(thoughtsListProvider);
       if (mounted) {
@@ -164,8 +202,6 @@ class _ThoughtsEditorPageState extends ConsumerState<ThoughtsEditorPage> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-
-    _loadThought();
 
     if (!_isLoaded) {
       return Scaffold(
@@ -232,19 +268,49 @@ class _ThoughtsEditorPageState extends ConsumerState<ThoughtsEditorPage> {
             padding: const EdgeInsets.all(AppSpacing.lg),
             children: [
               // Content editor
-              TextField(
-                controller: _contentController,
-                minLines: 5,
-                maxLines: null,
-                textInputAction: TextInputAction.newline,
-                onChanged: (_) => _markDirty(),
-                decoration: const InputDecoration(
-                  hintText: '记录你的想法...',
-                  border: InputBorder.none,
-                  contentPadding: EdgeInsets.zero,
+              DecoratedBox(
+                decoration: BoxDecoration(
+                  color: AppColors.surface,
+                  borderRadius: BorderRadius.circular(AppRadius.md),
+                  border: Border.all(color: AppColors.borderSoft),
                 ),
-                style: theme.textTheme.bodyLarge,
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(AppRadius.md),
+                  child: ThoughtRichEditor(
+                    controller: _contentController,
+                    imageService: ref.read(thoughtImageServiceProvider),
+                    minHeight: 360,
+                    placeholder: '记录你的想法...',
+                    onChanged: (_) => _markDirty(),
+                    onImageAdded: (path) {
+                      if (!_images.contains(path)) {
+                        setState(() => _images.add(path));
+                      }
+                    },
+                  ),
+                ),
               ),
+
+              if (_images.isNotEmpty) ...[
+                const SizedBox(height: AppSpacing.md),
+                _ImageStrip(
+                  images: _images,
+                  onRemove: (index) async {
+                    final path = _images[index];
+                    await ref
+                        .read(thoughtImageServiceProvider)
+                        .deleteImage(path);
+                    final updatedDocument = ThoughtContentCodec.removeImage(
+                      _contentController.document,
+                      path,
+                    );
+                    _contentController.dispose();
+                    _contentController = _createController(updatedDocument);
+                    setState(() => _images.removeAt(index));
+                    _markDirty();
+                  },
+                ),
+              ],
 
               const SizedBox(height: AppSpacing.lg),
 
@@ -371,6 +437,62 @@ class _ThoughtsEditorPageState extends ConsumerState<ThoughtsEditorPage> {
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _ImageStrip extends StatelessWidget {
+  final List<String> images;
+  final Future<void> Function(int index) onRemove;
+
+  const _ImageStrip({required this.images, required this.onRemove});
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 84,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        itemCount: images.length,
+        separatorBuilder: (_, _) => const SizedBox(width: AppSpacing.sm),
+        itemBuilder: (_, index) {
+          final file = File(images[index]);
+          return Stack(
+            children: [
+              ClipRRect(
+                borderRadius: BorderRadius.circular(AppRadius.sm),
+                child: file.existsSync()
+                    ? Image.file(file, width: 84, height: 84, fit: BoxFit.cover)
+                    : Container(
+                        width: 84,
+                        height: 84,
+                        color: AppColors.surfaceMuted,
+                        child: const Icon(Icons.broken_image_outlined),
+                      ),
+              ),
+              Positioned(
+                top: 3,
+                right: 3,
+                child: GestureDetector(
+                  onTap: () => unawaited(onRemove(index)),
+                  child: Container(
+                    padding: const EdgeInsets.all(2),
+                    decoration: const BoxDecoration(
+                      color: Colors.black54,
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.close,
+                      size: 14,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          );
+        },
       ),
     );
   }
