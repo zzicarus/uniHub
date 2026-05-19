@@ -18,8 +18,12 @@ class Sidebar extends ConsumerWidget {
 
     return Material(
       color: colorScheme.surface,
-      child: SizedBox(
+      child: Container(
         width: AppDesktopSizes.sidebarWidth,
+        decoration: BoxDecoration(
+          color: colorScheme.surface,
+          border: Border(right: BorderSide(color: colorScheme.outlineVariant)),
+        ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -110,49 +114,17 @@ class Sidebar extends ConsumerWidget {
                     isSelected: location == '/settings',
                     onTap: () => context.goNamed(RouteNames.settings),
                   ),
-                  const SizedBox(height: AppSpacing.xl),
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(
-                      AppSpacing.xl,
-                      0,
-                      AppSpacing.xl,
-                      AppSpacing.xl,
-                    ),
-                    child: Row(
-                      children: [
-                        CircleAvatar(
-                          radius: 20,
-                          backgroundColor: colorScheme.primaryContainer,
-                          child: Icon(
-                            Icons.person_rounded,
-                            size: 22,
-                            color: colorScheme.onPrimaryContainer,
-                          ),
-                        ),
-                        const SizedBox(width: AppSpacing.sm),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text('Alex', style: theme.textTheme.titleSmall),
-                              Text(
-                                '专注记录 · 持续进步',
-                                style: theme.textTheme.bodySmall,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ],
-                          ),
-                        ),
-                        Icon(
-                          Icons.keyboard_arrow_down_rounded,
-                          size: 18,
-                          color: colorScheme.outline,
-                        ),
-                      ],
-                    ),
-                  ),
                 ],
               ),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(
+                AppSpacing.lg,
+                0,
+                AppSpacing.lg,
+                AppSpacing.xl,
+              ),
+              child: _UserTile(colorScheme: colorScheme, theme: theme),
             ),
           ],
         ),
@@ -188,6 +160,63 @@ class _LogoMark extends StatelessWidget {
             fontSize: 24,
             height: 1,
             fontWeight: FontWeight.w800,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _UserTile extends StatelessWidget {
+  final ColorScheme colorScheme;
+  final ThemeData theme;
+
+  const _UserTile({required this.colorScheme, required this.theme});
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      borderRadius: BorderRadius.circular(AppRadius.lg),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(AppRadius.lg),
+        onTap: () {},
+        child: Padding(
+          padding: const EdgeInsets.all(AppSpacing.xs),
+          child: Row(
+            children: [
+              CircleAvatar(
+                radius: 22,
+                backgroundColor: colorScheme.primaryContainer,
+                child: Text(
+                  'A',
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    color: colorScheme.primary,
+                    fontSize: 18,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
+              const SizedBox(width: AppSpacing.sm),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Alex', style: theme.textTheme.titleSmall),
+                    Text(
+                      '专注记录 · 持续进步',
+                      style: theme.textTheme.bodySmall,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
+              ),
+              Icon(
+                Icons.keyboard_arrow_down_rounded,
+                size: 18,
+                color: colorScheme.outline,
+              ),
+            ],
           ),
         ),
       ),
@@ -347,7 +376,7 @@ class _NavItem extends StatelessWidget {
         ? colorScheme.onSurfaceVariant
         : colorScheme.outline;
     final bgColor = isSelected
-        ? colorScheme.primaryContainer
+        ? colorScheme.primaryContainer.withValues(alpha: 0.72)
         : Colors.transparent;
 
     return Padding(

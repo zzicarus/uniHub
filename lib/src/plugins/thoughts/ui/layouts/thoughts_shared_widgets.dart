@@ -42,8 +42,8 @@ class ThoughtIconBubble extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 56,
-      height: 56,
+      width: 54,
+      height: 54,
       decoration: BoxDecoration(
         color: background,
         borderRadius: BorderRadius.circular(AppRadius.lg),
@@ -74,15 +74,13 @@ class ThoughtPillButton extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        height: AppDesktopSizes.compactButtonHeight,
-        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
+        height: 40,
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
         decoration: BoxDecoration(
-          color: selected
-              ? colorScheme.tertiaryContainer
-              : colorScheme.surfaceContainerLow,
+          color: selected ? colorScheme.tertiaryContainer : colorScheme.surface,
           borderRadius: BorderRadius.circular(AppRadius.sm),
           border: Border.all(
-            color: selected ? colorScheme.tertiary : colorScheme.outline,
+            color: selected ? colorScheme.tertiary : colorScheme.outlineVariant,
           ),
         ),
         child: Row(
@@ -117,19 +115,26 @@ class ThoughtSearchBox extends StatelessWidget {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     return Container(
-      width: 260,
-      height: AppSizes.inputHeight,
+      width: 320,
+      height: 56,
       decoration: BoxDecoration(
         color: colorScheme.surface,
         borderRadius: BorderRadius.circular(AppRadius.md),
-        border: Border.all(color: colorScheme.outline),
+        border: Border.all(color: colorScheme.outlineVariant),
+        boxShadow: const [AppShadows.card],
       ),
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
       child: Row(
         children: [
           Icon(Icons.search_rounded, color: colorScheme.outline),
           const SizedBox(width: AppSpacing.xs),
-          Text('Ctrl + K 全局搜索', style: theme.textTheme.bodyMedium),
+          Expanded(
+            child: Text(
+              'Ctrl + K 全局搜索',
+              style: theme.textTheme.bodyMedium,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
         ],
       ),
     );
@@ -145,12 +150,13 @@ class ThoughtIconSquare extends StatelessWidget {
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     return Container(
-      width: AppSizes.inputHeight,
-      height: AppSizes.inputHeight,
+      width: 56,
+      height: 56,
       decoration: BoxDecoration(
         color: colorScheme.surface,
         borderRadius: BorderRadius.circular(AppRadius.md),
-        border: Border.all(color: colorScheme.outline),
+        border: Border.all(color: colorScheme.outlineVariant),
+        boxShadow: const [AppShadows.card],
       ),
       child: Icon(icon, color: colorScheme.onSurfaceVariant),
     );
@@ -182,11 +188,13 @@ class ThoughtFilterChip extends StatelessWidget {
         onTap: onTap,
         borderRadius: BorderRadius.circular(AppRadius.full),
         child: Container(
-          height: AppDesktopSizes.compactButtonHeight,
+          height: 40,
           padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
           decoration: BoxDecoration(
             border: Border.all(
-              color: selected ? colorScheme.primary : colorScheme.outline,
+              color: selected
+                  ? colorScheme.primary
+                  : colorScheme.outlineVariant,
             ),
             borderRadius: BorderRadius.circular(AppRadius.full),
           ),

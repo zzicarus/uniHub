@@ -52,12 +52,6 @@ class _ThoughtCardState extends ConsumerState<ThoughtCard> {
     final accent = widget.color != null
         ? _hexToColor(widget.color!)
         : _cardAccent(widget.id, colorScheme);
-    final background = widget.color != null
-        ? Color.alphaBlend(
-            accent.withValues(alpha: 0.12),
-            colorScheme.surfaceContainerLow,
-          )
-        : _cardBackground(widget.id, colorScheme);
     final images = ThoughtContentCodec.mergeImagePaths(
       widget.imagePaths,
       widget.content,
@@ -69,7 +63,7 @@ class _ThoughtCardState extends ConsumerState<ThoughtCard> {
       onEnter: (_) => setState(() => _hovered = true),
       onExit: (_) => setState(() => _hovered = false),
       child: Material(
-        color: background,
+        color: colorScheme.surface,
         borderRadius: BorderRadius.circular(AppRadius.md),
         child: InkWell(
           borderRadius: BorderRadius.circular(AppRadius.md),
@@ -79,9 +73,20 @@ class _ThoughtCardState extends ConsumerState<ThoughtCard> {
               minHeight: AppSizes.cardMinHeight,
             ),
             padding: const EdgeInsets.all(AppSpacing.md),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(AppRadius.md),
+              border: Border.all(color: colorScheme.outlineVariant),
+            ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                if (images.isNotEmpty) ...[
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(AppRadius.sm),
+                    child: _ThoughtCardImage(path: images.first),
+                  ),
+                  const SizedBox(height: AppSpacing.md),
+                ],
                 // ── Timestamp + Actions ──
                 Row(
                   children: [
@@ -131,7 +136,7 @@ class _ThoughtCardState extends ConsumerState<ThoughtCard> {
                 const SizedBox(height: AppSpacing.sm),
 
                 // ── Body ──
-                Expanded(
+                Flexible(
                   child: Text(
                     body,
                     maxLines: 4,
@@ -144,17 +149,17 @@ class _ThoughtCardState extends ConsumerState<ThoughtCard> {
                 ),
 
                 // ── Images ──
-                if (images.isNotEmpty) ...[
+                if (images.length > 1) ...[
                   const SizedBox(height: AppSpacing.sm),
                   SizedBox(
                     height: 54,
                     child: ListView.separated(
                       scrollDirection: Axis.horizontal,
-                      itemCount: images.take(4).length,
+                      itemCount: images.skip(1).take(4).length,
                       separatorBuilder: (_, _) =>
                           const SizedBox(width: AppSpacing.xs),
                       itemBuilder: (_, index) {
-                        final file = File(images[index]);
+                        final file = File(images[index + 1]);
                         return ClipRRect(
                           borderRadius: BorderRadius.circular(AppRadius.xs),
                           child: file.existsSync()
@@ -227,17 +232,6 @@ class _ThoughtCardState extends ConsumerState<ThoughtCard> {
     return accents[index % accents.length];
   }
 
-  Color _cardBackground(int index, ColorScheme colorScheme) {
-    final backgrounds = [
-      colorScheme.tertiaryContainer,
-      colorScheme.secondaryContainer,
-      colorScheme.primaryContainer,
-      colorScheme.errorContainer,
-      colorScheme.surfaceContainerHigh,
-    ];
-    return backgrounds[index % backgrounds.length].withValues(alpha: 0.62);
-  }
-
   String _formatTimestamp(DateTime dt) {
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
@@ -252,6 +246,31 @@ class _ThoughtCardState extends ConsumerState<ThoughtCard> {
       return '${dt.month}月${dt.day}日 ${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
     }
     return '${dt.year}-${dt.month.toString().padLeft(2, '0')}-${dt.day.toString().padLeft(2, '0')}';
+  }
+}
+
+class _ThoughtCardImage extends StatelessWidget {
+  final String path;
+
+  const _ThoughtCardImage({required this.path});
+
+  @override
+  Widget build(BuildContext context) {
+    final file = File(path);
+    if (!file.existsSync()) {
+      return Container(
+        height: 90,
+        width: double.infinity,
+        color: Theme.of(context).colorScheme.surfaceContainerHigh,
+        child: const Icon(Icons.broken_image_outlined, size: 20),
+      );
+    }
+    return Image.file(
+      file,
+      height: 90,
+      width: double.infinity,
+      fit: BoxFit.cover,
+    );
   }
 }
 

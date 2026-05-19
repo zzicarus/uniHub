@@ -70,68 +70,79 @@ class ThoughtsDesktopLayout extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final width = MediaQuery.of(context).size.width;
     final showRightRail = width >= AppBreakpoints.wideMin;
+    final colorScheme = Theme.of(context).colorScheme;
 
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Expanded(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(AppSpacing.xxl),
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 920),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _ThoughtsHeader(isArchived: isArchived),
-                  const SizedBox(height: AppSpacing.xxl),
-                  if (!isArchived) ...[
-                    _ThoughtComposer(
-                      contentController: contentController,
-                      tagTextController: tagTextController,
-                      tagChips: tagChips,
-                      isSubmitting: isSubmitting,
-                      canSubmit: canSubmit,
-                      isPinned: isPinned,
-                      pendingImages: pendingImages,
-                      onSubmit: onSubmit,
-                      onTagInput: onTagInput,
-                      onRemoveChip: onRemoveChip,
-                      onTogglePin: onTogglePin,
-                      onPickImage: onPickImage,
-                      onRemoveImage: onRemoveImage,
-                      imageService: imageService,
-                      onContentChanged: onContentChanged,
-                      onImageAdded: onImageAdded,
-                    ),
-                    const SizedBox(height: AppSpacing.xxl),
-                  ],
-                  _ThoughtsToolbar(
-                    tagStats: tagStats,
-                    selectedTag: selectedTag,
-                    isArchived: isArchived,
-                    onTagFilterChanged: onTagFilterChanged,
-                  ),
-                  const SizedBox(height: AppSpacing.lg),
-                  thoughtsAsync.when(
-                    loading: () => const ThoughtLoadingState(),
-                    error: (err, _) => ThoughtErrorState(error: err),
-                    data: (thoughts) => _ThoughtsContent(
-                      thoughts: thoughts,
-                      isArchived: isArchived,
+    return ColoredBox(
+      color: colorScheme.surfaceContainerLowest,
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Expanded(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.fromLTRB(
+                AppSpacing.xxl,
+                AppSpacing.xl,
+                AppSpacing.xxl,
+                AppSpacing.section,
+              ),
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 1080),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    if (isArchived) ...[
+                      _ThoughtsHeader(isArchived: isArchived),
+                      const SizedBox(height: AppSpacing.xl),
+                    ],
+                    if (!isArchived) ...[
+                      _ThoughtComposer(
+                        contentController: contentController,
+                        tagTextController: tagTextController,
+                        tagChips: tagChips,
+                        isSubmitting: isSubmitting,
+                        canSubmit: canSubmit,
+                        isPinned: isPinned,
+                        pendingImages: pendingImages,
+                        onSubmit: onSubmit,
+                        onTagInput: onTagInput,
+                        onRemoveChip: onRemoveChip,
+                        onTogglePin: onTogglePin,
+                        onPickImage: onPickImage,
+                        onRemoveImage: onRemoveImage,
+                        imageService: imageService,
+                        onContentChanged: onContentChanged,
+                        onImageAdded: onImageAdded,
+                      ),
+                      const SizedBox(height: AppSpacing.xl),
+                    ],
+                    _ThoughtsToolbar(
+                      tagStats: tagStats,
                       selectedTag: selectedTag,
-                      onOpen: onThoughtTap,
-                      onTagTap: onTagFilterChanged,
-                      onArchive: onArchive,
-                      onRestore: onRestore,
+                      isArchived: isArchived,
+                      onTagFilterChanged: onTagFilterChanged,
                     ),
-                  ),
-                ],
+                    const SizedBox(height: AppSpacing.lg),
+                    thoughtsAsync.when(
+                      loading: () => const ThoughtLoadingState(),
+                      error: (err, _) => ThoughtErrorState(error: err),
+                      data: (thoughts) => _ThoughtsContent(
+                        thoughts: thoughts,
+                        isArchived: isArchived,
+                        selectedTag: selectedTag,
+                        onOpen: onThoughtTap,
+                        onTagTap: onTagFilterChanged,
+                        onArchive: onArchive,
+                        onRestore: onRestore,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
-        ),
-        if (showRightRail) _ThoughtsRightRail(thoughtsAsync: thoughtsAsync),
-      ],
+          if (showRightRail) _ThoughtsRightRail(thoughtsAsync: thoughtsAsync),
+        ],
+      ),
     );
   }
 }
@@ -231,19 +242,24 @@ class _ThoughtComposer extends StatelessWidget {
             color: colorScheme.onPrimaryContainer,
             background: colorScheme.primaryContainer,
           ),
-          const SizedBox(width: AppSpacing.xl),
+          const SizedBox(width: AppSpacing.lg),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Text('快速记录想法', style: theme.textTheme.titleMedium),
+                Text(
+                  '快速记录想法',
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
                 const SizedBox(height: AppSpacing.md),
                 DecoratedBox(
                   decoration: BoxDecoration(
                     color: Theme.of(context).colorScheme.surface,
                     borderRadius: BorderRadius.circular(AppRadius.md),
                     border: Border.all(
-                      color: Theme.of(context).colorScheme.outline,
+                      color: Theme.of(context).colorScheme.outlineVariant,
                     ),
                   ),
                   child: ClipRRect(
@@ -252,7 +268,7 @@ class _ThoughtComposer extends StatelessWidget {
                       controller: contentController,
                       imageService: imageService,
                       minHeight: 112,
-                      placeholder: '快速记录你的想法、灵感或闪念...',
+                      placeholder: '今天有什么新想法？',
                       onChanged: (_) => onContentChanged(),
                       onImageAdded: onImageAdded,
                     ),
@@ -326,10 +342,13 @@ class _ThoughtComposer extends StatelessWidget {
                   ),
                 ],
                 const SizedBox(height: AppSpacing.md),
-                Row(
+                Wrap(
+                  spacing: AppSpacing.sm,
+                  runSpacing: AppSpacing.sm,
+                  crossAxisAlignment: WrapCrossAlignment.center,
                   children: [
                     SizedBox(
-                      width: 160,
+                      width: 150,
                       child: TextField(
                         controller: tagTextController,
                         onChanged: onTagInput,
@@ -341,7 +360,6 @@ class _ThoughtComposer extends StatelessWidget {
                         style: theme.textTheme.bodySmall,
                       ),
                     ),
-                    const SizedBox(width: AppSpacing.sm),
                     ThoughtPillButton(
                       icon: Icons.image_outlined,
                       label: pendingImages.isNotEmpty
@@ -349,18 +367,20 @@ class _ThoughtComposer extends StatelessWidget {
                           : '图片',
                       onTap: onPickImage,
                     ),
-                    const SizedBox(width: AppSpacing.sm),
                     ThoughtPillButton(
                       icon: isPinned ? Icons.push_pin : Icons.push_pin_outlined,
-                      label: isPinned ? '已置顶' : '设为置顶',
+                      label: isPinned ? '已置顶' : '置顶',
                       selected: isPinned,
                       onTap: onTogglePin,
                     ),
-                    const Spacer(),
-                    FilledButton.icon(
-                      onPressed: canSubmit && !isSubmitting ? onSubmit : null,
-                      icon: const Icon(Icons.send_rounded, size: 18),
-                      label: Text(isSubmitting ? '保存中' : '记录想法'),
+                    Align(
+                      alignment: Alignment.centerRight,
+                      widthFactor: 1,
+                      child: FilledButton.icon(
+                        onPressed: canSubmit && !isSubmitting ? onSubmit : null,
+                        icon: const Icon(Icons.send_rounded, size: 18),
+                        label: Text(isSubmitting ? '保存中' : '记录想法'),
+                      ),
                     ),
                   ],
                 ),
@@ -393,7 +413,10 @@ class _ThoughtsToolbar extends StatelessWidget {
       ..sort((a, b) => b.value.compareTo(a.value));
     final total = tagStats.values.fold<int>(0, (sum, count) => sum + count);
 
-    return Row(
+    return Wrap(
+      spacing: AppSpacing.sm,
+      runSpacing: AppSpacing.sm,
+      crossAxisAlignment: WrapCrossAlignment.center,
       children: [
         ThoughtFilterChip(
           label: '全部',
@@ -402,34 +425,26 @@ class _ThoughtsToolbar extends StatelessWidget {
           onTap: () => onTagFilterChanged(null),
         ),
         ...sortedTags.map((entry) {
-          return Padding(
-            padding: const EdgeInsets.only(left: AppSpacing.sm),
-            child: ThoughtFilterChip(
-              label: entry.key,
-              value: entry.value.toString(),
-              selected: selectedTag == entry.key,
-              onTap: () => onTagFilterChanged(
-                selectedTag == entry.key ? null : entry.key,
-              ),
-            ),
+          return ThoughtFilterChip(
+            label: entry.key,
+            value: entry.value.toString(),
+            selected: selectedTag == entry.key,
+            onTap: () =>
+                onTagFilterChanged(selectedTag == entry.key ? null : entry.key),
           );
         }),
         if (selectedTag != null && selectedTag!.isNotEmpty)
-          Padding(
-            padding: const EdgeInsets.only(left: AppSpacing.sm),
-            child: Chip(
-              label: Text('#$selectedTag'),
-              deleteIcon: const Icon(Icons.close, size: 14),
-              onDeleted: () => onTagFilterChanged(null),
-              backgroundColor: Theme.of(
-                context,
-              ).colorScheme.primary.withValues(alpha: 0.12),
-              side: BorderSide.none,
-              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-              visualDensity: VisualDensity.compact,
-            ),
+          Chip(
+            label: Text('#$selectedTag'),
+            deleteIcon: const Icon(Icons.close, size: 14),
+            onDeleted: () => onTagFilterChanged(null),
+            backgroundColor: Theme.of(
+              context,
+            ).colorScheme.primary.withValues(alpha: 0.12),
+            side: BorderSide.none,
+            materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            visualDensity: VisualDensity.compact,
           ),
-        const Spacer(),
         Container(
           height: AppDesktopSizes.compactButtonHeight,
           padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
@@ -538,7 +553,11 @@ class _ThoughtGrid extends StatelessWidget {
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        final columns = constraints.maxWidth >= 760 ? 3 : 1;
+        final columns = constraints.maxWidth >= 980
+            ? 4
+            : constraints.maxWidth >= 640
+            ? 2
+            : 1;
         return GridView.builder(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
@@ -546,7 +565,7 @@ class _ThoughtGrid extends StatelessWidget {
             crossAxisCount: columns,
             crossAxisSpacing: AppSpacing.md,
             mainAxisSpacing: AppSpacing.md,
-            childAspectRatio: columns == 1 ? 3.2 : 1.25,
+            childAspectRatio: columns == 1 ? 3.2 : 1.45,
           ),
           itemCount: thoughts.length,
           itemBuilder: (context, index) {
@@ -592,7 +611,7 @@ class _ThoughtsRightRail extends StatelessWidget {
     return Container(
       width: AppDesktopSizes.rightRailWideWidth,
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surfaceContainerLow,
+        color: Theme.of(context).colorScheme.surfaceContainerLowest,
         border: Border(
           left: BorderSide(color: Theme.of(context).colorScheme.outlineVariant),
         ),
