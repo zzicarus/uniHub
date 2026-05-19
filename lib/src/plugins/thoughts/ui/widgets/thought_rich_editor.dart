@@ -158,6 +158,7 @@ class _ThoughtRichEditorState extends State<ThoughtRichEditor> {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     final toolbar = QuillSimpleToolbar(
       controller: widget.controller,
       config: QuillSimpleToolbarConfig(
@@ -199,9 +200,11 @@ class _ThoughtRichEditorState extends State<ThoughtRichEditor> {
             Container(
               height: 42,
               alignment: Alignment.centerLeft,
-              decoration: const BoxDecoration(
-                color: AppColors.surfaceMuted,
-                border: Border(bottom: BorderSide(color: AppColors.borderSoft)),
+              decoration: BoxDecoration(
+                color: colorScheme.surfaceContainerHigh,
+                border: Border(
+                  bottom: BorderSide(color: colorScheme.outlineVariant),
+                ),
               ),
               child: SingleChildScrollView(
                 scrollDirection: Axis.horizontal,

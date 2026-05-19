@@ -201,14 +201,15 @@ class _DesktopShellPreview extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: AppColors.surface,
-        border: Border.all(color: AppColors.border),
+        color: colorScheme.surface,
+        border: Border.all(color: colorScheme.outlineVariant),
         borderRadius: BorderRadius.circular(AppRadius.sm),
         boxShadow: [
           BoxShadow(
-            color: AppColors.textPrimary.withValues(alpha: 0.04),
+            color: colorScheme.shadow.withValues(alpha: 0.08),
             blurRadius: 18,
             offset: const Offset(0, 8),
           ),
@@ -237,6 +238,7 @@ class _DesktopSidebarPreview extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
+    final colorScheme = Theme.of(context).colorScheme;
 
     return SizedBox(
       width: AppDesktopSizes.sidebarWidth,
@@ -275,10 +277,14 @@ class _DesktopSidebarPreview extends StatelessWidget {
             const SizedBox(height: AppSpacing.md),
             Row(
               children: [
-                const CircleAvatar(
+                CircleAvatar(
                   radius: 18,
-                  backgroundColor: AppColors.primarySoft,
-                  child: Icon(Icons.person_outline, size: 20),
+                  backgroundColor: colorScheme.primaryContainer,
+                  child: Icon(
+                    Icons.person_outline,
+                    size: 20,
+                    color: colorScheme.onPrimaryContainer,
+                  ),
                 ),
                 const SizedBox(width: AppSpacing.sm),
                 Expanded(
@@ -314,13 +320,16 @@ class _DesktopNavItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
-    final foreground = selected ? AppColors.primary : AppColors.textSecondary;
+    final colorScheme = Theme.of(context).colorScheme;
+    final foreground = selected
+        ? colorScheme.primary
+        : colorScheme.onSurfaceVariant;
 
     return Padding(
       padding: const EdgeInsets.only(bottom: AppSpacing.xs),
       child: DecoratedBox(
         decoration: BoxDecoration(
-          color: selected ? AppColors.primarySoft : Colors.transparent,
+          color: selected ? colorScheme.primaryContainer : Colors.transparent,
           borderRadius: BorderRadius.circular(AppRadius.sm),
         ),
         child: SizedBox(
@@ -350,6 +359,7 @@ class _DesktopContentPreview extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
+    final colorScheme = Theme.of(context).colorScheme;
 
     return Padding(
       padding: const EdgeInsets.all(AppSpacing.xl),
@@ -382,35 +392,35 @@ class _DesktopContentPreview extends StatelessWidget {
             const SizedBox(height: AppSpacing.xl),
             Text('桌面端信息卡片', style: textTheme.titleLarge),
             const SizedBox(height: AppSpacing.md),
-            const Row(
+            Row(
               children: [
                 Expanded(
                   child: _MetricCard(
                     icon: Icons.check_box_outlined,
                     title: '今日待办',
                     value: '5',
-                    color: AppColors.success,
-                    tint: AppColors.successSoft,
+                    color: colorScheme.secondary,
+                    tint: colorScheme.secondaryContainer,
                   ),
                 ),
-                SizedBox(width: AppSpacing.md),
+                const SizedBox(width: AppSpacing.md),
                 Expanded(
                   child: _MetricCard(
                     icon: Icons.description_outlined,
                     title: '最近笔记',
                     value: '3',
-                    color: AppColors.primary,
-                    tint: AppColors.primarySoft,
+                    color: colorScheme.primary,
+                    tint: colorScheme.primaryContainer,
                   ),
                 ),
-                SizedBox(width: AppSpacing.md),
+                const SizedBox(width: AppSpacing.md),
                 Expanded(
                   child: _MetricCard(
                     icon: Icons.lightbulb_outline,
                     title: '灵感想法',
                     value: '8',
-                    color: AppColors.accent,
-                    tint: AppColors.accentSoft,
+                    color: colorScheme.tertiary,
+                    tint: colorScheme.tertiaryContainer,
                   ),
                 ),
               ],
@@ -430,11 +440,12 @@ class _DesktopSearchField extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
+    final colorScheme = Theme.of(context).colorScheme;
 
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: AppColors.surface,
-        border: Border.all(color: AppColors.border),
+        color: colorScheme.surface,
+        border: Border.all(color: colorScheme.outlineVariant),
         borderRadius: BorderRadius.circular(AppRadius.sm),
       ),
       child: SizedBox(
@@ -461,12 +472,13 @@ class _QuickCapturePreview extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
+    final colorScheme = Theme.of(context).colorScheme;
 
     return _DesktopPanel(
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const _IconBadge(icon: Icons.edit_outlined, color: AppColors.primary),
+          _IconBadge(icon: Icons.edit_outlined, color: colorScheme.primary),
           const SizedBox(width: AppSpacing.md),
           Expanded(
             child: Column(
@@ -556,31 +568,32 @@ class _DesktopListPreview extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const _DesktopPanel(
+    final colorScheme = Theme.of(context).colorScheme;
+    return _DesktopPanel(
       child: Column(
         children: [
           _CompactListRow(
             icon: Icons.star_rounded,
             title: '产品想法：轻量级个人信息中心',
             tag: '产品想法',
-            color: AppColors.purple,
-            tint: AppColors.purpleSoft,
+            color: colorScheme.tertiary,
+            tint: colorScheme.tertiaryContainer,
           ),
-          Divider(),
+          const Divider(),
           _CompactListRow(
             icon: Icons.menu_book_outlined,
             title: '读书笔记：《原子习惯》',
             tag: '阅读笔记',
-            color: AppColors.success,
-            tint: AppColors.successSoft,
+            color: colorScheme.secondary,
+            tint: colorScheme.secondaryContainer,
           ),
-          Divider(),
+          const Divider(),
           _CompactListRow(
             icon: Icons.shopping_cart_outlined,
             title: '采购清单',
             tag: '生活',
-            color: AppColors.accent,
-            tint: AppColors.accentSoft,
+            color: colorScheme.primary,
+            tint: colorScheme.primaryContainer,
           ),
         ],
       ),
@@ -629,6 +642,7 @@ class _DesktopRightRailPreview extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
+    final colorScheme = Theme.of(context).colorScheme;
 
     return SizedBox(
       width: AppDesktopSizes.rightRailWidth,
@@ -650,28 +664,28 @@ class _DesktopRightRailPreview extends StatelessWidget {
                       ],
                     ),
                     const SizedBox(height: AppSpacing.md),
-                    const _CompactListRow(
+                    _CompactListRow(
                       icon: Icons.bookmark_rounded,
                       title: '人生愿景清单',
                       tag: '长期',
-                      color: AppColors.purple,
-                      tint: AppColors.purpleSoft,
+                      color: colorScheme.tertiary,
+                      tint: colorScheme.tertiaryContainer,
                     ),
                     const Divider(),
-                    const _CompactListRow(
+                    _CompactListRow(
                       icon: Icons.folder_rounded,
                       title: '旅行计划',
                       tag: '计划',
-                      color: AppColors.accent,
-                      tint: AppColors.accentSoft,
+                      color: colorScheme.primary,
+                      tint: colorScheme.primaryContainer,
                     ),
                     const Divider(),
-                    const _CompactListRow(
+                    _CompactListRow(
                       icon: Icons.task_alt_rounded,
                       title: '今日待办',
                       tag: '5',
-                      color: AppColors.success,
-                      tint: AppColors.successSoft,
+                      color: colorScheme.secondary,
+                      tint: colorScheme.secondaryContainer,
                     ),
                   ],
                 ),
@@ -705,14 +719,15 @@ class _DesktopPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: AppColors.surface,
-        border: Border.all(color: AppColors.border),
+        color: colorScheme.surface,
+        border: Border.all(color: colorScheme.outlineVariant),
         borderRadius: BorderRadius.circular(AppRadius.sm),
         boxShadow: [
           BoxShadow(
-            color: AppColors.textPrimary.withValues(alpha: 0.035),
+            color: colorScheme.shadow.withValues(alpha: 0.07),
             blurRadius: 16,
             offset: const Offset(0, 6),
           ),
@@ -735,10 +750,11 @@ class _MiniActionChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
+    final colorScheme = Theme.of(context).colorScheme;
 
     return DecoratedBox(
       decoration: BoxDecoration(
-        border: Border.all(color: AppColors.border),
+        border: Border.all(color: colorScheme.outlineVariant),
         borderRadius: BorderRadius.circular(AppRadius.sm),
       ),
       child: Padding(
@@ -831,9 +847,9 @@ class _RuleLine extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Icon(
+          Icon(
             Icons.check_circle_rounded,
-            color: AppColors.success,
+            color: Theme.of(context).colorScheme.secondary,
             size: 16,
           ),
           const SizedBox(width: AppSpacing.xs),
@@ -853,9 +869,10 @@ class _IconButtonPreview extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return DecoratedBox(
       decoration: BoxDecoration(
-        border: Border.all(color: AppColors.border),
+        border: Border.all(color: colorScheme.outlineVariant),
         borderRadius: BorderRadius.circular(AppRadius.sm),
       ),
       child: SizedBox.square(
@@ -871,23 +888,21 @@ class _AppMark extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return DecoratedBox(
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: [
-            AppColors.primary.withValues(alpha: 0.72),
-            AppColors.purple.withValues(alpha: 0.62),
-          ],
+          colors: [colorScheme.primary, colorScheme.tertiary],
         ),
         borderRadius: BorderRadius.circular(AppRadius.sm),
       ),
-      child: const SizedBox.square(
+      child: SizedBox.square(
         dimension: 32,
         child: Center(
           child: Text(
             'U',
             style: TextStyle(
-              color: AppColors.surface,
+              color: colorScheme.onPrimary,
               fontWeight: FontWeight.w800,
             ),
           ),
@@ -935,6 +950,7 @@ class _CardSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
+    final colorScheme = Theme.of(context).colorScheme;
 
     return _Section(
       title: '卡片',
@@ -946,9 +962,9 @@ class _CardSection extends StatelessWidget {
             children: [
               Row(
                 children: [
-                  const _IconBadge(
+                  _IconBadge(
                     icon: Icons.task_alt_rounded,
-                    color: AppColors.primary,
+                    color: colorScheme.primary,
                   ),
                   const SizedBox(width: AppSpacing.sm),
                   Expanded(
@@ -1036,11 +1052,12 @@ class _EmptyStateSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const _Section(
+    final colorScheme = Theme.of(context).colorScheme;
+    return _Section(
       title: '空状态',
       child: _StatusPanel(
         icon: Icons.inbox_outlined,
-        iconColor: AppColors.secondary,
+        iconColor: colorScheme.secondary,
         title: '今天还没有安排',
         message: '添加课程、活动或待办后，这里会展示接下来要处理的事项。',
         actionLabel: '添加事项',
@@ -1054,11 +1071,12 @@ class _ErrorStateSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const _Section(
+    final colorScheme = Theme.of(context).colorScheme;
+    return _Section(
       title: '错误状态',
       child: _StatusPanel(
         icon: Icons.error_outline_rounded,
-        iconColor: AppColors.error,
+        iconColor: colorScheme.error,
         title: '同步失败',
         message: '当前网络不稳定，部分数据可能不是最新状态。',
         actionLabel: '重试',

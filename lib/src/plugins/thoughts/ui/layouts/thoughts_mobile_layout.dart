@@ -176,12 +176,12 @@ class _MobileThoughtsHeader extends StatelessWidget {
                   },
                   icon: const Icon(Icons.notifications_none_rounded),
                 ),
-                const Positioned(
+                Positioned(
                   top: 10,
                   right: 10,
                   child: DecoratedBox(
                     decoration: BoxDecoration(
-                      color: AppColors.primary,
+                      color: Theme.of(context).colorScheme.primary,
                       shape: BoxShape.circle,
                     ),
                     child: SizedBox(
@@ -244,6 +244,7 @@ class _MobileThoughtComposer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
     return ThoughtPanel(
       padding: const EdgeInsets.all(AppSpacing.lg),
       child: Column(
@@ -251,10 +252,10 @@ class _MobileThoughtComposer extends StatelessWidget {
         children: [
           Row(
             children: [
-              const ThoughtIconBubble(
+              ThoughtIconBubble(
                 icon: Icons.lightbulb_outline,
-                color: AppColors.primary,
-                background: AppColors.primarySoft,
+                color: colorScheme.onPrimaryContainer,
+                background: colorScheme.primaryContainer,
               ),
               const SizedBox(width: AppSpacing.md),
               Text('快速记录想法', style: theme.textTheme.titleMedium),
@@ -324,7 +325,10 @@ class _MobileThoughtComposer extends StatelessWidget {
                           child: Container(
                             padding: const EdgeInsets.all(AppSpacing.xxs),
                             decoration: BoxDecoration(
-                              color: Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.54),
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .onSurfaceVariant
+                                  .withValues(alpha: 0.54),
                               shape: BoxShape.circle,
                             ),
                             child: Icon(

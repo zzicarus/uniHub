@@ -99,6 +99,7 @@ class _HomeHeader extends StatelessWidget {
   }
 
   Widget _buildGreeting(ThemeData theme) {
+    final colorScheme = theme.colorScheme;
     final hour = DateTime.now().hour;
     String greeting;
     IconData greetingIcon;
@@ -106,15 +107,15 @@ class _HomeHeader extends StatelessWidget {
     if (hour >= 6 && hour < 12) {
       greeting = '早上好，Alex';
       greetingIcon = Icons.wb_sunny_rounded;
-      iconColor = AppColors.warning;
+      iconColor = colorScheme.tertiary;
     } else if (hour >= 12 && hour < 18) {
       greeting = '下午好，Alex';
       greetingIcon = Icons.wb_cloudy_rounded;
-      iconColor = AppColors.textSecondary;
+      iconColor = colorScheme.onSurfaceVariant;
     } else {
       greeting = '晚上好，Alex';
       greetingIcon = Icons.nights_stay_rounded;
-      iconColor = AppColors.primary;
+      iconColor = colorScheme.primary;
     }
     return Row(
       children: [
@@ -187,7 +188,10 @@ class _NotificationButton extends StatelessWidget {
             borderRadius: BorderRadius.circular(AppRadius.md),
             border: Border.all(color: colorScheme.outline),
           ),
-          child: Icon(Icons.notifications_none_rounded, color: colorScheme.onSurfaceVariant),
+          child: Icon(
+            Icons.notifications_none_rounded,
+            color: colorScheme.onSurfaceVariant,
+          ),
         ),
         Positioned(
           right: 10,
@@ -263,10 +267,10 @@ class _QuickCaptureCardState extends ConsumerState<_QuickCaptureCard> {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const _IconBubble(
+          _IconBubble(
             icon: Icons.edit_outlined,
-            color: AppColors.primary,
-            background: AppColors.primarySoft,
+            color: colorScheme.onPrimaryContainer,
+            background: colorScheme.primaryContainer,
           ),
           const SizedBox(width: AppSpacing.xl),
           Expanded(
@@ -358,26 +362,26 @@ class _FocusGrid extends ConsumerWidget {
 
     return Row(
       children: [
-        const Expanded(
+        Expanded(
           child: _MetricCard(
             title: '今日待办',
             // TODO: 待插件实现后替换为真实数据
             value: '5',
             note: '项待完成',
-            color: AppColors.success,
-            background: AppColors.greenSoft,
+            color: Theme.of(context).colorScheme.secondary,
+            background: Theme.of(context).colorScheme.secondaryContainer,
             icon: Icons.check_circle_outline_rounded,
           ),
         ),
         const SizedBox(width: AppSpacing.md),
-        const Expanded(
+        Expanded(
           child: _MetricCard(
             title: '最近笔记',
             // TODO: 待插件实现后替换为真实数据
             value: '3',
             note: '条新笔记',
-            color: AppColors.primary,
-            background: AppColors.blueSoft,
+            color: Theme.of(context).colorScheme.primary,
+            background: Theme.of(context).colorScheme.primaryContainer,
             icon: Icons.description_outlined,
           ),
         ),
@@ -387,8 +391,8 @@ class _FocusGrid extends ConsumerWidget {
             title: '灵感想法',
             value: '$thoughtsCount',
             note: '条未整理',
-            color: AppColors.warning,
-            background: AppColors.yellowSoft,
+            color: Theme.of(context).colorScheme.tertiary,
+            background: Theme.of(context).colorScheme.tertiaryContainer,
             icon: Icons.lightbulb_outline,
           ),
         ),
@@ -526,6 +530,7 @@ class _ShortcutGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return GridView.count(
       crossAxisCount: 4,
       crossAxisSpacing: AppSpacing.md,
@@ -537,23 +542,23 @@ class _ShortcutGrid extends StatelessWidget {
           icon: Icons.lightbulb_outline,
           title: '想法',
           subtitle: '随时记录灵感',
-          color: AppColors.purple,
-          background: AppColors.purpleSoft,
+          color: colorScheme.tertiary,
+          background: colorScheme.tertiaryContainer,
           onTap: onThoughtsTap,
         ),
-        const _ShortcutCard(
+        _ShortcutCard(
           icon: Icons.check_circle_outline_rounded,
           title: '待办',
           subtitle: '管理任务清单',
-          color: AppColors.success,
-          background: AppColors.greenSoft,
+          color: colorScheme.secondary,
+          background: colorScheme.secondaryContainer,
         ),
-        const _ShortcutCard(
+        _ShortcutCard(
           icon: Icons.article_outlined,
           title: '笔记',
           subtitle: '沉淀知识',
-          color: AppColors.primary,
-          background: AppColors.blueSoft,
+          color: colorScheme.primary,
+          background: colorScheme.primaryContainer,
         ),
         _ShortcutCard(
           icon: Icons.search_rounded,
@@ -594,11 +599,7 @@ class _HomeRightRail extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(
-                  Icons.lock_outline,
-                  size: 14,
-                  color: colorScheme.outline,
-                ),
+                Icon(Icons.lock_outline, size: 14, color: colorScheme.outline),
                 const SizedBox(width: AppSpacing.xxs),
                 Text(
                   '你的数据，仅你可见',
@@ -620,6 +621,7 @@ class _PinnedPanel extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final colorScheme = Theme.of(context).colorScheme;
     final pinnedAsync = ref.watch(dashboardPinnedProvider);
 
     return _Panel(
@@ -659,8 +661,8 @@ class _PinnedPanel extends ConsumerWidget {
                   final subtitle = item.tags.isNotEmpty
                       ? item.tags.first
                       : '想法';
-                  final color = _itemColor(item);
-                  final background = _itemBackground(color);
+                  final color = _itemColor(item, colorScheme);
+                  final background = _itemBackground(color, colorScheme);
                   return _CompactListItem(
                     icon: Icons.lightbulb_outline,
                     color: color,
@@ -711,6 +713,7 @@ class _DataPanel extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final colorScheme = Theme.of(context).colorScheme;
     final statsAsync = ref.watch(dashboardStatsProvider);
     final thoughtsCount =
         statsAsync.whenOrNull(
@@ -734,26 +737,26 @@ class _DataPanel extends ConsumerWidget {
             label: '想法',
             value: thoughtsCount >= 0 ? '$thoughtsCount' : '—',
             change: '—',
-            color: AppColors.purple,
-            background: AppColors.purpleSoft,
+            color: colorScheme.tertiary,
+            background: colorScheme.tertiaryContainer,
           ),
-          const _DataLine(
+          _DataLine(
             icon: Icons.check_circle_outline,
             label: '待办',
             // TODO: 待插件实现后替换为真实数据
             value: '24',
             change: '—',
-            color: AppColors.success,
-            background: AppColors.greenSoft,
+            color: colorScheme.secondary,
+            background: colorScheme.secondaryContainer,
           ),
-          const _DataLine(
+          _DataLine(
             icon: Icons.article_outlined,
             label: '笔记',
             // TODO: 待插件实现后替换为真实数据
             value: '56',
             change: '—',
-            color: AppColors.primary,
-            background: AppColors.blueSoft,
+            color: colorScheme.primary,
+            background: colorScheme.primaryContainer,
           ),
         ],
       ),
@@ -933,7 +936,9 @@ class _MetricCard extends StatelessWidget {
                 width: 64,
                 height: 64,
                 decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.surface.withValues(alpha: 0.5),
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.surface.withValues(alpha: 0.5),
                   borderRadius: BorderRadius.circular(AppRadius.lg),
                 ),
                 child: Icon(
@@ -964,8 +969,8 @@ class _ThoughtPreviewCard extends StatelessWidget {
     final body = _restLines(item.content);
     final tag = item.tags.isNotEmpty ? item.tags.first : '';
     final time = _formatTimestamp(item.createdAt);
-    final color = _itemColor(item);
-    final background = _itemBackground(color);
+    final color = _itemColor(item, colorScheme);
+    final background = _itemBackground(color, colorScheme);
 
     return Material(
       color: background.withValues(alpha: 0.62),
@@ -986,7 +991,7 @@ class _ThoughtPreviewCard extends StatelessWidget {
                         ? Icons.star_rounded
                         : Icons.star_border_rounded,
                     color: item.isPinned
-                        ? AppColors.warning
+                        ? colorScheme.tertiary
                         : colorScheme.outline,
                     size: 18,
                   ),
@@ -1067,7 +1072,9 @@ class _ShortcutCard extends StatelessWidget {
               _IconBubble(
                 icon: icon,
                 color: color,
-                background: Theme.of(context).colorScheme.surface.withValues(alpha: 0.5),
+                background: Theme.of(
+                  context,
+                ).colorScheme.surface.withValues(alpha: 0.5),
               ),
               const SizedBox(width: AppSpacing.md),
               Expanded(
@@ -1186,7 +1193,9 @@ class _TodoLine extends StatelessWidget {
           Icon(
             done ? Icons.check_box_rounded : Icons.check_box_outline_blank,
             size: 20,
-            color: done ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.outline,
+            color: done
+                ? Theme.of(context).colorScheme.primary
+                : Theme.of(context).colorScheme.outline,
           ),
           const SizedBox(width: AppSpacing.sm),
           Expanded(
@@ -1289,38 +1298,28 @@ String _formatTimestamp(DateTime dt) {
   return '${dt.year}-${dt.month.toString().padLeft(2, '0')}-${dt.day.toString().padLeft(2, '0')}';
 }
 
-const _accentPalette = [
-  AppColors.warning,
-  AppColors.success,
-  AppColors.primary,
-  AppColors.purple,
-  AppColors.error,
-  AppColors.secondary,
-];
-
-const _backgroundPalette = [
-  AppColors.yellowSoft,
-  AppColors.greenSoft,
-  AppColors.blueSoft,
-  AppColors.purpleSoft,
-  AppColors.roseSoft,
-  AppColors.secondarySoft,
-];
-
-Color _itemColor(DashboardItem item) {
+Color _itemColor(DashboardItem item, ColorScheme colorScheme) {
   if (item.colorHex != null && item.colorHex!.isNotEmpty) {
     final cleaned = item.colorHex!.replaceFirst('#', '');
     final normalized = cleaned.length == 6 ? 'FF$cleaned' : cleaned;
     final intVal = int.tryParse(normalized, radix: 16);
     if (intVal != null) return Color(intVal);
   }
+  final accentPalette = [
+    colorScheme.tertiary,
+    colorScheme.secondary,
+    colorScheme.primary,
+    colorScheme.error,
+  ];
   final idx = item.itemId.hashCode.abs();
-  return _accentPalette[idx % _accentPalette.length];
+  return accentPalette[idx % accentPalette.length];
 }
 
-Color _itemBackground(Color color) {
-  final idx = color.toARGB32().abs();
-  return _backgroundPalette[idx % _backgroundPalette.length];
+Color _itemBackground(Color color, ColorScheme colorScheme) {
+  return Color.alphaBlend(
+    color.withValues(alpha: 0.12),
+    colorScheme.surfaceContainerLow,
+  );
 }
 
 class _MobileHomeView extends ConsumerWidget {
@@ -1428,10 +1427,13 @@ class _MobileBrandHeader extends StatelessWidget {
           height: AppMobileSizes.heroLogoSize,
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(AppRadius.md),
-            gradient: const LinearGradient(
+            gradient: LinearGradient(
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
-              colors: [Color(0xFFB7C5FF), AppColors.primary],
+              colors: [
+                Theme.of(context).colorScheme.primaryContainer,
+                Theme.of(context).colorScheme.primary,
+              ],
             ),
           ),
           child: Center(
@@ -1466,12 +1468,12 @@ class _MobileBrandHeader extends StatelessWidget {
               },
               icon: const Icon(Icons.notifications_none_rounded),
             ),
-            const Positioned(
+            Positioned(
               top: 10,
               right: 10,
               child: DecoratedBox(
                 decoration: BoxDecoration(
-                  color: AppColors.primary,
+                  color: Theme.of(context).colorScheme.primary,
                   shape: BoxShape.circle,
                 ),
                 child: SizedBox(width: AppSpacing.xs, height: AppSpacing.xs),
@@ -1490,6 +1492,7 @@ class _MobileGreeting extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
     final hour = DateTime.now().hour;
     final greeting = hour >= 6 && hour < 12
         ? '早上好，Alex'
@@ -1517,7 +1520,7 @@ class _MobileGreeting extends StatelessWidget {
               ),
             ),
             const SizedBox(width: AppSpacing.sm),
-            Icon(icon, color: AppColors.warning, size: 30),
+            Icon(icon, color: colorScheme.tertiary, size: 30),
           ],
         ),
         const SizedBox(height: AppSpacing.xs),
@@ -1616,8 +1619,9 @@ class _MobileQuickCaptureCardState
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
     return Material(
-      color: Theme.of(context).colorScheme.surfaceContainerLow,
+      color: colorScheme.surfaceContainerLow,
       borderRadius: BorderRadius.circular(AppRadius.lg),
       child: Padding(
         padding: const EdgeInsets.all(AppSpacing.lg),
@@ -1626,10 +1630,10 @@ class _MobileQuickCaptureCardState
           children: [
             Row(
               children: [
-                const _IconBubble(
+                _IconBubble(
                   icon: Icons.edit_outlined,
-                  color: AppColors.primary,
-                  background: AppColors.primarySoft,
+                  color: colorScheme.onPrimaryContainer,
+                  background: colorScheme.primaryContainer,
                 ),
                 const SizedBox(width: AppSpacing.md),
                 Text('快速记录想法', style: theme.textTheme.titleMedium),
@@ -1700,6 +1704,7 @@ class _MobileFocusCards extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return GridView.count(
       crossAxisCount: 3,
       crossAxisSpacing: AppSpacing.md,
@@ -1708,29 +1713,29 @@ class _MobileFocusCards extends StatelessWidget {
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
       children: [
-        const _MobileFocusCard(
+        _MobileFocusCard(
           title: '今日待办',
           value: '5',
           note: '项待完成',
           icon: Icons.check_box_outlined,
-          color: AppColors.success,
-          background: AppColors.greenSoft,
+          color: colorScheme.secondary,
+          background: colorScheme.secondaryContainer,
         ),
-        const _MobileFocusCard(
+        _MobileFocusCard(
           title: '最近笔记',
           value: '3',
           note: '条新笔记',
           icon: Icons.description_outlined,
-          color: AppColors.primary,
-          background: AppColors.blueSoft,
+          color: colorScheme.primary,
+          background: colorScheme.primaryContainer,
         ),
         _MobileFocusCard(
           title: '想法灵感',
           value: '$thoughtsCount',
           note: '条未整理',
           icon: Icons.lightbulb_outline,
-          color: AppColors.warning,
-          background: AppColors.yellowSoft,
+          color: colorScheme.tertiary,
+          background: colorScheme.tertiaryContainer,
         ),
       ],
     );
@@ -1786,7 +1791,9 @@ class _MobileFocusCard extends StatelessWidget {
                 width: AppSizes.iconButton,
                 height: AppSizes.iconButton,
                 decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.surface.withValues(alpha: 0.5),
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.surface.withValues(alpha: 0.5),
                   borderRadius: BorderRadius.circular(AppRadius.md),
                 ),
                 child: Icon(icon, color: color.withValues(alpha: 0.65)),
@@ -1932,7 +1939,9 @@ class _MobileTodoLine extends StatelessWidget {
         children: [
           Icon(
             done ? Icons.check_box_rounded : Icons.check_box_outline_blank,
-            color: done ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.outline,
+            color: done
+                ? Theme.of(context).colorScheme.primary
+                : Theme.of(context).colorScheme.outline,
             size: 20,
           ),
           const SizedBox(width: AppSpacing.sm),
@@ -1978,24 +1987,24 @@ class _MobileShortcutGrid extends StatelessWidget {
           icon: Icons.lightbulb_outline,
           title: '想法',
           subtitle: '随时记录灵感',
-          color: AppColors.purple,
-          background: AppColors.purpleSoft,
+          color: colorScheme.tertiary,
+          background: colorScheme.tertiaryContainer,
           onTap: onThoughtsTap,
         ),
         _MobileShortcutCard(
           icon: Icons.check_box_outlined,
           title: '待办',
           subtitle: '管理任务清单',
-          color: AppColors.success,
-          background: AppColors.greenSoft,
+          color: colorScheme.secondary,
+          background: colorScheme.secondaryContainer,
           onTap: onTodosTap,
         ),
         _MobileShortcutCard(
           icon: Icons.description_outlined,
           title: '笔记',
           subtitle: '记录与沉淀知识',
-          color: AppColors.primary,
-          background: AppColors.blueSoft,
+          color: colorScheme.primary,
+          background: colorScheme.primaryContainer,
           onTap: onNotesTap,
         ),
         _MobileShortcutCard(
@@ -2044,7 +2053,9 @@ class _MobileShortcutCard extends StatelessWidget {
                 width: AppSizes.inputHeight,
                 height: AppSizes.inputHeight,
                 decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.surface.withValues(alpha: 0.5),
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.surface.withValues(alpha: 0.5),
                   borderRadius: BorderRadius.circular(AppRadius.md),
                 ),
                 child: Icon(icon, color: color),

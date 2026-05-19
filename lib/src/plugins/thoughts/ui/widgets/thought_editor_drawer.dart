@@ -181,7 +181,9 @@ class _ThoughtEditorDrawerState extends ConsumerState<ThoughtEditorDrawer> {
           ),
           FilledButton(
             onPressed: () => Navigator.of(c).pop(true),
-            style: FilledButton.styleFrom(backgroundColor: Theme.of(context).colorScheme.error),
+            style: FilledButton.styleFrom(
+              backgroundColor: Theme.of(context).colorScheme.error,
+            ),
             child: const Text('删除'),
           ),
         ],
@@ -313,7 +315,9 @@ class _ThoughtEditorDrawerState extends ConsumerState<ThoughtEditorDrawer> {
                           : Container(
                               width: 80,
                               height: 80,
-                              color: Theme.of(context).colorScheme.surfaceContainerHigh,
+                              color: Theme.of(
+                                context,
+                              ).colorScheme.surfaceContainerHigh,
                               child: const Icon(Icons.broken_image_outlined),
                             ),
                     ),
@@ -324,7 +328,10 @@ class _ThoughtEditorDrawerState extends ConsumerState<ThoughtEditorDrawer> {
                         onTap: () => _removeImage(i),
                         child: Container(
                           decoration: BoxDecoration(
-                            color: Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.54),
+                            color: Theme.of(context)
+                                .colorScheme
+                                .onSurfaceVariant
+                                .withValues(alpha: 0.54),
                             shape: BoxShape.circle,
                           ),
                           padding: const EdgeInsets.all(AppSpacing.xxs),
@@ -348,6 +355,7 @@ class _ThoughtEditorDrawerState extends ConsumerState<ThoughtEditorDrawer> {
 
   Widget _buildFooter(ThemeData theme) {
     if (!_loaded) return const SizedBox.shrink();
+    final colorScheme = theme.colorScheme;
 
     return Container(
       constraints: const BoxConstraints(maxHeight: 260),
@@ -420,7 +428,7 @@ class _ThoughtEditorDrawerState extends ConsumerState<ThoughtEditorDrawer> {
                     _markDirty();
                   },
                 ),
-                ..._colors.map(
+                ..._colors(colorScheme).map(
                   (c) => _Cd(
                     color: c,
                     sel: _color == _hex(c),
@@ -443,7 +451,7 @@ class _ThoughtEditorDrawerState extends ConsumerState<ThoughtEditorDrawer> {
                   setState(() => _pinned = v);
                   _markDirty();
                 },
-                activeThumbColor: AppColors.warning,
+                activeThumbColor: colorScheme.tertiary,
                 dense: true,
               ),
             const SizedBox(height: AppSpacing.sm),
@@ -500,7 +508,9 @@ class _Cd extends StatelessWidget {
           shape: BoxShape.circle,
           color: color ?? Theme.of(context).colorScheme.surfaceContainerHigh,
           border: Border.all(
-            color: sel ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.outline,
+            color: sel
+                ? Theme.of(context).colorScheme.primary
+                : Theme.of(context).colorScheme.outline,
             width: sel ? 2.5 : 1.5,
           ),
         ),
@@ -520,14 +530,14 @@ class _Cd extends StatelessWidget {
   }
 }
 
-const _colors = [
-  AppColors.primary,
-  AppColors.secondary,
-  AppColors.accent,
-  AppColors.purple,
-  AppColors.success,
-  AppColors.warning,
-  AppColors.error,
+List<Color> _colors(ColorScheme colorScheme) => [
+  colorScheme.primary,
+  colorScheme.secondary,
+  colorScheme.tertiary,
+  colorScheme.error,
+  colorScheme.primaryContainer,
+  colorScheme.secondaryContainer,
+  colorScheme.tertiaryContainer,
 ];
 
 String _hex(Color c) =>

@@ -43,6 +43,7 @@ class _ThoughtCardState extends ConsumerState<ThoughtCard> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
     final tagList = (widget.tags ?? '')
         .split(',')
         .map((s) => s.trim())
@@ -50,10 +51,13 @@ class _ThoughtCardState extends ConsumerState<ThoughtCard> {
         .toList();
     final accent = widget.color != null
         ? _hexToColor(widget.color!)
-        : _cardAccent(widget.id);
+        : _cardAccent(widget.id, colorScheme);
     final background = widget.color != null
-        ? accent.withValues(alpha: 0.08)
-        : _cardBackground(widget.id);
+        ? Color.alphaBlend(
+            accent.withValues(alpha: 0.12),
+            colorScheme.surfaceContainerLow,
+          )
+        : _cardBackground(widget.id, colorScheme);
     final images = ThoughtContentCodec.mergeImagePaths(
       widget.imagePaths,
       widget.content,
@@ -108,8 +112,8 @@ class _ThoughtCardState extends ConsumerState<ThoughtCard> {
                           : Icons.more_horiz_rounded,
                       size: 18,
                       color: widget.isPinned
-                          ? AppColors.warning
-                          : Theme.of(context).colorScheme.outline,
+                          ? colorScheme.tertiary
+                          : colorScheme.outline,
                     ),
                   ],
                 ),
@@ -163,7 +167,9 @@ class _ThoughtCardState extends ConsumerState<ThoughtCard> {
                               : Container(
                                   width: 64,
                                   height: 54,
-                                  color: Theme.of(context).colorScheme.surfaceContainerHigh,
+                                  color: Theme.of(
+                                    context,
+                                  ).colorScheme.surfaceContainerHigh,
                                   child: const Icon(
                                     Icons.broken_image_outlined,
                                     size: 18,
@@ -208,29 +214,26 @@ class _ThoughtCardState extends ConsumerState<ThoughtCard> {
     final cleaned = hex.replaceFirst('#', '');
     final normalized = cleaned.length == 6 ? 'FF$cleaned' : cleaned;
     final intVal = int.tryParse(normalized, radix: 16);
-    return Color(intVal ?? AppColors.primary.toARGB32());
+    return Color(intVal ?? Theme.of(context).colorScheme.primary.toARGB32());
   }
 
-  Color _cardAccent(int index) {
-    const accents = [
-      AppColors.warning,
-      AppColors.success,
-      AppColors.primary,
-      AppColors.purple,
-      AppColors.error,
-      AppColors.secondary,
+  Color _cardAccent(int index, ColorScheme colorScheme) {
+    final accents = [
+      colorScheme.tertiary,
+      colorScheme.secondary,
+      colorScheme.primary,
+      colorScheme.error,
     ];
     return accents[index % accents.length];
   }
 
-  Color _cardBackground(int index) {
-    const backgrounds = [
-      AppColors.yellowSoft,
-      AppColors.greenSoft,
-      AppColors.blueSoft,
-      AppColors.purpleSoft,
-      AppColors.roseSoft,
-      AppColors.secondarySoft,
+  Color _cardBackground(int index, ColorScheme colorScheme) {
+    final backgrounds = [
+      colorScheme.tertiaryContainer,
+      colorScheme.secondaryContainer,
+      colorScheme.primaryContainer,
+      colorScheme.errorContainer,
+      colorScheme.surfaceContainerHigh,
     ];
     return backgrounds[index % backgrounds.length].withValues(alpha: 0.62);
   }

@@ -220,15 +220,16 @@ class _ThoughtComposer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
     return ThoughtPanel(
       padding: const EdgeInsets.all(AppSpacing.xl),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const ThoughtIconBubble(
+          ThoughtIconBubble(
             icon: Icons.lightbulb_outline,
-            color: AppColors.primary,
-            background: AppColors.primarySoft,
+            color: colorScheme.onPrimaryContainer,
+            background: colorScheme.primaryContainer,
           ),
           const SizedBox(width: AppSpacing.xl),
           Expanded(
@@ -241,7 +242,9 @@ class _ThoughtComposer extends StatelessWidget {
                   decoration: BoxDecoration(
                     color: Theme.of(context).colorScheme.surface,
                     borderRadius: BorderRadius.circular(AppRadius.md),
-                    border: Border.all(color: Theme.of(context).colorScheme.outline),
+                    border: Border.all(
+                      color: Theme.of(context).colorScheme.outline,
+                    ),
                   ),
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(AppRadius.md),
@@ -299,14 +302,19 @@ class _ThoughtComposer extends StatelessWidget {
                                 onTap: () => onRemoveImage(i),
                                 child: Container(
                                   decoration: BoxDecoration(
-                                    color: Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.54),
+                                    color: Theme.of(context)
+                                        .colorScheme
+                                        .onSurfaceVariant
+                                        .withValues(alpha: 0.54),
                                     shape: BoxShape.circle,
                                   ),
                                   padding: const EdgeInsets.all(AppSpacing.xxs),
                                   child: Icon(
                                     Icons.close,
                                     size: 12,
-                                    color: Theme.of(context).colorScheme.onPrimary,
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.onPrimary,
                                   ),
                                 ),
                               ),
@@ -413,7 +421,9 @@ class _ThoughtsToolbar extends StatelessWidget {
               label: Text('#$selectedTag'),
               deleteIcon: const Icon(Icons.close, size: 14),
               onDeleted: () => onTagFilterChanged(null),
-              backgroundColor: Theme.of(context).colorScheme.primary.withValues(alpha: 0.12),
+              backgroundColor: Theme.of(
+                context,
+              ).colorScheme.primary.withValues(alpha: 0.12),
               side: BorderSide.none,
               materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
               visualDensity: VisualDensity.compact,
@@ -583,7 +593,9 @@ class _ThoughtsRightRail extends StatelessWidget {
       width: AppDesktopSizes.rightRailWideWidth,
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surfaceContainerLow,
-        border: Border(left: BorderSide(color: Theme.of(context).colorScheme.outlineVariant)),
+        border: Border(
+          left: BorderSide(color: Theme.of(context).colorScheme.outlineVariant),
+        ),
       ),
       child: SingleChildScrollView(
         padding: const EdgeInsets.all(AppSpacing.xl),
@@ -641,6 +653,7 @@ class _StatsPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return ThoughtPanel(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -654,22 +667,22 @@ class _StatsPanel extends StatelessWidget {
             icon: Icons.lightbulb_outline,
             label: '总想法',
             value: total.toString(),
-            color: AppColors.primary,
-            background: AppColors.blueSoft,
+            color: colorScheme.primary,
+            background: colorScheme.primaryContainer,
           ),
           ThoughtStatRow(
             icon: Icons.add_circle_outline_rounded,
             label: '本页展示',
             value: total.toString(),
-            color: AppColors.success,
-            background: AppColors.greenSoft,
+            color: colorScheme.secondary,
+            background: colorScheme.secondaryContainer,
           ),
           ThoughtStatRow(
             icon: Icons.star_outline_rounded,
             label: '置顶数量',
             value: pinned.toString(),
-            color: AppColors.warning,
-            background: AppColors.yellowSoft,
+            color: colorScheme.tertiary,
+            background: colorScheme.tertiaryContainer,
           ),
         ],
       ),
@@ -684,6 +697,7 @@ class _TagsPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return ThoughtPanel(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -699,7 +713,7 @@ class _TagsPanel extends StatelessWidget {
               children: tags.map((entry) {
                 return Chip(
                   label: Text('${entry.key}  ${entry.value}'),
-                  backgroundColor: AppColors.primarySoft,
+                  backgroundColor: colorScheme.primaryContainer,
                   side: BorderSide.none,
                 );
               }).toList(),

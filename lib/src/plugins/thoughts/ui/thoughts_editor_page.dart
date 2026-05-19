@@ -134,7 +134,9 @@ class _ThoughtsEditorPageState extends ConsumerState<ThoughtsEditorPage> {
           ),
           FilledButton(
             onPressed: () => Navigator.of(context).pop(true),
-            style: FilledButton.styleFrom(backgroundColor: Theme.of(context).colorScheme.error),
+            style: FilledButton.styleFrom(
+              backgroundColor: Theme.of(context).colorScheme.error,
+            ),
             child: const Text('删除'),
           ),
         ],
@@ -202,6 +204,7 @@ class _ThoughtsEditorPageState extends ConsumerState<ThoughtsEditorPage> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
 
     if (!_isLoaded) {
       return Scaffold(
@@ -255,7 +258,12 @@ class _ThoughtsEditorPageState extends ConsumerState<ThoughtsEditorPage> {
                           color: Theme.of(context).colorScheme.error,
                         ),
                         const SizedBox(width: AppSpacing.sm),
-                        Text('删除', style: TextStyle(color: Theme.of(context).colorScheme.error)),
+                        Text(
+                          '删除',
+                          style: TextStyle(
+                            color: Theme.of(context).colorScheme.error,
+                          ),
+                        ),
                       ],
                     ),
                   ),
@@ -272,7 +280,9 @@ class _ThoughtsEditorPageState extends ConsumerState<ThoughtsEditorPage> {
                 decoration: BoxDecoration(
                   color: Theme.of(context).colorScheme.surface,
                   borderRadius: BorderRadius.circular(AppRadius.md),
-                  border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
+                  border: Border.all(
+                    color: Theme.of(context).colorScheme.outlineVariant,
+                  ),
                 ),
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(AppRadius.md),
@@ -365,7 +375,7 @@ class _ThoughtsEditorPageState extends ConsumerState<ThoughtsEditorPage> {
                       });
                     },
                   ),
-                  ..._availableColors.map((c) {
+                  ..._availableColors(colorScheme).map((c) {
                     return _ColorDot(
                       color: c,
                       label: null,
@@ -390,7 +400,7 @@ class _ThoughtsEditorPageState extends ConsumerState<ThoughtsEditorPage> {
                   title: const Text('置顶'),
                   value: _isPinned,
                   onChanged: _togglePin,
-                  activeThumbColor: AppColors.warning,
+                  activeThumbColor: colorScheme.tertiary,
                   secondary: const Icon(Icons.push_pin_outlined),
                 ),
 
@@ -428,7 +438,9 @@ class _ThoughtsEditorPageState extends ConsumerState<ThoughtsEditorPage> {
                     label: Text('删除'),
                     style: OutlinedButton.styleFrom(
                       foregroundColor: Theme.of(context).colorScheme.error,
-                      side: BorderSide(color: Theme.of(context).colorScheme.error),
+                      side: BorderSide(
+                        color: Theme.of(context).colorScheme.error,
+                      ),
                     ),
                   ),
                 ),
@@ -467,7 +479,9 @@ class _ImageStrip extends StatelessWidget {
                     : Container(
                         width: 84,
                         height: 84,
-                        color: Theme.of(context).colorScheme.surfaceContainerHigh,
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.surfaceContainerHigh,
                         child: const Icon(Icons.broken_image_outlined),
                       ),
               ),
@@ -479,7 +493,9 @@ class _ImageStrip extends StatelessWidget {
                   child: Container(
                     padding: const EdgeInsets.all(AppSpacing.xxs),
                     decoration: BoxDecoration(
-                      color: Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.54),
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.onSurfaceVariant.withValues(alpha: 0.54),
                       shape: BoxShape.circle,
                     ),
                     child: Icon(
@@ -523,7 +539,9 @@ class _ColorDot extends StatelessWidget {
           shape: BoxShape.circle,
           color: color ?? Theme.of(context).colorScheme.surfaceContainerHigh,
           border: Border.all(
-            color: isSelected ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.outline,
+            color: isSelected
+                ? Theme.of(context).colorScheme.primary
+                : Theme.of(context).colorScheme.outline,
             width: isSelected ? 2.5 : 1.5,
           ),
         ),
@@ -531,7 +549,10 @@ class _ColorDot extends StatelessWidget {
             ? Center(
                 child: Text(
                   'A',
-                  style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.outline),
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Theme.of(context).colorScheme.outline,
+                  ),
                 ),
               )
             : null,
@@ -540,14 +561,14 @@ class _ColorDot extends StatelessWidget {
   }
 }
 
-const _availableColors = [
-  AppColors.primary,
-  AppColors.secondary,
-  AppColors.accent,
-  AppColors.purple,
-  AppColors.success,
-  AppColors.warning,
-  AppColors.error,
+List<Color> _availableColors(ColorScheme colorScheme) => [
+  colorScheme.primary,
+  colorScheme.secondary,
+  colorScheme.tertiary,
+  colorScheme.error,
+  colorScheme.primaryContainer,
+  colorScheme.secondaryContainer,
+  colorScheme.tertiaryContainer,
 ];
 
 String _colorToHex(Color c) {

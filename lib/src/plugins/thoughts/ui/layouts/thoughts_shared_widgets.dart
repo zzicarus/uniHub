@@ -77,10 +77,12 @@ class ThoughtPillButton extends StatelessWidget {
         height: AppDesktopSizes.compactButtonHeight,
         padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
         decoration: BoxDecoration(
-          color: selected ? AppColors.yellowSoft : colorScheme.surface,
+          color: selected
+              ? colorScheme.tertiaryContainer
+              : colorScheme.surfaceContainerLow,
           borderRadius: BorderRadius.circular(AppRadius.sm),
           border: Border.all(
-            color: selected ? AppColors.warning : colorScheme.outline,
+            color: selected ? colorScheme.tertiary : colorScheme.outline,
           ),
         ),
         child: Row(
@@ -89,13 +91,15 @@ class ThoughtPillButton extends StatelessWidget {
             Icon(
               icon,
               size: 18,
-              color: selected ? AppColors.warning : colorScheme.onSurfaceVariant,
+              color: selected
+                  ? colorScheme.onTertiaryContainer
+                  : colorScheme.onSurfaceVariant,
             ),
             const SizedBox(width: AppSpacing.xs),
             Text(
               label,
               style: theme.textTheme.labelMedium?.copyWith(
-                color: selected ? AppColors.warning : null,
+                color: selected ? colorScheme.onTertiaryContainer : null,
               ),
             ),
           ],
@@ -192,14 +196,18 @@ class ThoughtFilterChip extends StatelessWidget {
               Text(
                 label,
                 style: theme.textTheme.labelMedium?.copyWith(
-                  color: selected ? colorScheme.onPrimary : colorScheme.onSurfaceVariant,
+                  color: selected
+                      ? colorScheme.onPrimary
+                      : colorScheme.onSurfaceVariant,
                 ),
               ),
               const SizedBox(width: AppSpacing.xs),
               Text(
                 value,
                 style: theme.textTheme.labelMedium?.copyWith(
-                  color: selected ? colorScheme.onPrimary.withValues(alpha: 0.7) : colorScheme.outline,
+                  color: selected
+                      ? colorScheme.onPrimary.withValues(alpha: 0.7)
+                      : colorScheme.outline,
                 ),
               ),
             ],
@@ -293,10 +301,10 @@ class ThoughtCompactItem extends StatelessWidget {
       padding: const EdgeInsets.only(bottom: AppSpacing.md),
       child: Row(
         children: [
-          const ThoughtIconBubble(
+          ThoughtIconBubble(
             icon: Icons.lightbulb_outline,
-            color: AppColors.warning,
-            background: AppColors.yellowSoft,
+            color: Theme.of(context).colorScheme.onTertiaryContainer,
+            background: Theme.of(context).colorScheme.tertiaryContainer,
           ),
           const SizedBox(width: AppSpacing.md),
           Expanded(
@@ -316,7 +324,11 @@ class ThoughtCompactItem extends StatelessWidget {
               ],
             ),
           ),
-          const Icon(Icons.star_rounded, color: AppColors.warning, size: 18),
+          Icon(
+            Icons.star_rounded,
+            color: Theme.of(context).colorScheme.tertiary,
+            size: 18,
+          ),
         ],
       ),
     );

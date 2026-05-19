@@ -4,7 +4,6 @@ import 'package:flutter_quill/flutter_quill.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/database/app_database.dart';
-import '../../../core/theme/app_tokens.dart';
 import '../../../shared/widgets/adaptive_layout.dart';
 import '../data/thought_content_codec.dart';
 import '../data/thought_image_service.dart';
@@ -206,6 +205,7 @@ class _ThoughtsPageState extends ConsumerState<ThoughtsPage> {
     final isArchived = ref.watch(archiveFilterProvider);
     final tagStats = ref.watch(tagStatsProvider);
     final selectedTag = ref.watch(tagFilterProvider);
+    final colorScheme = Theme.of(context).colorScheme;
 
     final layoutParams = _LayoutParams(
       thoughtsAsync: thoughtsAsync,
@@ -250,7 +250,7 @@ class _ThoughtsPageState extends ConsumerState<ThoughtsPage> {
       },
       child: Scaffold(
         key: _scaffoldKey,
-        backgroundColor: AppColors.background,
+        backgroundColor: colorScheme.surface,
         endDrawer: _selectedThoughtId != null
             ? Drawer(
                 width: MediaQuery.of(context).size.width * 0.55,

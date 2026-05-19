@@ -120,13 +120,13 @@ class Sidebar extends ConsumerWidget {
                     ),
                     child: Row(
                       children: [
-                        const CircleAvatar(
+                        CircleAvatar(
                           radius: 20,
-                          backgroundColor: AppColors.blueSoft,
+                          backgroundColor: colorScheme.primaryContainer,
                           child: Icon(
                             Icons.person_rounded,
                             size: 22,
-                            color: AppColors.primary,
+                            color: colorScheme.onPrimaryContainer,
                           ),
                         ),
                         const SizedBox(width: AppSpacing.sm),
@@ -171,10 +171,13 @@ class _LogoMark extends StatelessWidget {
       height: 42,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(AppRadius.md),
-        gradient: const LinearGradient(
+        gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [Color(0xFF9AAEFF), AppColors.primary],
+          colors: [
+            Theme.of(context).colorScheme.primaryContainer,
+            Theme.of(context).colorScheme.primary,
+          ],
         ),
       ),
       child: Center(
@@ -343,7 +346,9 @@ class _NavItem extends StatelessWidget {
         : isEnabled
         ? colorScheme.onSurfaceVariant
         : colorScheme.outline;
-    final bgColor = isSelected ? colorScheme.primaryContainer : Colors.transparent;
+    final bgColor = isSelected
+        ? colorScheme.primaryContainer
+        : Colors.transparent;
 
     return Padding(
       padding: EdgeInsets.symmetric(
