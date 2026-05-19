@@ -74,25 +74,29 @@ class Sidebar extends ConsumerWidget {
                             },
                           ),
                   ),
-                  const _NavItem(
+                  _NavItem(
                     icon: Icons.check_box_outlined,
                     label: '待办',
-                    isSelected: false,
+                    isSelected: location == '/todos',
+                    onTap: () => context.goNamed(RouteNames.todos),
                   ),
-                  const _NavItem(
+                  _NavItem(
                     icon: Icons.description_outlined,
                     label: '笔记',
-                    isSelected: false,
+                    isSelected: location == '/notes',
+                    onTap: () => context.goNamed(RouteNames.notes),
                   ),
-                  const _NavItem(
+                  _NavItem(
                     icon: Icons.calendar_month_outlined,
                     label: '日历',
-                    isSelected: false,
+                    isSelected: location == '/calendar',
+                    onTap: () => context.goNamed(RouteNames.calendar),
                   ),
-                  const _NavItem(
+                  _NavItem(
                     icon: Icons.star_border_rounded,
                     label: '收藏',
-                    isSelected: false,
+                    isSelected: location == '/favorites',
+                    onTap: () => context.goNamed(RouteNames.favorites),
                   ),
                   const SizedBox(height: AppSpacing.lg),
                   const Padding(

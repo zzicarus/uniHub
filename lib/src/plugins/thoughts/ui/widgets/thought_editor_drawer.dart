@@ -13,8 +13,9 @@ import 'thought_rich_editor.dart';
 
 class ThoughtEditorDrawer extends ConsumerStatefulWidget {
   final int thoughtId;
+  final VoidCallback? onClose;
 
-  const ThoughtEditorDrawer({required this.thoughtId, super.key});
+  const ThoughtEditorDrawer({required this.thoughtId, this.onClose, super.key});
 
   @override
   ConsumerState<ThoughtEditorDrawer> createState() =>
@@ -114,7 +115,7 @@ class _ThoughtEditorDrawerState extends ConsumerState<ThoughtEditorDrawer> {
 
   Future<void> _close() async {
     await _save();
-    if (mounted) Navigator.of(context).pop();
+    widget.onClose?.call();
   }
 
   Future<void> _addImage() async {
@@ -158,7 +159,7 @@ class _ThoughtEditorDrawerState extends ConsumerState<ThoughtEditorDrawer> {
   Future<void> _archive() async {
     await ref.read(thoughtsRepositoryProvider).archiveThought(widget.thoughtId);
     ref.invalidate(thoughtsListProvider);
-    if (mounted) Navigator.of(context).pop();
+    widget.onClose?.call();
   }
 
   Future<void> _restore() async {
@@ -186,11 +187,11 @@ class _ThoughtEditorDrawerState extends ConsumerState<ThoughtEditorDrawer> {
         ],
       ),
     );
-    if (ok != true || !mounted) return;
+    if (ok != true) return;
     await ref.read(thoughtImageServiceProvider).deleteImages(_images);
     await ref.read(thoughtsRepositoryProvider).deleteThought(widget.thoughtId);
     ref.invalidate(thoughtsListProvider);
-    if (mounted) Navigator.of(context).pop();
+    widget.onClose?.call();
   }
 
   @override
@@ -272,7 +273,6 @@ class _ThoughtEditorDrawerState extends ConsumerState<ThoughtEditorDrawer> {
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
         children: [
           Row(
             children: [

@@ -1,9 +1,10 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../app/adaptive_shell.dart';
 import '../app/home_page.dart';
+import '../app/mobile_placeholder_pages.dart';
 import '../app/settings_page.dart';
 import '../plugin/plugin_registry.dart';
-import '../../shared/layouts/app_layout.dart';
 import 'route_names.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
@@ -12,7 +13,7 @@ final routerProvider = Provider<GoRouter>((ref) {
     initialLocation: '/',
     routes: [
       ShellRoute(
-        builder: (context, state, child) => AppLayout(child: child),
+        builder: (context, state, child) => AdaptiveShell(child: child),
         routes: [
           GoRoute(
             path: '/',
@@ -20,6 +21,31 @@ final routerProvider = Provider<GoRouter>((ref) {
             builder: (context, state) => const HomePage(),
           ),
           ...registry.mergedRoutes,
+          GoRoute(
+            path: '/todos',
+            name: RouteNames.todos,
+            builder: (context, state) => const TodosPage(),
+          ),
+          GoRoute(
+            path: '/notes',
+            name: RouteNames.notes,
+            builder: (context, state) => const NotesPage(),
+          ),
+          GoRoute(
+            path: '/calendar',
+            name: RouteNames.calendar,
+            builder: (context, state) => const CalendarPage(),
+          ),
+          GoRoute(
+            path: '/favorites',
+            name: RouteNames.favorites,
+            builder: (context, state) => const FavoritesPage(),
+          ),
+          GoRoute(
+            path: '/search',
+            name: RouteNames.search,
+            builder: (context, state) => const SearchPage(),
+          ),
           GoRoute(
             path: '/settings',
             name: RouteNames.settings,

@@ -84,3 +84,14 @@ abstract final class AppDesktopSizes {
   static const compactButtonHeight = 36.0;
   static const previewMinWidth = 980.0;
 }
+
+abstract final class AppMobileSizes {
+  static const maxContentWidth = 560.0;
+  static const bottomNavHeight = 88.0;
+  static const pageHorizontalPadding = 20.0;
+  static const heroLogoSize = 46.0;
+  static const iconTile = 48.0;
+  static const statCardHeight = 108.0;
+  static const compactCardHeight = 128.0;
+  static const searchHeight = 58.0;
+}
