@@ -278,9 +278,8 @@ class _QuickCaptureCardState extends ConsumerState<_QuickCaptureCard> {
                     vertical: AppSpacing.sm,
                   ),
                   decoration: BoxDecoration(
-                    color: AppColors.surface,
+                    color: AppColors.surfaceSubtle,
                     borderRadius: BorderRadius.circular(AppRadius.md),
-                    border: Border.all(color: AppColors.border),
                   ),
                   child: TextField(
                     controller: _controller,
@@ -802,21 +801,10 @@ class _Panel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: padding,
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(AppRadius.lg),
-        border: Border.all(color: AppColors.borderSoft),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.textPrimary.withValues(alpha: 0.04),
-            blurRadius: 24,
-            offset: const Offset(0, 12),
-          ),
-        ],
-      ),
-      child: child,
+    return Material(
+      color: AppColors.surface,
+      borderRadius: BorderRadius.circular(AppRadius.lg),
+      child: Padding(padding: padding, child: child),
     );
   }
 }
@@ -895,47 +883,58 @@ class _MetricCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return _Panel(
-      child: SizedBox(
-        height: AppSizes.dashboardCardHeight,
-        child: Row(
-          children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Icon(icon, color: color, size: 24),
-                  Text(title, style: theme.textTheme.labelLarge),
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      Text(
-                        value,
-                        style: theme.textTheme.headlineMedium?.copyWith(
-                          fontWeight: FontWeight.w800,
+    return Material(
+      color: background,
+      borderRadius: BorderRadius.circular(AppRadius.lg),
+      child: Padding(
+        padding: const EdgeInsets.all(AppSpacing.lg),
+        child: SizedBox(
+          height: AppSizes.dashboardCardHeight,
+          child: Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Icon(icon, color: color, size: 24),
+                    Text(title, style: theme.textTheme.labelLarge),
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Text(
+                          value,
+                          style: theme.textTheme.headlineMedium?.copyWith(
+                            fontWeight: FontWeight.w800,
+                          ),
                         ),
-                      ),
-                      const SizedBox(width: AppSpacing.xs),
-                      Padding(
-                        padding: const EdgeInsets.only(bottom: AppSpacing.xxs),
-                        child: Text(note, style: theme.textTheme.bodySmall),
-                      ),
-                    ],
-                  ),
-                ],
+                        const SizedBox(width: AppSpacing.xs),
+                        Padding(
+                          padding: const EdgeInsets.only(
+                            bottom: AppSpacing.xxs,
+                          ),
+                          child: Text(note, style: theme.textTheme.bodySmall),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
-            ),
-            Container(
-              width: 64,
-              height: 64,
-              decoration: BoxDecoration(
-                color: background,
-                borderRadius: BorderRadius.circular(AppRadius.lg),
+              Container(
+                width: 64,
+                height: 64,
+                decoration: BoxDecoration(
+                  color: AppColors.surface.withValues(alpha: 0.5),
+                  borderRadius: BorderRadius.circular(AppRadius.lg),
+                ),
+                child: Icon(
+                  icon,
+                  color: color.withValues(alpha: 0.65),
+                  size: 32,
+                ),
               ),
-              child: Icon(icon, color: color.withValues(alpha: 0.65), size: 32),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -959,17 +958,13 @@ class _ThoughtPreviewCard extends StatelessWidget {
     final background = _itemBackground(color);
 
     return Material(
+      color: background.withValues(alpha: 0.62),
       borderRadius: BorderRadius.circular(AppRadius.md),
       child: InkWell(
         borderRadius: BorderRadius.circular(AppRadius.md),
         onTap: onTap,
-        child: Container(
+        child: Padding(
           padding: const EdgeInsets.all(AppSpacing.md),
-          decoration: BoxDecoration(
-            color: background.withValues(alpha: 0.62),
-            borderRadius: BorderRadius.circular(AppRadius.md),
-            border: Border.all(color: color.withValues(alpha: 0.16)),
-          ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -1050,15 +1045,20 @@ class _ShortcutCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Material(
+      color: background,
       borderRadius: BorderRadius.circular(AppRadius.lg),
       child: InkWell(
         borderRadius: BorderRadius.circular(AppRadius.lg),
         onTap: onTap,
-        child: _Panel(
+        child: Padding(
           padding: const EdgeInsets.all(AppSpacing.md),
           child: Row(
             children: [
-              _IconBubble(icon: icon, color: color, background: background),
+              _IconBubble(
+                icon: icon,
+                color: color,
+                background: AppColors.surface.withValues(alpha: 0.5),
+              ),
               const SizedBox(width: AppSpacing.md),
               Expanded(
                 child: Column(
@@ -1605,49 +1605,53 @@ class _MobileQuickCaptureCardState
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return _Panel(
-      padding: const EdgeInsets.all(AppSpacing.lg),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              const _IconBubble(
-                icon: Icons.edit_outlined,
-                color: AppColors.primary,
-                background: AppColors.primarySoft,
-              ),
-              const SizedBox(width: AppSpacing.md),
-              Text('快速记录想法', style: theme.textTheme.titleMedium),
-            ],
-          ),
-          const SizedBox(height: AppSpacing.md),
-          TextField(
-            controller: _controller,
-            minLines: 2,
-            maxLines: 4,
-            decoration: const InputDecoration(hintText: '此刻的想法是...'),
-            onChanged: (_) => setState(() {}),
-          ),
-          const SizedBox(height: AppSpacing.md),
-          Wrap(
-            spacing: AppSpacing.sm,
-            runSpacing: AppSpacing.sm,
-            crossAxisAlignment: WrapCrossAlignment.center,
-            children: [
-              const _PillButton(icon: Icons.sell_outlined, label: '添加标签'),
-              const _PillButton(icon: Icons.image_outlined, label: '图片'),
-              const _PillButton(icon: Icons.check_box_outlined, label: '待办'),
-              FilledButton.icon(
-                onPressed: _controller.text.trim().isEmpty || _submitting
-                    ? null
-                    : _submit,
-                icon: const Icon(Icons.send_rounded, size: 18),
-                label: Text(_submitting ? '记录中' : '记录'),
-              ),
-            ],
-          ),
-        ],
+    return Material(
+      color: AppColors.surfaceSubtle,
+      borderRadius: BorderRadius.circular(AppRadius.lg),
+      child: Padding(
+        padding: const EdgeInsets.all(AppSpacing.lg),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                const _IconBubble(
+                  icon: Icons.edit_outlined,
+                  color: AppColors.primary,
+                  background: AppColors.primarySoft,
+                ),
+                const SizedBox(width: AppSpacing.md),
+                Text('快速记录想法', style: theme.textTheme.titleMedium),
+              ],
+            ),
+            const SizedBox(height: AppSpacing.md),
+            TextField(
+              controller: _controller,
+              minLines: 2,
+              maxLines: 4,
+              decoration: const InputDecoration(hintText: '此刻的想法是...'),
+              onChanged: (_) => setState(() {}),
+            ),
+            const SizedBox(height: AppSpacing.md),
+            Wrap(
+              spacing: AppSpacing.sm,
+              runSpacing: AppSpacing.sm,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              children: [
+                const _PillButton(icon: Icons.sell_outlined, label: '添加标签'),
+                const _PillButton(icon: Icons.image_outlined, label: '图片'),
+                const _PillButton(icon: Icons.check_box_outlined, label: '待办'),
+                FilledButton.icon(
+                  onPressed: _controller.text.trim().isEmpty || _submitting
+                      ? null
+                      : _submit,
+                  icon: const Icon(Icons.send_rounded, size: 18),
+                  label: Text(_submitting ? '记录中' : '记录'),
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -1742,39 +1746,43 @@ class _MobileFocusCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return _Panel(
-      padding: const EdgeInsets.all(AppSpacing.sm),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Icon(icon, color: color, size: 22),
-          Text(title, style: theme.textTheme.labelLarge, maxLines: 1),
-          Text(
-            value,
-            style: theme.textTheme.headlineMedium?.copyWith(
-              fontSize: 28,
-              fontWeight: FontWeight.w800,
-            ),
-          ),
-          Text(
-            note,
-            style: theme.textTheme.bodySmall,
-            overflow: TextOverflow.ellipsis,
-          ),
-          Align(
-            alignment: Alignment.centerRight,
-            child: Container(
-              width: AppSizes.iconButton,
-              height: AppSizes.iconButton,
-              decoration: BoxDecoration(
-                color: background,
-                borderRadius: BorderRadius.circular(AppRadius.md),
+    return Material(
+      color: background,
+      borderRadius: BorderRadius.circular(AppRadius.lg),
+      child: Padding(
+        padding: const EdgeInsets.all(AppSpacing.sm),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Icon(icon, color: color, size: 22),
+            Text(title, style: theme.textTheme.labelLarge, maxLines: 1),
+            Text(
+              value,
+              style: theme.textTheme.headlineMedium?.copyWith(
+                fontSize: 28,
+                fontWeight: FontWeight.w800,
               ),
-              child: Icon(icon, color: color.withValues(alpha: 0.65)),
             ),
-          ),
-        ],
+            Text(
+              note,
+              style: theme.textTheme.bodySmall,
+              overflow: TextOverflow.ellipsis,
+            ),
+            Align(
+              alignment: Alignment.centerRight,
+              child: Container(
+                width: AppSizes.iconButton,
+                height: AppSizes.iconButton,
+                decoration: BoxDecoration(
+                  color: AppColors.surface.withValues(alpha: 0.5),
+                  borderRadius: BorderRadius.circular(AppRadius.md),
+                ),
+                child: Icon(icon, color: color.withValues(alpha: 0.65)),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -1831,38 +1839,37 @@ class _MobileThoughtLine extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
+    return Material(
+      color: AppColors.surfaceSubtle,
       borderRadius: BorderRadius.circular(AppRadius.md),
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.all(AppSpacing.md),
-        decoration: BoxDecoration(
-          color: AppColors.surfaceSubtle,
-          borderRadius: BorderRadius.circular(AppRadius.md),
-          border: Border.all(color: AppColors.borderSoft),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              _formatTimestamp(item.createdAt),
-              style: Theme.of(context).textTheme.bodySmall,
-            ),
-            const SizedBox(height: AppSpacing.sm),
-            Text(
-              _firstLine(item.content),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: Theme.of(context).textTheme.titleSmall,
-            ),
-            const SizedBox(height: AppSpacing.xs),
-            Text(
-              _restLines(item.content),
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-              style: Theme.of(context).textTheme.bodySmall,
-            ),
-          ],
+      child: InkWell(
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.all(AppSpacing.md),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                _formatTimestamp(item.createdAt),
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+              const SizedBox(height: AppSpacing.sm),
+              Text(
+                _firstLine(item.content),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: Theme.of(context).textTheme.titleSmall,
+              ),
+              const SizedBox(height: AppSpacing.xs),
+              Text(
+                _restLines(item.content),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -2011,38 +2018,42 @@ class _MobileShortcutCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
+    return Material(
+      color: background,
       borderRadius: BorderRadius.circular(AppRadius.md),
-      onTap: onTap,
-      child: _Panel(
-        padding: const EdgeInsets.all(AppSpacing.sm),
-        child: Row(
-          children: [
-            Container(
-              width: AppSizes.inputHeight,
-              height: AppSizes.inputHeight,
-              decoration: BoxDecoration(
-                color: background,
-                borderRadius: BorderRadius.circular(AppRadius.md),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.all(AppSpacing.sm),
+          child: Row(
+            children: [
+              Container(
+                width: AppSizes.inputHeight,
+                height: AppSizes.inputHeight,
+                decoration: BoxDecoration(
+                  color: AppColors.surface.withValues(alpha: 0.5),
+                  borderRadius: BorderRadius.circular(AppRadius.md),
+                ),
+                child: Icon(icon, color: color),
               ),
-              child: Icon(icon, color: color),
-            ),
-            const SizedBox(width: AppSpacing.sm),
-            Expanded(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(title, style: Theme.of(context).textTheme.titleSmall),
-                  Text(
-                    subtitle,
-                    style: Theme.of(context).textTheme.bodySmall,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ],
+              const SizedBox(width: AppSpacing.sm),
+              Expanded(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(title, style: Theme.of(context).textTheme.titleSmall),
+                    Text(
+                      subtitle,
+                      style: Theme.of(context).textTheme.bodySmall,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

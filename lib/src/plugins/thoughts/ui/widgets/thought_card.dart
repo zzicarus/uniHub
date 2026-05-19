@@ -75,10 +75,6 @@ class _ThoughtCardState extends ConsumerState<ThoughtCard> {
               minHeight: AppSizes.cardMinHeight,
             ),
             padding: const EdgeInsets.all(AppSpacing.md),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(AppRadius.md),
-              border: Border.all(color: accent.withValues(alpha: 0.16)),
-            ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
