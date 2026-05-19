@@ -270,6 +270,41 @@ Widget build(BuildContext context, WidgetRef ref) {
 }
 ```
 
+### 动态色板与颜色选择器
+
+当 UI 需要一组强调色（例如卡片 fallback 色板、颜色选择器、统计卡图标色）时，不要在 Widget 文件中维护 `AppColors.primary / success / warning / purple` 数组。改为从当前 `ColorScheme` 派生，并把 `ColorScheme` 显式传入 helper。
+
+```dart
+// ✅ 正确：色板跟随当前亮色/暗色主题
+List<Color> availableColors(ColorScheme colorScheme) => [
+  colorScheme.primary,
+  colorScheme.secondary,
+  colorScheme.tertiary,
+  colorScheme.error,
+  colorScheme.primaryContainer,
+  colorScheme.secondaryContainer,
+  colorScheme.tertiaryContainer,
+];
+
+Color cardAccent(int index, ColorScheme colorScheme) {
+  final accents = [
+    colorScheme.tertiary,
+    colorScheme.secondary,
+    colorScheme.primary,
+    colorScheme.error,
+  ];
+  return accents[index % accents.length];
+}
+
+// ❌ 错误：Widget 层固定旧 palette，暗色模式和动态主题无法跟随
+const accents = [
+  AppColors.warning,
+  AppColors.success,
+  AppColors.primary,
+  AppColors.purple,
+];
+```
+
 ### 暗色主题实现模式
 
 ```dart
