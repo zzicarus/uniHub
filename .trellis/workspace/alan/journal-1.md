@@ -362,3 +362,37 @@ Refactored Thoughts and HomePage UI to strictly follow Material 3 Tonal styling.
 ### Next Steps
 
 - None - task complete
+
+
+## Session 12: 迁移 UI 到 Material Design 3
+
+**Date**: 2026-05-19
+**Task**: 迁移 UI 到 Material Design 3
+**Branch**: `main`
+
+### Summary
+
+完成 lib/src 全 UI 的 Material Design 3 ColorScheme 迁移，提交动态色板规范，并通过 flutter analyze 与 flutter test。
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `bd7a0df` | (see git log) |
+| `7fc1cdd` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
