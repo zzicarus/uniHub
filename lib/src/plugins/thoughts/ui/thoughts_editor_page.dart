@@ -134,7 +134,7 @@ class _ThoughtsEditorPageState extends ConsumerState<ThoughtsEditorPage> {
           ),
           FilledButton(
             onPressed: () => Navigator.of(context).pop(true),
-            style: FilledButton.styleFrom(backgroundColor: AppColors.error),
+            style: FilledButton.styleFrom(backgroundColor: Theme.of(context).colorScheme.error),
             child: const Text('删除'),
           ),
         ],
@@ -249,13 +249,13 @@ class _ThoughtsEditorPageState extends ConsumerState<ThoughtsEditorPage> {
                     value: 'delete',
                     child: Row(
                       children: [
-                        const Icon(
+                        Icon(
                           Icons.delete_outline,
                           size: 20,
-                          color: AppColors.error,
+                          color: Theme.of(context).colorScheme.error,
                         ),
                         const SizedBox(width: AppSpacing.sm),
-                        Text('删除', style: TextStyle(color: AppColors.error)),
+                        Text('删除', style: TextStyle(color: Theme.of(context).colorScheme.error)),
                       ],
                     ),
                   ),
@@ -270,9 +270,9 @@ class _ThoughtsEditorPageState extends ConsumerState<ThoughtsEditorPage> {
               // Content editor
               DecoratedBox(
                 decoration: BoxDecoration(
-                  color: AppColors.surface,
+                  color: Theme.of(context).colorScheme.surface,
                   borderRadius: BorderRadius.circular(AppRadius.md),
-                  border: Border.all(color: AppColors.borderSoft),
+                  border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
                 ),
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(AppRadius.md),
@@ -420,15 +420,15 @@ class _ThoughtsEditorPageState extends ConsumerState<ThoughtsEditorPage> {
                   width: double.infinity,
                   child: OutlinedButton.icon(
                     onPressed: _delete,
-                    icon: const Icon(
+                    icon: Icon(
                       Icons.delete_outline,
                       size: 18,
-                      color: AppColors.error,
+                      color: Theme.of(context).colorScheme.error,
                     ),
-                    label: const Text('删除'),
+                    label: Text('删除'),
                     style: OutlinedButton.styleFrom(
-                      foregroundColor: AppColors.error,
-                      side: const BorderSide(color: AppColors.error),
+                      foregroundColor: Theme.of(context).colorScheme.error,
+                      side: BorderSide(color: Theme.of(context).colorScheme.error),
                     ),
                   ),
                 ),
@@ -467,7 +467,7 @@ class _ImageStrip extends StatelessWidget {
                     : Container(
                         width: 84,
                         height: 84,
-                        color: AppColors.surfaceMuted,
+                        color: Theme.of(context).colorScheme.surfaceContainerHigh,
                         child: const Icon(Icons.broken_image_outlined),
                       ),
               ),
@@ -477,15 +477,15 @@ class _ImageStrip extends StatelessWidget {
                 child: GestureDetector(
                   onTap: () => unawaited(onRemove(index)),
                   child: Container(
-                    padding: const EdgeInsets.all(2),
-                    decoration: const BoxDecoration(
-                      color: Colors.black54,
+                    padding: const EdgeInsets.all(AppSpacing.xxs),
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.54),
                       shape: BoxShape.circle,
                     ),
-                    child: const Icon(
+                    child: Icon(
                       Icons.close,
                       size: 14,
-                      color: Colors.white,
+                      color: Theme.of(context).colorScheme.onPrimary,
                     ),
                   ),
                 ),
@@ -521,17 +521,17 @@ class _ColorDot extends StatelessWidget {
         height: 36,
         decoration: BoxDecoration(
           shape: BoxShape.circle,
-          color: color ?? AppColors.surfaceMuted,
+          color: color ?? Theme.of(context).colorScheme.surfaceContainerHigh,
           border: Border.all(
-            color: isSelected ? AppColors.primary : AppColors.border,
+            color: isSelected ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.outline,
             width: isSelected ? 2.5 : 1.5,
           ),
         ),
         child: color == null
-            ? const Center(
+            ? Center(
                 child: Text(
                   'A',
-                  style: TextStyle(fontSize: 12, color: AppColors.textTertiary),
+                  style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.outline),
                 ),
               )
             : null,

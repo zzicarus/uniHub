@@ -13,19 +13,14 @@ class ThoughtPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Container(
       padding: padding,
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: colorScheme.surface,
         borderRadius: BorderRadius.circular(AppRadius.lg),
-        border: Border.all(color: AppColors.borderSoft),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.textPrimary.withValues(alpha: 0.04),
-            blurRadius: 24,
-            offset: const Offset(0, 12),
-          ),
-        ],
+        border: Border.all(color: colorScheme.outlineVariant),
+        boxShadow: const [AppShadows.card],
       ),
       child: child,
     );
@@ -75,16 +70,17 @@ class ThoughtPillButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
     return GestureDetector(
       onTap: onTap,
       child: Container(
         height: AppDesktopSizes.compactButtonHeight,
         padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
         decoration: BoxDecoration(
-          color: selected ? AppColors.yellowSoft : AppColors.surface,
+          color: selected ? AppColors.yellowSoft : colorScheme.surface,
           borderRadius: BorderRadius.circular(AppRadius.sm),
           border: Border.all(
-            color: selected ? AppColors.warning : AppColors.border,
+            color: selected ? AppColors.warning : colorScheme.outline,
           ),
         ),
         child: Row(
@@ -93,7 +89,7 @@ class ThoughtPillButton extends StatelessWidget {
             Icon(
               icon,
               size: 18,
-              color: selected ? AppColors.warning : AppColors.textSecondary,
+              color: selected ? AppColors.warning : colorScheme.onSurfaceVariant,
             ),
             const SizedBox(width: AppSpacing.xs),
             Text(
@@ -115,18 +111,19 @@ class ThoughtSearchBox extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
     return Container(
       width: 260,
       height: AppSizes.inputHeight,
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: colorScheme.surface,
         borderRadius: BorderRadius.circular(AppRadius.md),
-        border: Border.all(color: AppColors.border),
+        border: Border.all(color: colorScheme.outline),
       ),
       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
       child: Row(
         children: [
-          const Icon(Icons.search_rounded, color: AppColors.textTertiary),
+          Icon(Icons.search_rounded, color: colorScheme.outline),
           const SizedBox(width: AppSpacing.xs),
           Text('Ctrl + K 全局搜索', style: theme.textTheme.bodyMedium),
         ],
@@ -142,15 +139,16 @@ class ThoughtIconSquare extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Container(
       width: AppSizes.inputHeight,
       height: AppSizes.inputHeight,
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: colorScheme.surface,
         borderRadius: BorderRadius.circular(AppRadius.md),
-        border: Border.all(color: AppColors.border),
+        border: Border.all(color: colorScheme.outline),
       ),
-      child: Icon(icon),
+      child: Icon(icon, color: colorScheme.onSurfaceVariant),
     );
   }
 }
@@ -172,34 +170,40 @@ class ThoughtFilterChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        height: AppDesktopSizes.compactButtonHeight,
-        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
-        decoration: BoxDecoration(
-          color: selected ? AppColors.primary : AppColors.surface,
-          borderRadius: BorderRadius.circular(AppRadius.full),
-          border: Border.all(
-            color: selected ? AppColors.primary : AppColors.border,
+    final colorScheme = theme.colorScheme;
+    return Material(
+      color: selected ? colorScheme.primary : colorScheme.surface,
+      borderRadius: BorderRadius.circular(AppRadius.full),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(AppRadius.full),
+        child: Container(
+          height: AppDesktopSizes.compactButtonHeight,
+          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+          decoration: BoxDecoration(
+            border: Border.all(
+              color: selected ? colorScheme.primary : colorScheme.outline,
+            ),
+            borderRadius: BorderRadius.circular(AppRadius.full),
           ),
-        ),
-        child: Row(
-          children: [
-            Text(
-              label,
-              style: theme.textTheme.labelMedium?.copyWith(
-                color: selected ? Colors.white : AppColors.textSecondary,
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                label,
+                style: theme.textTheme.labelMedium?.copyWith(
+                  color: selected ? colorScheme.onPrimary : colorScheme.onSurfaceVariant,
+                ),
               ),
-            ),
-            const SizedBox(width: AppSpacing.xs),
-            Text(
-              value,
-              style: theme.textTheme.labelMedium?.copyWith(
-                color: selected ? Colors.white70 : AppColors.textTertiary,
+              const SizedBox(width: AppSpacing.xs),
+              Text(
+                value,
+                style: theme.textTheme.labelMedium?.copyWith(
+                  color: selected ? colorScheme.onPrimary.withValues(alpha: 0.7) : colorScheme.outline,
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -221,9 +225,10 @@ class ThoughtSectionLabel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
     return Row(
       children: [
-        Icon(icon, size: 18, color: AppColors.primary),
+        Icon(icon, size: 18, color: colorScheme.primary),
         const SizedBox(width: AppSpacing.xs),
         Text(title, style: theme.textTheme.titleMedium),
         const SizedBox(width: AppSpacing.xs),
@@ -232,7 +237,7 @@ class ThoughtSectionLabel extends StatelessWidget {
           materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
           visualDensity: VisualDensity.compact,
           side: BorderSide.none,
-          backgroundColor: AppColors.surfaceMuted,
+          backgroundColor: Theme.of(context).colorScheme.surfaceContainerHigh,
         ),
       ],
     );
@@ -256,7 +261,7 @@ class ThoughtPanelHeader extends StatelessWidget {
     final theme = Theme.of(context);
     return Row(
       children: [
-        Icon(icon, size: 20, color: AppColors.textPrimary),
+        Icon(icon, size: 20, color: Theme.of(context).colorScheme.onSurface),
         const SizedBox(width: AppSpacing.sm),
         Expanded(child: Text(title, style: theme.textTheme.titleMedium)),
         if (count != null)
@@ -423,7 +428,7 @@ class ThoughtEmptyState extends StatelessWidget {
             Icon(
               isArchived ? Icons.archive_outlined : Icons.lightbulb_outline,
               size: 54,
-              color: AppColors.textTertiary,
+              color: Theme.of(context).colorScheme.outline,
             ),
             const SizedBox(height: AppSpacing.md),
             Text(

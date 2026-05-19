@@ -181,7 +181,7 @@ class _ThoughtEditorDrawerState extends ConsumerState<ThoughtEditorDrawer> {
           ),
           FilledButton(
             onPressed: () => Navigator.of(c).pop(true),
-            style: FilledButton.styleFrom(backgroundColor: AppColors.error),
+            style: FilledButton.styleFrom(backgroundColor: Theme.of(context).colorScheme.error),
             child: const Text('删除'),
           ),
         ],
@@ -248,7 +248,7 @@ class _ThoughtEditorDrawerState extends ConsumerState<ThoughtEditorDrawer> {
     if (!_loaded) return const Center(child: CircularProgressIndicator());
 
     return DecoratedBox(
-      decoration: const BoxDecoration(color: AppColors.surface),
+      decoration: BoxDecoration(color: Theme.of(context).colorScheme.surface),
       child: ThoughtRichEditor(
         controller: _contentCtrl,
         imageService: ref.read(thoughtImageServiceProvider),
@@ -313,7 +313,7 @@ class _ThoughtEditorDrawerState extends ConsumerState<ThoughtEditorDrawer> {
                           : Container(
                               width: 80,
                               height: 80,
-                              color: AppColors.surfaceMuted,
+                              color: Theme.of(context).colorScheme.surfaceContainerHigh,
                               child: const Icon(Icons.broken_image_outlined),
                             ),
                     ),
@@ -323,15 +323,15 @@ class _ThoughtEditorDrawerState extends ConsumerState<ThoughtEditorDrawer> {
                       child: GestureDetector(
                         onTap: () => _removeImage(i),
                         child: Container(
-                          decoration: const BoxDecoration(
-                            color: Colors.black54,
+                          decoration: BoxDecoration(
+                            color: Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.54),
                             shape: BoxShape.circle,
                           ),
-                          padding: const EdgeInsets.all(2),
-                          child: const Icon(
+                          padding: const EdgeInsets.all(AppSpacing.xxs),
+                          child: Icon(
                             Icons.close,
                             size: 14,
-                            color: Colors.white,
+                            color: Theme.of(context).colorScheme.onPrimary,
                           ),
                         ),
                       ),
@@ -464,11 +464,11 @@ class _ThoughtEditorDrawerState extends ConsumerState<ThoughtEditorDrawer> {
               const SizedBox(height: AppSpacing.xs),
               OutlinedButton.icon(
                 onPressed: _delete,
-                icon: const Icon(Icons.delete_outline, size: 18),
-                label: const Text('删除'),
+                icon: Icon(Icons.delete_outline, size: 18),
+                label: Text('删除'),
                 style: OutlinedButton.styleFrom(
-                  foregroundColor: AppColors.error,
-                  side: const BorderSide(color: AppColors.error),
+                  foregroundColor: Theme.of(context).colorScheme.error,
+                  side: BorderSide(color: Theme.of(context).colorScheme.error),
                 ),
               ),
             ],
@@ -498,9 +498,9 @@ class _Cd extends StatelessWidget {
         height: 32,
         decoration: BoxDecoration(
           shape: BoxShape.circle,
-          color: color ?? AppColors.surfaceMuted,
+          color: color ?? Theme.of(context).colorScheme.surfaceContainerHigh,
           border: Border.all(
-            color: sel ? AppColors.primary : AppColors.border,
+            color: sel ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.outline,
             width: sel ? 2.5 : 1.5,
           ),
         ),
@@ -508,9 +508,9 @@ class _Cd extends StatelessWidget {
             ? Center(
                 child: Text(
                   'A',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 11,
-                    color: AppColors.textTertiary,
+                    color: Theme.of(context).colorScheme.outline,
                   ),
                 ),
               )

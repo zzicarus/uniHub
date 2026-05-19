@@ -95,3 +95,11 @@ abstract final class AppMobileSizes {
   static const compactCardHeight = 128.0;
   static const searchHeight = 58.0;
 }
+
+abstract final class AppShadows {
+  static const card = BoxShadow(
+    color: Color(0x0A0F172A),
+    blurRadius: 24,
+    offset: Offset(0, 12),
+  );
+}

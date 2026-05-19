@@ -101,12 +101,13 @@ Token 定义在 `lib/src/core/theme/app_tokens.dart`：
 
 | Token 类 | 内容 |
 |-----------|------|
-| `AppColors` | 颜色（primary、text、background、border 等） |
+| `AppColors` | 颜色 palette（primary、text、background、border、soft 装饰色等） |
 | `AppSpacing` | 间距（xxs=4 → section=40） |
 | `AppRadius` | 圆角（xs=6 → full=999） |
 | `AppSizes` | 尺寸（buttonHeight、inputHeight、listItem 等） |
 | `AppDesktopSizes` | 桌面端尺寸（sidebarWidth=240 等） |
 | `AppFonts` | 字体族（decorative、fallback 列表） |
+| `AppShadows` | 共享阴影常量（card、elevated 等） |
 
 ---
 
@@ -165,8 +166,10 @@ return Row(
 | 在 `build` 中执行异步操作 | build 应该是纯函数 | 使用 Riverpod Provider 提前加载数据 |
 | `MediaQuery.of(context)` 在深层 Widget 中 | 可能导致不必要的 rebuild | 在布局层判断，通过参数向下传递 |
 | 硬编码颜色/间距/字号 | Token 变更时遗漏 | 始终使用 `AppColors`、`AppSpacing` 等 |
+| `Colors.white` / `Colors.black54` 在 widget 文件中 | 暗色模式下不可读，破坏 M3 主题一致性 | 使用 `colorScheme.onPrimary`、`colorScheme.onSurfaceVariant` |
 | `Container` 无意义使用 | 性能浪费 | 有明确需求时才用 Container（装饰、约束等） |
 | 深层嵌套超过 4 层 | 可读性差 | 提取子 Widget |
+| 禁用 `surfaceTintColor` | 关闭 M3 elevation 视觉反馈层 | 移除覆盖，让 M3 默认处理 |
 
 ---
 
@@ -214,3 +217,85 @@ Material(
   ),
 );
 \
+
+---
+
+## M3 ColorScheme 使用模式
+
+Widget 层必须使用 `Theme.of(context).colorScheme` 获取颜色，而非硬编码 `AppColors.*`，以支持暗色模式和动态颜色。
+
+### 标准映射
+
+| AppColors（旧） | ColorScheme（推荐） | 适用 |
+|---|---|---|
+| `primary` | `colorScheme.primary` | 主色按钮、强调元素 |
+| `background` | `colorScheme.surface` | 页面背景 |
+| `surface` | `colorScheme.surface` | 卡片背景 |
+| `surfaceMuted` | `colorScheme.surfaceContainerHigh` | 次级表面 |
+| `textPrimary` | `colorScheme.onSurface` | 主要文字 |
+| `textSecondary` | `colorScheme.onSurfaceVariant` | 次要文字 |
+| `textTertiary` | `colorScheme.outline` | 占位符、提示 |
+| `border` / `borderSoft` | `colorScheme.outline` / `outlineVariant` | 边框 |
+| `error` | `colorScheme.error` | 错误状态 |
+| `*Soft` 装饰色 | 保留 `AppColors.*Soft` | 无 M3 直接对应，仅用于装饰 |
+
+### 白色/黑色硬编码替换
+
+```dart
+// ✅ 正确
+color: colorScheme.onPrimary,        // 替代 Colors.white（在 primary 背景上）
+color: colorScheme.onSurface,        // 替代 Colors.black87（主文字）
+color: colorScheme.onSurfaceVariant.withValues(alpha: 0.54),  // 替代 Colors.black54
+color: Colors.transparent,            // 保持透明（用于 InkWell 背景切换等）
+
+// ❌ 错误
+color: Colors.white,                  // 暗色模式下不可读
+color: Colors.black54,               // 暗色模式下不可读
+```
+
+### Widget 中使用模式
+
+```dart
+@override
+Widget build(BuildContext context, WidgetRef ref) {
+  final colorScheme = Theme.of(context).colorScheme;
+
+  return Container(
+    color: colorScheme.surfaceContainerLow,
+    child: Text(
+      'Hello',
+      style: TextStyle(color: colorScheme.onSurface),
+    ),
+  );
+}
+```
+
+### 暗色主题实现模式
+
+```dart
+// ✅ 正确：使用 fromSeed + Brightness.dark 自动生成
+static ThemeData get dark {
+  return ThemeData(
+    useMaterial3: true,
+    colorScheme: ColorScheme.fromSeed(
+      seedColor: AppColors.primary,
+      brightness: Brightness.dark,
+    ),
+    scaffoldBackgroundColor: ColorScheme.fromSeed(
+      seedColor: AppColors.primary,
+      brightness: Brightness.dark,
+    ).surface,
+  );
+}
+
+// MaterialApp 中启用
+MaterialApp.router(
+  theme: AppTheme.light,
+  darkTheme: AppTheme.dark,
+  themeMode: ThemeMode.system,
+);
+```
+
+### Elevation Surface Tint
+
+不要禁用 `surfaceTintColor`（`Colors.transparent`），M3 的 surface tint 层为 AppBar、Card、NavigationBar 等带 elevation 的组件提供了微妙的色调叠加，是 M3 视觉语言的重要组成。

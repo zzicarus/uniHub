@@ -14,8 +14,9 @@ class MobileShell extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final location = GoRouterState.of(context).uri.path;
 
+    final colorScheme = Theme.of(context).colorScheme;
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: colorScheme.surface,
       body: child,
       bottomNavigationBar: _MobileNavigationBar(location: location),
     );
@@ -43,11 +44,11 @@ class _MobileNavigationBar extends StatelessWidget {
       _ => 0,
     };
 
+    final colorScheme = Theme.of(context).colorScheme;
     return NavigationBar(
       height: AppMobileSizes.bottomNavHeight,
-      backgroundColor: AppColors.surface,
-      surfaceTintColor: Colors.transparent,
-      indicatorColor: AppColors.primarySoft,
+      backgroundColor: colorScheme.surface,
+      indicatorColor: colorScheme.primaryContainer,
       selectedIndex: selectedIndex,
       destinations: [
         const NavigationDestination(

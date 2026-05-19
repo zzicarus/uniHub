@@ -12,8 +12,9 @@ class HomePage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: colorScheme.surface,
       body: SafeArea(
         child: LayoutBuilder(
           builder: (context, constraints) {
@@ -140,6 +141,7 @@ class _SearchBox extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
     return InkWell(
       borderRadius: BorderRadius.circular(AppRadius.md),
       onTap: () {
@@ -151,14 +153,14 @@ class _SearchBox extends StatelessWidget {
         width: 260,
         height: AppSizes.inputHeight,
         decoration: BoxDecoration(
-          color: AppColors.surface,
+          color: colorScheme.surface,
           borderRadius: BorderRadius.circular(AppRadius.md),
-          border: Border.all(color: AppColors.border),
+          border: Border.all(color: colorScheme.outline),
         ),
         padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
         child: Row(
           children: [
-            const Icon(Icons.search_rounded, color: AppColors.textTertiary),
+            Icon(Icons.search_rounded, color: colorScheme.outline),
             const SizedBox(width: AppSpacing.xs),
             Text('Ctrl + K 全局搜索', style: theme.textTheme.bodyMedium),
           ],
@@ -173,6 +175,7 @@ class _NotificationButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Stack(
       clipBehavior: Clip.none,
       children: [
@@ -180,11 +183,11 @@ class _NotificationButton extends StatelessWidget {
           width: AppSizes.inputHeight,
           height: AppSizes.inputHeight,
           decoration: BoxDecoration(
-            color: AppColors.surface,
+            color: colorScheme.surface,
             borderRadius: BorderRadius.circular(AppRadius.md),
-            border: Border.all(color: AppColors.border),
+            border: Border.all(color: colorScheme.outline),
           ),
-          child: const Icon(Icons.notifications_none_rounded),
+          child: Icon(Icons.notifications_none_rounded, color: colorScheme.onSurfaceVariant),
         ),
         Positioned(
           right: 10,
@@ -192,8 +195,8 @@ class _NotificationButton extends StatelessWidget {
           child: Container(
             width: AppSpacing.xs,
             height: AppSpacing.xs,
-            decoration: const BoxDecoration(
-              color: AppColors.primary,
+            decoration: BoxDecoration(
+              color: colorScheme.primary,
               shape: BoxShape.circle,
             ),
           ),
@@ -252,6 +255,7 @@ class _QuickCaptureCardState extends ConsumerState<_QuickCaptureCard> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
     final isEmpty = _controller.text.trim().isEmpty;
 
     return _Panel(
@@ -278,7 +282,7 @@ class _QuickCaptureCardState extends ConsumerState<_QuickCaptureCard> {
                     vertical: AppSpacing.sm,
                   ),
                   decoration: BoxDecoration(
-                    color: AppColors.surfaceSubtle,
+                    color: colorScheme.surfaceContainerLow,
                     borderRadius: BorderRadius.circular(AppRadius.md),
                   ),
                   child: TextField(
@@ -287,9 +291,9 @@ class _QuickCaptureCardState extends ConsumerState<_QuickCaptureCard> {
                     minLines: 1,
                     textInputAction: TextInputAction.newline,
                     style: theme.textTheme.bodyMedium,
-                    decoration: const InputDecoration(
+                    decoration: InputDecoration(
                       hintText: '快速记录你的想法...',
-                      hintStyle: TextStyle(color: AppColors.textTertiary),
+                      hintStyle: TextStyle(color: colorScheme.outline),
                       border: InputBorder.none,
                       isDense: true,
                       contentPadding: EdgeInsets.zero,
@@ -311,12 +315,12 @@ class _QuickCaptureCardState extends ConsumerState<_QuickCaptureCard> {
                     FilledButton.icon(
                       onPressed: (isEmpty || _submitting) ? null : _submit,
                       icon: _submitting
-                          ? const SizedBox(
+                          ? SizedBox(
                               width: 18,
                               height: 18,
                               child: CircularProgressIndicator(
                                 strokeWidth: 2,
-                                color: Colors.white,
+                                color: colorScheme.onPrimary,
                               ),
                             )
                           : const Icon(Icons.send_rounded, size: 18),
@@ -403,16 +407,17 @@ class _RecentThoughtsGrid extends ConsumerWidget {
     final itemsAsync = ref.watch(dashboardItemsProvider);
 
     return itemsAsync.when(
-      loading: () => _buildLoadingGrid(),
-      error: (error, stack) => _buildErrorState(ref, error),
+      loading: () => _buildLoadingGrid(context),
+      error: (error, stack) => _buildErrorState(context, ref, error),
       data: (items) {
-        if (items.isEmpty) return _buildEmptyState();
+        if (items.isEmpty) return _buildEmptyState(context);
         return _buildDataGrid(context, items);
       },
     );
   }
 
-  Widget _buildLoadingGrid() {
+  Widget _buildLoadingGrid(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Wrap(
       spacing: AppSpacing.md,
       runSpacing: AppSpacing.md,
@@ -423,7 +428,7 @@ class _RecentThoughtsGrid extends ConsumerWidget {
           height: 244,
           child: Container(
             decoration: BoxDecoration(
-              color: AppColors.surfaceMuted,
+              color: colorScheme.surfaceContainerHigh,
               borderRadius: BorderRadius.circular(AppRadius.md),
             ),
             child: const Center(child: CircularProgressIndicator()),
@@ -433,16 +438,17 @@ class _RecentThoughtsGrid extends ConsumerWidget {
     );
   }
 
-  Widget _buildErrorState(WidgetRef ref, Object error) {
+  Widget _buildErrorState(BuildContext context, WidgetRef ref, Object error) {
+    final colorScheme = Theme.of(context).colorScheme;
     return _Panel(
       child: Padding(
         padding: const EdgeInsets.all(AppSpacing.xl),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.error_outline, color: AppColors.error, size: 32),
+            Icon(Icons.error_outline, color: colorScheme.error, size: 32),
             const SizedBox(height: AppSpacing.sm),
-            Text('加载失败', style: TextStyle(color: AppColors.textSecondary)),
+            Text('加载失败', style: TextStyle(color: colorScheme.onSurfaceVariant)),
             const SizedBox(height: AppSpacing.sm),
             FilledButton.tonalIcon(
               onPressed: () {
@@ -457,7 +463,8 @@ class _RecentThoughtsGrid extends ConsumerWidget {
     );
   }
 
-  Widget _buildEmptyState() {
+  Widget _buildEmptyState(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return _Panel(
       child: Center(
         child: Padding(
@@ -467,13 +474,13 @@ class _RecentThoughtsGrid extends ConsumerWidget {
             children: [
               Icon(
                 Icons.lightbulb_outline,
-                color: AppColors.textTertiary.withValues(alpha: 0.5),
+                color: colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
                 size: 48,
               ),
               const SizedBox(height: AppSpacing.md),
               Text(
                 '还没有想法，点击上方快速记录第一条吧',
-                style: TextStyle(color: AppColors.textTertiary),
+                style: TextStyle(color: colorScheme.outline),
               ),
             ],
           ),
@@ -548,12 +555,12 @@ class _ShortcutGrid extends StatelessWidget {
           color: AppColors.primary,
           background: AppColors.blueSoft,
         ),
-        const _ShortcutCard(
+        _ShortcutCard(
           icon: Icons.search_rounded,
           title: '搜索',
           subtitle: '查找全部内容',
-          color: AppColors.textSecondary,
-          background: AppColors.surfaceMuted,
+          color: Theme.of(context).colorScheme.onSurfaceVariant,
+          background: Theme.of(context).colorScheme.surfaceContainerHigh,
         ),
       ],
     );
@@ -567,34 +574,35 @@ class _HomeRightRail extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Container(
       width: AppDesktopSizes.rightRailWideWidth,
-      decoration: const BoxDecoration(
-        color: AppColors.surfaceElevated,
-        border: Border(left: BorderSide(color: AppColors.borderSoft)),
+      decoration: BoxDecoration(
+        color: colorScheme.surfaceContainerLow,
+        border: Border(left: BorderSide(color: colorScheme.outlineVariant)),
       ),
       child: SingleChildScrollView(
         padding: const EdgeInsets.all(AppSpacing.xl),
         child: Column(
-          children: const [
-            _PinnedPanel(),
-            SizedBox(height: AppSpacing.xl),
-            _TodoPanel(),
-            SizedBox(height: AppSpacing.xl),
-            _DataPanel(),
-            SizedBox(height: AppSpacing.xxl),
+          children: [
+            const _PinnedPanel(),
+            const SizedBox(height: AppSpacing.xl),
+            const _TodoPanel(),
+            const SizedBox(height: AppSpacing.xl),
+            const _DataPanel(),
+            const SizedBox(height: AppSpacing.xxl),
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Icon(
                   Icons.lock_outline,
                   size: 14,
-                  color: AppColors.textTertiary,
+                  color: colorScheme.outline,
                 ),
-                SizedBox(width: AppSpacing.xxs),
+                const SizedBox(width: AppSpacing.xxs),
                 Text(
                   '你的数据，仅你可见',
-                  style: TextStyle(color: AppColors.textTertiary, fontSize: 12),
+                  style: TextStyle(color: colorScheme.outline, fontSize: 12),
                 ),
               ],
             ),
@@ -639,7 +647,7 @@ class _PinnedPanel extends ConsumerWidget {
                   child: Text(
                     '暂无置顶内容',
                     style: TextStyle(
-                      color: AppColors.textTertiary,
+                      color: Theme.of(context).colorScheme.outline,
                       fontSize: 13,
                     ),
                   ),
@@ -780,7 +788,7 @@ class _SectionTitle extends StatelessWidget {
               child: Text(
                 '$trailing  →',
                 style: theme.textTheme.labelLarge?.copyWith(
-                  color: AppColors.primary,
+                  color: Theme.of(context).colorScheme.primary,
                 ),
               ),
             ),
@@ -802,7 +810,7 @@ class _Panel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: AppColors.surface,
+      color: Theme.of(context).colorScheme.surface,
       borderRadius: BorderRadius.circular(AppRadius.lg),
       child: Padding(padding: padding, child: child),
     );
@@ -843,18 +851,19 @@ class _PillButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
     return Container(
       height: AppDesktopSizes.compactButtonHeight,
       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: colorScheme.surface,
         borderRadius: BorderRadius.circular(AppRadius.sm),
-        border: Border.all(color: AppColors.border),
+        border: Border.all(color: colorScheme.outline),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 18, color: AppColors.textSecondary),
+          Icon(icon, size: 18, color: colorScheme.onSurfaceVariant),
           const SizedBox(width: AppSpacing.xs),
           Text(label, style: theme.textTheme.labelMedium),
         ],
@@ -924,7 +933,7 @@ class _MetricCard extends StatelessWidget {
                 width: 64,
                 height: 64,
                 decoration: BoxDecoration(
-                  color: AppColors.surface.withValues(alpha: 0.5),
+                  color: Theme.of(context).colorScheme.surface.withValues(alpha: 0.5),
                   borderRadius: BorderRadius.circular(AppRadius.lg),
                 ),
                 child: Icon(
@@ -950,6 +959,7 @@ class _ThoughtPreviewCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
     final title = _firstLine(item.content);
     final body = _restLines(item.content);
     final tag = item.tags.isNotEmpty ? item.tags.first : '';
@@ -977,7 +987,7 @@ class _ThoughtPreviewCard extends StatelessWidget {
                         : Icons.star_border_rounded,
                     color: item.isPinned
                         ? AppColors.warning
-                        : AppColors.textTertiary,
+                        : colorScheme.outline,
                     size: 18,
                   ),
                 ],
@@ -996,7 +1006,7 @@ class _ThoughtPreviewCard extends StatelessWidget {
                   maxLines: 5,
                   overflow: TextOverflow.ellipsis,
                   style: theme.textTheme.bodySmall?.copyWith(
-                    color: AppColors.textSecondary,
+                    color: colorScheme.onSurfaceVariant,
                   ),
                 ),
               ),
@@ -1057,7 +1067,7 @@ class _ShortcutCard extends StatelessWidget {
               _IconBubble(
                 icon: icon,
                 color: color,
-                background: AppColors.surface.withValues(alpha: 0.5),
+                background: Theme.of(context).colorScheme.surface.withValues(alpha: 0.5),
               ),
               const SizedBox(width: AppSpacing.md),
               Expanded(
@@ -1093,7 +1103,7 @@ class _PanelHeader extends StatelessWidget {
     final theme = Theme.of(context);
     return Row(
       children: [
-        Icon(icon, size: 20, color: AppColors.textPrimary),
+        Icon(icon, size: 20, color: Theme.of(context).colorScheme.onSurface),
         const SizedBox(width: AppSpacing.sm),
         Expanded(child: Text(title, style: theme.textTheme.titleMedium)),
       ],
@@ -1148,9 +1158,9 @@ class _CompactListItem extends StatelessWidget {
               ),
             ),
             if (onTap != null)
-              const Icon(
+              Icon(
                 Icons.more_vert_rounded,
-                color: AppColors.textTertiary,
+                color: Theme.of(context).colorScheme.outline,
               ),
           ],
         ),
@@ -1176,7 +1186,7 @@ class _TodoLine extends StatelessWidget {
           Icon(
             done ? Icons.check_box_rounded : Icons.check_box_outline_blank,
             size: 20,
-            color: done ? AppColors.primary : AppColors.textTertiary,
+            color: done ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.outline,
           ),
           const SizedBox(width: AppSpacing.sm),
           Expanded(
@@ -1238,7 +1248,7 @@ class _DataLine extends StatelessWidget {
           Text(
             change,
             style: theme.textTheme.labelMedium?.copyWith(
-              color: AppColors.textTertiary,
+              color: Theme.of(context).colorScheme.outline,
             ),
           ),
         ],
@@ -1424,11 +1434,11 @@ class _MobileBrandHeader extends StatelessWidget {
               colors: [Color(0xFFB7C5FF), AppColors.primary],
             ),
           ),
-          child: const Center(
+          child: Center(
             child: Text(
               'U',
               style: TextStyle(
-                color: Colors.white,
+                color: Theme.of(context).colorScheme.onPrimary,
                 fontSize: 28,
                 height: 1,
                 fontWeight: FontWeight.w900,
@@ -1524,6 +1534,7 @@ class _MobileSearchBox extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return InkWell(
       borderRadius: BorderRadius.circular(AppRadius.md),
       onTap: onTap,
@@ -1531,24 +1542,24 @@ class _MobileSearchBox extends StatelessWidget {
         height: AppMobileSizes.searchHeight,
         padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
         decoration: BoxDecoration(
-          color: AppColors.surface,
+          color: colorScheme.surface,
           borderRadius: BorderRadius.circular(AppRadius.md),
-          border: Border.all(color: AppColors.border),
+          border: Border.all(color: colorScheme.outline),
         ),
         child: Row(
           children: [
-            const Icon(Icons.search_rounded, color: AppColors.textSecondary),
+            Icon(Icons.search_rounded, color: colorScheme.onSurfaceVariant),
             const SizedBox(width: AppSpacing.sm),
             Expanded(
               child: Text(
                 '搜索想法、待办、笔记、标签...',
                 style: Theme.of(
                   context,
-                ).textTheme.bodyLarge?.copyWith(color: AppColors.textTertiary),
+                ).textTheme.bodyLarge?.copyWith(color: colorScheme.outline),
                 overflow: TextOverflow.ellipsis,
               ),
             ),
-            const Icon(Icons.crop_free_rounded, color: AppColors.textSecondary),
+            Icon(Icons.crop_free_rounded, color: colorScheme.onSurfaceVariant),
           ],
         ),
       ),
@@ -1606,7 +1617,7 @@ class _MobileQuickCaptureCardState
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Material(
-      color: AppColors.surfaceSubtle,
+      color: Theme.of(context).colorScheme.surfaceContainerLow,
       borderRadius: BorderRadius.circular(AppRadius.lg),
       child: Padding(
         padding: const EdgeInsets.all(AppSpacing.lg),
@@ -1775,7 +1786,7 @@ class _MobileFocusCard extends StatelessWidget {
                 width: AppSizes.iconButton,
                 height: AppSizes.iconButton,
                 decoration: BoxDecoration(
-                  color: AppColors.surface.withValues(alpha: 0.5),
+                  color: Theme.of(context).colorScheme.surface.withValues(alpha: 0.5),
                   borderRadius: BorderRadius.circular(AppRadius.md),
                 ),
                 child: Icon(icon, color: color.withValues(alpha: 0.65)),
@@ -1840,7 +1851,7 @@ class _MobileThoughtLine extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: AppColors.surfaceSubtle,
+      color: Theme.of(context).colorScheme.surfaceContainerLow,
       borderRadius: BorderRadius.circular(AppRadius.md),
       child: InkWell(
         borderRadius: BorderRadius.circular(AppRadius.md),
@@ -1921,7 +1932,7 @@ class _MobileTodoLine extends StatelessWidget {
         children: [
           Icon(
             done ? Icons.check_box_rounded : Icons.check_box_outline_blank,
-            color: done ? AppColors.primary : AppColors.textTertiary,
+            color: done ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.outline,
             size: 20,
           ),
           const SizedBox(width: AppSpacing.sm),
@@ -1954,6 +1965,7 @@ class _MobileShortcutGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return GridView.count(
       crossAxisCount: 2,
       crossAxisSpacing: AppSpacing.md,
@@ -1990,8 +2002,8 @@ class _MobileShortcutGrid extends StatelessWidget {
           icon: Icons.search_rounded,
           title: '搜索',
           subtitle: '查找全部内容',
-          color: AppColors.textSecondary,
-          background: AppColors.surfaceMuted,
+          color: colorScheme.onSurfaceVariant,
+          background: colorScheme.surfaceContainerHigh,
           onTap: onSearchTap,
         ),
       ],
@@ -2032,7 +2044,7 @@ class _MobileShortcutCard extends StatelessWidget {
                 width: AppSizes.inputHeight,
                 height: AppSizes.inputHeight,
                 decoration: BoxDecoration(
-                  color: AppColors.surface.withValues(alpha: 0.5),
+                  color: Theme.of(context).colorScheme.surface.withValues(alpha: 0.5),
                   borderRadius: BorderRadius.circular(AppRadius.md),
                 ),
                 child: Icon(icon, color: color),

@@ -150,7 +150,7 @@ class _ThoughtsHeader extends StatelessWidget {
         Icon(
           isArchived ? Icons.archive_outlined : Icons.lightbulb_outline,
           size: 36,
-          color: AppColors.textPrimary,
+          color: Theme.of(context).colorScheme.onSurface,
         ),
         const SizedBox(width: AppSpacing.md),
         Expanded(
@@ -239,9 +239,9 @@ class _ThoughtComposer extends StatelessWidget {
                 const SizedBox(height: AppSpacing.md),
                 DecoratedBox(
                   decoration: BoxDecoration(
-                    color: AppColors.surface,
+                    color: Theme.of(context).colorScheme.surface,
                     borderRadius: BorderRadius.circular(AppRadius.md),
-                    border: Border.all(color: AppColors.border),
+                    border: Border.all(color: Theme.of(context).colorScheme.outline),
                   ),
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(AppRadius.md),
@@ -298,15 +298,15 @@ class _ThoughtComposer extends StatelessWidget {
                               child: GestureDetector(
                                 onTap: () => onRemoveImage(i),
                                 child: Container(
-                                  decoration: const BoxDecoration(
-                                    color: Colors.black54,
+                                  decoration: BoxDecoration(
+                                    color: Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.54),
                                     shape: BoxShape.circle,
                                   ),
-                                  padding: const EdgeInsets.all(2),
-                                  child: const Icon(
+                                  padding: const EdgeInsets.all(AppSpacing.xxs),
+                                  child: Icon(
                                     Icons.close,
                                     size: 12,
-                                    color: Colors.white,
+                                    color: Theme.of(context).colorScheme.onPrimary,
                                   ),
                                 ),
                               ),
@@ -413,7 +413,7 @@ class _ThoughtsToolbar extends StatelessWidget {
               label: Text('#$selectedTag'),
               deleteIcon: const Icon(Icons.close, size: 14),
               onDeleted: () => onTagFilterChanged(null),
-              backgroundColor: AppColors.primary.withValues(alpha: 0.12),
+              backgroundColor: Theme.of(context).colorScheme.primary.withValues(alpha: 0.12),
               side: BorderSide.none,
               materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
               visualDensity: VisualDensity.compact,
@@ -424,9 +424,9 @@ class _ThoughtsToolbar extends StatelessWidget {
           height: AppDesktopSizes.compactButtonHeight,
           padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
           decoration: BoxDecoration(
-            color: AppColors.surface,
+            color: Theme.of(context).colorScheme.surface,
             borderRadius: BorderRadius.circular(AppRadius.sm),
-            border: Border.all(color: AppColors.border),
+            border: Border.all(color: Theme.of(context).colorScheme.outline),
           ),
           child: Row(
             children: [
@@ -581,9 +581,9 @@ class _ThoughtsRightRail extends StatelessWidget {
 
     return Container(
       width: AppDesktopSizes.rightRailWideWidth,
-      decoration: const BoxDecoration(
-        color: AppColors.surfaceElevated,
-        border: Border(left: BorderSide(color: AppColors.borderSoft)),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surfaceContainerLow,
+        border: Border(left: BorderSide(color: Theme.of(context).colorScheme.outlineVariant)),
       ),
       child: SingleChildScrollView(
         padding: const EdgeInsets.all(AppSpacing.xl),

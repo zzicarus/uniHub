@@ -198,7 +198,7 @@ class _MobilePageFrame extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: Theme.of(context).colorScheme.surface,
       floatingActionButton: floatingButton,
       body: SafeArea(
         child: Center(
@@ -227,7 +227,7 @@ class _MobilePageFrame extends StatelessWidget {
                         Icon(
                           leadingIcon,
                           size: 42,
-                          color: AppColors.textPrimary,
+                          color: Theme.of(context).colorScheme.onSurface,
                         ),
                         const SizedBox(width: AppSpacing.sm),
                       ],
@@ -306,11 +306,11 @@ class _LogoMark extends StatelessWidget {
           colors: [Color(0xFFB7C5FF), AppColors.primary],
         ),
       ),
-      child: const Center(
+      child: Center(
         child: Text(
           'U',
           style: TextStyle(
-            color: Colors.white,
+            color: Theme.of(context).colorScheme.onPrimary,
             fontSize: 28,
             height: 1,
             fontWeight: FontWeight.w900,
@@ -338,10 +338,10 @@ class _HeaderAction extends StatelessWidget {
           width: AppSizes.inputHeight,
           height: AppSizes.inputHeight,
           decoration: BoxDecoration(
-            color: filled ? AppColors.surfaceMuted : Colors.transparent,
+            color: filled ? Theme.of(context).colorScheme.surfaceContainerHigh : Colors.transparent,
             shape: BoxShape.circle,
           ),
-          child: Icon(icon, color: AppColors.textSecondary),
+          child: Icon(icon, color: Theme.of(context).colorScheme.onSurfaceVariant),
         ),
       ),
     );
@@ -358,8 +358,6 @@ class _FloatingAction extends StatelessWidget {
   Widget build(BuildContext context) {
     return FloatingActionButton.extended(
       onPressed: () => _showComingSoon(context),
-      backgroundColor: AppColors.primary,
-      foregroundColor: Colors.white,
       icon: Icon(icon),
       label: Text(label),
     );
@@ -377,19 +375,14 @@ class _Panel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Container(
       padding: padding,
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: colorScheme.surface,
         borderRadius: BorderRadius.circular(AppRadius.lg),
-        border: Border.all(color: AppColors.borderSoft),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.textPrimary.withValues(alpha: 0.04),
-            blurRadius: 24,
-            offset: const Offset(0, 12),
-          ),
-        ],
+        border: Border.all(color: colorScheme.outlineVariant),
+        boxShadow: const [AppShadows.card],
       ),
       child: child,
     );
@@ -411,24 +404,24 @@ class _SearchField extends StatelessWidget {
         height: AppMobileSizes.searchHeight,
         padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
         decoration: BoxDecoration(
-          color: AppColors.surface,
+          color: Theme.of(context).colorScheme.surface,
           borderRadius: BorderRadius.circular(AppRadius.md),
-          border: Border.all(color: AppColors.border),
+          border: Border.all(color: Theme.of(context).colorScheme.outline),
         ),
         child: Row(
           children: [
-            const Icon(Icons.search_rounded, color: AppColors.textSecondary),
+            Icon(Icons.search_rounded, color: Theme.of(context).colorScheme.onSurfaceVariant),
             const SizedBox(width: AppSpacing.sm),
             Expanded(
               child: Text(
                 hint,
                 style: Theme.of(
                   context,
-                ).textTheme.bodyLarge?.copyWith(color: AppColors.textTertiary),
+                ).textTheme.bodyLarge?.copyWith(color: Theme.of(context).colorScheme.outline),
                 overflow: TextOverflow.ellipsis,
               ),
             ),
-            Icon(trailing, color: AppColors.textSecondary),
+            Icon(trailing, color: Theme.of(context).colorScheme.onSurfaceVariant),
           ],
         ),
       ),
@@ -472,17 +465,17 @@ class _StaticPill extends StatelessWidget {
         height: AppDesktopSizes.navItemHeight,
         padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
         decoration: BoxDecoration(
-          color: selected ? AppColors.primary : AppColors.surface,
+          color: selected ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.surface,
           borderRadius: BorderRadius.circular(AppRadius.full),
           border: Border.all(
-            color: selected ? AppColors.primary : AppColors.border,
+            color: selected ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.outline,
           ),
         ),
         alignment: Alignment.center,
         child: Text(
           label,
           style: Theme.of(context).textTheme.labelLarge?.copyWith(
-            color: selected ? Colors.white : AppColors.textSecondary,
+            color: selected ? Theme.of(context).colorScheme.onPrimary : Theme.of(context).colorScheme.onSurfaceVariant,
           ),
         ),
       ),
@@ -528,7 +521,7 @@ class _SectionHeader extends StatelessWidget {
           Chip(
             label: Text(count!),
             side: BorderSide.none,
-            backgroundColor: AppColors.surfaceMuted,
+            backgroundColor: Theme.of(context).colorScheme.surfaceContainerHigh,
           ),
         ],
       ],
@@ -640,7 +633,7 @@ class _TodoRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final priorityColor = switch (priority) {
-      '高' => AppColors.error,
+      '高' => Theme.of(context).colorScheme.error,
       '低' => AppColors.primary,
       _ => AppColors.warning,
     };
@@ -653,7 +646,7 @@ class _TodoRow extends StatelessWidget {
           children: [
             Icon(
               done ? Icons.check_box_rounded : Icons.check_box_outline_blank,
-              color: done ? AppColors.primary : AppColors.textTertiary,
+              color: done ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.outline,
             ),
             const SizedBox(width: AppSpacing.sm),
             Expanded(
@@ -777,16 +770,16 @@ class _FocusItem extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(AppSpacing.sm),
       decoration: BoxDecoration(
-        color: AppColors.surfaceSubtle,
+        color: Theme.of(context).colorScheme.surfaceContainerLow,
         borderRadius: BorderRadius.circular(AppRadius.md),
-        border: Border.all(color: AppColors.borderSoft),
+        border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
       ),
       child: Row(
         children: [
           Text(
             rank,
             style: Theme.of(context).textTheme.titleLarge?.copyWith(
-              color: AppColors.textTertiary,
+              color: Theme.of(context).colorScheme.outline,
               fontWeight: FontWeight.w800,
             ),
           ),
@@ -915,9 +908,9 @@ class _EditorPreviewPanel extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(AppSpacing.md),
             decoration: BoxDecoration(
-              color: AppColors.surfaceSubtle,
+              color: Theme.of(context).colorScheme.surfaceContainerLow,
               borderRadius: BorderRadius.circular(AppRadius.md),
-              border: Border.all(color: AppColors.border),
+              border: Border.all(color: Theme.of(context).colorScheme.outline),
             ),
             child: Text(
               '一、目标\n打造一款轻量、专注的个人知识管理应用，帮助用户快速记录、整理与回顾想法。\n\n二、核心功能\n• 快速记录\n• 分类管理\n• 智能回顾',
@@ -1038,13 +1031,13 @@ class _MiniCalendarGrid extends StatelessWidget {
             height: 32,
             alignment: Alignment.center,
             decoration: BoxDecoration(
-              color: selected ? AppColors.primary : Colors.transparent,
+              color: selected ? Theme.of(context).colorScheme.primary : Colors.transparent,
               shape: BoxShape.circle,
             ),
             child: Text(
               days[index],
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: selected ? Colors.white : AppColors.textPrimary,
+                color: selected ? Theme.of(context).colorScheme.onPrimary : Theme.of(context).colorScheme.onSurface,
                 fontWeight: index < 7 ? FontWeight.w700 : null,
               ),
             ),
@@ -1117,9 +1110,9 @@ class _SmallMetric extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(AppSpacing.sm),
       decoration: BoxDecoration(
-        color: AppColors.surfaceSubtle,
+        color: Theme.of(context).colorScheme.surfaceContainerLow,
         borderRadius: BorderRadius.circular(AppRadius.md),
-        border: Border.all(color: AppColors.borderSoft),
+        border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
       ),
       child: Column(
         children: [

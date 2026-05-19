@@ -91,7 +91,7 @@ class _ThoughtCardState extends ConsumerState<ThoughtCard> {
                     if (widget.onRestore != null && _hovered)
                       _ActionIcon(
                         icon: Icons.unarchive_outlined,
-                        color: AppColors.textSecondary,
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
                         onTap: widget.onRestore,
                       ),
                     if (widget.onArchive != null &&
@@ -99,7 +99,7 @@ class _ThoughtCardState extends ConsumerState<ThoughtCard> {
                         !widget.isPinned)
                       _ActionIcon(
                         icon: Icons.archive_outlined,
-                        color: AppColors.textSecondary,
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
                         onTap: widget.onArchive,
                       ),
                     Icon(
@@ -109,7 +109,7 @@ class _ThoughtCardState extends ConsumerState<ThoughtCard> {
                       size: 18,
                       color: widget.isPinned
                           ? AppColors.warning
-                          : AppColors.textTertiary,
+                          : Theme.of(context).colorScheme.outline,
                     ),
                   ],
                 ),
@@ -133,7 +133,7 @@ class _ThoughtCardState extends ConsumerState<ThoughtCard> {
                     maxLines: 4,
                     overflow: TextOverflow.ellipsis,
                     style: theme.textTheme.bodySmall?.copyWith(
-                      color: AppColors.textSecondary,
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
                       height: 1.55,
                     ),
                   ),
@@ -163,7 +163,7 @@ class _ThoughtCardState extends ConsumerState<ThoughtCard> {
                               : Container(
                                   width: 64,
                                   height: 54,
-                                  color: AppColors.surfaceMuted,
+                                  color: Theme.of(context).colorScheme.surfaceContainerHigh,
                                   child: const Icon(
                                     Icons.broken_image_outlined,
                                     size: 18,
@@ -261,6 +261,7 @@ class _ActionIcon extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Padding(
       padding: const EdgeInsets.only(right: AppSpacing.xxs),
       child: GestureDetector(
@@ -269,9 +270,9 @@ class _ActionIcon extends StatelessWidget {
           width: 28,
           height: 28,
           decoration: BoxDecoration(
-            color: AppColors.surface,
+            color: colorScheme.surface,
             borderRadius: BorderRadius.circular(AppRadius.xs),
-            border: Border.all(color: AppColors.border),
+            border: Border.all(color: colorScheme.outline),
           ),
           child: Icon(icon, size: 16, color: color),
         ),

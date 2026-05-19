@@ -19,12 +19,11 @@ abstract final class AppTheme {
 
     return base.copyWith(
       textTheme: _textTheme(base.textTheme),
-      appBarTheme: const AppBarTheme(
+      appBarTheme: AppBarTheme(
         backgroundColor: AppColors.background,
         foregroundColor: AppColors.textPrimary,
         elevation: 0,
         centerTitle: false,
-        surfaceTintColor: Colors.transparent,
         titleTextStyle: TextStyle(
           color: AppColors.textPrimary,
           fontSize: 20,
@@ -37,7 +36,6 @@ abstract final class AppTheme {
         elevation: 8,
         shadowColor: AppColors.textPrimary.withValues(alpha: 0.04),
         margin: EdgeInsets.zero,
-        surfaceTintColor: Colors.transparent,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppRadius.lg),
           side: const BorderSide(color: AppColors.borderSoft),
@@ -140,6 +138,131 @@ abstract final class AppTheme {
         space: 1,
       ),
       iconTheme: const IconThemeData(color: AppColors.textSecondary, size: 22),
+    );
+  }
+
+  static ThemeData get dark {
+    final darkSeed = ColorScheme.fromSeed(
+      seedColor: AppColors.primary,
+      brightness: Brightness.dark,
+    );
+    final base = ThemeData(
+      useMaterial3: true,
+      colorScheme: darkSeed,
+      scaffoldBackgroundColor: darkSeed.surface,
+      canvasColor: darkSeed.surface,
+      fontFamilyFallback: AppFonts.fallback,
+    );
+
+    return base.copyWith(
+      textTheme: _textTheme(base.textTheme),
+      appBarTheme: AppBarTheme(
+        elevation: 0,
+        centerTitle: false,
+        titleTextStyle: TextStyle(
+          color: darkSeed.onSurface,
+          fontSize: 20,
+          height: 1.4,
+          fontWeight: FontWeight.w700,
+        ),
+      ),
+      cardTheme: CardThemeData(
+        elevation: 8,
+        shadowColor: darkSeed.shadow.withValues(alpha: 0.3),
+        margin: EdgeInsets.zero,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppRadius.lg),
+          side: BorderSide(color: darkSeed.outlineVariant),
+        ),
+      ),
+      filledButtonTheme: FilledButtonThemeData(
+        style: FilledButton.styleFrom(
+          minimumSize: const Size(64, AppSizes.buttonHeight),
+          textStyle: const TextStyle(
+            fontSize: 14,
+            height: 1.43,
+            fontWeight: FontWeight.w600,
+          ),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppRadius.sm),
+          ),
+        ),
+      ),
+      outlinedButtonTheme: OutlinedButtonThemeData(
+        style: OutlinedButton.styleFrom(
+          minimumSize: const Size(64, AppSizes.buttonHeight),
+          textStyle: const TextStyle(
+            fontSize: 14,
+            height: 1.43,
+            fontWeight: FontWeight.w600,
+          ),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppRadius.sm),
+          ),
+        ),
+      ),
+      textButtonTheme: TextButtonThemeData(
+        style: TextButton.styleFrom(
+          textStyle: const TextStyle(
+            fontSize: 14,
+            height: 1.43,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ),
+      inputDecorationTheme: InputDecorationTheme(
+        filled: true,
+        fillColor: darkSeed.surfaceContainerLow,
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.md,
+          vertical: AppSpacing.sm,
+        ),
+        hintStyle: TextStyle(color: darkSeed.outline),
+        labelStyle: TextStyle(color: darkSeed.onSurfaceVariant),
+        border: _inputBorder(darkSeed.outline),
+        enabledBorder: _inputBorder(darkSeed.outline),
+        focusedBorder: _inputBorder(darkSeed.primary),
+        errorBorder: _inputBorder(darkSeed.error),
+        focusedErrorBorder: _inputBorder(darkSeed.error),
+      ),
+      listTileTheme: ListTileThemeData(
+        minTileHeight: AppSizes.listItem,
+        contentPadding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+        iconColor: darkSeed.onSurfaceVariant,
+        textColor: darkSeed.onSurface,
+        titleTextStyle: TextStyle(
+          color: darkSeed.onSurface,
+          fontSize: 16,
+          height: 1.5,
+          fontWeight: FontWeight.w600,
+        ),
+        subtitleTextStyle: TextStyle(
+          color: darkSeed.onSurfaceVariant,
+          fontSize: 14,
+          height: 1.55,
+          fontWeight: FontWeight.w400,
+        ),
+      ),
+      chipTheme: ChipThemeData(
+        backgroundColor: darkSeed.surfaceContainerHigh,
+        selectedColor: darkSeed.primary.withValues(alpha: 0.12),
+        labelStyle: TextStyle(
+          color: darkSeed.onSurfaceVariant,
+          fontSize: 12,
+          height: 1.33,
+          fontWeight: FontWeight.w600,
+        ),
+        side: BorderSide(color: darkSeed.outline),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppRadius.full),
+        ),
+      ),
+      dividerTheme: DividerThemeData(
+        color: darkSeed.outlineVariant,
+        thickness: 1,
+        space: 1,
+      ),
+      iconTheme: IconThemeData(color: darkSeed.onSurfaceVariant, size: 22),
     );
   }
 

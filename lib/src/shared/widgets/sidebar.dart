@@ -14,9 +14,10 @@ class Sidebar extends ConsumerWidget {
     final registry = ref.watch(pluginRegistryProvider);
     final location = GoRouterState.of(context).uri.toString();
     final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
 
     return Material(
-      color: AppColors.surface,
+      color: colorScheme.surface,
       child: SizedBox(
         width: AppDesktopSizes.sidebarWidth,
         child: Column(
@@ -142,10 +143,10 @@ class Sidebar extends ConsumerWidget {
                             ],
                           ),
                         ),
-                        const Icon(
+                        Icon(
                           Icons.keyboard_arrow_down_rounded,
                           size: 18,
-                          color: AppColors.textTertiary,
+                          color: colorScheme.outline,
                         ),
                       ],
                     ),
@@ -176,11 +177,11 @@ class _LogoMark extends StatelessWidget {
           colors: [Color(0xFF9AAEFF), AppColors.primary],
         ),
       ),
-      child: const Center(
+      child: Center(
         child: Text(
           'U',
           style: TextStyle(
-            color: Colors.white,
+            color: Theme.of(context).colorScheme.onPrimary,
             fontSize: 24,
             height: 1,
             fontWeight: FontWeight.w800,
@@ -336,12 +337,13 @@ class _NavItem extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isEnabled = onTap != null;
+    final colorScheme = theme.colorScheme;
     final foreground = isSelected
-        ? AppColors.primary
+        ? colorScheme.primary
         : isEnabled
-        ? AppColors.textSecondary
-        : AppColors.textTertiary;
-    final bgColor = isSelected ? AppColors.primarySoft : Colors.transparent;
+        ? colorScheme.onSurfaceVariant
+        : colorScheme.outline;
+    final bgColor = isSelected ? colorScheme.primaryContainer : Colors.transparent;
 
     return Padding(
       padding: EdgeInsets.symmetric(

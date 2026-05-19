@@ -149,7 +149,7 @@ class _MobileThoughtsHeader extends StatelessWidget {
             Icon(
               isArchived ? Icons.archive_outlined : Icons.lightbulb_outline,
               size: 44,
-              color: AppColors.textPrimary,
+              color: Theme.of(context).colorScheme.onSurface,
             ),
             const SizedBox(width: AppSpacing.sm),
             Expanded(
@@ -263,9 +263,9 @@ class _MobileThoughtComposer extends StatelessWidget {
           const SizedBox(height: AppSpacing.md),
           DecoratedBox(
             decoration: BoxDecoration(
-              color: AppColors.surface,
+              color: Theme.of(context).colorScheme.surface,
               borderRadius: BorderRadius.circular(AppRadius.md),
-              border: Border.all(color: AppColors.border),
+              border: Border.all(color: Theme.of(context).colorScheme.outline),
             ),
             child: ClipRRect(
               borderRadius: BorderRadius.circular(AppRadius.md),
@@ -322,15 +322,15 @@ class _MobileThoughtComposer extends StatelessWidget {
                         child: GestureDetector(
                           onTap: () => onRemoveImage(i),
                           child: Container(
-                            padding: const EdgeInsets.all(2),
-                            decoration: const BoxDecoration(
-                              color: Colors.black54,
+                            padding: const EdgeInsets.all(AppSpacing.xxs),
+                            decoration: BoxDecoration(
+                              color: Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.54),
                               shape: BoxShape.circle,
                             ),
-                            child: const Icon(
+                            child: Icon(
                               Icons.close,
                               size: 12,
-                              color: Colors.white,
+                              color: Theme.of(context).colorScheme.onPrimary,
                             ),
                           ),
                         ),

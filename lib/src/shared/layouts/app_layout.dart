@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../core/theme/app_tokens.dart';
 import '../widgets/sidebar.dart';
 
 class AppLayout extends ConsumerWidget {
@@ -11,16 +10,17 @@ class AppLayout extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final isDesktop = MediaQuery.of(context).size.width >= 720;
+    final colorScheme = Theme.of(context).colorScheme;
 
     if (isDesktop) {
       return Scaffold(
-        backgroundColor: AppColors.background,
+        backgroundColor: colorScheme.surface,
         body: Row(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             const Sidebar(),
             Expanded(
-              child: ColoredBox(color: AppColors.background, child: child),
+              child: ColoredBox(color: colorScheme.surface, child: child),
             ),
           ],
         ),
@@ -28,7 +28,7 @@ class AppLayout extends ConsumerWidget {
     }
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: colorScheme.surface,
       drawer: const Drawer(child: Sidebar()),
       body: child,
     );
