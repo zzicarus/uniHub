@@ -296,3 +296,69 @@
 ### Next Steps
 
 - None - task complete
+
+
+## Session 10: M3 UI 一致性统一
+
+**Date**: 2026-05-19
+**Task**: M3 UI 一致性统一
+**Branch**: `main`
+
+### Summary
+
+全面迁移到 Material Design 3：新增暗色主题（AppTheme.dark + ThemeMode.system）、widget 层改用 ColorScheme 驱动、清理硬编码 Colors.white/black54、启用 elevation surface tint、组件 M3 化（FilterChip/InkWell）、BoxShadow 去重、更新前端组件规范
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `30dadbc` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
+
+
+## Session 11: Beautify Thoughts UI design
+
+**Date**: 2026-05-19
+**Task**: Beautify Thoughts UI design
+**Branch**: `main`
+
+### Summary
+
+Refactored Thoughts and HomePage UI to strictly follow Material 3 Tonal styling. Removed legacy borders and shadows, implemented purely color-based hover feedback, and synchronized corner radii and padding across all dashboard cards.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `e0eddc3` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
