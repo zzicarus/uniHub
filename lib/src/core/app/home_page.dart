@@ -5,7 +5,6 @@ import '../theme/app_breakpoints.dart';
 import '../theme/app_tokens.dart';
 import 'dashboard_providers.dart';
 import '../plugin/plugin_interface.dart';
-import '../plugin/plugin_registry.dart';
 
 class HomePage extends ConsumerWidget {
   const HomePage({super.key});
@@ -1744,8 +1743,7 @@ class _MobileQuickCaptureCardState
 
     setState(() => _submitting = true);
     try {
-      final registry = ref.read(pluginRegistryProvider);
-      await registry.quickCreate(ref, content: content);
+      await ref.read(quickCreateProvider((content: content, tags: null)).future);
       ref.invalidate(dashboardItemsProvider);
       ref.invalidate(dashboardPinnedProvider);
       ref.invalidate(dashboardStatsProvider);
