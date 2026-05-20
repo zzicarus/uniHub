@@ -70,3 +70,9 @@ thoughts/
 | `experimental_member_use` lint 抑制 | `thoughts_rich_editor.dart` |
 | 遗留 Markdown fallback 路径 | `thought_content_codec.dart` |
 | 主页使用硬编码 Mock 数据（5 个 TODO） | `home_page.dart` |
+
+---
+
+## 近期变更
+
+> 本 section 由 sync-knowledge 自动管理，按时间倒序追加。

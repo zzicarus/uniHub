@@ -13,13 +13,14 @@
 3. 对于复杂任务，先阅读涉模块的 `AGENTS.md` 和相关 `.omo/guidelines/` 文件
 4. 执行任务前使用 `todowrite` 拆分步骤（2 步以上必须写 todo）
 
-### 三条黄金原则
+### 四条黄金原则
 
 | 原则 | 说明 |
 |------|------|
 | 依赖方向不可逆 | `plugins/` 可以依赖 `shared/` 和 `core/`，反之禁止 |
 | 跨层引用用 package 路径 | `package:uni_hub/src/core/...`，禁止 `../../../` |
 | 新增代码禁止类型抑制 | 不写 `as any`、空 catch 块、行级屏蔽不加原因注释 |
+| **委派前必须检查技能映射** | 每次 `task()` 前先读 `.omo/skill-defaults.json`，按 category 和任务类型确定 `load_skills`；视觉任务必须加载 `frontend-ui-ux` |
 
 ---
 
@@ -32,6 +33,8 @@
 | `deep` | 端到端多步骤实现，含调研+编码+测试 | 完整功能（含测试） |
 | `quick` | 1-2 个文件的简单修改 | 单行到十行改动 |
 | `unspecified-high` | 不属于上述分类的中等任务 | 迁移脚本、测试框架搭建 |
+| `unspecified-low` | 简单但非视觉/文档的任务 | 配置修改、简单脚本 |
+| `artistry` | 需要非常规创意方法的复杂问题 | 视觉创新、交互实验 |
 | `writing` | 文档、PRD、指南 | 纯文字输出 |
 
 ### 不能委派的场景
@@ -125,10 +128,13 @@ task(
 - 暗色模式适配
 - 主题 Token 替换（`colorScheme.*` + `AppSpacing`/`AppRadius`）
 
-**加载技能**: `flutter-dev`, `flutter-build-responsive-layout`
+**加载技能**: `flutter-dev`, `flutter-build-responsive-layout`, `frontend-ui-ux`
+
+> `frontend-ui-ux` 强制造型检查（配色系统、间距、字体选择、动效质量），每个视觉任务必须加载。
 
 **前置阅读**:
 - `.omo/guidelines/widget.md` — Widget 类型选择、Token 使用、M3 颜色映射
+- `.omo/skill-defaults.json` — 技能默认加载规则
 - `lib/src/core/app/adaptive_shell.dart` — 路由层 ShellRoute 实现参考
 - `lib/src/shared/widgets/adaptive_layout.dart` — 插件内响应式布局实现参考
 
@@ -143,7 +149,7 @@ task(
 // UI 任务：新卡片组件
 task(
   category: "visual-engineering",
-  load_skills: ["flutter-dev", "flutter-build-responsive-layout"],
+  load_skills: ["flutter-dev", "flutter-build-responsive-layout", "frontend-ui-ux"],
   run_in_background: true,
   prompt: "在 lib/src/plugins/thoughts/ui/widgets/ 下新建一个 ThoughtCard 组件。接收 Thought 对象，展示内容摘要（最多两行）、标签和创建时间。使用 colorScheme 配色和 AppSpacing/AppRadius Token。",
 );
@@ -211,6 +217,7 @@ task(
 - 写 PRD（`.omo/plans/prd-*.md`）
 - 更新 `.omo/guidelines/` 规范
 - 写 README、CHANGELOG
+- **知识同步 (sync-knowledge)**：`/review-work` 内嵌步骤，非独立委派任务。根据 `.omo/knowledge-map.json` 的映射规则，自动将代码改动的经验沉淀到 errors.md、AGENTS.md、guidelines 等文档中
 
 **加载技能**: 不需要（如果涉及架构理解可加 `flutter-dev`）
 
@@ -263,8 +270,8 @@ task(
 | 新增插件模块注册 | `ultrabrain` | `flutter-apply-architecture-best-practices` | `lib/src/core/plugin/AGENTS.md` |
 | 新建 drift Table | `unspecified-high` | `flutter-dev`, `dart-add-unit-test` | `.omo/guidelines/database.md` |
 | 新增 DAO 方法 | `unspecified-high` | `flutter-dev`, `dart-add-unit-test` | `.omo/guidelines/database.md` |
-| 新增页面/组件 | `visual-engineering` | `flutter-dev`, `flutter-build-responsive-layout` | `.omo/guidelines/widget.md` |
-| 响应式布局调整 | `visual-engineering` | `flutter-build-responsive-layout`, `flutter-dev` | `lib/src/shared/widgets/adaptive_layout.dart` |
+| 新增页面/组件 | `visual-engineering` | `flutter-dev`, `flutter-build-responsive-layout`, `frontend-ui-ux` | `.omo/guidelines/widget.md` |
+| 响应式布局调整 | `visual-engineering` | `flutter-build-responsive-layout`, `flutter-dev`, `frontend-ui-ux` | `lib/src/shared/widgets/adaptive_layout.dart` |
 | Provider 层级调整 | `ultrabrain` | `flutter-apply-architecture-best-practices` | `lib/src/core/AGENTS.md` |
 | 数据层单元测试 | `quick` / `unspecified-high` | `dart-add-unit-test` | `test/AGENTS.md` |
 | Widget 测试 | `unspecified-high` | `flutter-add-widget-test` | `test/AGENTS.md` |
@@ -276,6 +283,7 @@ task(
 | 完整端到端插件开发 | `deep` | `flutter-dev`, `dart-add-unit-test` | 全部相关指南 |
 | 重构公共组件到 shared/ | `ultrabrain` | `flutter-apply-architecture-best-practices` | `lib/src/shared/AGENTS.md` |
 | Post-implementation 审查 | 不委派（用 `/review-work`） | `review-work` | 所有相关代码 |
+| 知识同步 (sync-knowledge) | 不独立委派 (`/review-work` 内嵌) | 无需加载 | `.omo/knowledge-map.json`、`.omo/guidelines/workflow.md` |
 
 ---
 
@@ -324,7 +332,7 @@ agent-workflow.md 与 `.omo/guidelines/workflow.md` 的 Plan → Code → Verify
 | Plan | 根据任务类型确定 category 和 skills，决定是否委派 |
 | Code | 委派子任务时加载对应的 skills，传递正确的前置文档引用 |
 | Verify | 使用 `dart-run-static-analysis`，在主流程串行执行 |
-| Review | 复杂任务完成后触发 `/review-work` |
+| Review | 复杂任务完成后触发 `/review-work`，内嵌 sync-knowledge 自动将改动经验写入相应文档 |
 | Ship | 遵循 workflow.md 的提交格式 |
 
 ---
@@ -341,5 +349,7 @@ agent-workflow.md 与 `.omo/guidelines/workflow.md` 的 Plan → Code → Verify
 | `lib/src/AGENTS.md` | 三层架构总览 |
 | `test/AGENTS.md` | 测试隔离模式和 ProviderScope override |
 | `lib/src/core/plugin/AGENTS.md` | 插件系统关键约定 |
+| `.omo/knowledge-map.json` | 知识同步映射规则（sync-knowledge 自动使用） |
+| `.omo/skill-defaults.json` | 任务类型到 Skills 的默认映射（委派前必须读取） |
 
 > 最后更新：2026-05-21 | 本文件是代理任务委派的唯一权威参考。如有矛盾以本文件为准。

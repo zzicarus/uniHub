@@ -99,6 +99,25 @@ final appDatabaseProvider = Provider<AppDatabase>((ref) {
 - 新增 UI 组件 → 同时加 Widget 测试
 - 测试文件和实现在同一个 commit（参考 `test/AGENTS.md`）
 
+### 技能加载
+
+> 委派子任务前必须先加载对应技能，否则子任务无法获得领域上下文。规则定义在 `.omo/skill-defaults.json`。
+
+**流程**:
+1. 委派前读取 `.omo/skill-defaults.json`，确定当前任务的 category 和具体类型
+2. 合并 `categoryDefaults` + `taskOverrides` 得到 `load_skills` 列表
+3. 在 `task(load_skills=[...])` 中传入合并结果
+4. 视觉任务（`visual-engineering`）必须包含 `frontend-ui-ux`（强制造型检查）
+
+```dart
+// 示例：视觉任务 + 单元测试
+task(
+  category: "visual-engineering",
+  load_skills: ["flutter-dev", "flutter-build-responsive-layout", "frontend-ui-ux", "dart-add-unit-test"],
+  ...
+);
+```
+
 ---
 
 ## 4. 验证 (Verify)
@@ -112,12 +131,16 @@ final appDatabaseProvider = Provider<AppDatabase>((ref) {
 # 2. Dart 静态分析
 flutter analyze
 
-# 3. 运行测试
+# 3. 如果有 warning 或 error：自动修复后重新 analyze
+dart fix --dry-run    # 预览
+dart fix --apply      # 确认后应用
+flutter analyze       # 重新检查
+
+# 4. 运行测试
 flutter test
 
-# 4. 如果新增代码后有 lint 警告
-dart fix --dry-run    # 先预览
-dart fix --apply      # 确认后应用
+# 5. 最终确认：无可修复的 lint 残留
+dart fix --dry-run    # 应输出"0 fixes"
 ```
 
 ### 验证通过标准
@@ -125,6 +148,7 @@ dart fix --apply      # 确认后应用
 |------|----------|
 | `lsp_diagnostics` | 无 error |
 | `flutter analyze` | 0 error, 0 warning |
+| `dart fix --dry-run` | 无可修复项（0 fixes） |
 | `flutter test` | 所有测试通过 |
 | 新增代码 | 禁止 `as any`, `@ts-ignore` |
 
@@ -132,8 +156,9 @@ dart fix --apply      # 确认后应用
 | 失败类型 | 处理方式 |
 |----------|----------|
 | LSP error | 修正类型错误，不绕行 |
-| analyze warning | `dart fix --apply` 自动修复 |
+| analyze warning | 执行 `dart fix` 步骤后重新 analyze |
 | analyze error | 按错误信息修改 |
+| `dart fix --dry-run` 有可修复项 | 执行 `dart fix --apply` 后重新 analyze |
 | 测试失败 | 确认是代码问题还是测试问题 |
 
 **连续 3 次修复无效 → 停止修改 → 咨询 Oracle。**
@@ -145,10 +170,40 @@ dart fix --apply      # 确认后应用
 ### 触发条件
 | 场景 | 操作 |
 |------|------|
-| 新增功能 | 触发 `/review-work` |
-| 重构 | 触发 `/review-work` |
-| Bugfix | 手动检查即可 |
+| 新增功能 | 触发 `/review-work`（含 sync-knowledge） |
+| 重构 | 触发 `/review-work`（含 sync-knowledge） |
+| Bugfix | 触发 `/review-work`（含 sync-knowledge，errors.md 静默写入） |
 | 简单文档变更 | 不需要 |
+
+### 知识同步 (sync-knowledge)
+
+> `/review-work` 执行完成后自动触发知识同步，将本次改动的经验沉淀到文档中。映射规则定义在 `.omo/knowledge-map.json`。
+
+**流程**:
+1. 读取 `.omo/knowledge-map.json`，匹配改动文件路径
+2. 根据匹配规则确定需更新的文档列表
+3. 对每篇文档生成更新内容：
+   - errors.md → 静默追加（无需确认）
+   - AGENTS.md / guidelines → 展示 diff 预览，待用户确认后写入
+4. 目标文档不存在时自动创建（填入基础模板）
+5. 遇到未定义的改动模式 → 询问用户如何处理，并将新模式记入 knowledge-map.json
+
+**内容生成规范**（模板引导，允许 agent 灵活组织）:
+
+每类文档的生成粒度：
+- **errors.md**：每个独立根因一条记录，每条包含场景/根因/修复/避免
+- **AGENTS.md**：在文档末尾按时间倒序追加"近期变更"条目，包含改动文件、原因、影响、关键约定
+- **guidelines**：在合适 section 下插入实际案例，包含背景、实现要点、注意事项
+
+**格式参考**（以 learnings 为例，其余文档由 agent 根据文档结构和内容风格自主决定）:
+```markdown
+## YYYY-MM-DD: 简短标题
+
+- **场景**: 做了什么遇到了这个错误
+- **根因**: 为什么出错
+- **修复**: 怎么解决的
+- **避免**: 以后怎么防止
+```
 
 ### 自检清单
 - [ ] 没有类型抑制（`as any`, `@ts-ignore`）
@@ -157,6 +212,17 @@ dart fix --apply      # 确认后应用
 - [ ] 新增代码遵循 `analysis_options.yaml` 规则
 - [ ] 测试覆盖新增逻辑
 - [ ] `flutter analyze` 通过
+- [ ] 知识同步确认：本改动涉及的文档已更新；如遇未定义的改动模式，已补充知识图谱映射规则
+
+### 知识同步故障处理
+
+| 场景 | 处理方式 |
+|------|----------|
+| 生成内容被用户拒绝 | 标记为 skipped，不留脏提交，不修改文档 |
+| 用户大幅修改了 agent 生成的模板内容 | 记录用户的修改模式到 knowledge-map.json（下次同类改动优先遵循） |
+| 自动创建的 AGENTS.md 内容质量差 | `git checkout -- <file>` 回滚，修正后重新触发 sync-knowledge |
+| knowledge-map.json 解析失败 | 检查 JSON 格式，修复后重试；紧急时可跳过 sync-knowledge 直接提交 |
+| 目标文档已被手动编辑、sync-knowledge 追加导致冲突 | 展示冲突 diff，由用户决定保留/合并 |
 
 ---
 
@@ -216,12 +282,13 @@ Co-authored-by: Sisyphus <clio-agent@sisyphuslabs.ai>
 ```
 
 ### 记录位置
-- 单次运行的临时问题 → 记录到 `.omo/learnings/errors.md`
-- 可以泛化的模式性问题 → 适合加入对应模块的 `AGENTS.md` 或 `.omo/guidelines/`
+- 单次运行的临时问题 → 由 sync-knowledge 自动记录到 `.omo/learnings/errors.md`
+- 可以泛化的模式性问题 → 由 sync-knowledge 自动加入对应模块的 `AGENTS.md` 或 `.omo/guidelines/`
 
 ### 检查机制
-- 每次 `/review-work` 时检查 `.omo/learnings/errors.md` 是否有新条目
+- 每次 `/review-work` 的 sync-knowledge 阶段自动检查并追加新条目
 - 修复已知问题前，先查阅该文件确认是否已有解决方案
+- 如需查阅历史 learnings，直接查看 `.omo/learnings/errors.md`
 
 ---
 
@@ -245,9 +312,18 @@ Co-authored-by: Sisyphus <clio-agent@sisyphuslabs.ai>
 - 修复已知问题的单行改动
 - 文档更新
 
----
+### 知识同步在 Loop 中的行为
 
-## 调试与失败恢复
+| Loop 类型 | sync-knowledge 触发时机 |
+|-----------|------------------------|
+| `/ulw-loop` | 仅在 Loop 完成时触发一次（不每次迭代触发） |
+| `/ralph-loop` | 仅在 Loop 完成时触发一次（探索过程中的失败不记录） |
+| 手动模式 | 用户决定是否触发 `/review-work` |
+
+**规则**：
+- Loop 中的中间迭代即使通过验证也不触发 sync-knowledge，避免频繁写入导致文档膨胀
+- 只有 Loop 结束后（所有 todo 完成 + 最终验证通过）的统一 `/review-work` 才触发同步
+- 迭代过程中如果发现可泛化的模式性问题，agent 应记录到临时上下文，最终一次写入
 
 | 情况 | 操作 |
 |------|------|

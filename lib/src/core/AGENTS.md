@@ -55,3 +55,9 @@ main()
 - 亮/暗色通过 `ThemeMode.system` 自动切换
 - 所有 Widget 使用 `Theme.of(context).colorScheme`（不直接使用 AppColors 常量）
 - 设计令牌 Token 定义在 `app_tokens.dart`（AppSpacing、AppRadius、AppSizes 等）
+
+---
+
+## 近期变更
+
+> 本 section 由 sync-knowledge 自动管理，按时间倒序追加。

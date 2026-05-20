@@ -49,3 +49,9 @@ main.dart → PluginRegistry.register(ThoughtsPlugin())
 5. 实现 `routes()` 返回 GoRoute 列表
 6. 实现 `init()` 做初始化（如创建默认数据）
 7. 添加测试：参考 `test/src/core/plugin/plugin_registry_test.dart`
+
+---
+
+## 近期变更
+
+> 本 section 由 sync-knowledge 自动管理，按时间倒序追加。

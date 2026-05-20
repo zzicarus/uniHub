@@ -36,3 +36,10 @@ lib/src/
 - 零 mockito：目前全部通过手写 stub 实现
 - 详细测试约定见 [`test/AGENTS.md`](../../test/AGENTS.md)
 - 代理任务分类与委派指南见 [`.omo/guidelines/agent-workflow.md`](../../.omo/guidelines/agent-workflow.md)
+- 知识同步映射规则见 [`.omo/knowledge-map.json`](../../.omo/knowledge-map.json)
+
+---
+
+## 近期变更
+
+> 本 section 由 sync-knowledge 自动管理，按时间倒序追加。

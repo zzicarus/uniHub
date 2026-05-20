@@ -28,6 +28,9 @@ UniHub 是一个 **桌面端优先** 的 Flutter 笔记应用，基于插件架�
 | `test/` | 测试隔离模式 + ProviderScope override | 新增测试必读 |
 | `.omo/guidelines/` | 项目规范（数据库/Widget/工作流/代理委派/PRD 模板） | 任意任务前查阅 |
 | `.omo/plans/` | PRD 示例与技术债跟踪 | 大型功能前查阅 |
+| `.omo/knowledge-map.json` | 知识同步映射规则（sync-knowledge 自动使用） | Review 阶段自动 |
+| `.omo/skill-defaults.json` | 任务类型到 Skills 的默认映射（委派前必须读取） | 每次委派子任务前 |
+| `.omo/learnings/errors.md` | 错误学习记录（sync-knowledge 自动写入） | 修复已知问题前查阅 |
 
 ## 项目规范
 
@@ -47,16 +50,21 @@ UniHub 是一个 **桌面端优先** 的 Flutter 笔记应用，基于插件架�
 # 1. Dart 静态分析
 flutter analyze
 
-# 2. 运行所有测试
+# 2. 如有 warning/error：自动修复后重新检查
+dart fix --dry-run         # 预览可修复项
+dart fix --apply           # 确认后应用
+flutter analyze            # 重新检查
+
+# 3. 运行所有测试
 flutter test
 
-# 3. 自动修复 lint 问题（预览后再应用）
-dart fix --dry-run
-dart fix --apply           # 确认后执行
+# 4. 最终确认无可修复 lint 残留
+dart fix --dry-run         # 应输出"0 fixes"
 ```
 
 ### 通过标准
 - `flutter analyze` — **0 error, 0 warning**
+- `dart fix --dry-run` — **无可修复项（0 fixes）**
 - `flutter test` — **全部通过**
 - 新增代码 — 禁止 `as any`、`@ts-ignore`、空 catch 块
 
