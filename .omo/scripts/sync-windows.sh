@@ -36,7 +36,7 @@ if [ "$BRANCH" = "main" ]; then
     esac
 
     SCRIPT_DIR=$(cd "$(dirname "$0")/.." && pwd)
-    SYNC_SCRIPT="$SCRIPT_DIR/omo/scripts/sync-windows.sh"
+    SYNC_SCRIPT="$SCRIPT_DIR/.omo/scripts/sync-windows.sh"
 
     if [ -f "$SYNC_SCRIPT" ]; then
         bash "$SYNC_SCRIPT"
