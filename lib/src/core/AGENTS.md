@@ -39,8 +39,8 @@ main()
 
 - `app_bootstrap.dart` — `AppBootstrap` 定义但未在任何地方调用
 - `app/app_layout.dart` — 旧的布局实现，未被引用
-- `app/style_guide_screen.dart` — 1162 行占位页面（可能是开发期产物）
 - `app/mobile_placeholder_pages.dart` — 5 个硬编码占位页面（1505 行）
+- `shared/ui/style_guide_screen.dart` — 组件目录页面（已接入路由，通过侧栏「组件目录」访问）
 
 ## 数据库
 

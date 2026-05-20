@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 
 import '../../core/theme/app_tokens.dart';
+import '../widgets/uni_icon_badge.dart';
+import '../widgets/uni_panel.dart';
+import '../widgets/uni_pill.dart';
+import '../widgets/uni_status_panel.dart';
 
 class StyleGuideScreen extends StatelessWidget {
   const StyleGuideScreen({super.key});
@@ -18,7 +22,7 @@ class StyleGuideScreen extends StatelessWidget {
           Text('清爽、可信、年轻、高效', style: textTheme.headlineMedium),
           const SizedBox(height: AppSpacing.xs),
           Text(
-            '用于确认 uniHub 移动端基础视觉语言，后续业务页面统一复用这套 Token 与 Theme。',
+            '用于确认 uniHub 基础视觉语言，后续业务页面统一复用这套 Token 与 Theme。',
             style: textTheme.bodyMedium,
           ),
           const SizedBox(height: AppSpacing.xl),
@@ -249,7 +253,10 @@ class _DesktopSidebarPreview extends StatelessWidget {
           children: [
             Row(
               children: [
-                const _AppMark(),
+                UniIconBadge(
+                  icon: Icons.auto_awesome_rounded,
+                  color: colorScheme.primary,
+                ),
                 const SizedBox(width: AppSpacing.sm),
                 Text('uniHub', style: textTheme.titleLarge),
               ],
@@ -262,14 +269,8 @@ class _DesktopSidebarPreview extends StatelessWidget {
             ),
             const _DesktopNavItem(icon: Icons.lightbulb_outline, label: '想法'),
             const _DesktopNavItem(icon: Icons.check_box_outlined, label: '待办'),
-            const _DesktopNavItem(
-              icon: Icons.description_outlined,
-              label: '笔记',
-            ),
-            const _DesktopNavItem(
-              icon: Icons.calendar_today_outlined,
-              label: '日历',
-            ),
+            const _DesktopNavItem(icon: Icons.description_outlined, label: '笔记'),
+            const _DesktopNavItem(icon: Icons.calendar_today_outlined, label: '日历'),
             const _DesktopNavItem(icon: Icons.star_border_rounded, label: '收藏'),
             const Spacer(),
             const Divider(),
@@ -474,11 +475,11 @@ class _QuickCapturePreview extends StatelessWidget {
     final textTheme = Theme.of(context).textTheme;
     final colorScheme = Theme.of(context).colorScheme;
 
-    return _DesktopPanel(
+    return UniPanel(
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _IconBadge(icon: Icons.edit_outlined, color: colorScheme.primary),
+          UniIconBadge(icon: Icons.edit_outlined, color: colorScheme.primary),
           const SizedBox(width: AppSpacing.md),
           Expanded(
             child: Column(
@@ -569,7 +570,7 @@ class _DesktopListPreview extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    return _DesktopPanel(
+    return UniPanel(
       child: Column(
         children: [
           _CompactListRow(
@@ -627,7 +628,7 @@ class _CompactListRow extends StatelessWidget {
           _SmallIconTile(icon: icon, color: color, tint: tint),
           const SizedBox(width: AppSpacing.sm),
           Expanded(child: Text(title, style: textTheme.titleSmall)),
-          _PillLabel(label: tag, color: color, tint: tint),
+          UniPill(label: tag, color: color, tint: tint),
           const SizedBox(width: AppSpacing.xs),
           const Icon(Icons.more_horiz_rounded, size: 18),
         ],
@@ -652,7 +653,7 @@ class _DesktopRightRailPreview extends StatelessWidget {
           primary: false,
           child: Column(
             children: [
-              _DesktopPanel(
+              UniPanel(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -691,7 +692,7 @@ class _DesktopRightRailPreview extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: AppSpacing.md),
-              _DesktopPanel(
+              UniPanel(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -707,35 +708,6 @@ class _DesktopRightRailPreview extends StatelessWidget {
             ],
           ),
         ),
-      ),
-    );
-  }
-}
-
-class _DesktopPanel extends StatelessWidget {
-  const _DesktopPanel({required this.child});
-
-  final Widget child;
-
-  @override
-  Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: colorScheme.surface,
-        border: Border.all(color: colorScheme.outlineVariant),
-        borderRadius: BorderRadius.circular(AppRadius.sm),
-        boxShadow: [
-          BoxShadow(
-            color: colorScheme.shadow.withValues(alpha: 0.07),
-            blurRadius: 16,
-            offset: const Offset(0, 6),
-          ),
-        ],
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.md),
-        child: child,
       ),
     );
   }
@@ -801,40 +773,6 @@ class _SmallIconTile extends StatelessWidget {
   }
 }
 
-class _PillLabel extends StatelessWidget {
-  const _PillLabel({
-    required this.label,
-    required this.color,
-    required this.tint,
-  });
-
-  final String label;
-  final Color color;
-  final Color tint;
-
-  @override
-  Widget build(BuildContext context) {
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: tint,
-        borderRadius: BorderRadius.circular(AppRadius.full),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.xs,
-          vertical: AppSpacing.xxs,
-        ),
-        child: Text(
-          label,
-          style: Theme.of(
-            context,
-          ).textTheme.labelMedium?.copyWith(color: color),
-        ),
-      ),
-    );
-  }
-}
-
 class _RuleLine extends StatelessWidget {
   const _RuleLine({required this.text});
 
@@ -878,35 +816,6 @@ class _IconButtonPreview extends StatelessWidget {
       child: SizedBox.square(
         dimension: AppDesktopSizes.compactButtonHeight,
         child: Icon(icon, size: 18),
-      ),
-    );
-  }
-}
-
-class _AppMark extends StatelessWidget {
-  const _AppMark();
-
-  @override
-  Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [colorScheme.primary, colorScheme.tertiary],
-        ),
-        borderRadius: BorderRadius.circular(AppRadius.sm),
-      ),
-      child: SizedBox.square(
-        dimension: 32,
-        child: Center(
-          child: Text(
-            'U',
-            style: TextStyle(
-              color: colorScheme.onPrimary,
-              fontWeight: FontWeight.w800,
-            ),
-          ),
-        ),
       ),
     );
   }
@@ -962,7 +871,7 @@ class _CardSection extends StatelessWidget {
             children: [
               Row(
                 children: [
-                  _IconBadge(
+                  UniIconBadge(
                     icon: Icons.task_alt_rounded,
                     color: colorScheme.primary,
                   ),
@@ -1055,7 +964,7 @@ class _EmptyStateSection extends StatelessWidget {
     final colorScheme = Theme.of(context).colorScheme;
     return _Section(
       title: '空状态',
-      child: _StatusPanel(
+      child: UniStatusPanel(
         icon: Icons.inbox_outlined,
         iconColor: colorScheme.secondary,
         title: '今天还没有安排',
@@ -1074,88 +983,13 @@ class _ErrorStateSection extends StatelessWidget {
     final colorScheme = Theme.of(context).colorScheme;
     return _Section(
       title: '错误状态',
-      child: _StatusPanel(
+      child: UniStatusPanel(
         icon: Icons.error_outline_rounded,
         iconColor: colorScheme.error,
         title: '同步失败',
         message: '当前网络不稳定，部分数据可能不是最新状态。',
         actionLabel: '重试',
         isOutlinedAction: true,
-      ),
-    );
-  }
-}
-
-class _StatusPanel extends StatelessWidget {
-  const _StatusPanel({
-    required this.icon,
-    required this.iconColor,
-    required this.title,
-    required this.message,
-    required this.actionLabel,
-    this.isOutlinedAction = false,
-  });
-
-  final IconData icon;
-  final Color iconColor;
-  final String title;
-  final String message;
-  final String actionLabel;
-  final bool isOutlinedAction;
-
-  @override
-  Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
-
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.xl),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            _IconBadge(icon: icon, color: iconColor),
-            const SizedBox(height: AppSpacing.md),
-            Text(
-              title,
-              style: textTheme.titleMedium,
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: AppSpacing.xs),
-            Text(
-              message,
-              style: textTheme.bodyMedium,
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: AppSpacing.lg),
-            SizedBox(
-              width: double.infinity,
-              child: isOutlinedAction
-                  ? OutlinedButton(onPressed: () {}, child: Text(actionLabel))
-                  : FilledButton(onPressed: () {}, child: Text(actionLabel)),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _IconBadge extends StatelessWidget {
-  const _IconBadge({required this.icon, required this.color});
-
-  final IconData icon;
-  final Color color;
-
-  @override
-  Widget build(BuildContext context) {
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(AppRadius.md),
-      ),
-      child: SizedBox.square(
-        dimension: AppSizes.statusIcon,
-        child: Icon(icon, color: color),
       ),
     );
   }

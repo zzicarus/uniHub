@@ -8,4 +8,5 @@ abstract final class RouteNames {
   static const favorites = 'favorites';
   static const search = 'search';
   static const settings = 'settings';
+  static const styleGuide = 'style-guide';
 }

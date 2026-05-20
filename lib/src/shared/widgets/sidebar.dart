@@ -112,6 +112,13 @@ class Sidebar extends ConsumerWidget {
                   isSelected: location == '/settings',
                   onTap: () => context.goNamed(RouteNames.settings),
                 ),
+                const SizedBox(height: AppSpacing.xxs),
+                _NavItem(
+                  icon: Icons.palette_outlined,
+                  label: '组件目录',
+                  isSelected: location == '/style-guide',
+                  onTap: () => context.goNamed(RouteNames.styleGuide),
+                ),
               ],
             ),
           ),
