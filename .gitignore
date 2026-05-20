@@ -127,6 +127,10 @@ app.*.symbols
 .playwright-mcp/
 .serena/
 .trellis/
+.omo/run-continuation/
+
+# Generated reports
+token-usage-output.txt
 
 # IDE
 .idea/
