@@ -83,31 +83,52 @@ Flutter 中没有 "props" 概念——构造器参数即 Props：
 
 ## 设计 Token
 
-**始终使用 Token，禁止硬编码值**：
+**始终使用 Token，禁止硬编码值**。但不同类型用不同的 Token：
+
+### 颜色 → 用 `colorScheme`
+所有颜色必须在 Widget 中通过 `Theme.of(context).colorScheme` 获取，**不应使用 `AppColors`**（`AppColors.primary` 仅用于 `app_theme.dart` 的 `ColorScheme.fromSeed(seedColor: ...)`）。
 
 ```dart
 // ✅ 正确
-const SizedBox(height: AppSpacing.md)
+color: colorScheme.primary
+color: colorScheme.onSurface
+color: colorScheme.surfaceContainerLow
+
+// ❌ 错误
 color: AppColors.primary
+color: Color(0xFF4F6BFF)
+Colors.white
+```
+
+例外：`AppColors.*Soft` 装饰色（没有 M3 colorScheme 直接对应）可继续使用，但仅限装饰性场景。
+
+### 间距/圆角/尺寸 → 用 `AppToken`
+```dart
+// ✅ 正确
+const SizedBox(height: AppSpacing.md)
 BorderRadius.circular(AppRadius.sm)
 
 // ❌ 错误
 const SizedBox(height: 16)
-color: Color(0xFF2563EB)
 BorderRadius.circular(8)
 ```
 
+### 所有 Token 对照表
+
 Token 定义在 `lib/src/core/theme/app_tokens.dart`：
 
-| Token 类 | 内容 |
-|-----------|------|
-| `AppColors` | 颜色 palette（primary、text、background、border、soft 装饰色等） |
-| `AppSpacing` | 间距（xxs=4 → section=40） |
-| `AppRadius` | 圆角（xs=6 → full=999） |
-| `AppSizes` | 尺寸（buttonHeight、inputHeight、listItem 等） |
-| `AppDesktopSizes` | 桌面端尺寸（sidebarWidth=240 等） |
-| `AppFonts` | 字体族（decorative、fallback 列表） |
-| `AppShadows` | 共享阴影常量（card、elevated 等） |
+| Token 类 | 用途 | Widget 中使用 |
+|-----------|------|-------------|
+| `colorScheme.*` | 颜色（primary/surface/onSurface/outline 等） | **优先使用** |
+| `AppColors.primary` | 仅 `ColorScheme.fromSeed(seedColor:)` 参数 | 主题初始化 |
+| `AppColors.*Soft` | M3 无直接对应的装饰色 | 可继续用 |
+| `AppSpacing` | 间距（xxs=4 → section=40） | ✅ 必须用 |
+| `AppRadius` | 圆角（xs=6 → full=999） | ✅ 必须用 |
+| `AppSizes` | 组件尺寸（buttonHeight、listItem 等） | ✅ 优先用 |
+| `AppDesktopSizes` | 桌面端布局尺寸（sidebarWidth 等） | ✅ 必须用 |
+| `AppMobileSizes` | 移动端布局尺寸 | ✅ 必须用 |
+| `AppFonts` | 字体族 | ✅ 必须用 |
+| `AppShadows` | 阴影常量 | ✅ 优先用 |
 
 ---
 
@@ -334,3 +355,37 @@ MaterialApp.router(
 ### Elevation Surface Tint
 
 不要禁用 `surfaceTintColor`（`Colors.transparent`），M3 的 surface tint 层为 AppBar、Card、NavigationBar 等带 elevation 的组件提供了微妙的色调叠加，是 M3 视觉语言的重要组成。
+
+---
+
+## ColorScheme vs AppTokens 决策树
+
+```
+我要设置一个颜色值
+│
+├─ 是 Widget 中的颜色吗？
+│   ├─ ✅ → 用 colorScheme.*
+│   │   ├─ 卡片背景 → colorScheme.surface
+│   │   ├─ 页面背景 → colorScheme.surface
+│   │   ├─ 主按钮 → colorScheme.primary
+│   │   ├─ 文字 → colorScheme.onSurface / onSurfaceVariant
+│   │   ├─ 边框 → colorScheme.outline / outlineVariant
+│   │   ├─ 次级表面 → colorScheme.surfaceContainerLow/High
+│   │   ├─ 错误 → colorScheme.error
+│   │   └─ 装饰色且 M3 无对应 → AppColors.*Soft（例外）
+│   │
+│   └─ ❌ 是 Theme 初始化？
+│       └─ ✅ → AppColors.primary（seedColor）
+│
+├─ 我要设置间距
+│   └─ ✅ → AppSpacing.xxs/xs/sm/md/lg/xl/xxl/section
+│
+├─ 我要设置圆角
+│   └─ ✅ → AppRadius.xs/sm/md/lg/xl/full
+│
+├─ 我要设置尺寸
+│   └─ ✅ → AppSizes / AppDesktopSizes / AppMobileSizes
+│
+└─ 我要设置字体
+    └─ ✅ → AppFonts.decorative + fallback 或默认 textTheme
+```
