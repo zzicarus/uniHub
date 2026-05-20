@@ -118,12 +118,11 @@ app.*.symbols
 !/packages/flutter_tools/test/data/dart_dependencies_test/**/.packages
 !/dev/ci/**/Gemfile.lock
 
-# AI tools config
+# AI tools config (runtime/state only)
 .agents/
 .claude/
 .codex/
 .gemini/
-.omo/
 .opencode/
 .playwright-mcp/
 .serena/
