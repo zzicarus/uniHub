@@ -1,6 +1,7 @@
 # 剩余技术债务
 
-> 2026-05-20 代码库全面缺陷分析后尚未处理的剩余项。
+> 创建日期：2026-05-20
+> 最后核对日期：2026-05-21
 
 ## 完成情况总览
 
@@ -20,12 +21,12 @@
 
 ### #14 — 替换仪表盘硬编码 Mock 数据
 
-**位置**：`lib/src/plugins/thoughts/ui/home_page.dart`（5 处 `// TODO`）
+**位置**：`lib/src/core/app/home_page.dart`（5 处 `// TODO`）
 
 **描述**：仪表盘的统计卡片使用了硬编码值——thoughts 总数、todos 总数、标签数量、统计图表等。这些数据应该从真实 provider 获取。
 
 **涉及文件**：
-- `lib/src/plugins/thoughts/ui/home_page.dart`
+- `lib/src/core/app/home_page.dart`
 
 **验收标准**：
 - [ ] 仪表盘数据全部来自真实 Provider/DAO
@@ -56,7 +57,7 @@
 - `lib/src/core/app/`
 - `lib/src/core/router/`
 - `lib/src/core/theme/`
-- `lib/src/shared/layouts/`
+- `lib/src/shared/widgets/`
 - `lib/src/plugins/*/ui/`
 
 **验收标准**：
@@ -69,7 +70,7 @@
 
 ### #8 — 拆分脆弱的全量冒烟测试
 
-**位置**：`test/src/plugins/thoughts/widget/widget_test.dart`
+**位置**：`test/widget_test.dart`
 
 **描述**：当前唯一的 widget 测试是整个应用加载的冒烟测试。当任何组件变化时这个测试容易失败，且无法定位具体问题。
 
@@ -81,3 +82,16 @@
 - [ ] 至少有 3 个独立的 widget 测试覆盖不同组件
 - [ ] 全量冒烟测试依然保留
 - [ ] `flutter test` 全部通过
+
+---
+
+## 当前真实状态（2026-05-21 核对）
+
+| 条目 | 状态 | 说明 |
+|------|------|------|
+| #14 路径 | ✅ 已修正 | `lib/src/plugins/thoughts/ui/home_page.dart` → `lib/src/core/app/home_page.dart`（因 ThoughtsTable 重构时 home_page 移至 core/app 目录） |
+| #14 涉及的 5 处 TODO | ✅ 仍存在 | 位于 `lib/src/core/app/home_page.dart`，标记 mock 数据待替换 |
+| #5 测试覆盖 | ✅ 路径已验证 | 目前 6 个测试文件共约 41 个测试用例（test/core/ 3 个、test/plugins/thoughts/data/ 3 个、test/widget_test.dart 1 个） |
+| #8 全量冒烟测试 | ✅ 路径已验证 | 位于 `test/widget_test.dart`，为非 `src/` 子目录下的独立文件 |
+
+> 测试文件实际目录为 `test/`，不包含 `src/` 子目录。`test/` 镜像 `lib/` 的结构。

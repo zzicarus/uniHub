@@ -17,7 +17,7 @@ UniHub 是一个 **桌面端优先** 的 Flutter 笔记应用，基于插件架�
 
 ## 代码库导航
 
-可按模块查阅对应的 AGENTS.md：
+可按模块查阅对应的 AGENTS.md 及规划文档：
 
 | 路径 | 内容 | 优先级 |
 |------|------|--------|
@@ -26,6 +26,8 @@ UniHub 是一个 **桌面端优先** 的 Flutter 笔记应用，基于插件架�
 | `lib/src/core/plugin/` | **插件系统关键约定 + 已知陷阱** | 新增/修改插件必读 |
 | `lib/src/plugins/thoughts/` | Thoughts 插件内部架构 + data/ui 分层 | 维护该插件必读 |
 | `test/` | 测试隔离模式 + ProviderScope override | 新增测试必读 |
+| `.omo/guidelines/` | 项目规范（数据库/Widget/工作流/代理委派/PRD 模板） | 任意任务前查阅 |
+| `.omo/plans/` | PRD 示例与技术债跟踪 | 大型功能前查阅 |
 
 ## 项目规范
 
@@ -33,6 +35,9 @@ UniHub 是一个 **桌面端优先** 的 Flutter 笔记应用，基于插件架�
 
 - `.omo/guidelines/database.md` — 数据库规范（drift/SQLite）
 - `.omo/guidelines/widget.md` — Widget 编写规范（设计令牌、M3 ColorScheme、布局约定）
+- `.omo/guidelines/workflow.md` — 完整开发流程规范（Plan → Code → Verify → Review → Ship）
+- `.omo/guidelines/planning.md` — PRD 模板和命名约定
+- `.omo/guidelines/agent-workflow.md` — 代理任务分类与委派指南（根据任务类型选择 category/skills）
 
 ## 构建与验证
 
@@ -63,6 +68,8 @@ dart fix --apply           # 确认后执行
 |---|------|------|------|
 | ~~1~~ | ~~`AppBootstrap` 定义但从未调用~~ | ~~`lib/src/core/app/app_bootstrap.dart`~~ | ✅ **已修复** — 文件已删除 |
 | ~~2~~ | ~~`PluginRegistry.quickCreate` 硬编码 `id=='thoughts'`~~ | ~~`lib/src/core/plugin/plugin_registry.dart`~~ | ✅ **已修复** — 改为遍历所有插件 |
-| 3 | 三套布局机制并存：`AppLayout`（死）、`AdaptiveShell`（活）、`AdaptiveLayout`（在用） | `shared/layouts/` + `core/app/` | ⏸️ 待确认 |
+| ~~3~~ | ~~三套布局机制并存：`AppLayout`（死）、`AdaptiveShell`（活）、`AdaptiveLayout`（在用）~~ | ~~`shared/layouts/` + `core/app/`~~ | ✅ **已修复** — `AppLayout` 已删除，当前仅 `AdaptiveShell`（GoRouter ShellRoute）与 `AdaptiveLayout`（插件内布局）两套机制并存 |
 | ~~4~~ | ~~`dynamic ref` 在 `PluginInterface`~~ | ~~`lib/src/core/plugin/plugin_interface.dart`~~ | ✅ **已修复** — 改为 `Ref` |
-| 5 | `core/database/app_database.dart` 直接 import `plugins/thoughts/table` | `lib/src/core/database/` | ⏸️ 待确认 |
+| ~~5~~ | ~~`core/database/app_database.dart` 直接 import `plugins/thoughts/table`~~ | ~~`lib/src/core/database/`~~ | ✅ **已修复** — `ThoughtsTable` 已移至 `core/database/tables/`，`app_database.dart` 使用 core 内相对路径引入 |
+
+> 最后核对日期：2026-05-21 | 当前无阻塞级别的已知问题。

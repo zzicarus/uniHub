@@ -10,7 +10,7 @@
 | P0 | 验证环境 / 项目信息 | 2 | 影响每次 vibe coding 的闭环验证和项目理解 |
 | P1 | 插件架构 / 真实数据闭环 | 4 | 影响 UniHub 作为插件化笔记应用的核心可信度 |
 | P2 | UI/UX / 可维护性 / 测试 | 8 | 影响产品体验、agent 改动稳定性和回归风险 |
-| P3 | 文档与流程 | 4 | 影响后续 agent 协作效率和任务边界清晰度 |
+| P3 | 文档与流程 | 4（全部完成） | 影响后续 agent 协作效率和任务边界清晰度 |
 
 ## P0：必须先排除的阻塞
 
@@ -56,12 +56,12 @@
 
 ## P3：文档、规范与 vibe coding 流程
 
-| # | 问题 | 证据位置 | 风险 | 建议 |
-|---|------|----------|------|------|
-| P3-1 | `.omo` 技术债文档有路径滞后 | `remaining-technical-debt.md` 写到旧路径 `plugins/thoughts/ui/home_page.dart` | agent 会按旧路径查找，降低效率 | 每次重构后同步 `.omo` 和 AGENTS 文档 |
-| P3-2 | AGENTS / guidelines 中部分状态描述可能滞后 | 多处文档记录“已修复/待确认/当前覆盖” | 状态漂移后会误导后续任务规划 | 增加“最后核对日期”和“当前真实状态”小节 |
-| P3-3 | 缺少按任务类型调用 skill/agent 的本地指南 | 当前只有通用 workflow，没有 UniHub 专属 agent 分工 | vibe coding 时容易把架构、UI、数据、测试混成一个大任务 | 新增 `docs/agent-workflow.md` 或 `.omo/guidelines/agent-workflow.md` |
-| P3-4 | 缺少 PRD 到实现的验收模板实例 | `.omo/guidelines/planning.md` 有模板，但缺少真实例子 | 复杂功能容易写成泛泛计划 | 为“全局搜索”“Todo 插件”“首页真实数据化”各写一个 PRD 示例 |
+| # | 问题 | 状态 | 证据位置 | 风险 | 建议 |
+|---|------|------|----------|------|------|
+| ~~P3-1~~ | ~~`.omo` 技术债文档有路径滞后~~ | ✅ **已完成** | ~~`remaining-technical-debt.md` 写到旧路径~~ | ~~agent 会按旧路径查找~~ | 已修正路径、添加核对日期和“当前真实状态”小节 |
+| ~~P3-2~~ | ~~AGENTS / guidelines 中部分状态描述可能滞后~~ | ✅ **已完成** | ~~多处文档记录“已修复/待确认/当前覆盖”~~ | ~~状态漂移后会误导~~ | 已更新 AGENTS.md 和 test/AGENTS.md，所有问题标记为 ✅ |
+| ~~P3-3~~ | ~~缺少按任务类型调用 skill/agent 的本地指南~~ | ✅ **已完成** | `.omo/guidelines/agent-workflow.md` | ~~vibe coding 任务边界不清~~ | 已创建，覆盖 6 类任务 + 速查表 + 委派策略 |
+| ~~P3-4~~ | ~~缺少 PRD 到实现的验收模板实例~~ | ✅ **已完成** | `.omo/plans/prd-global-search.md`、`prd-todo-plugin.md`、`prd-home-real-data.md` | ~~复杂功能容易泛泛~~ | 已创建 3 个 PRD 示例，基于真实代码路径 |
 
 ## 建议的分批处理顺序
 
