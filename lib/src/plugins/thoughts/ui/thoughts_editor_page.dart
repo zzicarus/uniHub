@@ -5,10 +5,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_quill/flutter_quill.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import '../../../core/theme/app_tokens.dart';
+import 'package:uni_hub/src/core/theme/app_tokens.dart';
 import '../data/thought_content_codec.dart';
 import '../data/thought_image_service.dart';
 import '../providers/thoughts_providers.dart';
+import 'widgets/thought_color_picker.dart';
 import 'widgets/thought_rich_editor.dart';
 
 class ThoughtsEditorPage extends ConsumerStatefulWidget {
@@ -364,7 +365,7 @@ class _ThoughtsEditorPageState extends ConsumerState<ThoughtsEditorPage> {
                 spacing: AppSpacing.sm,
                 runSpacing: AppSpacing.sm,
                 children: [
-                  _ColorDot(
+                  ThoughtColorDot(
                     color: null,
                     label: '默认',
                     isSelected: _selectedColor == null,
@@ -375,14 +376,14 @@ class _ThoughtsEditorPageState extends ConsumerState<ThoughtsEditorPage> {
                       });
                     },
                   ),
-                  ..._availableColors(colorScheme).map((c) {
-                    return _ColorDot(
+                  ...thoughtAvailableColors(colorScheme).map((c) {
+                    return ThoughtColorDot(
                       color: c,
                       label: null,
-                      isSelected: _selectedColor == _colorToHex(c),
+                      isSelected: _selectedColor == thoughtColorToHex(c),
                       onTap: () {
                         setState(() {
-                          _selectedColor = _colorToHex(c);
+                          _selectedColor = thoughtColorToHex(c);
                           _isDirty = true;
                         });
                       },
@@ -514,63 +515,3 @@ class _ImageStrip extends StatelessWidget {
   }
 }
 
-class _ColorDot extends StatelessWidget {
-  final Color? color;
-  final String? label;
-  final bool isSelected;
-  final VoidCallback onTap;
-
-  const _ColorDot({
-    this.color,
-    this.label,
-    required this.isSelected,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(AppRadius.full),
-      child: Container(
-        width: 36,
-        height: 36,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          color: color ?? Theme.of(context).colorScheme.surfaceContainerHigh,
-          border: Border.all(
-            color: isSelected
-                ? Theme.of(context).colorScheme.primary
-                : Theme.of(context).colorScheme.outline,
-            width: isSelected ? 2.5 : 1.5,
-          ),
-        ),
-        child: color == null
-            ? Center(
-                child: Text(
-                  'A',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Theme.of(context).colorScheme.outline,
-                  ),
-                ),
-              )
-            : null,
-      ),
-    );
-  }
-}
-
-List<Color> _availableColors(ColorScheme colorScheme) => [
-  colorScheme.primary,
-  colorScheme.secondary,
-  colorScheme.tertiary,
-  colorScheme.error,
-  colorScheme.primaryContainer,
-  colorScheme.secondaryContainer,
-  colorScheme.tertiaryContainer,
-];
-
-String _colorToHex(Color c) {
-  return '#${c.toARGB32().toRadixString(16).padLeft(8, '0').substring(2).toUpperCase()}';
-}

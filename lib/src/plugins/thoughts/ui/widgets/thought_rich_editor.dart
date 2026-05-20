@@ -1,5 +1,3 @@
-// ignore_for_file: experimental_member_use
-
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -7,7 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_quill/flutter_quill.dart';
 import 'package:flutter_quill_extensions/flutter_quill_extensions.dart';
 
-import '../../../../core/theme/app_tokens.dart';
+import 'package:uni_hub/src/core/theme/app_tokens.dart';
 import '../../data/thought_content_codec.dart';
 import '../../data/thought_image_service.dart';
 
@@ -43,6 +41,7 @@ class ThoughtRichEditor extends StatefulWidget {
       document: document,
       selection: const TextSelection.collapsed(offset: 0),
       config: QuillControllerConfig(
+        // ignore: experimental_member_use
         clipboardConfig: QuillClipboardConfig(onImagePaste: onImagePaste),
       ),
     );
@@ -120,7 +119,7 @@ class _ThoughtRichEditorState extends State<ThoughtRichEditor> {
     final markerHash = Object.hash(lineStart, marker, offset);
     if (_lastMarkdownShortcutHash == markerHash) return;
 
-    Attribute<dynamic>? attribute;
+    Attribute<Object?>? attribute;
     var removeLength = 0;
     switch (marker) {
       case '# ':

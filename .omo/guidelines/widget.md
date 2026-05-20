@@ -135,7 +135,7 @@ Token 定义在 `lib/src/core/theme/app_tokens.dart`：
 ## 响应式布局
 
 ```dart
-// 参考 lib/src/shared/layouts/app_layout.dart
+// 参考 lib/src/shared/layouts/adaptive_shell.dart
 final isDesktop = MediaQuery.of(context).size.width >= 720;
 
 if (isDesktop) {
@@ -180,6 +180,47 @@ return Row(
 
 ---
 
+## 占位页面规范
+
+对于路由中存在但功能尚未实现的占位页面，遵循以下原则：
+
+| 规则 | 说明 | 示例 |
+|------|------|------|
+| 保持极简 | 只显示图标 + 标题 + 说明文字，不含任何 mock 数据 | `Icon` + `Text('即将推出')` |
+| 保留路由结构 | 注册必要的路由路径，避免路由缺失导致导航断裂 | 5 个占位页面约 120 行 |
+| 禁止硬编码 mock 内容 | 不写入假列表、假统计、假图表 | 1500 行 mock 数据 ❌ |
+| 占位数据放在独立文件 | 如果确实需要展示 mock 预览，放在单独的数据文件 | 不与路由/页面定义混合 |
+
+```dart
+// ✅ 正确：极简占位页面
+class ComingSoonPage extends StatelessWidget {
+  final IconData icon;
+  final String title;
+
+  const ComingSoonPage({required this.icon, required this.title, super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 48, color: colorScheme.onSurfaceVariant),
+          const SizedBox(height: 16),
+          Text(title, style: Theme.of(context).textTheme.headlineSmall),
+          const SizedBox(height: 8),
+          Text('即将推出，敬请期待',
+              style: TextStyle(color: colorScheme.onSurfaceVariant)),
+        ],
+      ),
+    );
+  }
+}
+```
+
+---
+
 ## 避免模式
 
 | 禁止 | 原因 | 正确做法 |
@@ -198,7 +239,7 @@ return Row(
 
 - `lib/src/core/app/home_page.dart` — 简单页面示例
 - `lib/src/shared/widgets/sidebar.dart` — 复杂组件示例（包含私有 `_NavItem` 组件）
-- `lib/src/shared/layouts/app_layout.dart` — 响应式布局示例
+- `lib/src/shared/layouts/adaptive_shell.dart` — 响应式布局示例
 - `lib/src/plugins/thoughts/thoughts_placeholder_page.dart` — 插件页面示例
 
 

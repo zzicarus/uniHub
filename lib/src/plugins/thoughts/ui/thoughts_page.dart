@@ -3,7 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_quill/flutter_quill.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../core/database/app_database.dart';
+import 'package:uni_hub/src/core/database/app_database.dart';
 import '../../../shared/widgets/adaptive_layout.dart';
 import '../data/thought_content_codec.dart';
 import '../data/thought_image_service.dart';

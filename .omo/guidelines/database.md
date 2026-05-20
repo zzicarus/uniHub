@@ -20,7 +20,7 @@
 ### 基础模式
 
 ```dart
-// lib/src/plugins/thoughts/data/thoughts_table.dart
+// lib/src/core/database/tables/thoughts_table.dart
 import 'package:drift/drift.dart';
 
 class ThoughtsTable extends Table {
@@ -251,3 +251,30 @@ final appDatabaseProvider = Provider<AppDatabase>((ref) {
 | 数据库未关闭 | Provider dispose 未注册 | 始终在 Provider 中 `ref.onDispose(() => db.close())` |
 | 直接在 Widget 中查询数据库 | 绕过 Repository/Provider 层 | 遵循 `UI → Provider → Repository → DAO` 分层 |
 | 迁移漏写导致数据丢失 | schemaVersion 变了但 onUpgrade 未处理 | 每次改 schemaVersion 必须写对应的 onUpgrade 逻辑 |
+| 测试中 DB 未关闭（缺少 tearDown） | 测试函数异常退出时 close() 不执行 | 使用 `late AppDatabase` + `setUp`/`tearDown` 模式，确保即使失败也释放资源 |
+
+### 测试生命周期模式
+
+测试中管理数据库资源的正确模式：
+
+```dart
+late AppDatabase database;
+
+setUp(() async {
+  database = AppDatabase(NativeDatabase.memory());
+});
+
+tearDown(() async {
+  await database.close();
+});
+
+test('query returns data', () async {
+  final result = await database.someQuery();
+  expect(result, isNotNull);
+});
+```
+
+使用 `late` + `setUp`/`tearDown` 模式可以确保：
+- 每个测试获得独立的数据库实例
+- 即使测试断言失败，`tearDown` 仍然执行
+- 不会在测试间泄漏连接或状态

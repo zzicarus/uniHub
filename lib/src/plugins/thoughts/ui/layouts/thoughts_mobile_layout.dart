@@ -5,9 +5,9 @@ import 'package:flutter_quill/flutter_quill.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../../core/theme/app_tokens.dart';
+import 'package:uni_hub/src/core/theme/app_tokens.dart';
 import '../../data/thought_image_service.dart';
-import '../../../../core/database/app_database.dart';
+import 'package:uni_hub/src/core/database/app_database.dart';
 import '../widgets/thought_card.dart';
 import '../widgets/thought_rich_editor.dart';
 import 'thoughts_shared_widgets.dart';

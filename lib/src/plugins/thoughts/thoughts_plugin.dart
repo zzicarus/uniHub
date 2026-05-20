@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import '../../core/plugin/plugin_interface.dart';
-import '../../core/router/route_names.dart';
+import 'package:uni_hub/src/core/plugin/plugin_interface.dart';
+import 'package:uni_hub/src/core/router/route_names.dart';
+import 'package:uni_hub/src/core/database/tables/thoughts_table.dart';
 import 'data/thought_content_codec.dart';
-import 'data/thoughts_table.dart';
 import 'providers/thoughts_providers.dart';
 import 'ui/thoughts_list_page.dart';
 import 'ui/thoughts_editor_page.dart';
@@ -75,7 +75,7 @@ class ThoughtsPlugin extends UniHubPlugin {
 
   @override
   Future<List<DashboardItem>> getRecentItems(
-    dynamic ref, {
+    Ref ref, {
     int count = 4,
   }) async {
     final repo = ref.read(thoughtsRepositoryProvider);
@@ -100,7 +100,7 @@ class ThoughtsPlugin extends UniHubPlugin {
 
   @override
   Future<List<DashboardItem>> getPinnedItems(
-    dynamic ref, {
+    Ref ref, {
     int count = 3,
   }) async {
     final repo = ref.read(thoughtsRepositoryProvider);
@@ -123,7 +123,7 @@ class ThoughtsPlugin extends UniHubPlugin {
   }
 
   @override
-  Future<PluginStat?> getStat(dynamic ref) async {
+  Future<PluginStat?> getStat(Ref ref) async {
     final repo = ref.read(thoughtsRepositoryProvider);
     final thoughts = await repo.getThoughts(archived: false);
     return PluginStat(pluginId: id, label: '想法', count: thoughts.length);
@@ -131,7 +131,7 @@ class ThoughtsPlugin extends UniHubPlugin {
 
   @override
   Future<DashboardItem?> quickCreate(
-    dynamic ref, {
+    Ref ref, {
     required String content,
     String? tags,
   }) async {

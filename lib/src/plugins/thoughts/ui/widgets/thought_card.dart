@@ -2,7 +2,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../core/theme/app_tokens.dart';
+import 'package:uni_hub/src/core/theme/app_tokens.dart';
 import '../../data/thought_content_codec.dart';
 
 class ThoughtCard extends ConsumerStatefulWidget {

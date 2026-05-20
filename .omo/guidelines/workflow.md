@@ -54,7 +54,45 @@ flowchart LR
 ### 文件修改规则
 - **Bugfix**：最小修改，不重构任何不相关代码
 - **新增功能**：遵循现有模式（DAO → Repository → Provider → UI）
-- **不引入**：类型抑制（`as any`、`@ts-ignore`、`@ts-expect-error`）、空的 catch 块
+- **不引入**：类型抑制（`as any`、`@ts-ignore`、`@ts-expect-error`）、文件级 `// ignore_for_file:`（改用行级 `// ignore:` + 原因注释）、空的 catch 块
+
+### Import 约定
+
+| 场景 | 规则 | 示例 |
+|------|------|------|
+| plugins → core 跨层引用 | 使用 `package:` 绝对路径，禁止 `../../../` 相对路径 | `package:uni_hub/src/core/...` ✅ / `../../../../core/...` ❌ |
+| 同一层内引用 | 相对路径（简短即可） | `../data/thoughts_dao.dart` ✅ |
+| `dart:` / `package:` 标准库 | 使用标准 import | 正常引入 |
+
+### 资源清理
+
+所有通过 Provider 获取的外部资源（数据库、Controller、监听器）都必须在 Provider 中注册 `ref.onDispose` 清理逻辑：
+
+```dart
+final myProvider = Provider<MyResource>((ref) {
+  final resource = MyResource();
+  ref.onDispose(() => resource.dispose());
+  return resource;
+});
+```
+
+沿用 `appDatabaseProvider` 的既有模式：
+
+```dart
+final appDatabaseProvider = Provider<AppDatabase>((ref) {
+  final db = AppDatabase(_createExecutor());
+  ref.onDispose(() => db.close());
+  return db;
+});
+```
+
+### 提取共享代码
+
+当发现两个或多个文件中存在重复的 widget/函数/逻辑时，提取为共享组件。提取时注意：
+
+- **命名冲突**：检查待删除的私有类名（如 `_ColorDot`、`_Cd` 表示同一事物）是否被其他文件引用
+- **构造器**：共享 widget 的构造器参数使用命名参数，必传项用 `required`
+- **文件位置**：属于插件层的共享代码放在 `lib/src/shared/` 或插件内的 `widgets/` 目录
 
 ### 测试同步
 - 新增/修改数据层代码 → 同时加单元测试

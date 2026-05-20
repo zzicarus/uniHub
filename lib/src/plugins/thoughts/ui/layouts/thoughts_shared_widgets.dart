@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../../core/theme/app_tokens.dart';
+import 'package:uni_hub/src/core/theme/app_tokens.dart';
 
 /// Desktop-style white card with thin border and light shadow.
 /// Matches `_Panel` in home_page.dart.

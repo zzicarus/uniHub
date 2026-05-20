@@ -1,6 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../core/database/app_database.dart';
-import '../../../core/database/database_provider.dart';
+import 'package:uni_hub/src/core/database/app_database.dart';
+import 'package:uni_hub/src/core/database/database_provider.dart';
 import '../data/thoughts_dao.dart';
 import '../data/thoughts_repository.dart';
 import '../data/thought_image_service.dart';

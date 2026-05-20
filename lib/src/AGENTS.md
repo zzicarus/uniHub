@@ -12,15 +12,14 @@ lib/src/
 ### 依赖方向
 `plugins/ → shared/ → core/`（插件可依赖 shared 和 core，core 不可依赖 plugins）
 
-⚠️ 当前违规：`core/database/app_database.dart` 直接 import `plugins/thoughts/` 的表定义。
+✅ 已修复：`ThoughtsTable` 移至 `core/database/tables/`，依赖方向恢复正常。
 
-### 布局系统（三套并存，注意区分）
+### 布局系统
 
 | 机制 | 状态 | 说明 |
 |------|------|------|
 | `AdaptiveShell` → `DesktopShell` / `MobileShell` | ✅ **使用中** | GoRouter ShellRoute 接入，桌面端布局 |
 | `AdaptiveLayout` | ✅ 被 ThoughtsPage 使用 | 插件页面内的响应式布局 |
-| `AppLayout` | ❌ **死代码** | 未被任何代码引用 |
 
 - **新增页面**：顶层路由页面 → 使用 `AdaptiveShell`（已注册在 GoRouter ShellRoute）
 - **插件内部**：插件页面内容 → 使用 `AdaptiveLayout`（ThoughtsPage 模式）

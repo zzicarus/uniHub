@@ -1,4 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
+// hide avoids ambiguity with `package:test` matchers isNull/isNotNull.
+// Use `package:drift`'s .isNull extension on Expression types when needed.
 import 'package:drift/drift.dart' hide isNull, isNotNull;
 import 'package:drift/native.dart';
 import 'package:uni_hub/src/core/database/app_database.dart';

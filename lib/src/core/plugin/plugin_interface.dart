@@ -1,4 +1,5 @@
 import 'package:flutter/widgets.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../search/search_result.dart';
 
@@ -70,27 +71,23 @@ abstract class UniHubPlugin {
   Future<List<SearchResult>> search(String query) async => [];
 
   /// Return recent items for the dashboard home page.
-  /// The [ref] parameter accepts any Riverpod ref (WidgetRef or provider Ref).
   Future<List<DashboardItem>> getRecentItems(
-    dynamic ref, {
+    Ref ref, {
     int count = 4,
   }) async => [];
 
   /// Return pinned items for the dashboard right rail.
-  /// The [ref] parameter accepts any Riverpod ref (WidgetRef or provider Ref).
   Future<List<DashboardItem>> getPinnedItems(
-    dynamic ref, {
+    Ref ref, {
     int count = 3,
   }) async => [];
 
   /// Return stats (count) for the dashboard.
-  /// The [ref] parameter accepts any Riverpod ref (WidgetRef or provider Ref).
-  Future<PluginStat?> getStat(dynamic ref) async => null;
+  Future<PluginStat?> getStat(Ref ref) async => null;
 
   /// Quick-create an item from the dashboard. Returns the created item.
-  /// The [ref] parameter accepts any Riverpod ref (WidgetRef or provider Ref).
   Future<DashboardItem?> quickCreate(
-    dynamic ref, {
+    Ref ref, {
     required String content,
     String? tags,
   }) async => null;

@@ -28,28 +28,23 @@ main.dart → PluginRegistry.register(ThoughtsPlugin())
          → AppDatabase 遍历插件收集 tables
 ```
 
-## 关键陷阱
+## 已修复的历史问题
 
-### 1️⃣ `PluginRegistry.quickCreate` 硬编码
-`quickCreate` 方法目前只处理 `id == 'thoughts'` 的插件。
-**新插件不会自动通过 quickCreate 注册**，需在 `main.dart` 中显式 `register()`。
+以下架构违规已修复：
 
-### 2️⃣ `dynamic ref` 类型不安全
-`UniHubPlugin.init(WidgetRef ref)` 参数为 `dynamic` 类型。
-provider 返回 `[UniHubPlugin]` 时需调用方运行时 cast。
-**不要依赖编译期类型检查**，插件方法调用后需验证结果。
-
-### 3️⃣ 插件贡献表的注册
-插件通过 `get tables` 贡献表定义给 `AppDatabase`。
-`AppDatabase` 当前在构造时遍历所有插件的 tables 并合并。
-⚠️ 当前 `AppDatabase` 直接 import `plugins/thoughts/` 的表——这违反了依赖方向。
+| # | 问题 | 修复方式 |
+|---|------|---------|
+| 1 | `PluginRegistry.quickCreate` 硬编码 `id == 'thoughts'` | 改为遍历所有插件，调用 `plugin.quickCreate()` |
+| 2 | `UniHubPlugin` 接口使用 `dynamic ref` | 改为 `Ref` 编译期类型 |
+| 3 | `AppDatabase` 直接 import `plugins/thoughts/` 的表 | `ThoughtsTable` 移至 `core/database/tables/`，双向依赖消除 |
 
 ## 如何新增一个插件
 
 1. 实现 `UniHubPlugin` 抽象类
 2. 在 `main.dart` 中调用 `registry.register(YourPlugin())`
-3. 在 `PluginRegistry.quickCreate` 中添加该插件的创建逻辑
-4. 如果需要数据库表，在 `get tables` 中返回
+3. 如果需要数据库表
+    - 表定义放在 `core/database/tables/` 中
+    - 在 `get tables` 中返回
     - 同时在 `AppDatabase` 的 `@DriftDatabase(tables: [...])` 中添加
 5. 实现 `routes()` 返回 GoRoute 列表
 6. 实现 `init()` 做初始化（如创建默认数据）

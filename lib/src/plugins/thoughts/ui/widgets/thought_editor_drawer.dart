@@ -5,10 +5,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_quill/flutter_quill.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../../core/theme/app_tokens.dart';
+import 'package:uni_hub/src/core/theme/app_tokens.dart';
 import '../../data/thought_content_codec.dart';
 import '../../data/thought_image_service.dart';
 import '../../providers/thoughts_providers.dart';
+import 'thought_color_picker.dart';
 import 'thought_rich_editor.dart';
 
 class ThoughtEditorDrawer extends ConsumerStatefulWidget {
@@ -420,21 +421,21 @@ class _ThoughtEditorDrawerState extends ConsumerState<ThoughtEditorDrawer> {
               spacing: AppSpacing.sm,
               runSpacing: AppSpacing.sm,
               children: [
-                _Cd(
+                ThoughtColorDot(
                   color: null,
                   label: '默认',
-                  sel: _color == null,
+                  isSelected: _color == null,
                   onTap: () {
                     setState(() => _color = null);
                     _markDirty();
                   },
                 ),
-                ..._colors(colorScheme).map(
-                  (c) => _Cd(
+                ...thoughtAvailableColors(colorScheme).map(
+                  (c) => ThoughtColorDot(
                     color: c,
-                    sel: _color == _hex(c),
+                    isSelected: _color == thoughtColorToHex(c),
                     onTap: () {
-                      setState(() => _color = _hex(c));
+                      setState(() => _color = thoughtColorToHex(c));
                       _markDirty();
                     },
                   ),
@@ -488,58 +489,3 @@ class _ThoughtEditorDrawerState extends ConsumerState<ThoughtEditorDrawer> {
   }
 }
 
-// ── Color dot ──
-
-class _Cd extends StatelessWidget {
-  final Color? color;
-  final String? label;
-  final bool sel;
-  final VoidCallback onTap;
-  const _Cd({this.color, this.label, required this.sel, required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(AppRadius.full),
-      child: Container(
-        width: 32,
-        height: 32,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          color: color ?? Theme.of(context).colorScheme.surfaceContainerHigh,
-          border: Border.all(
-            color: sel
-                ? Theme.of(context).colorScheme.primary
-                : Theme.of(context).colorScheme.outline,
-            width: sel ? 2.5 : 1.5,
-          ),
-        ),
-        child: color == null
-            ? Center(
-                child: Text(
-                  'A',
-                  style: TextStyle(
-                    fontSize: 11,
-                    color: Theme.of(context).colorScheme.outline,
-                  ),
-                ),
-              )
-            : null,
-      ),
-    );
-  }
-}
-
-List<Color> _colors(ColorScheme colorScheme) => [
-  colorScheme.primary,
-  colorScheme.secondary,
-  colorScheme.tertiary,
-  colorScheme.error,
-  colorScheme.primaryContainer,
-  colorScheme.secondaryContainer,
-  colorScheme.tertiaryContainer,
-];
-
-String _hex(Color c) =>
-    '#${c.toARGB32().toRadixString(16).padLeft(8, '0').substring(2).toUpperCase()}';

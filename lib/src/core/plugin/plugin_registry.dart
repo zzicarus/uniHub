@@ -23,7 +23,7 @@ class PluginRegistry {
   }
 
   Future<List<DashboardItem>> getDashboardItems(
-    dynamic ref, {
+    Ref ref, {
     int count = 4,
   }) async {
     final items = <DashboardItem>[];
@@ -36,7 +36,7 @@ class PluginRegistry {
   }
 
   Future<List<DashboardItem>> getDashboardPinned(
-    dynamic ref, {
+    Ref ref, {
     int count = 3,
   }) async {
     final items = <DashboardItem>[];
@@ -48,7 +48,7 @@ class PluginRegistry {
     return items.take(count).toList();
   }
 
-  Future<List<PluginStat>> getDashboardStats(dynamic ref) async {
+  Future<List<PluginStat>> getDashboardStats(Ref ref) async {
     final stats = <PluginStat>[];
     for (final p in _plugins) {
       final stat = await p.getStat(ref);
@@ -58,19 +58,22 @@ class PluginRegistry {
   }
 
   Future<DashboardItem?> quickCreate(
-    dynamic ref, {
+    Ref ref, {
     required String content,
     String? tags,
   }) async {
     for (final p in _plugins) {
-      if (p.id == 'thoughts') {
-        return await p.quickCreate(ref, content: content, tags: tags);
-      }
+      final item = await p.quickCreate(ref, content: content, tags: tags);
+      if (item != null) return item;
     }
     return null;
   }
 }
 
 final pluginRegistryProvider = Provider<PluginRegistry>(
-  (ref) => PluginRegistry(),
+  (ref) {
+    final registry = PluginRegistry();
+    ref.onDispose(() => registry.disposeAll());
+    return registry;
+  },
 );

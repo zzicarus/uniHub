@@ -57,12 +57,12 @@ dart fix --apply           # 确认后执行
 
 完整开发流程规范见 `.omo/guidelines/workflow.md`。
 
-## 关键已知问题（Agent 需注意）
+## 关键已知问题
 
-| # | 问题 | 位置 | 影响 |
+| # | 问题 | 位置 | 状态 |
 |---|------|------|------|
-| 1 | `AppBootstrap` 定义但从未调用 | `lib/src/core/app/app_bootstrap.dart` | 死代码，不要尝试使用 |
-| 2 | `PluginRegistry.quickCreate` 硬编码 `id=='thoughts'` | `lib/src/core/plugin/plugin_registry.dart` | 新插件不会自动注册 |
-| 3 | 三套布局机制并存：`AppLayout`（死）、`AdaptiveShell`（活）、`AdaptiveLayout`（在用） | `shared/layouts/` + `core/app/` | 新页面需确认使用哪个 |
-| 4 | `dynamic ref` 在 `PluginInterface` | `lib/src/core/plugin/plugin_interface.dart` | 类型不安全，需运行时 cast |
-| 5 | `core/database/app_database.dart` 直接 import `plugins/thoughts/table` | `lib/src/core/database/` | 架构层间循环依赖 |
+| ~~1~~ | ~~`AppBootstrap` 定义但从未调用~~ | ~~`lib/src/core/app/app_bootstrap.dart`~~ | ✅ **已修复** — 文件已删除 |
+| ~~2~~ | ~~`PluginRegistry.quickCreate` 硬编码 `id=='thoughts'`~~ | ~~`lib/src/core/plugin/plugin_registry.dart`~~ | ✅ **已修复** — 改为遍历所有插件 |
+| 3 | 三套布局机制并存：`AppLayout`（死）、`AdaptiveShell`（活）、`AdaptiveLayout`（在用） | `shared/layouts/` + `core/app/` | ⏸️ 待确认 |
+| ~~4~~ | ~~`dynamic ref` 在 `PluginInterface`~~ | ~~`lib/src/core/plugin/plugin_interface.dart`~~ | ✅ **已修复** — 改为 `Ref` |
+| 5 | `core/database/app_database.dart` 直接 import `plugins/thoughts/table` | `lib/src/core/database/` | ⏸️ 待确认 |

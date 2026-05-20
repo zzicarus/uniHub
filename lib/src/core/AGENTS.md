@@ -15,13 +15,13 @@
 
 ## 布局系统（重要）
 
-三套布局并存——确定自己该用哪个：
+两套布局——确定自己该用哪个：
 
 | 你的页面类型 | 使用 |
 |-------------|------|
 | 顶层路由页面（从 GoRouter 导航过来） | 不直接选——GoRouter ShellRoute（`AdaptiveShell`）自动选择 DesktopShell/MobileShell |
 | 插件页面内的子布局 | `AdaptiveLayout`（参考 ThoughtsPage 中的用法） |
-| 任何地方都不要新建 | `AppLayout`（已废弃/死代码） |
+| 任何地方都不要新建 | `AppLayout`（已删除） |
 
 ## 启动序列
 
@@ -30,16 +30,14 @@ main()
 └─ ProviderScope (顶层)
    ├─ AppDatabase (LazyDatabase → 延迟创建)
    ├─ PluginRegistry (注册所有插件)
-   │  └─ 各插件.init(ref) —— 注意 ref 是 dynamic
+   │  └─ 各插件.init(ref)
    └─ UniHubApp (MaterialApp.router)
       └─ routerProvider (GoRouter + ShellRoute)
 ```
 
 ## 已知死代码
 
-- `app_bootstrap.dart` — `AppBootstrap` 定义但未在任何地方调用
-- `app/app_layout.dart` — 旧的布局实现，未被引用
-- `app/mobile_placeholder_pages.dart` — 5 个硬编码占位页面（1505 行）
+- `app/mobile_placeholder_pages.dart` — 5 个轻量占位页面（用于未实现的移动端路由）
 - `shared/ui/style_guide_screen.dart` — 组件目录页面（已接入路由，通过侧栏「组件目录」访问）
 
 ## 数据库
@@ -47,7 +45,7 @@ main()
 详见 `.omo/guidelines/database.md`。核心注意：
 
 - `AppDatabase` 通过遍历插件 `tables` 合并所有表
-- ⚠️ `app_database.dart` 直接 import `plugins/thoughts/` 的表——架构违规
+- 表定义统一放在 `core/database/tables/` 下，插件不直接引入数据库表
 - 使用 `LazyDatabase` 延迟创建，Provider dispose 时关闭
 - 所有 DAO/Repository 使用构造器注入 `AppDatabase`
 

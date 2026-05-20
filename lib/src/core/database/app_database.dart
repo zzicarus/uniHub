@@ -1,5 +1,5 @@
 import 'package:drift/drift.dart';
-import '../../plugins/thoughts/data/thoughts_table.dart';
+import 'tables/thoughts_table.dart';
 
 part 'app_database.g.dart';
 

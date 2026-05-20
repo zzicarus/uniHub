@@ -1,5 +1,5 @@
 import 'package:drift/drift.dart';
-import '../../../core/database/app_database.dart';
+import 'package:uni_hub/src/core/database/app_database.dart';
 import 'thoughts_dao.dart';
 
 class ThoughtsRepository {

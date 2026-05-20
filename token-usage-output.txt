@@ -1,0 +1,151 @@
+═══════════════════════════════════════════════════════════════════════════
+Token Analysis: Session ses_1ba9c4c1affeZ9wNwAW7U4ehWT
+Model: deepseek-v4-flash
+═══════════════════════════════════════════════════════════════════════════
+
+WARNINGS
+───────────────────────────────────────────────────
+- Pricing for 'opencode-go/deepseek-v4-flash' was not found in models.json. Cost estimates use the default fallback rates ($1/M input, $3/M output, no cache pricing).
+
+TOKEN BREAKDOWN BY CATEGORY
+─────────────────────────────────────────────────────────────────────────
+Estimated using tokenizer analysis of message content:
+
+Input Categories:
+  USER      ██████████████████████████████       100.0% (308)
+
+  Subtotal: 308 estimated input tokens
+
+Output Categories:
+  REASONING ██████████████████████████████        100.0% (27)
+
+  Subtotal: 27 estimated output tokens
+
+Local Total: 335 tokens (estimated)
+
+TOOL USAGE BREAKDOWN
+─────────────────────────────────────────────────────────────────────────
+
+TOP CONTRIBUTORS
+─────────────────────────────────────────────────────────────────────────
+• User#1                       308 tokens (91.9%)
+• Reasoning#1                  27 tokens (8.1%)
+
+═══════════════════════════════════════════════════════════════════════════
+MOST RECENT API CALL
+─────────────────────────────────────────────────────────────────────────
+
+Raw telemetry from last API response:
+  Input (fresh):              0 tokens
+  Cache read:                 0 tokens
+  Output:                     0 tokens
+  ─────────────────────────────────────
+  Total:                      0 tokens
+
+═══════════════════════════════════════════════════════════════════════════
+SESSION TOTALS (All 0 API calls)
+─────────────────────────────────────────────────────────────────────────
+
+Assistant messages observed: 1 (structural count)
+
+Total tokens processed across the entire session (for cost calculation):
+
+  Input tokens:               0 (fresh tokens across all calls)
+  Cache read:                 0 (cached tokens across all calls)
+  Cache write:                0 (tokens written to cache)
+  Output tokens:              0 (all model responses)
+  ─────────────────────────────────────
+  Session Total:              0 tokens (for billing)
+
+═══════════════════════════════════════════════════════════════════════════
+SESSION COST
+─────────────────────────────────────────────────────────────────────────
+
+Token usage breakdown:
+  Input tokens:               0
+  Output tokens:              0
+
+─────────────────────────────────────────────────────────────────────────
+ACTUAL COST (from API):  $0.0000
+
+Note: Actual cost from OpenCode includes provider-specific pricing
+and 200K+ context adjustments.
+
+══════════════════════════════════════════════════════════════════════════
+AVAILABLE SKILLS (always-available context)
+─────────────────────────────────────────────────────────────────────────
+
+These skills were recovered from the skill tool metadata available to this session.
+
+  Skill                  Description                                   Tokens
+  ───────────────────────────────────────────────────────────────────────
+  customize-opencode     Use ONLY when the user is editing or creatin…     ~95
+  figma-implement-design Translate Figma nodes into production-ready …     ~81
+  find-skills            Helps users discover and install agent skill…     ~69
+  figma                  Use the Figma MCP server to fetch design con…     ~64
+  context7-mcp           This skill should be used when the user asks…     ~61
+  flutter-build-respons… Use `LayoutBuilder`, `MediaQuery`, or `Expan…     ~57
+  doc                    Use when the task involves reading, creating…     ~52
+  flutter-add-integrati… Configures Flutter Driver for app interactio…     ~52
+  flutter-add-widget-te… Implement a component-level test using `Widg…     ~52
+  flutter-dev            Flutter cross-platform development guide cov…     ~50
+  dart-run-static-analy… Execute `dart analyze` to identify warnings …     ~48
+  dart-generate-test-mo… Define and generate mock objects for externa…     ~47
+  dart-fix-runtime-erro… Uses get_runtime_errors and lsp to fetch an …     ~44
+  dart-add-unit-test     Write and organize unit tests for functions,…     ~43
+  flutter-add-widget-pr… Adds interactive widget previews to the proj…     ~42
+  flutter-apply-archite… Architects a Flutter application using the r…     ~42
+  dart-migrate-to-check… Replace the usage of `expect` and similar fu…     ~38
+  dart-resolve-package-… Workflow for fixing package version conflict…     ~33
+  dart-build-cli-app     Entrypoint structure, exit codes, cross-plat…     ~32
+  dart-collect-coverage  Collect coverage using the coverage packge a…     ~23
+  dart-use-pattern-matc… Use switch expressions and pattern matching …     ~18
+  ───────────────────────────────────────────────────────────────────────
+  Total: ~1,043 tokens (21 skills available)
+
+  Note: Full skill tool description is ~1,926 tokens (includes boilerplate).
+
+═══════════════════════════════════════════════════════════════════════════
+AVAILABLE SUBAGENTS (in task tool definition)
+─────────────────────────────────────────────────────────────────────────
+
+These subagents are embedded in the task tool description and consume tokens on every API call.
+
+  Subagent               Description                                        Tokens
+  ───────────────────────────────────────────────────────────────────────
+  librarian              Specialized codebase understanding agent for mult…     ~78
+  explore                Contextual grep for codebases. Answers "Where is …     ~71
+  multimodal-looker      Analyze media files (PDFs, images, diagrams) that…     ~64
+  Metis - Plan Consulta… Pre-planning consultant that analyzes requests to…     ~36
+  Momus - Plan Critic    Expert reviewer for evaluating work plans against…     ~35
+  oracle                 Read-only consultation agent. High-IQ reasoning s…     ~33
+  Sisyphus-Junior        Focused task executor. Same discipline, no delega…     ~32
+  general                General-purpose agent for researching complex que…     ~28
+  build                  The default agent. Executes tools based on config…     ~15
+  plan                   Plan mode. Disallows all edit tools.                   ~13
+  ───────────────────────────────────────────────────────────────────────
+  Total: ~405 tokens (10 subagents available)
+
+  Note: Full task tool description is ~860 tokens (includes instructions/examples).
+
+═══════════════════════════════════════════════════════════════════════════
+TOOL DEFINITION COSTS (Estimated from argument analysis)
+─────────────────────────────────────────────────────────────────────────
+
+  Tool                Est. Tokens   Args   Complexity
+  ───────────────────────────────────────────────────────────────────
+  tokenscope                 ~280       0   simple
+  ───────────────────────────────────────────────────────────────────
+  Total:             ~        280 tokens (1 enabled tools)
+
+  Note: Estimates inferred from tool call arguments in this session.
+        Actual schema tokens may vary +/-20%.
+
+═══════════════════════════════════════════════════════════════════════════
+SUMMARY
+─────────────────────────────────────────────────────────────────────────
+
+                          Cost        Tokens          API Calls
+  Session:           $    0.0000             0             0
+
+═══════════════════════════════════════════════════════════════════════════
