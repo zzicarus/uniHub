@@ -3,9 +3,8 @@
 # Installed by sync-windows.sh --install
 
 BRANCH=$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "unknown")
-REMOTE=$(git remote 2>/dev/null | head -1)
 
-if [ "$BRANCH" = "main" ] && [ -n "$REMOTE" ]; then
+if [ "$BRANCH" = "main" ]; then
     LAST_MSG=$(git log -1 --pretty=%B | head -1)
     case "$LAST_MSG" in
         *"[no-sync]"*)
@@ -17,6 +16,6 @@ if [ "$BRANCH" = "main" ] && [ -n "$REMOTE" ]; then
     SYNC_SCRIPT="$SCRIPT_DIR/omo/scripts/sync-windows.sh"
 
     if [ -f "$SYNC_SCRIPT" ]; then
-        bash "$SYNC_SCRIPT" &
+        bash "$SYNC_SCRIPT"
     fi
 fi

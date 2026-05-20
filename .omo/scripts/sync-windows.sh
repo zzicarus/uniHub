@@ -8,7 +8,7 @@
 # 自动安装（推荐）:
 #   bash .omo/scripts/sync-windows.sh --install
 #
-# 安装后，每次 `git push` 会自动调用此脚本。
+# 安装后，每次 `git push` 会通过 post-push hook 自动调用此脚本。
 # Windows 仓库路径通过参数或默认 /mnt/d/uniHub
 # ============================================================
 
@@ -20,15 +20,14 @@ DEFAULT_WINDOWS_REPO="/mnt/d/uniHub"
 install_hook() {
     local windows_repo="${1:-$DEFAULT_WINDOWS_REPO}"
     mkdir -p "$HOOKS_DIR"
-    cat > "$HOOKS_DIR/post-commit" << 'HOOK'
+    cat > "$HOOKS_DIR/post-push" << 'HOOK'
 #!/bin/bash
 # Auto-sync to Windows repo after pushing to main
 # Installed by sync-windows.sh --install
 
 BRANCH=$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "unknown")
-REMOTE=$(git remote 2>/dev/null | head -1)
 
-if [ "$BRANCH" = "main" ] && [ -n "$REMOTE" ]; then
+if [ "$BRANCH" = "main" ]; then
     LAST_MSG=$(git log -1 --pretty=%B | head -1)
     case "$LAST_MSG" in
         *"[no-sync]"*)
@@ -40,14 +39,14 @@ if [ "$BRANCH" = "main" ] && [ -n "$REMOTE" ]; then
     SYNC_SCRIPT="$SCRIPT_DIR/omo/scripts/sync-windows.sh"
 
     if [ -f "$SYNC_SCRIPT" ]; then
-        bash "$SYNC_SCRIPT" &
+        bash "$SYNC_SCRIPT"
     fi
 fi
 HOOK
-    chmod +x "$HOOKS_DIR/post-commit"
+    chmod +x "$HOOKS_DIR/post-push"
     git config core.hooksPath "$HOOKS_DIR"
 
-    echo "✅ 已安装 git hook: $HOOKS_DIR/post-commit"
+    echo "✅ 已安装 git hook: $HOOKS_DIR/post-push"
     echo "   每次 'git push' 后自动同步到 $windows_repo"
     echo "   提交信息含 [no-sync] 可跳过同步"
 }
