@@ -25,7 +25,7 @@ class ThoughtPanel extends StatelessWidget {
           color: colorScheme.surface,
           borderRadius: BorderRadius.circular(AppRadius.lg),
           border: Border.all(color: colorScheme.outlineVariant),
-          boxShadow: const [AppShadows.card],
+          boxShadow: const [AppShadows.cardSoft],
         ),
         child: Padding(padding: padding, child: child),
       ),
@@ -48,13 +48,13 @@ class ThoughtIconBubble extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 54,
-      height: 54,
+      width: 48,
+      height: 48,
       decoration: BoxDecoration(
         color: background,
-        borderRadius: BorderRadius.circular(AppRadius.lg),
+        borderRadius: BorderRadius.circular(AppRadius.md),
       ),
-      child: Icon(icon, color: color, size: 28),
+      child: Icon(icon, color: color, size: 24),
     );
   }
 }
@@ -142,7 +142,7 @@ class ThoughtSearchBox extends StatelessWidget {
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(AppRadius.md),
             border: Border.all(color: colorScheme.outlineVariant),
-            boxShadow: const [AppShadows.card],
+            boxShadow: const [AppShadows.cardSoft],
           ),
           padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
           child: Row(
@@ -185,7 +185,7 @@ class ThoughtIconSquare extends StatelessWidget {
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(AppRadius.md),
           border: Border.all(color: colorScheme.outlineVariant),
-          boxShadow: const [AppShadows.card],
+          boxShadow: const [AppShadows.cardSoft],
         ),
         child: Icon(icon, color: colorScheme.onSurfaceVariant, size: 22),
       ),

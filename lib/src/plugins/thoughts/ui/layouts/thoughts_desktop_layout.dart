@@ -481,6 +481,7 @@ class _ThoughtsToolbar extends StatelessWidget {
             color: colorScheme.surface,
             borderRadius: BorderRadius.circular(AppRadius.sm),
             border: Border.all(color: colorScheme.outlineVariant),
+            boxShadow: const [AppShadows.cardSoft],
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,

@@ -25,7 +25,7 @@ class Sidebar extends ConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const SizedBox(height: AppSpacing.xxl),
+          const SizedBox(height: AppSpacing.xl),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl),
             child: Row(
@@ -35,7 +35,7 @@ class Sidebar extends ConsumerWidget {
                 Text(
                   'uniHub',
                   style: theme.textTheme.titleLarge?.copyWith(
-                    fontSize: 24,
+                    fontSize: 22,
                     fontWeight: FontWeight.w800,
                   ),
                 ),
@@ -142,17 +142,18 @@ class _LogoMark extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Container(
-      width: 42,
-      height: 42,
+      width: 40,
+      height: 40,
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(AppRadius.md),
+        borderRadius: BorderRadius.circular(AppRadius.sm),
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            Theme.of(context).colorScheme.primaryContainer,
-            Theme.of(context).colorScheme.primary,
+            colorScheme.primaryContainer,
+            colorScheme.primary,
           ],
         ),
       ),
@@ -160,8 +161,8 @@ class _LogoMark extends StatelessWidget {
         child: Text(
           'U',
           style: TextStyle(
-            color: Theme.of(context).colorScheme.onPrimary,
-            fontSize: 24,
+            color: colorScheme.onPrimary,
+            fontSize: 22,
             height: 1,
             fontWeight: FontWeight.w800,
           ),
@@ -181,22 +182,22 @@ class _UserTile extends StatelessWidget {
   Widget build(BuildContext context) {
     return Material(
       color: Colors.transparent,
-      borderRadius: BorderRadius.circular(AppRadius.lg),
+      borderRadius: BorderRadius.circular(AppRadius.md),
       child: InkWell(
-        borderRadius: BorderRadius.circular(AppRadius.lg),
+        borderRadius: BorderRadius.circular(AppRadius.md),
         onTap: () {},
         child: Padding(
-          padding: const EdgeInsets.all(AppSpacing.xs),
+          padding: const EdgeInsets.all(AppSpacing.sm),
           child: Row(
             children: [
               CircleAvatar(
-                radius: 22,
+                radius: 18,
                 backgroundColor: colorScheme.primaryContainer,
                 child: Text(
                   'A',
                   style: theme.textTheme.titleSmall?.copyWith(
                     color: colorScheme.primary,
-                    fontSize: 18,
+                    fontSize: 16,
                     fontWeight: FontWeight.w800,
                   ),
                 ),
@@ -208,7 +209,7 @@ class _UserTile extends StatelessWidget {
                   children: [
                     Text('Alex', style: theme.textTheme.titleSmall),
                     Text(
-                      '专注记录 · 持续进步',
+                      '专注记录',
                       style: theme.textTheme.bodySmall,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -216,7 +217,7 @@ class _UserTile extends StatelessWidget {
                 ),
               ),
               Icon(
-                Icons.keyboard_arrow_down_rounded,
+                Icons.more_horiz_rounded,
                 size: 18,
                 color: colorScheme.outline,
               ),
@@ -380,13 +381,13 @@ class _NavItem extends StatelessWidget {
         ? colorScheme.onSurfaceVariant
         : colorScheme.outline;
     final bgColor = isSelected
-        ? colorScheme.primaryContainer.withValues(alpha: 0.72)
+        ? colorScheme.primaryContainer.withValues(alpha: 0.6)
         : Colors.transparent;
 
     return Padding(
       padding: EdgeInsets.symmetric(
         horizontal: compact ? AppSpacing.lg : AppSpacing.xl,
-        vertical: AppSpacing.xs / 2,
+        vertical: AppSpacing.xxs / 2,
       ),
       child: Material(
         color: bgColor,
@@ -410,6 +411,7 @@ class _NavItem extends StatelessWidget {
                       style: theme.textTheme.titleSmall?.copyWith(
                         color: foreground,
                         fontSize: compact ? 13 : 15,
+                        fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
                       ),
                       overflow: TextOverflow.ellipsis,
                     ),

@@ -76,28 +76,28 @@ class _HomeHeader extends StatelessWidget {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         Container(
-          width: 64,
-          height: 64,
+          width: 56,
+          height: 56,
           decoration: BoxDecoration(
             color: colorScheme.tertiaryContainer,
-            borderRadius: BorderRadius.circular(AppRadius.lg),
-            border: Border.all(color: colorScheme.outlineVariant),
+            borderRadius: BorderRadius.circular(AppRadius.md),
           ),
-          child: Icon(_greetingIcon(), color: colorScheme.tertiary, size: 34),
+          child: Icon(_greetingIcon(), color: colorScheme.tertiary, size: 28),
         ),
         const SizedBox(width: AppSpacing.xl),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
               _buildGreeting(theme),
-              const SizedBox(height: AppSpacing.xs),
+              const SizedBox(height: AppSpacing.xxs),
               Text(
                 '专注当下，持续进步',
-                style: theme.textTheme.bodyLarge?.copyWith(
+                style: theme.textTheme.bodyMedium?.copyWith(
                   color: colorScheme.onSurfaceVariant,
                 ),
               ),
@@ -124,9 +124,8 @@ class _HomeHeader extends StatelessWidget {
     }
     return Text(
       greeting,
-      style: theme.textTheme.headlineMedium?.copyWith(
-        fontSize: 28,
-        fontWeight: FontWeight.w800,
+      style: theme.textTheme.titleLarge?.copyWith(
+        fontWeight: FontWeight.w700,
       ),
       overflow: TextOverflow.ellipsis,
     );
@@ -147,35 +146,41 @@ class _SearchBox extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    return InkWell(
+    return Material(
+      color: colorScheme.surface,
       borderRadius: BorderRadius.circular(AppRadius.md),
-      onTap: () {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('全局搜索即将上线')));
-      },
-      child: Container(
-        width: 360,
-        height: 56,
-        decoration: BoxDecoration(
-          color: colorScheme.surface,
-          borderRadius: BorderRadius.circular(AppRadius.md),
-          border: Border.all(color: colorScheme.outlineVariant),
-          boxShadow: const [AppShadows.card],
-        ),
-        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-        child: Row(
-          children: [
-            Icon(Icons.search_rounded, color: colorScheme.outline),
-            const SizedBox(width: AppSpacing.xs),
-            Expanded(
-              child: Text(
-                '搜索想法、笔记、待办...',
-                style: theme.textTheme.bodyMedium,
-                overflow: TextOverflow.ellipsis,
+      elevation: 0,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        onTap: () {
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(const SnackBar(content: Text('全局搜索即将上线')));
+        },
+        child: Container(
+          width: 360,
+          height: 48,
+          decoration: BoxDecoration(
+            color: colorScheme.surface,
+            borderRadius: BorderRadius.circular(AppRadius.md),
+            border: Border.all(color: colorScheme.outlineVariant),
+            boxShadow: const [AppShadows.cardSoft],
+          ),
+          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+          child: Row(
+            children: [
+              Icon(Icons.search_rounded, color: colorScheme.outline),
+              const SizedBox(width: AppSpacing.xs),
+              Expanded(
+                child: Text(
+                  '搜索想法、笔记、待办...',
+                  style: theme.textTheme.bodyMedium,
+                  overflow: TextOverflow.ellipsis,
+                ),
               ),
-            ),
-          ],
+              Icon(Icons.crop_free_rounded, color: colorScheme.outline, size: 16),
+            ],
+          ),
         ),
       ),
     );
@@ -192,22 +197,23 @@ class _NotificationButton extends StatelessWidget {
       clipBehavior: Clip.none,
       children: [
         Container(
-          width: 56,
-          height: 56,
+          width: 48,
+          height: 48,
           decoration: BoxDecoration(
             color: colorScheme.surface,
             borderRadius: BorderRadius.circular(AppRadius.md),
             border: Border.all(color: colorScheme.outlineVariant),
-            boxShadow: const [AppShadows.card],
+            boxShadow: const [AppShadows.cardSoft],
           ),
           child: Icon(
             Icons.notifications_none_rounded,
             color: colorScheme.onSurfaceVariant,
+            size: 22,
           ),
         ),
         Positioned(
-          right: 10,
-          top: 10,
+          right: 8,
+          top: 8,
           child: Container(
             width: AppSpacing.xs,
             height: AppSpacing.xs,
@@ -876,7 +882,7 @@ class _Panel extends StatelessWidget {
           color: colorScheme.surface,
           borderRadius: BorderRadius.circular(AppRadius.lg),
           border: Border.all(color: colorScheme.outlineVariant),
-          boxShadow: const [AppShadows.card],
+          boxShadow: const [AppShadows.cardSoft],
         ),
         child: Padding(padding: padding, child: child),
       ),
@@ -898,13 +904,13 @@ class _IconBubble extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 56,
-      height: 56,
+      width: 48,
+      height: 48,
       decoration: BoxDecoration(
         color: background,
-        borderRadius: BorderRadius.circular(AppRadius.lg),
+        borderRadius: BorderRadius.circular(AppRadius.md),
       ),
-      child: Icon(icon, color: color, size: 28),
+      child: Icon(icon, color: color, size: 24),
     );
   }
 }
@@ -962,25 +968,26 @@ class _MetricCard extends StatelessWidget {
     return Material(
       color: theme.colorScheme.surface,
       borderRadius: BorderRadius.circular(AppRadius.lg),
+      elevation: 0,
       child: DecoratedBox(
         decoration: BoxDecoration(
           color: theme.colorScheme.surface,
           borderRadius: BorderRadius.circular(AppRadius.lg),
           border: Border.all(color: theme.colorScheme.outlineVariant),
-          boxShadow: const [AppShadows.card],
+          boxShadow: const [AppShadows.cardSoft],
         ),
         child: Padding(
           padding: const EdgeInsets.all(AppSpacing.lg),
           child: Row(
             children: [
               Container(
-                width: 54,
-                height: 54,
+                width: 48,
+                height: 48,
                 decoration: BoxDecoration(
                   color: background,
-                  borderRadius: BorderRadius.circular(AppRadius.lg),
+                  borderRadius: BorderRadius.circular(AppRadius.md),
                 ),
-                child: Icon(icon, color: color, size: 28),
+                child: Icon(icon, color: color, size: 24),
               ),
               const SizedBox(width: AppSpacing.lg),
               Expanded(
@@ -989,7 +996,7 @@ class _MetricCard extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Text(title, style: theme.textTheme.labelLarge),
-                    const SizedBox(height: AppSpacing.xs),
+                    const SizedBox(height: AppSpacing.xxs),
                     Text(
                       value,
                       style: theme.textTheme.headlineMedium?.copyWith(
@@ -1029,10 +1036,12 @@ class _ThoughtPreviewCard extends StatelessWidget {
     return Material(
       color: colorScheme.surface,
       borderRadius: BorderRadius.circular(AppRadius.md),
+      elevation: 0,
       child: DecoratedBox(
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(AppRadius.md),
           border: Border.all(color: colorScheme.outlineVariant),
+          boxShadow: const [AppShadows.cardSoft],
         ),
         child: InkWell(
           borderRadius: BorderRadius.circular(AppRadius.md),
@@ -1050,7 +1059,7 @@ class _ThoughtPreviewCard extends StatelessWidget {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: theme.textTheme.titleSmall?.copyWith(
-                          fontWeight: FontWeight.w800,
+                          fontWeight: FontWeight.w700,
                         ),
                       ),
                     ),
@@ -1069,6 +1078,7 @@ class _ThoughtPreviewCard extends StatelessWidget {
                           tag,
                           style: theme.textTheme.labelMedium?.copyWith(
                             color: color,
+                            fontWeight: FontWeight.w600,
                           ),
                         ),
                       ),
@@ -1085,15 +1095,16 @@ class _ThoughtPreviewCard extends StatelessWidget {
                   ],
                 ),
                 const SizedBox(height: AppSpacing.xs),
-                Text(
-                  body,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: colorScheme.onSurfaceVariant,
+                Expanded(
+                  child: Text(
+                    body,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: colorScheme.onSurfaceVariant,
+                    ),
                   ),
                 ),
-                const Spacer(),
                 Text(time, style: theme.textTheme.bodySmall),
               ],
             ),
@@ -1128,10 +1139,12 @@ class _ShortcutCard extends StatelessWidget {
     return Material(
       color: colorScheme.surface,
       borderRadius: BorderRadius.circular(AppRadius.md),
+      elevation: 0,
       child: DecoratedBox(
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(AppRadius.md),
           border: Border.all(color: colorScheme.outlineVariant),
+          boxShadow: const [AppShadows.cardSoft],
         ),
         child: InkWell(
           borderRadius: BorderRadius.circular(AppRadius.md),
@@ -1142,20 +1155,22 @@ class _ShortcutCard extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Container(
-                  width: 38,
-                  height: 38,
+                  width: 36,
+                  height: 36,
                   decoration: BoxDecoration(
                     color: background,
-                    borderRadius: BorderRadius.circular(AppRadius.md),
+                    borderRadius: BorderRadius.circular(AppRadius.sm),
                   ),
-                  child: Icon(icon, color: color, size: 24),
+                  child: Icon(icon, color: color, size: 20),
                 ),
                 const SizedBox(height: AppSpacing.sm),
                 Text(
                   title,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: theme.textTheme.titleSmall,
+                  style: theme.textTheme.labelMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ],
             ),
@@ -1212,7 +1227,7 @@ class _CompactListItem extends StatelessWidget {
         borderRadius: BorderRadius.circular(AppRadius.md),
         child: Row(
           children: [
-            _IconBubble(icon: icon, color: color, background: background),
+            _SmallIconBubble(icon: icon, color: color, background: background),
             const SizedBox(width: AppSpacing.md),
             Expanded(
               child: Column(
@@ -1239,6 +1254,31 @@ class _CompactListItem extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+class _SmallIconBubble extends StatelessWidget {
+  final IconData icon;
+  final Color color;
+  final Color background;
+
+  const _SmallIconBubble({
+    required this.icon,
+    required this.color,
+    required this.background,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 40,
+      height: 40,
+      decoration: BoxDecoration(
+        color: background,
+        borderRadius: BorderRadius.circular(AppRadius.sm),
+      ),
+      child: Icon(icon, color: color, size: 20),
     );
   }
 }
@@ -1341,7 +1381,7 @@ class _DataLine extends StatelessWidget {
       padding: const EdgeInsets.only(bottom: AppSpacing.md),
       child: Row(
         children: [
-          _IconBubble(icon: icon, color: color, background: background),
+          _SmallIconBubble(icon: icon, color: color, background: background),
           const SizedBox(width: AppSpacing.md),
           Expanded(
             child: Column(
@@ -1350,7 +1390,7 @@ class _DataLine extends StatelessWidget {
                 Text(label, style: theme.textTheme.bodySmall),
                 Text(
                   value,
-                  style: theme.textTheme.titleLarge?.copyWith(
+                  style: theme.textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.w800,
                   ),
                 ),

@@ -1,5 +1,3 @@
-
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uni_hub/src/core/theme/app_tokens.dart';
@@ -78,14 +76,8 @@ class _ThoughtCardState extends ConsumerState<ThoughtCard> {
               borderRadius: BorderRadius.circular(AppRadius.lg),
               border: Border.all(color: colorScheme.outlineVariant),
               boxShadow: _hovered
-                  ? [
-                      BoxShadow(
-                        color: colorScheme.shadow.withValues(alpha: 0.10),
-                        blurRadius: 16,
-                        offset: const Offset(0, 6),
-                      ),
-                    ]
-                  : const [AppShadows.card],
+                  ? const [AppShadows.cardElevated]
+                  : const [AppShadows.cardSoft],
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -114,11 +106,11 @@ class _ThoughtCardState extends ConsumerState<ThoughtCard> {
                       ),
                     Icon(
                       widget.isPinned
-                          ? Icons.star_rounded
+                          ? Icons.push_pin_rounded
                           : Icons.more_horiz_rounded,
                       size: 18,
                       color: widget.isPinned
-                          ? colorScheme.tertiary
+                          ? colorScheme.primary
                           : colorScheme.outline,
                     ),
                   ],
@@ -131,20 +123,20 @@ class _ThoughtCardState extends ConsumerState<ThoughtCard> {
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                   style: theme.textTheme.titleSmall?.copyWith(
-                    fontWeight: FontWeight.w800,
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
                 const SizedBox(height: AppSpacing.xs),
 
                 // ── Body ──
-                Flexible(
+                Expanded(
                   child: Text(
                     body,
-                    maxLines: 4,
+                    maxLines: 3,
                     overflow: TextOverflow.ellipsis,
                     style: theme.textTheme.bodySmall?.copyWith(
                       color: colorScheme.onSurfaceVariant,
-                      height: 1.55,
+                      height: 1.5,
                     ),
                   ),
                 ),
@@ -153,61 +145,35 @@ class _ThoughtCardState extends ConsumerState<ThoughtCard> {
                 if (tagList.isNotEmpty || images.isNotEmpty) ...[
                   const SizedBox(height: AppSpacing.sm),
                   Wrap(
-                    spacing: AppSpacing.xs,
-                    runSpacing: AppSpacing.xs,
+                    spacing: AppSpacing.xxs,
+                    runSpacing: AppSpacing.xxs,
                     crossAxisAlignment: WrapCrossAlignment.center,
                     children: [
                       if (images.isNotEmpty)
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: AppSpacing.sm,
-                            vertical: 5,
-                          ),
-                          decoration: BoxDecoration(
-                            color: colorScheme.primaryContainer.withValues(alpha: 0.35),
-                            borderRadius: BorderRadius.circular(AppRadius.full),
-                            border: Border.all(
-                              color: colorScheme.primary.withValues(alpha: 0.2),
-                            ),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(
-                                Icons.image_outlined,
-                                size: 14,
-                                color: colorScheme.primary,
-                              ),
-                              const SizedBox(width: AppSpacing.xs - 2),
-                              Text(
-                                '图片附件',
-                                style: theme.textTheme.labelMedium?.copyWith(
-                                  color: colorScheme.primary,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
+                        _ImageBadge(accent: accent, colorScheme: colorScheme),
                       ...tagList.map((tag) {
                         return ActionChip(
-                          label: Text(tag),
-                          onPressed: () => widget.onTagTap(tag),
-                          backgroundColor: accent.withValues(alpha: 0.11),
-                          side: BorderSide.none,
-                          labelStyle: theme.textTheme.labelMedium?.copyWith(
-                            color: accent,
+                          label: Text(
+                            tag,
+                            style: theme.textTheme.labelMedium?.copyWith(
+                              color: accent,
+                              fontWeight: FontWeight.w600,
+                              fontSize: 11,
+                            ),
                           ),
+                          onPressed: () => widget.onTagTap(tag),
+                          backgroundColor: accent.withValues(alpha: 0.10),
+                          side: BorderSide.none,
                           materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                           visualDensity: VisualDensity.compact,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: AppSpacing.xs - 2,
+                          ),
                         );
                       }),
                     ],
                   ),
                 ],
-                // ── Bottom spacer ──
-                if (tagList.isEmpty && images.isEmpty)
-                  const Spacer(),
               ],
             ),
           ),
@@ -250,6 +216,45 @@ class _ThoughtCardState extends ConsumerState<ThoughtCard> {
   }
 }
 
+class _ImageBadge extends StatelessWidget {
+  final Color accent;
+  final ColorScheme colorScheme;
+
+  const _ImageBadge({required this.accent, required this.colorScheme});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.sm,
+        vertical: AppSpacing.xxs,
+      ),
+      decoration: BoxDecoration(
+        color: accent.withValues(alpha: 0.10),
+        borderRadius: BorderRadius.circular(AppRadius.full),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            Icons.image_outlined,
+            size: 13,
+            color: accent,
+          ),
+          const SizedBox(width: AppSpacing.xxs),
+          Text(
+            '图片',
+            style: Theme.of(context).textTheme.labelMedium?.copyWith(
+              color: accent,
+              fontWeight: FontWeight.w600,
+              fontSize: 11,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
 
 class _ActionIcon extends StatelessWidget {
   final IconData icon;

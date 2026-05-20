@@ -107,7 +107,7 @@ Token 定义在 `lib/src/core/theme/app_tokens.dart`：
 | `AppSizes` | 尺寸（buttonHeight、inputHeight、listItem 等） |
 | `AppDesktopSizes` | 桌面端尺寸（sidebarWidth=240 等） |
 | `AppFonts` | 字体族（decorative、fallback 列表） |
-| `AppShadows` | 共享阴影常量（card、elevated 等） |
+| `AppShadows` | 共享阴影常量（`card`, `cardSoft`, `cardElevated`, `elevated`） |
 
 ---
 
@@ -156,6 +156,19 @@ return Row(
   ],
 );
 ```
+
+---
+
+### 已知差距：字号 Token 缺失
+
+当前项目没有 `AppFontSizes` token 类，导致多处 `fontSize: 11`、`fontSize: 12` 等硬编码值。以下文件有 hardcoded fontSize：
+
+| 文件 | 上下文 |
+|------|--------|
+| `lib/src/plugins/thoughts/ui/widgets/thought_card.dart` | tag chip、badge 等小字号文本 |
+| `lib/src/plugins/thoughts/ui/layouts/thoughts_shared_widgets.dart` | 辅助信息、标签文本 |
+
+**建议**：未来引入 `AppFontSizes` 类集中管理字号 token，解决这些散落的硬编码值。
 
 ---
 
