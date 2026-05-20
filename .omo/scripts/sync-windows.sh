@@ -12,8 +12,7 @@
 # Windows 仓库路径通过参数或默认 /mnt/d/uniHub
 # ============================================================
 
-set -e
-
+# 不使用 set -e — 各步骤独立处理错误，避免 hook 上下文中静默失败
 HOOKS_DIR=".githooks"
 DEFAULT_WINDOWS_REPO="/mnt/d/uniHub"
 
@@ -39,9 +38,9 @@ if [ "$BRANCH" = "main" ]; then
     SYNC_SCRIPT="$SCRIPT_DIR/.omo/scripts/sync-windows.sh"
 
     if [ -f "$SYNC_SCRIPT" ]; then
-        bash "$SYNC_SCRIPT"
+        echo "🔄 触发 Windows 仓库同步..."
+        bash "$SYNC_SCRIPT" 2>&1 || echo "⚠️  Windows 同步脚本执行失败（如需手动同步: bash .omo/scripts/sync-windows.sh）"
     fi
-fi
 HOOK
     chmod +x "$HOOKS_DIR/post-push"
     git config core.hooksPath "$HOOKS_DIR"
@@ -62,7 +61,7 @@ sync_to_windows() {
     echo "🔄 同步到 Windows 仓库 ($WINDOWS_REPO) ..."
 
     CURRENT_DIR=$(pwd)
-    cd "$WINDOWS_REPO"
+    cd "$WINDOWS_REPO" || { echo "❌ 无法进入目录: $WINDOWS_REPO"; return 1; }
 
     # 暂存本地修改，避免 pull 冲突
     GIT_DIR="$WINDOWS_REPO/.git"

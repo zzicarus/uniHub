@@ -16,6 +16,7 @@ if [ "$BRANCH" = "main" ]; then
     SYNC_SCRIPT="$SCRIPT_DIR/.omo/scripts/sync-windows.sh"
 
     if [ -f "$SYNC_SCRIPT" ]; then
-        bash "$SYNC_SCRIPT"
+        echo "🔄 触发 Windows 仓库同步..."
+        bash "$SYNC_SCRIPT" 2>&1 || echo "⚠️  Windows 同步脚本执行失败（如需手动同步: bash .omo/scripts/sync-windows.sh）"
     fi
 fi

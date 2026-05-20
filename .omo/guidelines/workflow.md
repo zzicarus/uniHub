@@ -259,36 +259,20 @@ Co-authored-by: Sisyphus <clio-agent@sisyphuslabs.ai>
 
 ## 7. 错误记录与学习
 
-> agent 在运行过程中遇到的错误必须被记录，避免以后重复犯错。
+> agent 在运行过程中遇到的错误必须被记录，避免以后重复犯错。记录由第 5 节的 sync-knowledge 自动完成。
 
 ### 记录什么
-| 类型 | 示例 | 记录方式 |
-|------|------|----------|
-| 编译/类型错误 | `The argument type 'X' can't be assigned` | 在 `.omo/learnings/errors.md` 中记录根因 + 修复方式 |
-| 架构理解错误 | 用错了布局机制、走错了分层 | 记录正确的架构决策和当时的误解 |
-| 工具使用错误 | LSP 不可用、测试框架理解偏差 | 记录排查步骤和最终结论 |
-| 重复代码发现 | 发现了第 N 份 tag 解析副本 | 记录位置和避免方法 |
+| 类型 | 示例 |
+|------|------|
+| 编译/类型错误 | `The argument type 'X' can't be assigned` |
+| 架构理解错误 | 用错了布局机制、走错了分层 |
+| 工具使用错误 | LSP 不可用、测试框架理解偏差 |
+| 重复代码发现 | 发现了第 N 份 tag 解析副本 |
 
-### 记录格式
-
-```markdown
-## [错误分类] 简短描述
-
-- **发生时间**: YYYY-MM-DD
-- **场景**: 做了什么遇到了这个错误
-- **根因**: 为什么出错
-- **修复**: 怎么解决的
-- **避免**: 以后怎么防止
-```
-
-### 记录位置
-- 单次运行的临时问题 → 由 sync-knowledge 自动记录到 `.omo/learnings/errors.md`
-- 可以泛化的模式性问题 → 由 sync-knowledge 自动加入对应模块的 `AGENTS.md` 或 `.omo/guidelines/`
-
-### 检查机制
-- 每次 `/review-work` 的 sync-knowledge 阶段自动检查并追加新条目
-- 修复已知问题前，先查阅该文件确认是否已有解决方案
-- 如需查阅历史 learnings，直接查看 `.omo/learnings/errors.md`
+### 记录与检查
+- **写入**：由 sync-knowledge 自动完成（格式和流程见第 5 节）
+- **查阅**：`cat .omo/learnings/errors.md`
+- **修复已知问题前**：先查阅 learnings 确认是否有已有解决方案
 
 ---
 

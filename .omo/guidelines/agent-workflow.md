@@ -60,7 +60,7 @@
 - 路由结构调整（GoRouter ShellRoute 新增分支）
 - Provider 层级设计（Provider 作用域、生命周期管理）
 
-**加载技能**: `flutter-apply-architecture-best-practices`, `flutter-dev`
+**加载技能**: 见 `.omo/skill-defaults.json` → `categoryDefaults.ultrabrain`
 
 **前置阅读**:
 - `lib/src/core/AGENTS.md` — 基础设施全景
@@ -93,11 +93,7 @@ task(
 - schemaVersion 变更 + migration 逻辑
 - 数据模型 Provider 的创建或修改
 
-**加载技能**: `flutter-dev`, `dart-add-unit-test`
-
-**前置阅读**:
-- `.omo/guidelines/database.md` — Table 定义、DAO/Repository 模式、迁移策略
-- `test/AGENTS.md` — 数据库测试隔离模式（`NativeDatabase.memory()`）
+**加载技能**: 见 `.omo/skill-defaults.json` → `categoryDefaults.unspecified-high` + `taskOverrides.unit_test`
 
 **关键约束**:
 - DAO 只做数据访问，业务逻辑在 Repository
@@ -128,7 +124,7 @@ task(
 - 暗色模式适配
 - 主题 Token 替换（`colorScheme.*` + `AppSpacing`/`AppRadius`）
 
-**加载技能**: `flutter-dev`, `flutter-build-responsive-layout`, `frontend-ui-ux`
+**加载技能**: 见 `.omo/skill-defaults.json` → `categoryDefaults.visual-engineering`
 
 > `frontend-ui-ux` 强制造型检查（配色系统、间距、字体选择、动效质量），每个视觉任务必须加载。
 
@@ -170,7 +166,7 @@ task(
 - 为工具类/helper 函数写测试
 - 测试 `ThoughtContentCodec` 的 encode/decode 往返
 
-**加载技能**: `dart-add-unit-test`, `flutter-dev`
+**加载技能**: 见 `.omo/skill-defaults.json` → `taskOverrides.unit_test`
 
 **前置阅读**: `test/AGENTS.md` — ProviderScope override 模式
 
@@ -188,7 +184,7 @@ task(
 - 验证组件在不同状态下的渲染（加载/空/错误/数据）
 - 测试用户交互（点击、滚动、输入）
 
-**加载技能**: `flutter-add-widget-test`, `flutter-dev`
+**加载技能**: 见 `.omo/skill-defaults.json` → `taskOverrides.widget_test`
 
 **关键约束**:
 - 使用 `tester.pumpWidget(ProviderScope(...))` 包裹
@@ -251,7 +247,7 @@ task(
 - 执行 `flutter test` 验证测试通过
 - 用 `dart fix --dry-run` 预览自动修复
 
-**加载技能**: `dart-run-static-analysis`
+**加载技能**: 见 `.omo/skill-defaults.json` → `taskOverrides.static_analysis`
 
 **用法**: 作为最终步骤，不应单独委派给子代理，而是由主流程按顺序执行。
 
@@ -265,23 +261,23 @@ task(
 
 ## UniHub 常见任务速查表
 
-| 任务描述 | Category | Skills | 前置文档 |
-|----------|----------|--------|----------|
-| 新增插件模块注册 | `ultrabrain` | `flutter-apply-architecture-best-practices` | `lib/src/core/plugin/AGENTS.md` |
-| 新建 drift Table | `unspecified-high` | `flutter-dev`, `dart-add-unit-test` | `.omo/guidelines/database.md` |
-| 新增 DAO 方法 | `unspecified-high` | `flutter-dev`, `dart-add-unit-test` | `.omo/guidelines/database.md` |
-| 新增页面/组件 | `visual-engineering` | `flutter-dev`, `flutter-build-responsive-layout`, `frontend-ui-ux` | `.omo/guidelines/widget.md` |
-| 响应式布局调整 | `visual-engineering` | `flutter-build-responsive-layout`, `flutter-dev`, `frontend-ui-ux` | `lib/src/shared/widgets/adaptive_layout.dart` |
-| Provider 层级调整 | `ultrabrain` | `flutter-apply-architecture-best-practices` | `lib/src/core/AGENTS.md` |
-| 数据层单元测试 | `quick` / `unspecified-high` | `dart-add-unit-test` | `test/AGENTS.md` |
-| Widget 测试 | `unspecified-high` | `flutter-add-widget-test` | `test/AGENTS.md` |
+| 任务描述 | Category | Skills（见 skill-defaults.json） | 前置文档 |
+|----------|----------|-------------------------------|----------|
+| 新增插件模块注册 | `ultrabrain` | `categoryDefaults.ultrabrain` | `lib/src/core/plugin/AGENTS.md` |
+| 新建 drift Table | `unspecified-high` | `categoryDefaults.unspecified-high` + `unit_test` | `.omo/guidelines/database.md` |
+| 新增 DAO 方法 | `unspecified-high` | `categoryDefaults.unspecified-high` + `unit_test` | `.omo/guidelines/database.md` |
+| 新增页面/组件 | `visual-engineering` | `categoryDefaults.visual-engineering` | `.omo/guidelines/widget.md` |
+| 响应式布局调整 | `visual-engineering` | `categoryDefaults.visual-engineering` | `lib/src/shared/widgets/adaptive_layout.dart` |
+| Provider 层级调整 | `ultrabrain` | `categoryDefaults.ultrabrain` | `lib/src/core/AGENTS.md` |
+| 数据层单元测试 | `quick` / `unspecified-high` | `unit_test` | `test/AGENTS.md` |
+| Widget 测试 | `unspecified-high` | `widget_test` | `test/AGENTS.md` |
 | 写 PRD | `writing` | 无需加载 | `.omo/guidelines/planning.md` |
 | 写模块文档 | `writing` | 无需加载 | 对应模块的代码和 AGENTS.md |
-| 代码质量检查 | `quick` | `dart-run-static-analysis` | `.omo/guidelines/workflow.md` |
-| 第三方库用法查询 | `quick` | `context7-mcp` | 不适用 |
-| 使用 pattern matching 重构 | `quick` | `dart-use-pattern-matching` | `lib/src/` 涉模块 |
-| 完整端到端插件开发 | `deep` | `flutter-dev`, `dart-add-unit-test` | 全部相关指南 |
-| 重构公共组件到 shared/ | `ultrabrain` | `flutter-apply-architecture-best-practices` | `lib/src/shared/AGENTS.md` |
+| 代码质量检查 | `quick` | `static_analysis` | `.omo/guidelines/workflow.md` |
+| 第三方库用法查询 | `quick` | `library_lookup` | 不适用 |
+| 使用 pattern matching 重构 | `quick` | `pattern_migration` | `lib/src/` 涉模块 |
+| 完整端到端插件开发 | `deep` | `categoryDefaults.deep` + `unit_test` | 全部相关指南 |
+| 重构公共组件到 shared/ | `ultrabrain` | `categoryDefaults.ultrabrain` | `lib/src/shared/AGENTS.md` |
 | Post-implementation 审查 | 不委派（用 `/review-work`） | `review-work` | 所有相关代码 |
 | 知识同步 (sync-knowledge) | 不独立委派 (`/review-work` 内嵌) | 无需加载 | `.omo/knowledge-map.json`、`.omo/guidelines/workflow.md` |
 
