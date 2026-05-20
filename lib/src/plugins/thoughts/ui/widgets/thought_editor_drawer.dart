@@ -256,6 +256,7 @@ class _ThoughtEditorDrawerState extends ConsumerState<ThoughtEditorDrawer> {
         imageService: ref.read(thoughtImageServiceProvider),
         placeholder: '记录你的想法...',
         minHeight: 360,
+        expands: true,
         onChanged: (_) => _markDirty(),
         onImageAdded: (path) {
           if (!_images.contains(path)) {

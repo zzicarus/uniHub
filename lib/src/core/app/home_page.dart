@@ -290,7 +290,7 @@ class _FocusGrid extends ConsumerWidget {
             crossAxisCount: columns,
             crossAxisSpacing: AppSpacing.md,
             mainAxisSpacing: AppSpacing.md,
-            childAspectRatio: columns == 4 ? 1.95 : 2.35,
+            childAspectRatio: columns == 4 ? 1.55 : 2.0,
           ),
           itemBuilder: (context, index) => metrics[index],
         );
@@ -565,7 +565,7 @@ class _ShortcutGrid extends StatelessWidget {
             crossAxisCount: columns,
             crossAxisSpacing: AppSpacing.md,
             mainAxisSpacing: AppSpacing.md,
-            childAspectRatio: 1.45,
+            childAspectRatio: 1.15,
           ),
           itemBuilder: (context, index) => items[index],
         );
@@ -971,40 +971,37 @@ class _MetricCard extends StatelessWidget {
         ),
         child: Padding(
           padding: const EdgeInsets.all(AppSpacing.lg),
-          child: SizedBox(
-            height: 86,
-            child: Row(
-              children: [
-                Container(
-                  width: 54,
-                  height: 54,
-                  decoration: BoxDecoration(
-                    color: background,
-                    borderRadius: BorderRadius.circular(AppRadius.lg),
-                  ),
-                  child: Icon(icon, color: color, size: 28),
+          child: Row(
+            children: [
+              Container(
+                width: 54,
+                height: 54,
+                decoration: BoxDecoration(
+                  color: background,
+                  borderRadius: BorderRadius.circular(AppRadius.lg),
                 ),
-                const SizedBox(width: AppSpacing.lg),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(title, style: theme.textTheme.labelLarge),
-                      const SizedBox(height: AppSpacing.xs),
-                      Text(
-                        value,
-                        style: theme.textTheme.headlineMedium?.copyWith(
-                          fontSize: 25,
-                          fontWeight: FontWeight.w900,
-                        ),
+                child: Icon(icon, color: color, size: 28),
+              ),
+              const SizedBox(width: AppSpacing.lg),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(title, style: theme.textTheme.labelLarge),
+                    const SizedBox(height: AppSpacing.xs),
+                    Text(
+                      value,
+                      style: theme.textTheme.headlineMedium?.copyWith(
+                        fontSize: 25,
+                        fontWeight: FontWeight.w900,
                       ),
-                      Text(note, style: theme.textTheme.bodySmall),
-                    ],
-                  ),
+                    ),
+                    Text(note, style: theme.textTheme.bodySmall),
+                  ],
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),

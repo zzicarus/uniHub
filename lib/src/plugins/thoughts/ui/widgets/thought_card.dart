@@ -1,4 +1,4 @@
-import 'dart:io';
+
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -64,9 +64,10 @@ class _ThoughtCardState extends ConsumerState<ThoughtCard> {
       onExit: (_) => setState(() => _hovered = false),
       child: Material(
         color: colorScheme.surface,
-        borderRadius: BorderRadius.circular(AppRadius.md),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
+        elevation: 0,
         child: InkWell(
-          borderRadius: BorderRadius.circular(AppRadius.md),
+          borderRadius: BorderRadius.circular(AppRadius.lg),
           onTap: widget.onTap,
           child: Container(
             constraints: const BoxConstraints(
@@ -74,19 +75,21 @@ class _ThoughtCardState extends ConsumerState<ThoughtCard> {
             ),
             padding: const EdgeInsets.all(AppSpacing.md),
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(AppRadius.md),
+              borderRadius: BorderRadius.circular(AppRadius.lg),
               border: Border.all(color: colorScheme.outlineVariant),
+              boxShadow: _hovered
+                  ? [
+                      BoxShadow(
+                        color: colorScheme.shadow.withValues(alpha: 0.10),
+                        blurRadius: 16,
+                        offset: const Offset(0, 6),
+                      ),
+                    ]
+                  : const [AppShadows.card],
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                if (images.isNotEmpty) ...[
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(AppRadius.sm),
-                    child: _ThoughtCardImage(path: images.first),
-                  ),
-                  const SizedBox(height: AppSpacing.md),
-                ],
                 // ── Timestamp + Actions ──
                 Row(
                   children: [
@@ -100,15 +103,13 @@ class _ThoughtCardState extends ConsumerState<ThoughtCard> {
                     if (widget.onRestore != null && _hovered)
                       _ActionIcon(
                         icon: Icons.unarchive_outlined,
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        color: colorScheme.onSurfaceVariant,
                         onTap: widget.onRestore,
                       ),
-                    if (widget.onArchive != null &&
-                        _hovered &&
-                        !widget.isPinned)
+                    if (widget.onArchive != null && _hovered && !widget.isPinned)
                       _ActionIcon(
                         icon: Icons.archive_outlined,
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        color: colorScheme.onSurfaceVariant,
                         onTap: widget.onArchive,
                       ),
                     Icon(
@@ -122,7 +123,7 @@ class _ThoughtCardState extends ConsumerState<ThoughtCard> {
                     ),
                   ],
                 ),
-                const SizedBox(height: AppSpacing.md),
+                const SizedBox(height: AppSpacing.sm),
 
                 // ── Title ──
                 Text(
@@ -133,7 +134,7 @@ class _ThoughtCardState extends ConsumerState<ThoughtCard> {
                     fontWeight: FontWeight.w800,
                   ),
                 ),
-                const SizedBox(height: AppSpacing.sm),
+                const SizedBox(height: AppSpacing.xs),
 
                 // ── Body ──
                 Flexible(
@@ -142,71 +143,71 @@ class _ThoughtCardState extends ConsumerState<ThoughtCard> {
                     maxLines: 4,
                     overflow: TextOverflow.ellipsis,
                     style: theme.textTheme.bodySmall?.copyWith(
-                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      color: colorScheme.onSurfaceVariant,
                       height: 1.55,
                     ),
                   ),
                 ),
 
-                // ── Images ──
-                if (images.length > 1) ...[
-                  const SizedBox(height: AppSpacing.sm),
-                  SizedBox(
-                    height: 54,
-                    child: ListView.separated(
-                      scrollDirection: Axis.horizontal,
-                      itemCount: images.skip(1).take(4).length,
-                      separatorBuilder: (_, _) =>
-                          const SizedBox(width: AppSpacing.xs),
-                      itemBuilder: (_, index) {
-                        final file = File(images[index + 1]);
-                        return ClipRRect(
-                          borderRadius: BorderRadius.circular(AppRadius.xs),
-                          child: file.existsSync()
-                              ? Image.file(
-                                  file,
-                                  width: 64,
-                                  height: 54,
-                                  fit: BoxFit.cover,
-                                )
-                              : Container(
-                                  width: 64,
-                                  height: 54,
-                                  color: Theme.of(
-                                    context,
-                                  ).colorScheme.surfaceContainerHigh,
-                                  child: const Icon(
-                                    Icons.broken_image_outlined,
-                                    size: 18,
-                                  ),
-                                ),
-                        );
-                      },
-                    ),
-                  ),
-                ],
-
-                // ── Tags ──
-                if (tagList.isNotEmpty) ...[
+                // ── Tags & Attachments ──
+                if (tagList.isNotEmpty || images.isNotEmpty) ...[
                   const SizedBox(height: AppSpacing.sm),
                   Wrap(
                     spacing: AppSpacing.xs,
                     runSpacing: AppSpacing.xs,
-                    children: tagList.map((tag) {
-                      return ActionChip(
-                        label: Text(tag),
-                        onPressed: () => widget.onTagTap(tag),
-                        backgroundColor: accent.withValues(alpha: 0.11),
-                        side: BorderSide.none,
-                        labelStyle: theme.textTheme.labelMedium?.copyWith(
-                          color: accent,
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    children: [
+                      if (images.isNotEmpty)
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: AppSpacing.sm,
+                            vertical: 5,
+                          ),
+                          decoration: BoxDecoration(
+                            color: colorScheme.primaryContainer.withValues(alpha: 0.35),
+                            borderRadius: BorderRadius.circular(AppRadius.full),
+                            border: Border.all(
+                              color: colorScheme.primary.withValues(alpha: 0.2),
+                            ),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.image_outlined,
+                                size: 14,
+                                color: colorScheme.primary,
+                              ),
+                              const SizedBox(width: AppSpacing.xs - 2),
+                              Text(
+                                '图片附件',
+                                style: theme.textTheme.labelMedium?.copyWith(
+                                  color: colorScheme.primary,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
-                        materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                        visualDensity: VisualDensity.compact,
-                      );
-                    }).toList(),
+                      ...tagList.map((tag) {
+                        return ActionChip(
+                          label: Text(tag),
+                          onPressed: () => widget.onTagTap(tag),
+                          backgroundColor: accent.withValues(alpha: 0.11),
+                          side: BorderSide.none,
+                          labelStyle: theme.textTheme.labelMedium?.copyWith(
+                            color: accent,
+                          ),
+                          materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          visualDensity: VisualDensity.compact,
+                        );
+                      }),
+                    ],
                   ),
                 ],
+                // ── Bottom spacer ──
+                if (tagList.isEmpty && images.isEmpty)
+                  const Spacer(),
               ],
             ),
           ),
@@ -249,30 +250,6 @@ class _ThoughtCardState extends ConsumerState<ThoughtCard> {
   }
 }
 
-class _ThoughtCardImage extends StatelessWidget {
-  final String path;
-
-  const _ThoughtCardImage({required this.path});
-
-  @override
-  Widget build(BuildContext context) {
-    final file = File(path);
-    if (!file.existsSync()) {
-      return Container(
-        height: 90,
-        width: double.infinity,
-        color: Theme.of(context).colorScheme.surfaceContainerHigh,
-        child: const Icon(Icons.broken_image_outlined, size: 20),
-      );
-    }
-    return Image.file(
-      file,
-      height: 90,
-      width: double.infinity,
-      fit: BoxFit.cover,
-    );
-  }
-}
 
 class _ActionIcon extends StatelessWidget {
   final IconData icon;

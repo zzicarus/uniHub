@@ -147,6 +147,8 @@ class ThoughtsDesktopLayout extends ConsumerWidget {
   }
 }
 
+// ─── Header (Archived View) ──────────────────────────────────────────
+
 class _ThoughtsHeader extends StatelessWidget {
   final bool isArchived;
 
@@ -155,15 +157,25 @@ class _ThoughtsHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(
-          isArchived ? Icons.archive_outlined : Icons.lightbulb_outline,
-          size: 36,
-          color: Theme.of(context).colorScheme.onSurface,
+        Container(
+          width: 56,
+          height: 56,
+          decoration: BoxDecoration(
+            color: colorScheme.tertiaryContainer,
+            borderRadius: BorderRadius.circular(AppRadius.lg),
+            border: Border.all(color: colorScheme.outlineVariant),
+          ),
+          child: Icon(
+            isArchived ? Icons.archive_outlined : Icons.lightbulb_outline,
+            color: colorScheme.tertiary,
+            size: 30,
+          ),
         ),
-        const SizedBox(width: AppSpacing.md),
+        const SizedBox(width: AppSpacing.xl),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -171,25 +183,49 @@ class _ThoughtsHeader extends StatelessWidget {
               Text(
                 isArchived ? '归档想法' : '想法',
                 style: theme.textTheme.headlineMedium?.copyWith(
-                  fontSize: 30,
+                  fontSize: 28,
                   fontWeight: FontWeight.w800,
                 ),
               ),
               const SizedBox(height: AppSpacing.xs),
               Text(
-                isArchived ? '查看已经归档的记录，必要时可恢复。' : '捕捉灵感，整理想法，让每个念头都有价值',
-                style: theme.textTheme.bodyLarge,
+                isArchived
+                    ? '查看已经归档的记录，必要时可恢复。'
+                    : '捕捉灵感，整理想法，让每个念头都有价值',
+                style: theme.textTheme.bodyLarge?.copyWith(
+                  color: colorScheme.onSurfaceVariant,
+                ),
               ),
             ],
           ),
         ),
+        const SizedBox(width: AppSpacing.xl),
         const ThoughtSearchBox(),
         const SizedBox(width: AppSpacing.md),
-        const ThoughtIconSquare(icon: Icons.notifications_none_rounded),
+        Stack(
+          clipBehavior: Clip.none,
+          children: [
+            const ThoughtIconSquare(icon: Icons.notifications_none_rounded),
+            Positioned(
+              right: 10,
+              top: 10,
+              child: Container(
+                width: AppSpacing.xs,
+                height: AppSpacing.xs,
+                decoration: BoxDecoration(
+                  color: colorScheme.primary,
+                  shape: BoxShape.circle,
+                ),
+              ),
+            ),
+          ],
+        ),
       ],
     );
   }
 }
+
+// ─── Composer ────────────────────────────────────────────────────────
 
 class _ThoughtComposer extends StatelessWidget {
   final QuillController contentController;
@@ -256,11 +292,9 @@ class _ThoughtComposer extends StatelessWidget {
                 const SizedBox(height: AppSpacing.md),
                 DecoratedBox(
                   decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.surface,
+                    color: colorScheme.surfaceContainerLow,
                     borderRadius: BorderRadius.circular(AppRadius.md),
-                    border: Border.all(
-                      color: Theme.of(context).colorScheme.outlineVariant,
-                    ),
+                    border: Border.all(color: colorScheme.outlineVariant),
                   ),
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(AppRadius.md),
@@ -318,9 +352,7 @@ class _ThoughtComposer extends StatelessWidget {
                                 onTap: () => onRemoveImage(i),
                                 child: Container(
                                   decoration: BoxDecoration(
-                                    color: Theme.of(context)
-                                        .colorScheme
-                                        .onSurfaceVariant
+                                    color: colorScheme.onSurfaceVariant
                                         .withValues(alpha: 0.54),
                                     shape: BoxShape.circle,
                                   ),
@@ -328,9 +360,7 @@ class _ThoughtComposer extends StatelessWidget {
                                   child: Icon(
                                     Icons.close,
                                     size: 12,
-                                    color: Theme.of(
-                                      context,
-                                    ).colorScheme.onPrimary,
+                                    color: colorScheme.onPrimary,
                                   ),
                                 ),
                               ),
@@ -373,14 +403,11 @@ class _ThoughtComposer extends StatelessWidget {
                       selected: isPinned,
                       onTap: onTogglePin,
                     ),
-                    Align(
-                      alignment: Alignment.centerRight,
-                      widthFactor: 1,
-                      child: FilledButton.icon(
-                        onPressed: canSubmit && !isSubmitting ? onSubmit : null,
-                        icon: const Icon(Icons.send_rounded, size: 18),
-                        label: Text(isSubmitting ? '保存中' : '记录想法'),
-                      ),
+                    const Spacer(),
+                    FilledButton.icon(
+                      onPressed: canSubmit && !isSubmitting ? onSubmit : null,
+                      icon: const Icon(Icons.send_rounded, size: 18),
+                      label: Text(isSubmitting ? '保存中' : '记录想法'),
                     ),
                   ],
                 ),
@@ -392,6 +419,8 @@ class _ThoughtComposer extends StatelessWidget {
     );
   }
 }
+
+// ─── Toolbar ─────────────────────────────────────────────────────────
 
 class _ThoughtsToolbar extends StatelessWidget {
   final Map<String, int> tagStats;
@@ -409,6 +438,7 @@ class _ThoughtsToolbar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
     final sortedTags = tagStats.entries.toList()
       ..sort((a, b) => b.value.compareTo(a.value));
     final total = tagStats.values.fold<int>(0, (sum, count) => sum + count);
@@ -438,29 +468,35 @@ class _ThoughtsToolbar extends StatelessWidget {
             label: Text('#$selectedTag'),
             deleteIcon: const Icon(Icons.close, size: 14),
             onDeleted: () => onTagFilterChanged(null),
-            backgroundColor: Theme.of(
-              context,
-            ).colorScheme.primary.withValues(alpha: 0.12),
+            backgroundColor: colorScheme.primary.withValues(alpha: 0.12),
             side: BorderSide.none,
             materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
             visualDensity: VisualDensity.compact,
           ),
+        const Spacer(),
         Container(
           height: AppDesktopSizes.compactButtonHeight,
           padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
           decoration: BoxDecoration(
-            color: Theme.of(context).colorScheme.surface,
+            color: colorScheme.surface,
             borderRadius: BorderRadius.circular(AppRadius.sm),
-            border: Border.all(color: Theme.of(context).colorScheme.outline),
+            border: Border.all(color: colorScheme.outlineVariant),
           ),
           child: Row(
+            mainAxisSize: MainAxisSize.min,
             children: [
               Text(
                 isArchived ? '归档' : '最新',
-                style: theme.textTheme.labelMedium,
+                style: theme.textTheme.labelMedium?.copyWith(
+                  color: colorScheme.onSurfaceVariant,
+                ),
               ),
               const SizedBox(width: AppSpacing.xs),
-              const Icon(Icons.keyboard_arrow_down_rounded, size: 18),
+              Icon(
+                Icons.keyboard_arrow_down_rounded,
+                size: 18,
+                color: colorScheme.outline,
+              ),
             ],
           ),
         ),
@@ -468,6 +504,8 @@ class _ThoughtsToolbar extends StatelessWidget {
     );
   }
 }
+
+// ─── Content (Pinned + All Thoughts) ────────────────────────────────
 
 class _ThoughtsContent extends StatelessWidget {
   final List<ThoughtsTableData> thoughts;
@@ -534,6 +572,8 @@ class _ThoughtsContent extends StatelessWidget {
   }
 }
 
+// ─── Thought Grid ────────────────────────────────────────────────────
+
 class _ThoughtGrid extends StatelessWidget {
   final List<ThoughtsTableData> thoughts;
   final void Function(int) onOpen;
@@ -590,6 +630,8 @@ class _ThoughtGrid extends StatelessWidget {
   }
 }
 
+// ─── Right Rail ──────────────────────────────────────────────────────
+
 class _ThoughtsRightRail extends StatelessWidget {
   final AsyncValue<List<ThoughtsTableData>> thoughtsAsync;
 
@@ -597,6 +639,7 @@ class _ThoughtsRightRail extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     final thoughts = thoughtsAsync.valueOrNull ?? const <ThoughtsTableData>[];
     final pinned = thoughts.where((t) => t.isPinned).take(5).toList();
     final tags = <String, int>{};
@@ -611,9 +654,9 @@ class _ThoughtsRightRail extends StatelessWidget {
     return Container(
       width: AppDesktopSizes.rightRailWideWidth,
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surfaceContainerLowest,
+        color: colorScheme.surfaceContainerLowest,
         border: Border(
-          left: BorderSide(color: Theme.of(context).colorScheme.outlineVariant),
+          left: BorderSide(color: colorScheme.outlineVariant),
         ),
       ),
       child: SingleChildScrollView(
@@ -625,12 +668,26 @@ class _ThoughtsRightRail extends StatelessWidget {
             _StatsPanel(total: thoughts.length, pinned: pinned.length),
             const SizedBox(height: AppSpacing.xl),
             _TagsPanel(tags: tagEntries.take(10).toList()),
+            const SizedBox(height: AppSpacing.xxl),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.lock_outline, size: 14, color: colorScheme.outline),
+                const SizedBox(width: AppSpacing.xxs),
+                Text(
+                  '你的数据，仅你可见',
+                  style: TextStyle(color: colorScheme.outline, fontSize: 12),
+                ),
+              ],
+            ),
           ],
         ),
       ),
     );
   }
 }
+
+// ─── Right Rail: Pinned Panel ────────────────────────────────────────
 
 class _PinnedThoughtsPanel extends StatelessWidget {
   final List<ThoughtsTableData> thoughts;
@@ -663,6 +720,8 @@ class _PinnedThoughtsPanel extends StatelessWidget {
     );
   }
 }
+
+// ─── Right Rail: Stats Panel ─────────────────────────────────────────
 
 class _StatsPanel extends StatelessWidget {
   final int total;
@@ -709,6 +768,8 @@ class _StatsPanel extends StatelessWidget {
   }
 }
 
+// ─── Right Rail: Tags Panel ──────────────────────────────────────────
+
 class _TagsPanel extends StatelessWidget {
   final List<MapEntry<String, int>> tags;
 
@@ -716,7 +777,6 @@ class _TagsPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
     return ThoughtPanel(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -730,10 +790,9 @@ class _TagsPanel extends StatelessWidget {
               spacing: AppSpacing.xs,
               runSpacing: AppSpacing.xs,
               children: tags.map((entry) {
-                return Chip(
-                  label: Text('${entry.key}  ${entry.value}'),
-                  backgroundColor: colorScheme.primaryContainer,
-                  side: BorderSide.none,
+                return ThoughtTagChip(
+                  label: entry.key,
+                  count: entry.value,
                 );
               }).toList(),
             ),
@@ -742,6 +801,8 @@ class _TagsPanel extends StatelessWidget {
     );
   }
 }
+
+// ─── Helpers ─────────────────────────────────────────────────────────
 
 List<String> _parseTags(String? tags) {
   return (tags ?? '')

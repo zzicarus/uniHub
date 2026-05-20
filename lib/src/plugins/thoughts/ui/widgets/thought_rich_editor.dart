@@ -20,6 +20,7 @@ class ThoughtRichEditor extends StatefulWidget {
   final String placeholder;
   final bool showToolbar;
   final EdgeInsetsGeometry padding;
+  final bool expands;
 
   const ThoughtRichEditor({
     required this.controller,
@@ -30,6 +31,7 @@ class ThoughtRichEditor extends StatefulWidget {
     this.placeholder = '记录你的想法...',
     this.showToolbar = true,
     this.padding = const EdgeInsets.all(AppSpacing.md),
+    this.expands = false,
     super.key,
   });
 
@@ -212,22 +214,41 @@ class _ThoughtRichEditorState extends State<ThoughtRichEditor> {
               ),
             ),
           ],
-          Container(
-            constraints: BoxConstraints(minHeight: widget.minHeight),
-            padding: widget.padding,
-            child: QuillEditor.basic(
-              controller: widget.controller,
-              config: QuillEditorConfig(
-                placeholder: widget.placeholder,
-                autoFocus: false,
-                expands: false,
-                padding: EdgeInsets.zero,
-                embedBuilders: FlutterQuillEmbeds.editorBuilders(
-                  videoEmbedConfig: null,
+          if (widget.expands)
+            Expanded(
+              child: Container(
+                padding: widget.padding,
+                child: QuillEditor.basic(
+                  controller: widget.controller,
+                  config: QuillEditorConfig(
+                    placeholder: widget.placeholder,
+                    autoFocus: false,
+                    expands: true,
+                    padding: EdgeInsets.zero,
+                    embedBuilders: FlutterQuillEmbeds.editorBuilders(
+                      videoEmbedConfig: null,
+                    ),
+                  ),
+                ),
+              ),
+            )
+          else
+            Container(
+              constraints: BoxConstraints(minHeight: widget.minHeight),
+              padding: widget.padding,
+              child: QuillEditor.basic(
+                controller: widget.controller,
+                config: QuillEditorConfig(
+                  placeholder: widget.placeholder,
+                  autoFocus: false,
+                  expands: false,
+                  padding: EdgeInsets.zero,
+                  embedBuilders: FlutterQuillEmbeds.editorBuilders(
+                    videoEmbedConfig: null,
+                  ),
                 ),
               ),
             ),
-          ),
         ],
       ),
     );

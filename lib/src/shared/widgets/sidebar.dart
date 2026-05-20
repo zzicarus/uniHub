@@ -16,118 +16,115 @@ class Sidebar extends ConsumerWidget {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
-    return Material(
-      color: colorScheme.surface,
-      child: Container(
-        width: AppDesktopSizes.sidebarWidth,
-        decoration: BoxDecoration(
-          color: colorScheme.surface,
-          border: Border(right: BorderSide(color: colorScheme.outlineVariant)),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            const SizedBox(height: AppSpacing.xxl),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl),
-              child: Row(
-                children: [
-                  const _LogoMark(),
-                  const SizedBox(width: AppSpacing.sm),
-                  Text(
-                    'uniHub',
-                    style: theme.textTheme.titleLarge?.copyWith(
-                      fontSize: 24,
-                      fontWeight: FontWeight.w800,
-                    ),
+    return Container(
+      width: AppDesktopSizes.sidebarWidth,
+      decoration: BoxDecoration(
+        color: colorScheme.surface,
+        border: Border(right: BorderSide(color: colorScheme.outlineVariant)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const SizedBox(height: AppSpacing.xxl),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl),
+            child: Row(
+              children: [
+                const _LogoMark(),
+                const SizedBox(width: AppSpacing.sm),
+                Text(
+                  'uniHub',
+                  style: theme.textTheme.titleLarge?.copyWith(
+                    fontSize: 24,
+                    fontWeight: FontWeight.w800,
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
-            const SizedBox(height: AppSpacing.xxl),
-            Expanded(
-              child: ListView(
-                padding: EdgeInsets.zero,
-                children: [
-                  _NavItem(
-                    icon: Icons.home_rounded,
-                    label: '首页',
-                    isSelected: location == '/',
-                    onTap: () => context.goNamed(RouteNames.home),
-                  ),
-                  ...registry.navEntries.map(
-                    (entry) =>
-                        entry.children != null && entry.children!.isNotEmpty
-                        ? _ExpandableNavItem(
-                            label: entry.label,
-                            icon: entry.icon,
-                            path: entry.path,
-                            children: entry.children!,
-                            currentLocation: location,
-                          )
-                        : _NavItem(
-                            icon: entry.icon,
-                            label: entry.label,
-                            isSelected:
-                                location == entry.path ||
-                                location.startsWith('${entry.path}/'),
-                            onTap: () {
-                              context.goNamed(
-                                entry.routeName,
-                                pathParameters: entry.routeParams,
-                              );
-                            },
-                          ),
-                  ),
-                  _NavItem(
-                    icon: Icons.check_box_outlined,
-                    label: '待办',
-                    isSelected: location == '/todos',
-                    onTap: () => context.goNamed(RouteNames.todos),
-                  ),
-                  _NavItem(
-                    icon: Icons.description_outlined,
-                    label: '笔记',
-                    isSelected: location == '/notes',
-                    onTap: () => context.goNamed(RouteNames.notes),
-                  ),
-                  _NavItem(
-                    icon: Icons.calendar_month_outlined,
-                    label: '日历',
-                    isSelected: location == '/calendar',
-                    onTap: () => context.goNamed(RouteNames.calendar),
-                  ),
-                  _NavItem(
-                    icon: Icons.star_border_rounded,
-                    label: '收藏',
-                    isSelected: location == '/favorites',
-                    onTap: () => context.goNamed(RouteNames.favorites),
-                  ),
-                  const SizedBox(height: AppSpacing.lg),
-                  const Padding(
-                    padding: EdgeInsets.symmetric(horizontal: AppSpacing.xl),
-                    child: Divider(),
-                  ),
-                  _NavItem(
-                    icon: Icons.settings_outlined,
-                    label: '设置',
-                    isSelected: location == '/settings',
-                    onTap: () => context.goNamed(RouteNames.settings),
-                  ),
-                ],
-              ),
+          ),
+          const SizedBox(height: AppSpacing.xxl),
+          Expanded(
+            child: ListView(
+              padding: EdgeInsets.zero,
+              children: [
+                _NavItem(
+                  icon: Icons.home_rounded,
+                  label: '首页',
+                  isSelected: location == '/',
+                  onTap: () => context.goNamed(RouteNames.home),
+                ),
+                ...registry.navEntries.map(
+                  (entry) =>
+                      entry.children != null && entry.children!.isNotEmpty
+                      ? _ExpandableNavItem(
+                          label: entry.label,
+                          icon: entry.icon,
+                          path: entry.path,
+                          children: entry.children!,
+                          currentLocation: location,
+                        )
+                      : _NavItem(
+                          icon: entry.icon,
+                          label: entry.label,
+                          isSelected:
+                              location == entry.path ||
+                              location.startsWith('${entry.path}/'),
+                          onTap: () {
+                            context.goNamed(
+                              entry.routeName,
+                              pathParameters: entry.routeParams,
+                            );
+                          },
+                        ),
+                ),
+                _NavItem(
+                  icon: Icons.check_box_outlined,
+                  label: '待办',
+                  isSelected: location == '/todos',
+                  onTap: () => context.goNamed(RouteNames.todos),
+                ),
+                _NavItem(
+                  icon: Icons.description_outlined,
+                  label: '笔记',
+                  isSelected: location == '/notes',
+                  onTap: () => context.goNamed(RouteNames.notes),
+                ),
+                _NavItem(
+                  icon: Icons.calendar_month_outlined,
+                  label: '日历',
+                  isSelected: location == '/calendar',
+                  onTap: () => context.goNamed(RouteNames.calendar),
+                ),
+                _NavItem(
+                  icon: Icons.star_border_rounded,
+                  label: '收藏',
+                  isSelected: location == '/favorites',
+                  onTap: () => context.goNamed(RouteNames.favorites),
+                ),
+                const SizedBox(height: AppSpacing.lg),
+                const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: AppSpacing.xl),
+                  child: Divider(),
+                ),
+                _NavItem(
+                  icon: Icons.settings_outlined,
+                  label: '设置',
+                  isSelected: location == '/settings',
+                  onTap: () => context.goNamed(RouteNames.settings),
+                ),
+              ],
             ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(
-                AppSpacing.lg,
-                0,
-                AppSpacing.lg,
-                AppSpacing.xl,
-              ),
-              child: _UserTile(colorScheme: colorScheme, theme: theme),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(
+              AppSpacing.lg,
+              0,
+              AppSpacing.lg,
+              AppSpacing.xl,
             ),
-          ],
-        ),
+            child: _UserTile(colorScheme: colorScheme, theme: theme),
+          ),
+        ],
       ),
     );
   }
