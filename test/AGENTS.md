@@ -75,4 +75,34 @@ flutter test
 
 # 单个文件
 flutter test test/src/core/plugin/plugin_registry_test.dart
+
+# 单个测试用例（按名称过滤）
+flutter test --name "test case name"
 ```
+
+## 完整验证顺序
+
+提交前按以下顺序验证（参考 `.omo/guidelines/workflow.md`）：
+
+```sh
+# Step 1: 静态分析
+flutter analyze
+
+# Step 2: 自动修复 lint
+dart fix --dry-run   # 预览
+dart fix --apply     # 应用
+
+# Step 3: 运行测试
+flutter test
+
+# Step 4: 确认工作区干净
+git status
+```
+
+### 验证失败处理
+| 失败类型 | 处理方式 |
+|----------|----------|
+| analyze warning | `dart fix --apply` 自动修复 |
+| analyze error | 按错误信息修改代码 |
+| 测试失败 | 确认是代码问题还是测试问题 |
+| 3 次连续失败 | 停止 → 咨询 Oracle |

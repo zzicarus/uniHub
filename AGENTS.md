@@ -34,6 +34,29 @@ UniHub 是一个 **桌面端优先** 的 Flutter 笔记应用，基于插件架�
 - `.omo/guidelines/database.md` — 数据库规范（drift/SQLite）
 - `.omo/guidelines/widget.md` — Widget 编写规范（设计令牌、M3 ColorScheme、布局约定）
 
+## 构建与验证
+
+每次提交前按顺序执行以下验证：
+
+```bash
+# 1. Dart 静态分析
+flutter analyze
+
+# 2. 运行所有测试
+flutter test
+
+# 3. 自动修复 lint 问题（预览后再应用）
+dart fix --dry-run
+dart fix --apply           # 确认后执行
+```
+
+### 通过标准
+- `flutter analyze` — **0 error, 0 warning**
+- `flutter test` — **全部通过**
+- 新增代码 — 禁止 `as any`、`@ts-ignore`、空 catch 块
+
+完整开发流程规范见 `.omo/guidelines/workflow.md`。
+
 ## 关键已知问题（Agent 需注意）
 
 | # | 问题 | 位置 | 影响 |
