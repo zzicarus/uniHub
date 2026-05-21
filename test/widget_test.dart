@@ -93,14 +93,14 @@ void main() {
 
     await tester.tap(find.text('待办').last);
     await tester.pumpAndSettle();
-    expect(find.text('聚焦重要任务，专注当下'), findsOneWidget);
+    expect(find.text('即将推出，敬请期待'), findsOneWidget);
 
     await tester.tap(find.text('笔记').last);
     await tester.pumpAndSettle();
-    expect(find.text('记录与沉淀知识'), findsOneWidget);
+    expect(find.text('即将推出，敬请期待'), findsOneWidget);
 
     await tester.tap(find.text('更多').last);
     await tester.pumpAndSettle();
-    expect(find.text('规划你的时间，专注每一天的成长'), findsOneWidget);
+    expect(find.text('即将推出，敬请期待'), findsOneWidget);
   });
 }
