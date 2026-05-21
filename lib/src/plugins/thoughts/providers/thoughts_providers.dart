@@ -1,9 +1,13 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uni_hub/src/core/database/app_database.dart';
 import 'package:uni_hub/src/core/database/database_provider.dart';
+import '../data/file_image_storage.dart';
+import '../data/image_picker_service.dart';
+import '../data/image_storage.dart';
+import '../data/platform_image_picker.dart';
+import '../data/thought_image_service.dart';
 import '../data/thoughts_dao.dart';
 import '../data/thoughts_repository.dart';
-import '../data/thought_image_service.dart';
 
 final thoughtsDaoProvider = Provider<ThoughtsDao>((ref) {
   final db = ref.watch(appDatabaseProvider);
@@ -15,8 +19,19 @@ final thoughtsRepositoryProvider = Provider<ThoughtsRepository>((ref) {
   return ThoughtsRepository(dao);
 });
 
+final imagePickerServiceProvider = Provider<ImagePickerService>((ref) {
+  return PlatformImagePicker();
+});
+
+final imageStorageProvider = Provider<ImageStorage>((ref) {
+  return FileImageStorage();
+});
+
 final thoughtImageServiceProvider = Provider<ThoughtImageService>((ref) {
-  return ThoughtImageService();
+  return ThoughtImageService(
+    picker: ref.watch(imagePickerServiceProvider),
+    storage: ref.watch(imageStorageProvider),
+  );
 });
 
 final tagFilterProvider = StateProvider<String?>((ref) => null);

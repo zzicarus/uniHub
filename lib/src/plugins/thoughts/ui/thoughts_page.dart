@@ -1,4 +1,3 @@
-import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -138,6 +137,7 @@ class _ThoughtsPageState extends ConsumerState<ThoughtsPage> {
     setState(() => _isSubmitting = true);
     try {
       final repo = ref.read(thoughtsRepositoryProvider);
+      final svc = ref.read(thoughtImageServiceProvider);
       final tags = _tagChips.isNotEmpty ? _tagChips.join(',') : null;
       await repo.createThought(
         content: content,
@@ -147,6 +147,7 @@ class _ThoughtsPageState extends ConsumerState<ThoughtsPage> {
           ThoughtContentCodec.mergeImagePaths(
             ThoughtImageService.encodeImagePaths(_pendingImages),
             content,
+            existsChecker: svc.existsSync,
           ),
         ),
       );

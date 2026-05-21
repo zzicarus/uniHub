@@ -109,10 +109,12 @@ class ThoughtEditorController {
           .map((s) => s.trim())
           .where((s) => s.isNotEmpty),
     );
+    final svc = ref.read(thoughtImageServiceProvider);
     images.addAll(
       ThoughtContentCodec.mergeImagePaths(
         thought.imagePaths,
         thought.content,
+        existsChecker: svc.existsSync,
       ),
     );
     selectedColor = thought.color;

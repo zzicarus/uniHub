@@ -106,12 +106,17 @@ class ThoughtContentCodec {
     return source;
   }
 
-  static List<String> mergeImagePaths(String? storedImages, String content) {
+  static List<String> mergeImagePaths(
+    String? storedImages,
+    String content, {
+    bool Function(String)? existsChecker,
+  }) {
     final paths = <String>{
       ..._decodeImagePaths(storedImages),
       ...imagePathsFromStored(content),
     };
-    return paths.where((path) => File(path).existsSync()).toList();
+    final checker = existsChecker ?? (path) => File(path).existsSync();
+    return paths.where(checker).toList();
   }
 
   static Delta _normalizeImageUris(Delta delta) {

@@ -1,52 +1,53 @@
 import 'dart:convert';
-import 'dart:io';
 import 'dart:typed_data';
 
-import 'package:image_picker/image_picker.dart';
-import 'package:path/path.dart' as p;
-import 'package:path_provider/path_provider.dart';
+import 'image_picker_service.dart';
+import 'image_storage.dart';
 
+/// 管理想法相关图片的协调服务。
+///
+/// 通过构造器注入 [ImagePickerService] 和 [ImageStorage]，
+/// 不直接依赖任何平台 API，方便测试中替换为 fake 实现。
 class ThoughtImageService {
-  final ImagePicker _picker = ImagePicker();
+  final ImagePickerService _picker;
+  final ImageStorage _storage;
 
+  ThoughtImageService({
+    required ImagePickerService picker,
+    required ImageStorage storage,
+  })  : _picker = picker,
+        _storage = storage;
+
+  /// 从图库选择图片并保存到应用存储目录。
+  ///
+  /// 返回保存后的绝对路径；用户取消时返回 `null`。
   Future<String?> pickImage() async {
-    final XFile? image = await _picker.pickImage(
-      source: ImageSource.gallery,
-      maxWidth: 1920,
-      maxHeight: 1920,
-    );
-    if (image == null) return null;
+    final picked = await _picker.pickImage();
+    if (picked == null) return null;
 
-    final ext = p.extension(image.path).isNotEmpty
-        ? p.extension(image.path)
-        : '.jpg';
-    final savedPath = await _newImagePath(ext);
-    await File(image.path).copy(savedPath);
-
-    return savedPath;
+    return _storage.saveBytes(picked.bytes, extension: picked.extension);
   }
 
+  /// 将图片字节直接保存到应用存储目录。
   Future<String> saveImageBytes(
     Uint8List bytes, {
     String extension = '.png',
   }) async {
-    final savedPath = await _newImagePath(extension);
-    await File(savedPath).writeAsBytes(bytes, flush: true);
-    return savedPath;
+    return _storage.saveBytes(bytes, extension: extension);
   }
 
+  /// 删除指定路径的图片文件。
   Future<void> deleteImage(String path) async {
-    final file = File(path);
-    if (await file.exists()) {
-      await file.delete();
-    }
+    await _storage.delete(path);
   }
 
+  /// 批量删除图片文件。
   Future<void> deleteImages(List<String> paths) async {
-    for (final path in paths) {
-      await deleteImage(path);
-    }
+    await _storage.deleteAll(paths);
   }
+
+  /// 检查指定路径的图片文件是否存在。
+  bool existsSync(String path) => _storage.existsSync(path);
 
   static List<String> decodeImagePaths(String? json) {
     if (json == null || json.isEmpty) return [];
@@ -61,19 +62,4 @@ class ThoughtImageService {
   static String encodeImagePaths(List<String> paths) {
     return jsonEncode(paths);
   }
-
-  Future<String> _newImagePath(String extension) async {
-    final appDir = await getApplicationDocumentsDirectory();
-    final imagesDir = Directory(p.join(appDir.path, 'thought_images'));
-    if (!await imagesDir.exists()) {
-      await imagesDir.create(recursive: true);
-    }
-
-    final ext = extension.startsWith('.') ? extension : '.$extension';
-    final fileName =
-        '${DateTime.now().microsecondsSinceEpoch}_${_counter++}$ext';
-    return p.join(imagesDir.path, fileName);
-  }
-
-  static int _counter = 0;
 }
