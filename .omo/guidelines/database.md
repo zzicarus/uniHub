@@ -234,7 +234,8 @@ Text(ThoughtContentCodec.plainTextFromStored(thought.content));
 ```dart
 // lib/src/core/database/database_provider.dart
 final appDatabaseProvider = Provider<AppDatabase>((ref) {
-  final db = AppDatabase(_createExecutor());
+  final registry = ref.read(pluginRegistryProvider);
+  final db = AppDatabase(_createExecutor(), registry);
   ref.onDispose(() => db.close());
   return db;
 });
@@ -267,7 +268,9 @@ final appDatabaseProvider = Provider<AppDatabase>((ref) {
 late AppDatabase database;
 
 setUp(() async {
-  database = AppDatabase(NativeDatabase.memory());
+  final registry = PluginRegistry();
+  // registry.register(YourPlugin());
+  database = AppDatabase(NativeDatabase.memory(), registry);
 });
 
 tearDown(() async {

@@ -7,7 +7,9 @@
 ```dart
 import 'package:drift/native.dart';
 
-final db = AppDatabase(NativeDatabase.memory());
+final registry = PluginRegistry();
+// registry.register(YourPlugin());
+final db = AppDatabase(NativeDatabase.memory(), registry);
 ```
 
 不在测试间共享数据库实例。每个测试套件独立创建。
@@ -20,7 +22,7 @@ Widget 测试通过 `ProviderScope` overrides 注入测试依赖：
 ProviderScope(
   overrides: [
     appDatabaseProvider.overrideWithValue(testDb),
-    pluginRegistryProvider.overrideWithValue(PluginRegistry.withPlugins([...])),
+    pluginRegistryProvider.overrideWithValue(registry),
   ],
   child: MaterialApp(...),
 );
@@ -32,7 +34,7 @@ ProviderScope(
 
 **零 mockito**。所有 mock 通过以下方式实现：
 - 手写 stub 插件实现 `UniHubPlugin` 接口
-- 使用 `PluginRegistry.withPlugins([])` 构造测试专用 registry
+- 使用 `PluginRegistry()` + `register()` 构造测试专用 registry
 - 数据库直接使用真实 Drift 查询（in-memory）
 
 ## 测试文件结构

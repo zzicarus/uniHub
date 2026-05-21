@@ -14,7 +14,10 @@ void main() async {
   runApp(
     ProviderScope(
       overrides: [
-        pluginRegistryProvider.overrideWithValue(registry),
+        pluginRegistryProvider.overrideWith((ref) {
+          ref.onDispose(() => registry.disposeAll());
+          return registry;
+        }),
       ],
       child: const UniHubApp(),
     ),

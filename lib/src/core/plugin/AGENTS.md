@@ -6,16 +6,19 @@
 
 ```dart
 abstract class UniHubPlugin {
-  String get id;              // 唯一标识，如 'thoughts'
-  String get name;            // 显示名称
-  String get icon;            // 图标标识
-  String? get routePath;      // 根路由路径，如 '/thoughts'
-  List<GoRoute> routes();     // 贡献的路由
-  List<TableInfo> get tables; // 贡献的数据库表
-  int get schemaVersion;      // 数据库版本号
-  List<Override> providers(); // 贡献的 Riverpod Provider
-  Future<void> init(WidgetRef ref);  // 初始化钩子
-  Future<void> dispose();     // 清理钩子
+  String get id;                    // 唯一标识，如 'thoughts'
+  String get name;                  // 显示名称
+  List<NavEntry> get navEntries => [];   // 侧栏导航条目
+  List<GoRoute> get routes => [];        // 贡献的路由
+  List<Type> get tables => [];           // 贡献的数据库表类型
+  int get schemaVersion => 0;            // 数据库版本号
+  Future<void> onInit() async {}         // 启动初始化钩子
+  Future<void> onDispose() async {}      // 清理钩子
+  Future<List<SearchResult>> search(String query) async => [];
+  Future<List<DashboardItem>> getRecentItems(Ref ref, {int count = 4}) async => [];
+  Future<List<DashboardItem>> getPinnedItems(Ref ref, {int count = 3}) async => [];
+  Future<PluginStat?> getStat(Ref ref) async => null;
+  Future<DashboardItem?> quickCreate(Ref ref, {required String content, String? tags}) async => null;
 }
 ```
 
