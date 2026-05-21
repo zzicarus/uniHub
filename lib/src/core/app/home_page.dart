@@ -20,51 +20,65 @@ class HomePage extends ConsumerWidget {
     final colorScheme = Theme.of(context).colorScheme;
     return Scaffold(
       backgroundColor: colorScheme.surfaceContainerLowest,
-      body: SafeArea(
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            if (constraints.maxWidth < AppBreakpoints.tabletMin) {
-              return const _MobileHomeView();
-            }
-            final isWide = constraints.maxWidth >= AppBreakpoints.wideMin;
-            return Row(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Expanded(
-                  child: SingleChildScrollView(
-                    padding: const EdgeInsets.fromLTRB(
-                      AppSpacing.xxl,
-                      AppSpacing.xxl,
-                      AppSpacing.xxl,
-                      AppSpacing.section,
-                    ),
-                    child: ConstrainedBox(
-                      constraints: const BoxConstraints(maxWidth: 1080),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const _HomeHeader(),
-                          const SizedBox(height: AppSpacing.xxl),
-                          const _FocusGrid(),
-                          const SizedBox(height: AppSpacing.lg),
-                          _QuickAccessPanel(
-                            onThoughtsTap: () => context.go('/thoughts'),
-                          ),
-                          const SizedBox(height: AppSpacing.lg),
-                          _RecentThoughtsPanel(
-                            onOpen: () => context.go('/thoughts'),
-                          ),
-                          const SizedBox(height: AppSpacing.lg),
-                          const _HomeWorkGrid(),
-                        ],
+      body: DecoratedBox(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              colorScheme.primaryContainer.withValues(alpha: 0.18),
+              colorScheme.surfaceContainerLowest,
+              colorScheme.tertiaryContainer.withValues(alpha: 0.10),
+            ],
+            stops: const [0.0, 0.48, 1.0],
+          ),
+        ),
+        child: SafeArea(
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              if (constraints.maxWidth < AppBreakpoints.tabletMin) {
+                return const _MobileHomeView();
+              }
+              final isWide = constraints.maxWidth >= AppBreakpoints.wideMin;
+              return Row(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Expanded(
+                    child: SingleChildScrollView(
+                      padding: const EdgeInsets.fromLTRB(
+                        AppSpacing.xxl,
+                        AppSpacing.xxl,
+                        AppSpacing.xxl,
+                        AppSpacing.section,
+                      ),
+                      child: ConstrainedBox(
+                        constraints: const BoxConstraints(maxWidth: 1080),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const _HomeHeader(),
+                            const SizedBox(height: AppSpacing.xxl),
+                            const _FocusGrid(),
+                            const SizedBox(height: AppSpacing.lg),
+                            _QuickAccessPanel(
+                              onThoughtsTap: () => context.go('/thoughts'),
+                            ),
+                            const SizedBox(height: AppSpacing.lg),
+                            _RecentThoughtsPanel(
+                              onOpen: () => context.go('/thoughts'),
+                            ),
+                            const SizedBox(height: AppSpacing.lg),
+                            const _HomeWorkGrid(),
+                          ],
+                        ),
                       ),
                     ),
                   ),
-                ),
-                if (isWide) const _HomeRightRail(),
-              ],
-            );
-          },
+                  if (isWide) const _HomeRightRail(),
+                ],
+              );
+            },
+          ),
         ),
       ),
     );
@@ -130,16 +144,25 @@ class _Panel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
+    final radius = BorderRadius.circular(AppRadius.xl);
     return Material(
-      color: colorScheme.surface,
-      borderRadius: BorderRadius.circular(AppRadius.lg),
+      color: colorScheme.surface.withValues(alpha: 0.96),
+      borderRadius: radius,
       elevation: 0,
       child: DecoratedBox(
         decoration: BoxDecoration(
-          color: colorScheme.surface,
-          borderRadius: BorderRadius.circular(AppRadius.lg),
-          border: Border.all(color: colorScheme.outlineVariant),
-          boxShadow: const [AppShadows.cardSoft],
+          color: colorScheme.surface.withValues(alpha: 0.96),
+          borderRadius: radius,
+          border: Border.all(
+            color: colorScheme.outlineVariant.withValues(alpha: 0.64),
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: colorScheme.shadow.withValues(alpha: 0.055),
+              blurRadius: 26,
+              offset: const Offset(0, 12),
+            ),
+          ],
         ),
         child: Padding(padding: padding, child: child),
       ),
@@ -161,13 +184,14 @@ class _IconBubble extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 48,
-      height: 48,
+      width: 52,
+      height: 52,
       decoration: BoxDecoration(
         color: background,
-        borderRadius: BorderRadius.circular(AppRadius.md),
+        borderRadius: BorderRadius.circular(AppRadius.xl),
+        border: Border.all(color: color.withValues(alpha: 0.10)),
       ),
-      child: Icon(icon, color: color, size: 24),
+      child: Icon(icon, color: color, size: 25),
     );
   }
 }
@@ -222,29 +246,40 @@ class _MetricCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final radius = BorderRadius.circular(AppRadius.xl);
     return Material(
-      color: theme.colorScheme.surface,
-      borderRadius: BorderRadius.circular(AppRadius.lg),
+      color: colorScheme.surface.withValues(alpha: 0.96),
+      borderRadius: radius,
       elevation: 0,
       child: DecoratedBox(
         decoration: BoxDecoration(
-          color: theme.colorScheme.surface,
-          borderRadius: BorderRadius.circular(AppRadius.lg),
-          border: Border.all(color: theme.colorScheme.outlineVariant),
-          boxShadow: const [AppShadows.cardSoft],
+          color: colorScheme.surface.withValues(alpha: 0.96),
+          borderRadius: radius,
+          border: Border.all(
+            color: colorScheme.outlineVariant.withValues(alpha: 0.64),
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: colorScheme.shadow.withValues(alpha: 0.055),
+              blurRadius: 26,
+              offset: const Offset(0, 12),
+            ),
+          ],
         ),
         child: Padding(
           padding: const EdgeInsets.all(AppSpacing.lg),
           child: Row(
             children: [
               Container(
-                width: 48,
-                height: 48,
+                width: 52,
+                height: 52,
                 decoration: BoxDecoration(
                   color: background,
-                  borderRadius: BorderRadius.circular(AppRadius.md),
+                  borderRadius: BorderRadius.circular(AppRadius.xl),
+                  border: Border.all(color: color.withValues(alpha: 0.10)),
                 ),
-                child: Icon(icon, color: color, size: 24),
+                child: Icon(icon, color: color, size: 25),
               ),
               const SizedBox(width: AppSpacing.lg),
               Expanded(
@@ -289,19 +324,29 @@ class _ThoughtPreviewCard extends StatelessWidget {
     final time = _formatTimestamp(item.createdAt);
     final color = _itemColor(item, colorScheme);
     final background = _itemBackground(color, colorScheme);
+    final radius = BorderRadius.circular(AppRadius.lg);
 
     return Material(
-      color: colorScheme.surface,
-      borderRadius: BorderRadius.circular(AppRadius.md),
+      color: colorScheme.surface.withValues(alpha: 0.96),
+      borderRadius: radius,
       elevation: 0,
       child: DecoratedBox(
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(AppRadius.md),
-          border: Border.all(color: colorScheme.outlineVariant),
-          boxShadow: const [AppShadows.cardSoft],
+          color: colorScheme.surface.withValues(alpha: 0.96),
+          borderRadius: radius,
+          border: Border.all(
+            color: colorScheme.outlineVariant.withValues(alpha: 0.64),
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: colorScheme.shadow.withValues(alpha: 0.045),
+              blurRadius: 18,
+              offset: const Offset(0, 8),
+            ),
+          ],
         ),
         child: InkWell(
-          borderRadius: BorderRadius.circular(AppRadius.md),
+          borderRadius: radius,
           onTap: onTap,
           child: Padding(
             padding: const EdgeInsets.all(AppSpacing.md),
@@ -393,18 +438,28 @@ class _ShortcutCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
+    final radius = BorderRadius.circular(AppRadius.lg);
     return Material(
-      color: colorScheme.surface,
-      borderRadius: BorderRadius.circular(AppRadius.md),
+      color: colorScheme.surface.withValues(alpha: 0.96),
+      borderRadius: radius,
       elevation: 0,
       child: DecoratedBox(
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(AppRadius.md),
-          border: Border.all(color: colorScheme.outlineVariant),
-          boxShadow: const [AppShadows.cardSoft],
+          color: colorScheme.surface.withValues(alpha: 0.96),
+          borderRadius: radius,
+          border: Border.all(
+            color: colorScheme.outlineVariant.withValues(alpha: 0.64),
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: colorScheme.shadow.withValues(alpha: 0.045),
+              blurRadius: 18,
+              offset: const Offset(0, 8),
+            ),
+          ],
         ),
         child: InkWell(
-          borderRadius: BorderRadius.circular(AppRadius.md),
+          borderRadius: radius,
           onTap: onTap,
           child: Padding(
             padding: const EdgeInsets.all(AppSpacing.sm),
@@ -412,13 +467,14 @@ class _ShortcutCard extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Container(
-                  width: 36,
-                  height: 36,
+                  width: 40,
+                  height: 40,
                   decoration: BoxDecoration(
                     color: background,
-                    borderRadius: BorderRadius.circular(AppRadius.sm),
+                    borderRadius: BorderRadius.circular(AppRadius.lg),
+                    border: Border.all(color: color.withValues(alpha: 0.10)),
                   ),
-                  child: Icon(icon, color: color, size: 20),
+                  child: Icon(icon, color: color, size: 22),
                 ),
                 const SizedBox(height: AppSpacing.sm),
                 Text(
@@ -449,7 +505,7 @@ class _PanelHeader extends StatelessWidget {
     final theme = Theme.of(context);
     return Row(
       children: [
-        Icon(icon, size: 20, color: Theme.of(context).colorScheme.onSurface),
+        Icon(icon, size: 20, color: Theme.of(context).colorScheme.primary),
         const SizedBox(width: AppSpacing.sm),
         Expanded(child: Text(title, style: theme.textTheme.titleMedium)),
       ],
@@ -533,47 +589,10 @@ class _SmallIconBubble extends StatelessWidget {
       height: 40,
       decoration: BoxDecoration(
         color: background,
-        borderRadius: BorderRadius.circular(AppRadius.sm),
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        border: Border.all(color: color.withValues(alpha: 0.10)),
       ),
       child: Icon(icon, color: color, size: 20),
-    );
-  }
-}
-
-class _TodoLine extends StatelessWidget {
-  final String title;
-  final String time;
-  final bool done;
-
-  const _TodoLine({required this.title, required this.time}) : done = false;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Padding(
-      padding: const EdgeInsets.only(bottom: AppSpacing.sm),
-      child: Row(
-        children: [
-          Icon(
-            done ? Icons.check_box_rounded : Icons.check_box_outline_blank,
-            size: 20,
-            color: done
-                ? Theme.of(context).colorScheme.primary
-                : Theme.of(context).colorScheme.outline,
-          ),
-          const SizedBox(width: AppSpacing.sm),
-          Expanded(
-            child: Text(
-              title,
-              style: theme.textTheme.bodyMedium?.copyWith(
-                decoration: done ? TextDecoration.lineThrough : null,
-              ),
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
-          Text(time, style: theme.textTheme.bodySmall),
-        ],
-      ),
     );
   }
 }

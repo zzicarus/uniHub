@@ -13,13 +13,30 @@ class _HomeHeader extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         Container(
-          width: 56,
-          height: 56,
+          width: 60,
+          height: 60,
           decoration: BoxDecoration(
-            color: colorScheme.tertiaryContainer,
-            borderRadius: BorderRadius.circular(AppRadius.md),
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                colorScheme.tertiaryContainer,
+                colorScheme.tertiaryContainer.withValues(alpha: 0.45),
+              ],
+            ),
+            borderRadius: BorderRadius.circular(AppRadius.xl),
+            border: Border.all(
+              color: colorScheme.tertiary.withValues(alpha: 0.10),
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: colorScheme.tertiary.withValues(alpha: 0.12),
+                blurRadius: 24,
+                offset: const Offset(0, 10),
+              ),
+            ],
           ),
-          child: Icon(_greetingIcon(), color: colorScheme.tertiary, size: 28),
+          child: Icon(_greetingIcon(), color: colorScheme.tertiary, size: 30),
         ),
         const SizedBox(width: AppSpacing.xl),
         Expanded(
@@ -58,9 +75,7 @@ class _HomeHeader extends StatelessWidget {
     }
     return Text(
       greeting,
-      style: theme.textTheme.titleLarge?.copyWith(
-        fontWeight: FontWeight.w700,
-      ),
+      style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
       overflow: TextOverflow.ellipsis,
     );
   }
@@ -81,24 +96,32 @@ class _SearchBox extends StatelessWidget {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     return Material(
-      color: colorScheme.surface,
-      borderRadius: BorderRadius.circular(AppRadius.md),
+      color: colorScheme.surface.withValues(alpha: 0.96),
+      borderRadius: BorderRadius.circular(AppRadius.lg),
       elevation: 0,
       child: InkWell(
-        borderRadius: BorderRadius.circular(AppRadius.md),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
         onTap: () {
           ScaffoldMessenger.of(
             context,
           ).showSnackBar(const SnackBar(content: Text('全局搜索即将上线')));
         },
         child: Container(
-          width: 360,
-          height: 48,
+          width: 384,
+          height: 52,
           decoration: BoxDecoration(
-            color: colorScheme.surface,
-            borderRadius: BorderRadius.circular(AppRadius.md),
-            border: Border.all(color: colorScheme.outlineVariant),
-            boxShadow: const [AppShadows.cardSoft],
+            color: colorScheme.surface.withValues(alpha: 0.96),
+            borderRadius: BorderRadius.circular(AppRadius.lg),
+            border: Border.all(
+              color: colorScheme.outlineVariant.withValues(alpha: 0.68),
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: colorScheme.shadow.withValues(alpha: 0.045),
+                blurRadius: 18,
+                offset: const Offset(0, 8),
+              ),
+            ],
           ),
           padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
           child: Row(
@@ -112,7 +135,11 @@ class _SearchBox extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
-              Icon(Icons.crop_free_rounded, color: colorScheme.outline, size: 16),
+              Icon(
+                Icons.crop_free_rounded,
+                color: colorScheme.outline,
+                size: 16,
+              ),
             ],
           ),
         ),
@@ -131,13 +158,21 @@ class _NotificationButton extends StatelessWidget {
       clipBehavior: Clip.none,
       children: [
         Container(
-          width: 48,
-          height: 48,
+          width: 52,
+          height: 52,
           decoration: BoxDecoration(
-            color: colorScheme.surface,
-            borderRadius: BorderRadius.circular(AppRadius.md),
-            border: Border.all(color: colorScheme.outlineVariant),
-            boxShadow: const [AppShadows.cardSoft],
+            color: colorScheme.surface.withValues(alpha: 0.96),
+            borderRadius: BorderRadius.circular(AppRadius.lg),
+            border: Border.all(
+              color: colorScheme.outlineVariant.withValues(alpha: 0.68),
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: colorScheme.shadow.withValues(alpha: 0.045),
+                blurRadius: 18,
+                offset: const Offset(0, 8),
+              ),
+            ],
           ),
           child: Icon(
             Icons.notifications_none_rounded,

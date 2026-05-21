@@ -19,13 +19,17 @@ class Sidebar extends ConsumerWidget {
     return Container(
       width: AppDesktopSizes.sidebarWidth,
       decoration: BoxDecoration(
-        color: colorScheme.surface,
-        border: Border(right: BorderSide(color: colorScheme.outlineVariant)),
+        color: colorScheme.surface.withValues(alpha: 0.96),
+        border: Border(
+          right: BorderSide(
+            color: colorScheme.outlineVariant.withValues(alpha: 0.52),
+          ),
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const SizedBox(height: AppSpacing.xl),
+          const SizedBox(height: AppSpacing.xxl),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl),
             child: Row(
@@ -144,17 +148,21 @@ class _LogoMark extends StatelessWidget {
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     return Container(
-      width: 40,
-      height: 40,
+      width: 46,
+      height: 46,
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(AppRadius.sm),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
+        boxShadow: [
+          BoxShadow(
+            color: colorScheme.primary.withValues(alpha: 0.18),
+            blurRadius: 18,
+            offset: const Offset(0, 8),
+          ),
+        ],
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [
-            colorScheme.primaryContainer,
-            colorScheme.primary,
-          ],
+          colors: [colorScheme.primaryContainer, colorScheme.primary],
         ),
       ),
       child: Center(
@@ -162,9 +170,9 @@ class _LogoMark extends StatelessWidget {
           'U',
           style: TextStyle(
             color: colorScheme.onPrimary,
-            fontSize: 22,
+            fontSize: 24,
             height: 1,
-            fontWeight: FontWeight.w800,
+            fontWeight: FontWeight.w900,
           ),
         ),
       ),
@@ -209,7 +217,7 @@ class _UserTile extends StatelessWidget {
                   children: [
                     Text('Alex', style: theme.textTheme.titleSmall),
                     Text(
-                      '专注记录',
+                      '专注记录 · 持续进步',
                       style: theme.textTheme.bodySmall,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -381,24 +389,27 @@ class _NavItem extends StatelessWidget {
         ? colorScheme.onSurfaceVariant
         : colorScheme.outline;
     final bgColor = isSelected
-        ? colorScheme.primaryContainer.withValues(alpha: 0.6)
+        ? colorScheme.primaryContainer.withValues(alpha: 0.72)
         : Colors.transparent;
+    final radius = BorderRadius.circular(AppRadius.lg);
 
     return Padding(
       padding: EdgeInsets.symmetric(
         horizontal: compact ? AppSpacing.lg : AppSpacing.xl,
-        vertical: AppSpacing.xxs / 2,
+        vertical: AppSpacing.xxs,
       ),
       child: Material(
         color: bgColor,
-        borderRadius: BorderRadius.circular(AppRadius.md),
+        borderRadius: radius,
+        elevation: isSelected ? 1 : 0,
+        shadowColor: colorScheme.primary.withValues(alpha: 0.10),
         child: InkWell(
-          borderRadius: BorderRadius.circular(AppRadius.md),
+          borderRadius: radius,
           onTap: onTap,
           child: SizedBox(
             height: compact
                 ? AppDesktopSizes.compactButtonHeight
-                : AppDesktopSizes.navItemHeight,
+                : AppDesktopSizes.navItemHeight + 2,
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
               child: Row(
@@ -411,7 +422,9 @@ class _NavItem extends StatelessWidget {
                       style: theme.textTheme.titleSmall?.copyWith(
                         color: foreground,
                         fontSize: compact ? 13 : 15,
-                        fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                        fontWeight: isSelected
+                            ? FontWeight.w700
+                            : FontWeight.w500,
                       ),
                       overflow: TextOverflow.ellipsis,
                     ),

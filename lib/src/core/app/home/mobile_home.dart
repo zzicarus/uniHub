@@ -281,7 +281,9 @@ class _MobileQuickCaptureCardState
 
     setState(() => _submitting = true);
     try {
-      await ref.read(quickCreateProvider((content: content, tags: null)).future);
+      await ref.read(
+        quickCreateProvider((content: content, tags: null)).future,
+      );
       ref.invalidate(dashboardItemsProvider);
       ref.invalidate(dashboardPinnedProvider);
       ref.invalidate(dashboardStatsProvider);
@@ -592,44 +594,6 @@ class _MobileTodayTodos extends StatelessWidget {
             padding: EdgeInsets.all(16),
             child: Text('暂无待办数据', style: TextStyle(color: Colors.grey)),
           ),
-        ],
-      ),
-    );
-  }
-}
-
-class _MobileTodoLine extends StatelessWidget {
-  final String title;
-  final String time;
-  final bool done;
-
-  const _MobileTodoLine({
-    required this.title,
-    required this.time,
-  }) : done = false;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
-      child: Row(
-        children: [
-          Icon(
-            done ? Icons.check_box_rounded : Icons.check_box_outline_blank,
-            color: done
-                ? Theme.of(context).colorScheme.primary
-                : Theme.of(context).colorScheme.outline,
-            size: 20,
-          ),
-          const SizedBox(width: AppSpacing.sm),
-          Expanded(
-            child: Text(
-              title,
-              style: Theme.of(context).textTheme.bodyMedium,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
-          Text(time, style: Theme.of(context).textTheme.bodySmall),
         ],
       ),
     );

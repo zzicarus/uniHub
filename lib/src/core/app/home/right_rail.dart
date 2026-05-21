@@ -11,11 +11,20 @@ class _HomeRightRail extends StatelessWidget {
     return Container(
       width: AppDesktopSizes.rightRailWideWidth,
       decoration: BoxDecoration(
-        color: colorScheme.surfaceContainerLowest,
-        border: Border(left: BorderSide(color: colorScheme.outlineVariant)),
+        color: colorScheme.surfaceContainerLowest.withValues(alpha: 0.74),
+        border: Border(
+          left: BorderSide(
+            color: colorScheme.outlineVariant.withValues(alpha: 0.42),
+          ),
+        ),
       ),
       child: SingleChildScrollView(
-        padding: const EdgeInsets.all(AppSpacing.xl),
+        padding: const EdgeInsets.fromLTRB(
+          AppSpacing.lg,
+          AppSpacing.xl,
+          AppSpacing.xl,
+          AppSpacing.xl,
+        ),
         child: Column(
           children: [
             const _PinnedPanel(),
@@ -56,7 +65,7 @@ class _PinnedPanel extends ConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const _PanelHeader(title: '置顶', icon: Icons.push_pin_outlined),
+          const _PanelHeader(title: '重要内容', icon: Icons.push_pin_outlined),
           const SizedBox(height: AppSpacing.md),
           pinnedAsync.when(
             loading: () => const Padding(
@@ -116,15 +125,16 @@ class _TodoPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const _Panel(
+    final colorScheme = Theme.of(context).colorScheme;
+    return _Panel(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _PanelHeader(title: '今日待办', icon: Icons.check_box_outlined),
-          SizedBox(height: AppSpacing.md),
+          const _PanelHeader(title: '今日待办', icon: Icons.check_box_outlined),
+          const SizedBox(height: AppSpacing.md),
           Padding(
-            padding: EdgeInsets.all(16),
-            child: Text('暂无待办数据', style: TextStyle(color: Colors.grey)),
+            padding: const EdgeInsets.all(AppSpacing.md),
+            child: Text('暂无待办数据', style: TextStyle(color: colorScheme.outline)),
           ),
         ],
       ),
