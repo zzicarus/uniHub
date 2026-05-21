@@ -47,7 +47,7 @@
 |---|------|----------|------|------|
 | ~~P2-9~~ | ~~`home_page.dart` 文件过大~~ | ✅ **已完成** | ~~`lib/src/core/app/home_page.dart` 超过 2200 行~~ | 已拆分为 `home_page.dart` (723行) + 5 个 part 文件：`home/header.dart`、`home/focus_section.dart`、`home/recent_section.dart`、`home/right_rail.dart`、`home/mobile_home.dart`，使用 Dart `part`/`part of` 机制 |
 | P2-10 | Thoughts desktop/mobile layout 参数过多 | `ThoughtsDesktopLayout`、`ThoughtsMobileLayout` 构造器参数列表很长 | 新增字段要同步多处，容易漏传 | 提取 `ThoughtsLayoutState` / `ThoughtsLayoutActions`，减少构造器噪声 |
-| P2-11 | 独立编辑页与抽屉编辑器存在重复状态逻辑 | `thoughts_editor_page.dart`、`thought_editor_drawer.dart` | 保存、图片、标签、归档逻辑容易分叉 | 提取 `ThoughtEditorForm` 或 editor controller，页面/抽屉只负责容器 |
+| ~~P2-11~~ | ~~独立编辑页与抽屉编辑器存在重复状态逻辑~~ | ✅ **已完成** | ~~`thoughts_editor_page.dart`、`thought_editor_drawer.dart`~~ | ~~保存、图片、标签、归档逻辑容易分叉~~ | 已提取 `ThoughtEditorController` (294行) 和 `ThoughtEditorImageStrip` (74行)，页面/抽屉纯化为布局容器 (281 + 276 行)。UI 代码从 1044 行降至 557 行，重复业务逻辑完全消除 |
 | P2-12 | Provider 层仍偏简单 FutureProvider | `thoughts_providers.dart` | 增删改后依赖手动 invalidate，复杂度上升后易漏刷新 | Thoughts 列表可迁移到 `AsyncNotifier`，集中封装 create/update/archive/restore |
 | P2-13 | 测试覆盖不足 | `test/AGENTS.md` 记录 core/app、router、theme、thoughts/ui、shared 为 0% | UI 和路由变更缺少回归保护 | 优先补 provider、router、home smoke、Thoughts composer/editor widget 测试 |
 | P2-14 | 全量冒烟测试过脆 | `test/widget_test.dart` 直接加载整 App 并依赖具体文案 | UI 文案微调会导致测试失败，定位不精准 | 保留 1 个 App smoke，其余拆成组件级 widget 测试 |

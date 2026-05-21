@@ -53,16 +53,7 @@ thoughts/
 - `thoughts_editor_page.dart` — 编辑器页主体
 - `thoughts_editor_drawer.dart` — 编辑器附加面板
 
-⚠️ **已知重复**：`thoughts_editor_page.dart` 和 `thought_editor_drawer.dart` 之间仍存在重复：
-- `_formatTimestamp`（3 处副本）
-- Tag 解析逻辑（6+ 处副本）
-- `_Panel` 组件（3 处副本）
-- 颜色十六进制解析（2 处副本）
-- 颜色圆点 Widget（2 处副本）
-
-> **2025-05-21**：图片插入逻辑已提取至 `shared/ui/rich_text_editor/RichTextEditor`
-
-如果有意重构，建议提取到 `thoughts/ui/widgets/` 目录。
+> **2026-05-21**：编辑状态逻辑已重构。`ThoughtEditorController` 和 `ThoughtEditorImageStrip` 提取至 `thoughts/ui/widgets/`，`thoughts_editor_page.dart` 和 `thought_editor_drawer.dart` 现为纯布局容器。
 
 ## 已知代码问题
 

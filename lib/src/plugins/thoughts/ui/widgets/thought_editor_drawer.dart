@@ -1,15 +1,12 @@
 import 'dart:async';
-import 'dart:io';
 
 import 'package:flutter/material.dart';
-import 'package:flutter_quill/flutter_quill.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:uni_hub/src/core/theme/app_tokens.dart';
-import '../../data/thought_content_codec.dart';
-import '../../data/thought_image_service.dart';
-import '../../providers/thoughts_providers.dart';
 import 'thought_color_picker.dart';
+import 'thought_editor_controller.dart';
+import 'thought_editor_image_strip.dart';
 import 'package:uni_hub/src/shared/ui/rich_text_editor/rich_text_editor.dart';
 
 class ThoughtEditorDrawer extends ConsumerStatefulWidget {
@@ -24,186 +21,37 @@ class ThoughtEditorDrawer extends ConsumerStatefulWidget {
 }
 
 class _ThoughtEditorDrawerState extends ConsumerState<ThoughtEditorDrawer> {
-  late QuillController _contentCtrl;
-  final _tagCtrl = TextEditingController();
-  final _tagChips = <String>[];
-  String? _color;
-  bool _pinned = false;
-  bool _archived = false;
-  bool _loaded = false;
-  bool _dirty = false;
-  List<String> _images = [];
-  Timer? _debounce;
+  late final ThoughtEditorController _controller;
 
   @override
   void initState() {
     super.initState();
-    _contentCtrl = _createController(Document());
-    unawaited(_load());
+    _controller = ThoughtEditorController(
+      ref: ref,
+      thoughtId: widget.thoughtId,
+      autoSaveInterval: const Duration(seconds: 2),
+      onStateChanged: () {
+        if (mounted) setState(() {});
+      },
+    )..initialize();
+    unawaited(_controller.load());
   }
 
   @override
   void dispose() {
-    _debounce?.cancel();
-    _contentCtrl.dispose();
-    _tagCtrl.dispose();
+    _controller.dispose();
     super.dispose();
   }
 
-  QuillController _createController(Document document) {
-    return RichTextEditor.createController(
-      document: document,
-      onImagePaste: (bytes) async {
-        final path = await ref
-            .read(thoughtImageServiceProvider)
-            .saveImageBytes(bytes);
-        final source = ThoughtContentCodec.imageSourceForPath(path);
-        if (mounted) {
-          final parsedPath = ThoughtContentCodec.imagePathFromSource(source);
-          if (parsedPath != null && !_images.contains(parsedPath)) {
-            setState(() => _images = {..._images, parsedPath}.toList());
-          }
-        }
-        _markDirty();
-        return source;
-      },
-    );
-  }
-
-  void _markDirty() {
-    if (!_dirty) setState(() => _dirty = true);
-    _debounce?.cancel();
-    _debounce = Timer(const Duration(seconds: 2), _save);
-  }
-
-  Future<void> _load() async {
-    if (_loaded) return;
-    final t = await ref.read(thoughtProvider(widget.thoughtId).future);
-    if (t == null || _loaded || !mounted) return;
-    final controller = _createController(
-      ThoughtContentCodec.documentFromStored(t.content),
-    );
-    _contentCtrl.dispose();
-    setState(() {
-      _contentCtrl = controller;
-      _tagChips.addAll(
-        (t.tags ?? '')
-            .split(',')
-            .map((s) => s.trim())
-            .where((s) => s.isNotEmpty),
-      );
-      _color = t.color;
-      _pinned = t.isPinned;
-      _archived = t.archivedAt != null;
-      _images = ThoughtContentCodec.mergeImagePaths(t.imagePaths, t.content);
-      _loaded = true;
-      _dirty = false;
-    });
-  }
-
-  Future<void> _save() async {
-    if (!_dirty || !_loaded) return;
-    await ref
-        .read(thoughtsRepositoryProvider)
-        .updateThought(
-          widget.thoughtId,
-          content: ThoughtContentCodec.encodeDocument(_contentCtrl.document),
-          tags: _tagChips.isNotEmpty ? _tagChips.join(',') : null,
-          color: _color,
-          isPinned: _pinned,
-          imagePaths: ThoughtImageService.encodeImagePaths(_images),
-        );
-    ref.invalidate(thoughtProvider(widget.thoughtId));
-    ref.invalidate(thoughtsListProvider);
-    if (mounted) setState(() => _dirty = false);
-  }
-
   Future<void> _close() async {
-    await _save();
-    widget.onClose?.call();
-  }
-
-  Future<void> _addImage() async {
-    final svc = ref.read(thoughtImageServiceProvider);
-    final path = await svc.pickImage();
-    if (path != null) {
-      setState(() => _images.add(path));
-      _insertImage(path);
-      _markDirty();
-    }
-  }
-
-  void _insertImage(String path) {
-    final index = _contentCtrl.selection.baseOffset;
-    final length = _contentCtrl.selection.extentOffset - index;
-    final safeIndex = index < 0 ? _contentCtrl.document.length - 1 : index;
-    _contentCtrl
-      ..skipRequestKeyboard = true
-      ..replaceText(
-        safeIndex,
-        length < 0 ? 0 : length,
-        BlockEmbed.image(ThoughtContentCodec.imageSourceForPath(path)),
-        null,
-      )
-      ..moveCursorToPosition(safeIndex + 1);
-  }
-
-  Future<void> _removeImage(int i) async {
-    final path = _images[i];
-    await ref.read(thoughtImageServiceProvider).deleteImage(path);
-    final updatedDocument = ThoughtContentCodec.removeImage(
-      _contentCtrl.document,
-      path,
-    );
-    _contentCtrl.dispose();
-    _contentCtrl = _createController(updatedDocument);
-    setState(() => _images.removeAt(i));
-    _markDirty();
-  }
-
-  Future<void> _archive() async {
-    await ref.read(thoughtsRepositoryProvider).archiveThought(widget.thoughtId);
-    ref.invalidate(thoughtsListProvider);
-    widget.onClose?.call();
-  }
-
-  Future<void> _restore() async {
-    await ref.read(thoughtsRepositoryProvider).restoreThought(widget.thoughtId);
-    ref.invalidate(thoughtsListProvider);
-    if (mounted) setState(() => _archived = false);
-  }
-
-  Future<void> _delete() async {
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (c) => AlertDialog(
-        title: const Text('删除想法'),
-        content: const Text('确定要删除吗？此操作不可撤销。'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(c).pop(false),
-            child: const Text('取消'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.of(c).pop(true),
-            style: FilledButton.styleFrom(
-              backgroundColor: Theme.of(context).colorScheme.error,
-            ),
-            child: const Text('删除'),
-          ),
-        ],
-      ),
-    );
-    if (ok != true) return;
-    await ref.read(thoughtImageServiceProvider).deleteImages(_images);
-    await ref.read(thoughtsRepositoryProvider).deleteThought(widget.thoughtId);
-    ref.invalidate(thoughtsListProvider);
+    await _controller.save();
     widget.onClose?.call();
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final ctrl = _controller;
 
     return SafeArea(
       child: Column(
@@ -218,7 +66,7 @@ class _ThoughtEditorDrawerState extends ConsumerState<ThoughtEditorDrawer> {
               children: [
                 Expanded(
                   child: Text(
-                    _archived ? '编辑想法（已归档）' : '编辑想法',
+                    ctrl.isArchived ? '编辑想法（已归档）' : '编辑想法',
                     style: theme.textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.w700,
                     ),
@@ -238,7 +86,7 @@ class _ThoughtEditorDrawerState extends ConsumerState<ThoughtEditorDrawer> {
           Expanded(child: _buildContent(theme)),
 
           // Images
-          if (_images.isNotEmpty || _loaded) ...[
+          if (ctrl.images.isNotEmpty || ctrl.isLoaded) ...[
             const Divider(height: 1),
             _buildImages(theme),
           ],
@@ -252,41 +100,26 @@ class _ThoughtEditorDrawerState extends ConsumerState<ThoughtEditorDrawer> {
   }
 
   Widget _buildContent(ThemeData theme) {
-    if (!_loaded) return const Center(child: CircularProgressIndicator());
+    final ctrl = _controller;
+    if (!ctrl.isLoaded) return const Center(child: CircularProgressIndicator());
 
     return DecoratedBox(
       decoration: BoxDecoration(color: Theme.of(context).colorScheme.surface),
       child: RichTextEditor(
-        controller: _contentCtrl,
+        controller: ctrl.contentController,
         placeholder: '记录你的想法...',
         minHeight: 360,
         expands: true,
-        onChanged: (_) => _markDirty(),
-        onPickImage: () async {
-          final path = await ref
-              .read(thoughtImageServiceProvider)
-              .pickImage();
-          return path != null
-              ? ThoughtContentCodec.imageSourceForPath(path)
-              : null;
-        },
-        onPasteImage: (bytes) async {
-          final path = await ref
-              .read(thoughtImageServiceProvider)
-              .saveImageBytes(bytes);
-          return ThoughtContentCodec.imageSourceForPath(path);
-        },
-        onImageAdded: (source) {
-          final path = ThoughtContentCodec.imagePathFromSource(source);
-          if (path != null && !_images.contains(path)) {
-            setState(() => _images.add(path));
-          }
-        },
+        onChanged: (_) => ctrl.markDirty(),
+        onPickImage: ctrl.onPickImage,
+        onPasteImage: ctrl.onPasteImage,
+        onImageAdded: ctrl.onEditorImageAdded,
       ),
     );
   }
 
   Widget _buildImages(ThemeData theme) {
+    final ctrl = _controller;
     return Container(
       constraints: const BoxConstraints(maxHeight: 100),
       padding: const EdgeInsets.symmetric(
@@ -300,10 +133,10 @@ class _ThoughtEditorDrawerState extends ConsumerState<ThoughtEditorDrawer> {
             children: [
               Text('图片', style: theme.textTheme.labelMedium),
               const SizedBox(width: AppSpacing.sm),
-              Text('${_images.length} 张', style: theme.textTheme.bodySmall),
+              Text('${ctrl.images.length} 张', style: theme.textTheme.bodySmall),
               const Spacer(),
               TextButton.icon(
-                onPressed: _addImage,
+                onPressed: () => ctrl.addImage(),
                 icon: const Icon(Icons.add_photo_alternate_outlined, size: 16),
                 label: const Text('添加'),
                 style: TextButton.styleFrom(
@@ -315,57 +148,10 @@ class _ThoughtEditorDrawerState extends ConsumerState<ThoughtEditorDrawer> {
           ),
           const SizedBox(height: AppSpacing.xs),
           Expanded(
-            child: ListView.separated(
-              scrollDirection: Axis.horizontal,
-              itemCount: _images.length,
-              separatorBuilder: (_, _) => const SizedBox(width: AppSpacing.sm),
-              itemBuilder: (_, i) {
-                final f = File(_images[i]);
-                return Stack(
-                  children: [
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(AppRadius.sm),
-                      child: f.existsSync()
-                          ? Image.file(
-                              f,
-                              width: 80,
-                              height: 80,
-                              fit: BoxFit.cover,
-                            )
-                          : Container(
-                              width: 80,
-                              height: 80,
-                              color: Theme.of(
-                                context,
-                              ).colorScheme.surfaceContainerHigh,
-                              child: const Icon(Icons.broken_image_outlined),
-                            ),
-                    ),
-                    Positioned(
-                      top: 2,
-                      right: 2,
-                      child: GestureDetector(
-                        onTap: () => _removeImage(i),
-                        child: Container(
-                          decoration: BoxDecoration(
-                            color: Theme.of(context)
-                                .colorScheme
-                                .onSurfaceVariant
-                                .withValues(alpha: 0.54),
-                            shape: BoxShape.circle,
-                          ),
-                          padding: const EdgeInsets.all(AppSpacing.xxs),
-                          child: Icon(
-                            Icons.close,
-                            size: 14,
-                            color: Theme.of(context).colorScheme.onPrimary,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                );
-              },
+            child: ThoughtEditorImageStrip(
+              images: ctrl.images,
+              onRemove: ctrl.removeImage,
+              thumbnailSize: 80,
             ),
           ),
         ],
@@ -374,7 +160,8 @@ class _ThoughtEditorDrawerState extends ConsumerState<ThoughtEditorDrawer> {
   }
 
   Widget _buildFooter(ThemeData theme) {
-    if (!_loaded) return const SizedBox.shrink();
+    final ctrl = _controller;
+    if (!ctrl.isLoaded) return const SizedBox.shrink();
     final colorScheme = theme.colorScheme;
 
     return Container(
@@ -388,22 +175,19 @@ class _ThoughtEditorDrawerState extends ConsumerState<ThoughtEditorDrawer> {
             // Tags
             Text('标签', style: theme.textTheme.labelMedium),
             const SizedBox(height: AppSpacing.xs),
-            if (_tagChips.isNotEmpty)
+            if (ctrl.tagChips.isNotEmpty)
               Padding(
                 padding: const EdgeInsets.only(bottom: AppSpacing.xs),
                 child: Wrap(
                   spacing: AppSpacing.xxs,
                   runSpacing: AppSpacing.xxs,
-                  children: _tagChips
+                  children: ctrl.tagChips
                       .map(
                         (t) => Chip(
                           label: Text(t),
                           labelStyle: const TextStyle(fontSize: 12),
                           deleteIcon: const Icon(Icons.close, size: 14),
-                          onDeleted: () {
-                            setState(() => _tagChips.remove(t));
-                            _markDirty();
-                          },
+                          onDeleted: () => ctrl.removeChip(t),
                           materialTapTargetSize:
                               MaterialTapTargetSize.shrinkWrap,
                           visualDensity: VisualDensity.compact,
@@ -413,17 +197,8 @@ class _ThoughtEditorDrawerState extends ConsumerState<ThoughtEditorDrawer> {
                 ),
               ),
             TextField(
-              controller: _tagCtrl,
-              onChanged: (v) {
-                final d = v.contains(',') ? ',' : ' ';
-                if (!v.endsWith(d)) return;
-                final tag = v.substring(0, v.length - 1).trim();
-                if (tag.isNotEmpty && !_tagChips.contains(tag)) {
-                  setState(() => _tagChips.add(tag));
-                  _markDirty();
-                }
-                _tagCtrl.clear();
-              },
+              controller: ctrl.tagTextController,
+              onChanged: ctrl.handleTagInput,
               decoration: const InputDecoration(
                 hintText: '添加标签（空格/逗号分隔）',
                 isDense: true,
@@ -442,61 +217,53 @@ class _ThoughtEditorDrawerState extends ConsumerState<ThoughtEditorDrawer> {
                 ThoughtColorDot(
                   color: null,
                   label: '默认',
-                  isSelected: _color == null,
-                  onTap: () {
-                    setState(() => _color = null);
-                    _markDirty();
-                  },
+                  isSelected: ctrl.selectedColor == null,
+                  onTap: () => ctrl.setColor(null),
                 ),
                 ...thoughtAvailableColors(colorScheme).map(
                   (c) => ThoughtColorDot(
                     color: c,
-                    isSelected: _color == thoughtColorToHex(c),
-                    onTap: () {
-                      setState(() => _color = thoughtColorToHex(c));
-                      _markDirty();
-                    },
+                    isSelected: ctrl.selectedColor == thoughtColorToHex(c),
+                    onTap: () => ctrl.setColor(thoughtColorToHex(c)),
                   ),
                 ),
               ],
             ),
 
             // Pin
-            if (!_archived)
+            if (!ctrl.isArchived)
               SwitchListTile(
                 contentPadding: EdgeInsets.zero,
                 title: const Text('置顶'),
-                value: _pinned,
-                onChanged: (v) {
-                  setState(() => _pinned = v);
-                  _markDirty();
-                },
+                value: ctrl.isPinned,
+                onChanged: ctrl.togglePin,
                 activeThumbColor: colorScheme.tertiary,
                 dense: true,
               ),
             const SizedBox(height: AppSpacing.sm),
 
             // Actions
-            if (_archived)
+            if (ctrl.isArchived)
               OutlinedButton.icon(
-                onPressed: _restore,
+                onPressed: () => ctrl.restore(),
                 icon: const Icon(Icons.unarchive_outlined, size: 18),
                 label: const Text('恢复'),
               )
             else ...[
               OutlinedButton.icon(
-                onPressed: _archive,
+                onPressed: () => ctrl.archive(),
                 icon: const Icon(Icons.archive_outlined, size: 18),
                 label: const Text('归档'),
               ),
               const SizedBox(height: AppSpacing.xs),
               OutlinedButton.icon(
-                onPressed: _delete,
-                icon: Icon(Icons.delete_outline, size: 18),
-                label: Text('删除'),
+                onPressed: () => ctrl.delete(context),
+                icon: const Icon(Icons.delete_outline, size: 18),
+                label: const Text('删除'),
                 style: OutlinedButton.styleFrom(
                   foregroundColor: Theme.of(context).colorScheme.error,
-                  side: BorderSide(color: Theme.of(context).colorScheme.error),
+                  side: BorderSide(
+                      color: Theme.of(context).colorScheme.error),
                 ),
               ),
             ],
