@@ -53,13 +53,14 @@ thoughts/
 - `thoughts_editor_page.dart` — 编辑器页主体
 - `thoughts_editor_drawer.dart` — 编辑器附加面板
 
-⚠️ **已知重复**：`thoughts_editor_page.dart`（576 行）和 `thoughts_editor_drawer.dart`（545 行）之间约 **50% 代码重复**，包括：
+⚠️ **已知重复**：`thoughts_editor_page.dart` 和 `thought_editor_drawer.dart` 之间仍存在重复：
 - `_formatTimestamp`（3 处副本）
 - Tag 解析逻辑（6+ 处副本）
 - `_Panel` 组件（3 处副本）
 - 颜色十六进制解析（2 处副本）
 - 颜色圆点 Widget（2 处副本）
-- 图片插入逻辑（3 处副本）
+
+> **2025-05-21**：图片插入逻辑已提取至 `shared/ui/rich_text_editor/RichTextEditor`
 
 如果有意重构，建议提取到 `thoughts/ui/widgets/` 目录。
 
@@ -67,7 +68,7 @@ thoughts/
 
 | 问题 | 位置 |
 |------|------|
-| `experimental_member_use` lint 抑制 | `thoughts_rich_editor.dart` |
+| `experimental_member_use` lint 抑制 | `shared/ui/rich_text_editor/rich_text_editor.dart`（原 `thoughts_rich_editor.dart` 已下沉） |
 | 遗留 Markdown fallback 路径 | `thought_content_codec.dart` |
 | 主页使用硬编码 Mock 数据（5 个 TODO） | `home_page.dart` |
 

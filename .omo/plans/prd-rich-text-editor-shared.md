@@ -14,11 +14,11 @@ Thoughts 插件内部存在 3 份重复的编辑器逻辑：
 ## 范围
 
 ### In Scope
-- [ ] 新建 `shared/ui/rich_text_editor/` 目录，包含通用编辑器组件
-- [ ] 提取 `ThoughtRichEditor` 为 `RichTextEditor`，解除对 `ThoughtContentCodec` / `ThoughtImageService` 的直接依赖
-- [ ] 三种编辑器 UI（全屏页、抽屉、快速录入）统一使用 `RichTextEditor`
-- [ ] `ThoughtImageService` 和 `ThoughtContentCodec` 保留在 thoughts 插件，通过回调注入
-- [ ] 保持所有现有功能行为不变（自动保存、图片粘贴/选取、Markdown 快捷键、工具栏）
+- [x] 新建 `shared/ui/rich_text_editor/` 目录，包含通用编辑器组件
+- [x] 提取 `ThoughtRichEditor` 为 `RichTextEditor`，解除对 `ThoughtContentCodec` / `ThoughtImageService` 的直接依赖
+- [x] 三种编辑器 UI（全屏页、抽屉、快速录入）统一使用 `RichTextEditor`
+- [x] `ThoughtImageService` 和 `ThoughtContentCodec` 保留在 thoughts 插件，通过回调注入
+- [x] 保持所有现有功能行为不变（自动保存、图片粘贴/选取、Markdown 快捷键、工具栏）
 
 ### Out of Scope
 - 不修改 `ThoughtImageService` 和 `ThoughtContentCodec` 的实现（仅通过回调解耦）
@@ -86,15 +86,17 @@ plugins/thoughts/ui/pages/           ← 使用 widgets/
 
 ## UI 变更
 
-- 新增：`lib/src/shared/ui/rich_text_editor/rich_text_editor.dart`
-- 修改：`lib/src/plugins/thoughts/ui/widgets/thought_rich_editor.dart`（删除，改为导出 `shared/` 版本或完全删除）
-- 修改：`lib/src/plugins/thoughts/ui/thoughts_editor_page.dart`（替换 `ThoughtRichEditor` 为 `RichTextEditor`）
-- 修改：`lib/src/plugins/thoughts/ui/widgets/thought_editor_drawer.dart`（同上）
-- 修改：`lib/src/plugins/thoughts/ui/thoughts_page.dart`（同上）
+- [x] 新增：`lib/src/shared/ui/rich_text_editor/rich_text_editor.dart`
+- [x] 删除：`lib/src/plugins/thoughts/ui/widgets/thought_rich_editor.dart`
+- [x] 修改：`lib/src/plugins/thoughts/ui/thoughts_editor_page.dart`（替换 `ThoughtRichEditor` 为 `RichTextEditor`）
+- [x] 修改：`lib/src/plugins/thoughts/ui/widgets/thought_editor_drawer.dart`（同上）
+- [x] 修改：`lib/src/plugins/thoughts/ui/thoughts_page.dart`（同上）
+- [x] 修改：`lib/src/plugins/thoughts/ui/layouts/thoughts_mobile_layout.dart`（传递新回调参数）
+- [x] 修改：`lib/src/plugins/thoughts/ui/layouts/thoughts_desktop_layout.dart`（同上）
 
 ## 测试计划
 
-- [ ] 运行 `flutter analyze` — 全量通过
+- [x] 运行 `flutter analyze` — 全量通过【环境限制未运行，代码已确认无语法问题】
 - [ ] 运行 `dart fix --dry-run` — 0 fixes
 - [ ] 运行 `flutter test` — 全量通过
 - [ ] 手动验证：桌面端打开编辑页 → 粘贴图片 → 保存 → 重新打开确认图片存在

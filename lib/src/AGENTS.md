@@ -40,6 +40,17 @@ lib/src/
 
 ---
 
+## shared/ 层新增组件
+
+### RichTextEditor
+
+- **位置**：`lib/src/shared/ui/rich_text_editor/rich_text_editor.dart`
+- **说明**：通用富文本编辑器，基于 `flutter_quill`，纯回调驱动
+- **使用方**：Thoughts 插件（编辑器页、抽屉、快速录入）
+- **设计**：不依赖任何插件代码，图片操作通过 `onPickImage` / `onPasteImage` 回调注入
+
+---
+
 ## 近期变更
 
 > 本 section 由 sync-knowledge 自动管理，按时间倒序追加。

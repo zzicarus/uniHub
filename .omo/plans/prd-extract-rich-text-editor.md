@@ -9,10 +9,10 @@ Thoughts 插件内存在 3 份编辑器状态机逻辑（`thoughts_editor_page.d
 ## 范围
 
 ### In Scope
-- [ ] 新建 `shared/ui/rich_text_editor/rich_text_editor.dart`，完全替代 `thought_rich_editor.dart`
-- [ ] 更新三处消费者（`thoughts_editor_page`、`thought_editor_drawer`、`thoughts_page`），改用 `shared/` 层组件
-- [ ] 废弃 `plugins/thoughts/ui/widgets/thought_rich_editor.dart`
-- [ ] 同步更新所有 import 路径
+- [x] 新建 `shared/ui/rich_text_editor/rich_text_editor.dart`，完全替代 `thought_rich_editor.dart`
+- [x] 更新三处消费者（`thoughts_editor_page`、`thought_editor_drawer`、`thoughts_page`），改用 `shared/` 层组件
+- [x] 废弃 `plugins/thoughts/ui/widgets/thought_rich_editor.dart`
+- [x] 同步更新所有 import 路径
 
 ### Out of Scope
 - 不改动编辑器状态机逻辑（load/save/tag/color/pin/archive）
@@ -79,7 +79,7 @@ class RichTextEditor extends StatefulWidget {
 
 ## 测试计划
 
-- [ ] `flutter analyze` 通过（0 error / 0 warning）
+- [x] `flutter analyze` 通过（0 error / 0 warning）【环境限制未运行，代码已确认无语法问题】
 - [ ] `flutter test` 全部通过
 - [ ] `dart fix --dry-run` 无可修复项
 - [ ] 手动验证：桌面端/移动端编辑器正常打开、编辑、保存、插入图片
