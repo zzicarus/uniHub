@@ -36,6 +36,7 @@ ProviderScope(
 - 手写 stub 插件实现 `UniHubPlugin` 接口
 - 使用 `PluginRegistry()` + `register()` 构造测试专用 registry
 - 数据库直接使用真实 Drift 查询（in-memory）
+- 手写 fake 实现抽象接口（如 `FakeImagePicker`、`FakeImageStorage`），覆盖平台依赖和文件系统操作
 
 ## 测试文件结构
 
@@ -53,16 +54,16 @@ test/
             └── data/
 ```
 
-## 当前覆盖情况（约 41 测试用例，6 个测试文件）
+## 当前覆盖情况（约 54 测试用例，7 个测试文件）
 
-> 最后核对日期：2026-05-21
+> 最后核对日期：2026-05-22
 
 | 目录 | 覆盖 | 说明 |
 |------|------|------|
 | `core/database/` | 33% | (1/3 文件有测试) |
 | `core/plugin/` | 50% | (1/2) |
 | `core/search/` | 50% | (1/2) |
-| `thoughts/data/` | 60% | (3/5) |
+| `thoughts/data/` | 80% | (4/5 主数据文件有测试；新增 `ThoughtImageService` 测试 13 条，使用 `FakeImageStorage`/`FakeImagePicker` 避免文件系统依赖) |
 | `core/app/` | **0%** | **完全未覆盖** |
 | `core/router/` | **0%** | **完全未覆盖** |
 | `core/theme/` | **0%** | **完全未覆盖** |
@@ -120,3 +121,8 @@ git status
 ### 2026-05-22: 增加数据库测试覆盖
 - `database_test.dart` 新增 3 个测试用例（schemaVersion 计算、跨插件取最大值、缺失表断言）
 - 更新 5 个已有测试文件适配 `AppDatabase` 构造函数签名变更
+
+### 2026-05-22: P2-15 图片服务测试 + fake 模式
+- 新增 `thought_image_service_test.dart`（13 条用例）
+- 新建 `FakeImageStorage`（内存 Map 实现）和 `FakeImagePicker`（预设返回值），作为文件系统/平台依赖的标准 fake 模式，与零 mockito 策略一致
+- `thoughts/data/` 覆盖从 60% 提升至 80%

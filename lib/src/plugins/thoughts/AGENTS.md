@@ -6,7 +6,7 @@ UniHub 当前唯一的业务插件，管理"想法"笔记。
 
 ```
 thoughts/
-├── data/            ← 数据层：DAO → Repository → ContentCodec
+├── data/            ← 数据层：DAO → Repository → ContentCodec → ImageService
 ├── providers/       ← Riverpod Provider 层
 └── ui/              ← 表示层：页面 + Widget
 ```
@@ -22,6 +22,13 @@ thoughts/
 - 封装用例级 API，业务语义的方法名（`pinThought` 而非 `updatePinnedColumn`）
 - 接收 `ThoughtsDao` 构造器注入
 - 返回值使用业务模型
+
+### ThoughtImageService
+- 管理想法的图片生命周期：选择、保存、删除
+- 不直接依赖平台 API，通过构造器注入 `ImagePickerService` + `ImageStorage`
+- 平台实现（`PlatformImagePicker`、`FileImageStorage`）依赖 `image_picker`、`path_provider`
+- 测试中可通过 `FakeImagePicker` + `FakeImageStorage` 完全解耦文件系统
+- `encodeImagePaths` / `decodeImagePaths` 为静态方法，纯 JSON 编解码
 
 ### ThoughtContentCodec
 - 处理富文本存储格式转换
@@ -57,14 +64,24 @@ thoughts/
 
 ## 已知代码问题
 
-| 问题 | 位置 |
-|------|------|
-| `experimental_member_use` lint 抑制 | `shared/ui/rich_text_editor/rich_text_editor.dart`（原 `thoughts_rich_editor.dart` 已下沉） |
-| 遗留 Markdown fallback 路径 | `thought_content_codec.dart` |
-| 主页使用硬编码 Mock 数据（5 个 TODO） | `home_page.dart` |
+| 问题 | 位置 | 状态 |
+|------|------|------|
+| `experimental_member_use` lint 抑制 | `shared/ui/rich_text_editor/rich_text_editor.dart` | 未修复 |
+| 遗留 Markdown fallback 路径 | `thought_content_codec.dart` | 未修复 |
+| 主页使用硬编码 Mock 数据（5 个 TODO） | `home_page.dart` | 未修复 |
+| ~~图片服务硬依赖平台 API~~ | ~~`thought_image_service.dart`~~ | ✅ **P2-15 已完成** |
 
 ---
 
 ## 近期变更
 
 > 本 section 由 sync-knowledge 自动管理，按时间倒序追加。
+
+### 2026-05-22: P2-15 图片服务抽象为依赖注入模式
+- `ThoughtImageService` 改为构造器注入 `ImagePickerService` + `ImageStorage`，不再直接依赖 `ImagePicker`/`File`/`path_provider`
+- 新建接口层：`ImagePickerService`（选择）、`ImageStorage`（存储+exists 检查）
+- 新建平台实现：`PlatformImagePicker`（`image_picker` 包装）、`FileImageStorage`（`path_provider`+`dart:io`）
+- 提供测试 fake：`FakeImagePicker`（预设返回）、`FakeImageStorage`（内存 Map 存储）
+- `ThoughtContentCodec.mergeImagePaths` 增加可选 `existsChecker` 参数，解耦 `File.existsSync`
+- Provider 层拆分为 `imagePickerServiceProvider` + `imageStorageProvider`
+- 新增 13 个单元测试覆盖全路径

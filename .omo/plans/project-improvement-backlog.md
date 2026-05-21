@@ -51,7 +51,8 @@
 | P2-12 | Provider 层仍偏简单 FutureProvider | `thoughts_providers.dart` | 增删改后依赖手动 invalidate，复杂度上升后易漏刷新 | Thoughts 列表可迁移到 `AsyncNotifier`，集中封装 create/update/archive/restore |
 | P2-13 | 测试覆盖不足 | `test/AGENTS.md` 记录 core/app、router、theme、thoughts/ui、shared 为 0% | UI 和路由变更缺少回归保护 | 优先补 provider、router、home smoke、Thoughts composer/editor widget 测试 |
 | P2-14 | 全量冒烟测试过脆 | `test/widget_test.dart` 直接加载整 App 并依赖具体文案 | UI 文案微调会导致测试失败，定位不精准 | 保留 1 个 App smoke，其余拆成组件级 widget 测试 |
-| P2-15 | 图片服务对文件系统和平台依赖较硬 | `ThoughtImageService` 直接使用 `ImagePicker`、`File`、`path_provider` | 测试和桌面/移动差异处理不方便 | 抽象 picker/storage 接口，测试中注入 fake storage |
+| ~~P2-15~~ | ~~图片服务对文件系统和平台依赖较硬~~ | ✅ **已完成** | ~~测试和桌面/移动差异处理不方便~~ | 已抽象 `ImagePickerService` / `ImageStorage` 接口，`ThoughtImageService` 改为构造器注入，提供 `FakeImagePicker` / `FakeImageStorage` 用于测试 |
+
 | P2-16 | 内容 codec 中存在吞异常降级路径 | `ThoughtContentCodec` 多处 `catch (_)` | 兼容旧数据合理，但坏数据难以追踪 | 保留降级，但增加可观测日志或 debug-only warning |
 
 ## P3：文档、规范与 vibe coding 流程
