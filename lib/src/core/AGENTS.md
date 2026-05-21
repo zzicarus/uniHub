@@ -27,12 +27,16 @@
 
 ```
 main()
-└─ ProviderScope (顶层)
-   ├─ AppDatabase (LazyDatabase → 延迟创建)
-   ├─ PluginRegistry (注册所有插件)
-   │  └─ 各插件.init(ref)
-   └─ UniHubApp (MaterialApp.router)
-      └─ routerProvider (GoRouter + ShellRoute)
+├─ WidgetsFlutterBinding.ensureInitialized()
+├─ PluginRegistry (注册所有插件)
+│  └─ registry.initAll() (各插件.onInit 按注册顺序执行)
+└─ runApp(
+     ProviderScope (顶层)
+        ├─ AppDatabase (LazyDatabase → 延迟创建, 接收 PluginRegistry)
+        ├─ PluginRegistry (overrideWithValue, 已初始化完毕)
+        └─ UniHubApp (MaterialApp.router)
+           └─ routerProvider (GoRouter + ShellRoute)
+   )
 ```
 
 ## 已知死代码
@@ -61,3 +65,9 @@ main()
 ## 近期变更
 
 > 本 section 由 sync-knowledge 自动管理，按时间倒序追加。
+
+### 2026-05-22: P1-1/P1-2 插件数据库与生命周期修复
+- **AppDatabase** 现在接收 `PluginRegistry`，`schemaVersion` 动态计算（取所有插件版本的最大值），构造函数增加 debug 模式断言验证插件表与集中注册表一致性
+- **main.dart** 启动序列改为 `async main()`，在 `runApp()` 之前调用 `registry.initAll()`，使用 `overrideWithValue` 传递已初始化的 registry
+- **database_provider** 创建 `AppDatabase` 时传入 PluginRegistry
+- 插件 `AGENTS.md` 和 `database.md` 规范文档同步更新

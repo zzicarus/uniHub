@@ -114,3 +114,7 @@ git status
 ## 近期变更
 
 > 本 section 由 sync-knowledge 自动管理，按时间倒序追加。
+
+### 2026-05-22: 增加数据库测试覆盖
+- `database_test.dart` 新增 3 个测试用例（schemaVersion 计算、跨插件取最大值、缺失表断言）
+- 更新 5 个已有测试文件适配 `AppDatabase` 构造函数签名变更

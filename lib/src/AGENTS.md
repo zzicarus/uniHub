@@ -54,3 +54,8 @@ lib/src/
 ## 近期变更
 
 > 本 section 由 sync-knowledge 自动管理，按时间倒序追加。
+
+### 2026-05-22: P1-1/P1-2 插件数据库与生命周期修复
+- `AppDatabase` 接收 `PluginRegistry`，`schemaVersion` 动态计算
+- `main.dart` 启动序列改为 `async main()`+`registry.initAll()`
+- 数据库导入风格修复：同层统一使用相对路径
