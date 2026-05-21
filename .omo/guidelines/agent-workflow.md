@@ -24,6 +24,42 @@
 
 ---
 
+## Skill 调用协议
+
+Skill 调用必须可审计。无论是否委派子任务，只要进入实现或需要领域技能，都要按同一套规则声明。
+
+### 判定顺序
+
+| 步骤 | 动作 | 说明 |
+|------|------|------|
+| 1 | 判断 category | 使用下方 OMO 分类速览 |
+| 2 | 判断 taskOverrides | 根据具体任务叠加 `unit_test`、`widget_test`、`layout_fix` 等 |
+| 3 | 合并 skills | `categoryDefaults[category] + taskOverrides[...]`，去重后保持顺序 |
+| 4 | 检查强制规则 | 视觉任务必须包含 `frontend-ui-ux` |
+| 5 | 声明结果 | 在执行前说明 category、overrides、load_skills、前置文档 |
+
+### 声明模板
+
+```text
+任务分类: visual-engineering
+任务覆写: widget_test
+加载技能: flutter-dev, flutter-build-responsive-layout, frontend-ui-ux, flutter-add-widget-test
+前置文档: AGENTS.md, .omo/guidelines/widget.md, test/AGENTS.md
+委派策略: 不委派，由主流程实现并验证
+```
+
+### 合并规则
+
+| 场景 | 规则 |
+|------|------|
+| category 和 override 都有 skills | 先放 category，再追加 override，重复项只保留第一次 |
+| taskOverrides 为空 | 只使用 categoryDefaults |
+| writing / quick 无默认 skills | 不强行加载，除非任务涉及具体技术栈 |
+| 第三方库用法不确定 | 添加 `library_lookup`，优先使用官方文档或 Context7 |
+| skill 不存在或不可用 | 明确说明缺失，继续用最佳 fallback，不假装已加载 |
+
+---
+
 ## OMO 分类速览
 
 | 分类 | 使用场景 | 典型工作量 |
@@ -280,6 +316,32 @@ task(
 | 重构公共组件到 shared/ | `ultrabrain` | `categoryDefaults.ultrabrain` | `lib/src/shared/AGENTS.md` |
 | Post-implementation 审查 | 不委派（用 `/review-work`） | `review-work` | 所有相关代码 |
 | 知识同步 (sync-knowledge) | 不独立委派 (`/review-work` 内嵌) | 无需加载 | `.omo/knowledge-map.json`、`.omo/guidelines/workflow.md` |
+
+---
+
+## 上下文包规则
+
+上下文包是每类任务开始前必须读取的最小文件集合。目标是让 agent 少猜测、多基于当前仓库事实工作。
+
+| 任务类型 | 必读上下文 | 视情况读取 |
+|----------|------------|------------|
+| 通用任务 | `AGENTS.md`、涉模块 `AGENTS.md`、`.omo/skill-defaults.json` | `.omo/guidelines/workflow.md` |
+| 架构 / 插件 | `lib/src/AGENTS.md`、`lib/src/core/AGENTS.md`、`lib/src/core/plugin/AGENTS.md` | `.omo/plans/*.md`、相关注册代码 |
+| Drift / 数据层 | `.omo/guidelines/database.md`、`test/AGENTS.md`、目标 DAO/Repository | `app_database.dart`、表定义、已有迁移 |
+| UI / Widget | `.omo/guidelines/widget.md`、目标页面/组件、`app_tokens.dart` | shared widgets、对应 widget test |
+| 路由 / Shell | `lib/src/AGENTS.md`、`lib/src/core/AGENTS.md`、router/shell 源码 | 插件 routes、app router 测试 |
+| 测试 | `test/AGENTS.md`、被测文件、同目录已有测试 | 相关 Provider / fake / stub |
+| 文档 / PRD | `.omo/guidelines/planning.md`、相关 AGENTS/guidelines、真实源码路径 | `.omo/plans/` 示例 |
+| 验证 / CI | `.omo/guidelines/workflow.md`、`test/AGENTS.md` | 最近失败日志、已知 learnings |
+
+### 上下文加载原则
+
+| 原则 | 说明 |
+|------|------|
+| 先读入口再读局部 | 根 `AGENTS.md` 决定流程，模块 `AGENTS.md` 决定边界 |
+| 读源码确认事实 | 文档可能滞后，关键行为必须以当前源码为准 |
+| 不扩大上下文噪音 | 只读与任务相关的文件，不把无关模块纳入修改范围 |
+| 发现文档冲突 | 明确列出冲突来源，以源码和最新核对日期为准，并建议后续同步 |
 
 ---
 

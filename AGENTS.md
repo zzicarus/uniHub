@@ -19,6 +19,54 @@ UniHub 是一个 **桌面端优先** 的 Flutter 笔记应用，基于插件架�
 
 严格按照 `Plan → Code → Verify → Review → Ship` 闭环执行。完整细节见 `.omo/guidelines/workflow.md`，委派规则见 `.omo/guidelines/agent-workflow.md`。
 
+### Vibe Coding 入口协议
+
+`AGENTS.md` 是本仓库唯一总入口。agent 接到任务后，先在这里完成模式判断和上下文路由，再进入具体 guideline。
+
+| 步骤 | 要求 | 跳转 |
+|------|------|------|
+| 1. 判断任务模式 | 区分只读探索、方案规划、实现、验证、审查、提交；用户未授权实现时不得修改代码 | `.omo/guidelines/workflow.md` |
+| 2. 声明执行边界 | 开始前说明任务模式、预计涉及文件、禁止改动范围、验证方式 | `.omo/guidelines/workflow.md` |
+| 3. 加载上下文 | 读取涉模块 `AGENTS.md`、相关 guideline、必要源码；不要凭经验猜测行为 | `.omo/guidelines/agent-workflow.md` |
+| 4. 确定 skills | 读取 `.omo/skill-defaults.json`，声明 `category / taskOverrides / load_skills` | `.omo/guidelines/agent-workflow.md` |
+| 5. 执行闭环 | 按 Plan → Code → Verify → Review → Ship 推进；复杂变更先写 PRD | `.omo/guidelines/planning.md` |
+
+### 任务输入建议
+
+用户给任务时，建议尽量包含以下字段；缺失时 agent 应做保守假设，设计不确定时先确认。
+
+| 字段 | 说明 | 示例 |
+|------|------|------|
+| 目标 | 本次要完成什么 | 实现 Thoughts 列表空态 |
+| 模式 | 只读分析 / 方案 / 实现 / 验证 / 审查 / 提交 | 先只读分析，不改代码 |
+| 范围 | 允许改哪些模块或文件 | 只改 `lib/src/plugins/thoughts/ui/**` |
+| 禁止 | 明确不能碰的内容 | 不改数据库 schema，不加 mock 数据 |
+| 验收 | 用什么命令或现象判断完成 | `flutter analyze` 与目标 widget test 通过 |
+| 提交 | 是否允许 commit / push | 完成后先汇报，不提交 |
+
+### Agent 执行前声明
+
+进入实现或委派前，agent 需要简短声明：
+
+```text
+任务模式: Build
+任务分类: visual-engineering
+加载技能: flutter-dev, flutter-build-responsive-layout, frontend-ui-ux
+前置文档: AGENTS.md, .omo/guidelines/widget.md, test/AGENTS.md
+执行边界: 只改目标 Widget 与对应测试，不改数据库和路由
+验证方式: focused widget test + flutter analyze
+```
+
+### 边界控制
+
+| 场景 | 必须动作 |
+|------|----------|
+| 发现需要扩大改动范围 | 停止实现，说明新增影响面，等待用户确认 |
+| 设计方案有多个合理选项 | 给出 2-3 个方案和取舍，让用户决定 |
+| 用户明确说“先分析/先计划/不要改” | 只读，不 patch，不运行会产生写入的命令 |
+| 验证连续失败 3 次 | 停止试错，总结失败证据，询问下一步 |
+| 需要破坏性命令或外部权限 | 先说明原因并请求确认 |
+
 1. **理解任务 + 加载技能** — 读 `.omo/skill-defaults.json` 确定 `load_skills`；视觉任务必须加载 `frontend-ui-ux`；读涉模块 AGENTS.md
 2. **规划** — 2+ 步创建 `todowrite`；复杂变更在 `.omo/plans/` 写 PRD
 3. **实现** — 依赖方向 `plugins/ → shared/ → core/`；跨层用 `package:` 路径；禁止类型抑制；同步写测试
