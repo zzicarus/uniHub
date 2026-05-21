@@ -250,8 +250,7 @@ class _FocusGrid extends ConsumerWidget {
     final metrics = [
       _MetricCard(
         title: '今日待办',
-        // TODO: 待插件实现后替换为真实数据
-        value: '6',
+        value: '—',
         note: '待完成',
         color: colorScheme.primary,
         background: colorScheme.primaryContainer,
@@ -267,8 +266,7 @@ class _FocusGrid extends ConsumerWidget {
       ),
       _MetricCard(
         title: '本周笔记',
-        // TODO: 待插件实现后替换为真实数据
-        value: '8',
+        value: '—',
         note: '较上周 +2',
         color: colorScheme.secondary,
         background: colorScheme.secondaryContainer,
@@ -276,7 +274,7 @@ class _FocusGrid extends ConsumerWidget {
       ),
       _MetricCard(
         title: '纪念日',
-        value: '2',
+        value: '—',
         note: '即将到来',
         color: colorScheme.error,
         background: colorScheme.errorContainer,
@@ -700,13 +698,11 @@ class _TodoPanel extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _PanelHeader(title: '今日待办', icon: Icons.check_box_outlined),
-          // TODO: 待插件实现后替换为真实数据
           SizedBox(height: AppSpacing.md),
-          _TodoLine(title: '完成产品原型评审', time: '09:30'),
-          _TodoLine(title: '回复合作伙伴邮件', time: '11:00'),
-          _TodoLine(title: '晨跑 5 公里', time: '07:00', done: true),
-          _TodoLine(title: '阅读《设计心理学》', time: '20:00'),
-          _TodoLine(title: '整理周报数据', time: '21:30'),
+          Padding(
+            padding: EdgeInsets.all(16),
+            child: Text('暂无待办数据', style: TextStyle(color: Colors.grey)),
+          ),
         ],
       ),
     );
@@ -792,8 +788,7 @@ class _DataPanel extends ConsumerWidget {
           _DataLine(
             icon: Icons.check_circle_outline,
             label: '待办',
-            // TODO: 待插件实现后替换为真实数据
-            value: '24',
+            value: '—',
             change: '—',
             color: colorScheme.secondary,
             background: colorScheme.secondaryContainer,
@@ -801,8 +796,7 @@ class _DataPanel extends ConsumerWidget {
           _DataLine(
             icon: Icons.article_outlined,
             label: '笔记',
-            // TODO: 待插件实现后替换为真实数据
-            value: '56',
+            value: '—',
             change: '—',
             color: colorScheme.primary,
             background: colorScheme.primaryContainer,
@@ -1856,7 +1850,7 @@ class _MobileFocusCards extends StatelessWidget {
       children: [
         _MobileFocusCard(
           title: '今日待办',
-          value: '5',
+          value: '—',
           note: '项待完成',
           icon: Icons.check_box_outlined,
           color: colorScheme.secondary,
@@ -1864,7 +1858,7 @@ class _MobileFocusCards extends StatelessWidget {
         ),
         _MobileFocusCard(
           title: '最近笔记',
-          value: '3',
+          value: '—',
           note: '条新笔记',
           icon: Icons.description_outlined,
           color: colorScheme.primary,
@@ -2050,11 +2044,10 @@ class _MobileTodayTodos extends StatelessWidget {
             onTap: () => context.go('/todos'),
           ),
           const SizedBox(height: AppSpacing.sm),
-          const _MobileTodoLine(title: '完成产品原型评审', time: '09:30', done: true),
-          const _MobileTodoLine(title: '回复合作伙伴邮件', time: '11:00'),
-          const _MobileTodoLine(title: '晨跑 5 公里', time: '07:00', done: true),
-          const _MobileTodoLine(title: '阅读《设计心理学》', time: '20:00'),
-          const _MobileTodoLine(title: '整理周报数据', time: '21:30'),
+          const Padding(
+            padding: EdgeInsets.all(16),
+            child: Text('暂无待办数据', style: TextStyle(color: Colors.grey)),
+          ),
         ],
       ),
     );
