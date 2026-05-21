@@ -27,10 +27,9 @@ void main() {
     test('extracts image paths from legacy markdown', () {
       const markdown = '正文\n\n![](file:///D:/uniHub/example.png)';
 
-      expect(
-        ThoughtContentCodec.imagePathsFromStored(markdown),
-        contains('D:\\uniHub\\example.png'),
-      );
+      final paths = ThoughtContentCodec.imagePathsFromStored(markdown);
+      expect(paths, hasLength(1));
+      expect(paths.first, endsWith('D:/uniHub/example.png'));
     });
   });
 }

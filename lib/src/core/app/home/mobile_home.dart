@@ -606,8 +606,7 @@ class _MobileTodoLine extends StatelessWidget {
   const _MobileTodoLine({
     required this.title,
     required this.time,
-    this.done = false,
-  });
+  }) : done = false;
 
   @override
   Widget build(BuildContext context) {

@@ -545,7 +545,7 @@ class _TodoLine extends StatelessWidget {
   final String time;
   final bool done;
 
-  const _TodoLine({required this.title, required this.time, this.done = false});
+  const _TodoLine({required this.title, required this.time}) : done = false;
 
   @override
   Widget build(BuildContext context) {
