@@ -4,15 +4,17 @@ import 'src/core/app/app.dart';
 import 'src/core/plugin/plugin_registry.dart';
 import 'src/plugins/thoughts/thoughts_plugin.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  final registry = PluginRegistry();
+  registry.register(ThoughtsPlugin());
+  await registry.initAll();
+
   runApp(
     ProviderScope(
       overrides: [
-        pluginRegistryProvider.overrideWith((ref) {
-          final registry = PluginRegistry();
-          registry.register(ThoughtsPlugin());
-          return registry;
-        }),
+        pluginRegistryProvider.overrideWithValue(registry),
       ],
       child: const UniHubApp(),
     ),

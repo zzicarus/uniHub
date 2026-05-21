@@ -16,17 +16,15 @@ void main() {
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
 
-    final testDb = AppDatabase(NativeDatabase.memory());
+    final registry = PluginRegistry();
+    registry.register(ThoughtsPlugin());
+    final testDb = AppDatabase(NativeDatabase.memory(), registry);
     addTearDown(() => testDb.close());
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
           appDatabaseProvider.overrideWithValue(testDb),
-          pluginRegistryProvider.overrideWith((ref) {
-            final registry = PluginRegistry();
-            registry.register(ThoughtsPlugin());
-            return registry;
-          }),
+          pluginRegistryProvider.overrideWithValue(registry),
         ],
         child: const UniHubApp(),
       ),
@@ -41,17 +39,15 @@ void main() {
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
 
-    final testDb = AppDatabase(NativeDatabase.memory());
+    final registry = PluginRegistry();
+    registry.register(ThoughtsPlugin());
+    final testDb = AppDatabase(NativeDatabase.memory(), registry);
     addTearDown(() => testDb.close());
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
           appDatabaseProvider.overrideWithValue(testDb),
-          pluginRegistryProvider.overrideWith((ref) {
-            final registry = PluginRegistry();
-            registry.register(ThoughtsPlugin());
-            return registry;
-          }),
+          pluginRegistryProvider.overrideWithValue(registry),
         ],
         child: const UniHubApp(),
       ),
@@ -70,17 +66,15 @@ void main() {
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
 
-    final testDb = AppDatabase(NativeDatabase.memory());
+    final registry = PluginRegistry();
+    registry.register(ThoughtsPlugin());
+    final testDb = AppDatabase(NativeDatabase.memory(), registry);
     addTearDown(() => testDb.close());
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
           appDatabaseProvider.overrideWithValue(testDb),
-          pluginRegistryProvider.overrideWith((ref) {
-            final registry = PluginRegistry();
-            registry.register(ThoughtsPlugin());
-            return registry;
-          }),
+          pluginRegistryProvider.overrideWithValue(registry),
         ],
         child: const UniHubApp(),
       ),

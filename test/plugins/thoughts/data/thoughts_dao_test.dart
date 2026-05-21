@@ -4,14 +4,30 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:drift/drift.dart' hide isNull, isNotNull;
 import 'package:drift/native.dart';
 import 'package:uni_hub/src/core/database/app_database.dart';
+import 'package:uni_hub/src/core/database/tables/thoughts_table.dart';
+import 'package:uni_hub/src/core/plugin/plugin_interface.dart';
+import 'package:uni_hub/src/core/plugin/plugin_registry.dart';
 import 'package:uni_hub/src/plugins/thoughts/data/thoughts_dao.dart';
+
+class _ThoughtsTablePlugin extends UniHubPlugin {
+  @override
+  String get id => 'thoughts-test';
+  @override
+  String get name => 'Thoughts Test';
+  @override
+  List<Type> get tables => [ThoughtsTable];
+  @override
+  int get schemaVersion => 2;
+}
 
 void main() {
   late AppDatabase db;
   late ThoughtsDao dao;
 
   setUp(() {
-    db = AppDatabase(NativeDatabase.memory());
+    final registry = PluginRegistry();
+    registry.register(_ThoughtsTablePlugin());
+    db = AppDatabase(NativeDatabase.memory(), registry);
     dao = ThoughtsDao(db);
   });
 

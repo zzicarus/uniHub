@@ -52,12 +52,12 @@ class ThoughtsTable extends Table {
 数据库类在 `lib/src/core/database/app_database.dart`，是唯一的 drift Database 入口：
 
 ```dart
-@DriftDatabase(tables: [ThoughtsTable, TodoTable])  // 编译期声明所有表
+@DriftDatabase(tables: [ThoughtsTable, TodoTable])  // 编译期集中注册所有表
 class AppDatabase extends GeneratedDatabase {
-  AppDatabase(super.e);
+  AppDatabase(super.e, PluginRegistry registry);
 
   @override
-  int get schemaVersion => 1;
+  int get schemaVersion => /* 自动取所有插件 schemaVersion 的最大值 */;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -71,18 +71,24 @@ class AppDatabase extends GeneratedDatabase {
 }
 ```
 
+**重要**：`@DriftDatabase(tables: [...])` 是**编译期集中注册点**。由于 drift 代码生成器在编译时读取注解，表列表无法从运行时的 `PluginRegistry` 动态注入。因此：
+
+1. 所有表必须在本文件的 `tables: [...]` 中显式列出
+2. 插件的 `UniHubPlugin.tables` 返回对应 `Type` 用于运行时验证
+3. `AppDatabase` 构造时通过 `assert` 检查两者一致性（debug 模式）
+4. `schemaVersion` 自动从 `PluginRegistry` 计算（取所有插件版本的最大值）
+
 ---
 
 ## 迁移策略
 
 | 策略 | 说明 |
 |------|------|
-| schemaVersion 计算 | `AppDatabase.schemaVersion` = 所有插件 `schemaVersion` 之和 |
+| schemaVersion 计算 | `AppDatabase.schemaVersion` = 所有插件 `schemaVersion` 的最大值（运行时自动计算） |
 | onCreate | 合并执行所有插件的建表逻辑 |
 | onUpgrade | 按 `from` → `to` 版本差执行，必须幂等 |
 | 插件迁移 | 每个插件通过 `UniHubPlugin` 的 `tables` / `schemaVersion` 贡献自己的表和版本 |
-
-**Foundation 阶段约束**：当前 `AppDatabase` 为空骨架（`allTables => []`，`schemaVersion => 1`），不声明业务表。Thoughts Data Layer 任务接入真实表。
+| 集中注册 | `@DriftDatabase(tables: [...])` 是编译期唯一注册点，新增表必须同步更新 |
 
 ---
 
