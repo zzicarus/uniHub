@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_quill/flutter_quill.dart';
@@ -7,9 +8,8 @@ import 'package:uni_hub/src/core/theme/app_breakpoints.dart';
 import 'package:uni_hub/src/core/theme/app_tokens.dart';
 import 'package:uni_hub/src/core/database/app_database.dart';
 import '../../data/thought_content_codec.dart';
-import '../../data/thought_image_service.dart';
 import '../widgets/thought_card.dart';
-import '../widgets/thought_rich_editor.dart';
+import 'package:uni_hub/src/shared/ui/rich_text_editor/rich_text_editor.dart';
 import 'thoughts_shared_widgets.dart';
 
 class ThoughtsDesktopLayout extends ConsumerWidget {
@@ -28,8 +28,9 @@ class ThoughtsDesktopLayout extends ConsumerWidget {
   final VoidCallback onTogglePin;
   final VoidCallback onPickImage;
   final void Function(int) onRemoveImage;
-  final ThoughtImageService imageService;
   final VoidCallback onContentChanged;
+  final Future<String?> Function()? onEditorPickImage;
+  final Future<String?> Function(Uint8List)? onEditorPasteImage;
   final ValueChanged<String> onImageAdded;
   final void Function(int) onThoughtTap;
   final Future<void> Function(int) onArchive;
@@ -54,8 +55,9 @@ class ThoughtsDesktopLayout extends ConsumerWidget {
     required this.onTogglePin,
     required this.onPickImage,
     required this.onRemoveImage,
-    required this.imageService,
     required this.onContentChanged,
+    required this.onEditorPickImage,
+    required this.onEditorPasteImage,
     required this.onImageAdded,
     required this.onThoughtTap,
     required this.onArchive,
@@ -109,7 +111,8 @@ class ThoughtsDesktopLayout extends ConsumerWidget {
                         onTogglePin: onTogglePin,
                         onPickImage: onPickImage,
                         onRemoveImage: onRemoveImage,
-                        imageService: imageService,
+                        onEditorPickImage: onEditorPickImage,
+                        onEditorPasteImage: onEditorPasteImage,
                         onContentChanged: onContentChanged,
                         onImageAdded: onImageAdded,
                       ),
@@ -241,8 +244,9 @@ class _ThoughtComposer extends StatelessWidget {
   final VoidCallback onTogglePin;
   final VoidCallback onPickImage;
   final void Function(int) onRemoveImage;
-  final ThoughtImageService imageService;
   final VoidCallback onContentChanged;
+  final Future<String?> Function()? onEditorPickImage;
+  final Future<String?> Function(Uint8List)? onEditorPasteImage;
   final ValueChanged<String> onImageAdded;
 
   const _ThoughtComposer({
@@ -259,8 +263,9 @@ class _ThoughtComposer extends StatelessWidget {
     required this.onTogglePin,
     required this.onPickImage,
     required this.onRemoveImage,
-    required this.imageService,
     required this.onContentChanged,
+    required this.onEditorPickImage,
+    required this.onEditorPasteImage,
     required this.onImageAdded,
   });
 
@@ -298,12 +303,13 @@ class _ThoughtComposer extends StatelessWidget {
                   ),
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(AppRadius.md),
-                    child: ThoughtRichEditor(
+                    child: RichTextEditor(
                       controller: contentController,
-                      imageService: imageService,
                       minHeight: 112,
                       placeholder: '今天有什么新想法？',
                       onChanged: (_) => onContentChanged(),
+                      onPickImage: onEditorPickImage,
+                      onPasteImage: onEditorPasteImage,
                       onImageAdded: onImageAdded,
                     ),
                   ),

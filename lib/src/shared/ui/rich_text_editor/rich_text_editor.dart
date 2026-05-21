@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -6,23 +7,39 @@ import 'package:flutter_quill/flutter_quill.dart';
 import 'package:flutter_quill_extensions/flutter_quill_extensions.dart';
 
 import 'package:uni_hub/src/core/theme/app_tokens.dart';
-import '../../data/thought_content_codec.dart';
-import '../../data/thought_image_service.dart';
 
-class ThoughtRichEditor extends StatefulWidget {
+/// A reusable rich text editor backed by flutter_quill.
+///
+/// All image operations are delegated to the caller via callbacks,
+/// making this widget independent of any plugin-specific image service.
+class RichTextEditor extends StatefulWidget {
   final QuillController controller;
-  final ThoughtImageService imageService;
+
+  /// Invoked when the user taps the toolbar image button.
+  /// Should pick an image, persist it, and return the embed source string
+  /// (e.g. a file path or URI) to be inserted into the document.
+  final Future<String?> Function()? onPickImage;
+
+  /// Invoked when the user pastes an image from the clipboard.
+  /// Should persist the bytes and return the embed source string.
+  final Future<String?> Function(Uint8List bytes)? onPasteImage;
+
   final ValueChanged<Document>? onChanged;
+
+  /// Called after an image embed has been successfully inserted.
+  /// Receives the embed source string.
   final ValueChanged<String>? onImageAdded;
+
   final double minHeight;
   final String placeholder;
   final bool showToolbar;
   final EdgeInsetsGeometry padding;
   final bool expands;
 
-  const ThoughtRichEditor({
+  const RichTextEditor({
     required this.controller,
-    required this.imageService,
+    this.onPickImage,
+    this.onPasteImage,
     this.onChanged,
     this.onImageAdded,
     this.minHeight = 180,
@@ -33,6 +50,7 @@ class ThoughtRichEditor extends StatefulWidget {
     super.key,
   });
 
+  /// Creates a [QuillController] with optional clipboard image-paste support.
   static QuillController createController({
     required Document document,
     required Future<String?> Function(Uint8List imageBytes) onImagePaste,
@@ -48,10 +66,10 @@ class ThoughtRichEditor extends StatefulWidget {
   }
 
   @override
-  State<ThoughtRichEditor> createState() => _ThoughtRichEditorState();
+  State<RichTextEditor> createState() => _RichTextEditorState();
 }
 
-class _ThoughtRichEditorState extends State<ThoughtRichEditor> {
+class _RichTextEditorState extends State<RichTextEditor> {
   StreamSubscription<DocChange>? _changes;
   int? _lastMarkdownShortcutHash;
 
@@ -62,7 +80,7 @@ class _ThoughtRichEditorState extends State<ThoughtRichEditor> {
   }
 
   @override
-  void didUpdateWidget(covariant ThoughtRichEditor oldWidget) {
+  void didUpdateWidget(covariant RichTextEditor oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.controller != widget.controller) {
       _changes?.cancel();
@@ -84,12 +102,12 @@ class _ThoughtRichEditorState extends State<ThoughtRichEditor> {
   }
 
   Future<void> _insertPickedImage() async {
-    final path = await widget.imageService.pickImage();
-    if (path == null) return;
-    _insertImage(path);
+    final source = await widget.onPickImage?.call();
+    if (source == null) return;
+    _insertImage(source);
   }
 
-  void _insertImage(String path) {
+  void _insertImage(String source) {
     final index = widget.controller.selection.baseOffset;
     final length = widget.controller.selection.extentOffset - index;
     final safeIndex = index < 0 ? widget.controller.document.length - 1 : index;
@@ -98,11 +116,11 @@ class _ThoughtRichEditorState extends State<ThoughtRichEditor> {
       ..replaceText(
         safeIndex,
         length < 0 ? 0 : length,
-        BlockEmbed.image(ThoughtContentCodec.imageSourceForPath(path)),
+        BlockEmbed.image(source),
         null,
       )
       ..moveCursorToPosition(safeIndex + 1);
-    widget.onImageAdded?.call(path);
+    widget.onImageAdded?.call(source);
     widget.onChanged?.call(widget.controller.document);
   }
 
@@ -180,11 +198,12 @@ class _ThoughtRichEditorState extends State<ThoughtRichEditor> {
         showLink: false,
         showIndent: false,
         embedButtons: [
-          (context, embedContext) => IconButton(
-            icon: const Icon(Icons.image_outlined, size: 20),
-            tooltip: '插入图片',
-            onPressed: _insertPickedImage,
-          ),
+          if (widget.onPickImage != null)
+            (context, embedContext) => IconButton(
+                  icon: const Icon(Icons.image_outlined, size: 20),
+                  tooltip: '插入图片',
+                  onPressed: _insertPickedImage,
+                ),
         ],
       ),
     );

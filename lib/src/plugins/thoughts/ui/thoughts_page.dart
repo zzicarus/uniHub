@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_quill/flutter_quill.dart';
@@ -11,7 +13,7 @@ import '../providers/thoughts_providers.dart';
 import 'layouts/thoughts_desktop_layout.dart';
 import 'layouts/thoughts_mobile_layout.dart';
 import 'widgets/thought_editor_drawer.dart';
-import 'widgets/thought_rich_editor.dart';
+import 'package:uni_hub/src/shared/ui/rich_text_editor/rich_text_editor.dart';
 
 class ThoughtsPage extends ConsumerStatefulWidget {
   const ThoughtsPage({super.key});
@@ -45,16 +47,20 @@ class _ThoughtsPageState extends ConsumerState<ThoughtsPage> {
   }
 
   QuillController _createContentController() {
-    return ThoughtRichEditor.createController(
+    return RichTextEditor.createController(
       document: Document(),
       onImagePaste: (bytes) async {
         final path = await ref
             .read(thoughtImageServiceProvider)
             .saveImageBytes(bytes);
+        final source = ThoughtContentCodec.imageSourceForPath(path);
         if (mounted) {
-          setState(() => _pendingImages.add(path));
+          final parsedPath = ThoughtContentCodec.imagePathFromSource(source);
+          if (parsedPath != null && !_pendingImages.contains(parsedPath)) {
+            setState(() => _pendingImages.add(parsedPath));
+          }
         }
-        return ThoughtContentCodec.imageSourceForPath(path);
+        return source;
       },
     );
   }
@@ -223,10 +229,20 @@ class _ThoughtsPageState extends ConsumerState<ThoughtsPage> {
       onTogglePin: () => setState(() => _isPinned = !_isPinned),
       onPickImage: _pickImageForComposer,
       onRemoveImage: _removePendingImage,
-      imageService: ref.read(thoughtImageServiceProvider),
       onContentChanged: _syncContentState,
-      onImageAdded: (path) {
-        if (!_pendingImages.contains(path)) {
+      onEditorPickImage: () async {
+        final path = await ref.read(thoughtImageServiceProvider).pickImage();
+        return path != null
+            ? ThoughtContentCodec.imageSourceForPath(path)
+            : null;
+      },
+      onEditorPasteImage: (bytes) async {
+        final path = await ref.read(thoughtImageServiceProvider).saveImageBytes(bytes);
+        return ThoughtContentCodec.imageSourceForPath(path);
+      },
+      onImageAdded: (source) {
+        final path = ThoughtContentCodec.imagePathFromSource(source);
+        if (path != null && !_pendingImages.contains(path)) {
           setState(() => _pendingImages.add(path));
         }
       },
@@ -283,7 +299,8 @@ class _ThoughtsPageState extends ConsumerState<ThoughtsPage> {
               onTogglePin: layoutParams.onTogglePin,
               onPickImage: layoutParams.onPickImage,
               onRemoveImage: layoutParams.onRemoveImage,
-              imageService: layoutParams.imageService,
+              onEditorPickImage: layoutParams.onEditorPickImage,
+              onEditorPasteImage: layoutParams.onEditorPasteImage,
               onContentChanged: layoutParams.onContentChanged,
               onImageAdded: layoutParams.onImageAdded,
               onThoughtTap: layoutParams.onThoughtTap,
@@ -309,7 +326,8 @@ class _ThoughtsPageState extends ConsumerState<ThoughtsPage> {
               onTogglePin: layoutParams.onTogglePin,
               onPickImage: layoutParams.onPickImage,
               onRemoveImage: layoutParams.onRemoveImage,
-              imageService: layoutParams.imageService,
+              onEditorPickImage: layoutParams.onEditorPickImage,
+              onEditorPasteImage: layoutParams.onEditorPasteImage,
               onContentChanged: layoutParams.onContentChanged,
               onImageAdded: layoutParams.onImageAdded,
               onThoughtTap: layoutParams.onThoughtTap,
@@ -343,8 +361,9 @@ class _LayoutParams {
   final VoidCallback onTogglePin;
   final VoidCallback onPickImage;
   final void Function(int) onRemoveImage;
-  final ThoughtImageService imageService;
   final VoidCallback onContentChanged;
+  final Future<String?> Function()? onEditorPickImage;
+  final Future<String?> Function(Uint8List)? onEditorPasteImage;
   final ValueChanged<String> onImageAdded;
   final void Function(int) onThoughtTap;
   final Future<void> Function(int) onArchive;
@@ -369,8 +388,9 @@ class _LayoutParams {
     required this.onTogglePin,
     required this.onPickImage,
     required this.onRemoveImage,
-    required this.imageService,
     required this.onContentChanged,
+    required this.onEditorPickImage,
+    required this.onEditorPasteImage,
     required this.onImageAdded,
     required this.onThoughtTap,
     required this.onArchive,

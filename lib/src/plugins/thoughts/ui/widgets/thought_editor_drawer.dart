@@ -10,7 +10,7 @@ import '../../data/thought_content_codec.dart';
 import '../../data/thought_image_service.dart';
 import '../../providers/thoughts_providers.dart';
 import 'thought_color_picker.dart';
-import 'thought_rich_editor.dart';
+import 'package:uni_hub/src/shared/ui/rich_text_editor/rich_text_editor.dart';
 
 class ThoughtEditorDrawer extends ConsumerStatefulWidget {
   final int thoughtId;
@@ -51,17 +51,21 @@ class _ThoughtEditorDrawerState extends ConsumerState<ThoughtEditorDrawer> {
   }
 
   QuillController _createController(Document document) {
-    return ThoughtRichEditor.createController(
+    return RichTextEditor.createController(
       document: document,
       onImagePaste: (bytes) async {
         final path = await ref
             .read(thoughtImageServiceProvider)
             .saveImageBytes(bytes);
+        final source = ThoughtContentCodec.imageSourceForPath(path);
         if (mounted) {
-          setState(() => _images = {..._images, path}.toList());
+          final parsedPath = ThoughtContentCodec.imagePathFromSource(source);
+          if (parsedPath != null && !_images.contains(parsedPath)) {
+            setState(() => _images = {..._images, parsedPath}.toList());
+          }
         }
         _markDirty();
-        return ThoughtContentCodec.imageSourceForPath(path);
+        return source;
       },
     );
   }
@@ -252,15 +256,29 @@ class _ThoughtEditorDrawerState extends ConsumerState<ThoughtEditorDrawer> {
 
     return DecoratedBox(
       decoration: BoxDecoration(color: Theme.of(context).colorScheme.surface),
-      child: ThoughtRichEditor(
+      child: RichTextEditor(
         controller: _contentCtrl,
-        imageService: ref.read(thoughtImageServiceProvider),
         placeholder: '记录你的想法...',
         minHeight: 360,
         expands: true,
         onChanged: (_) => _markDirty(),
-        onImageAdded: (path) {
-          if (!_images.contains(path)) {
+        onPickImage: () async {
+          final path = await ref
+              .read(thoughtImageServiceProvider)
+              .pickImage();
+          return path != null
+              ? ThoughtContentCodec.imageSourceForPath(path)
+              : null;
+        },
+        onPasteImage: (bytes) async {
+          final path = await ref
+              .read(thoughtImageServiceProvider)
+              .saveImageBytes(bytes);
+          return ThoughtContentCodec.imageSourceForPath(path);
+        },
+        onImageAdded: (source) {
+          final path = ThoughtContentCodec.imagePathFromSource(source);
+          if (path != null && !_images.contains(path)) {
             setState(() => _images.add(path));
           }
         },
