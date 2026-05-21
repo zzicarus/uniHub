@@ -45,7 +45,7 @@
 
 | # | 问题 | 证据位置 | 风险 | 建议 |
 |---|------|----------|------|------|
-| P2-9 | `home_page.dart` 文件过大 | `lib/src/core/app/home_page.dart` 超过 2200 行 | agent 小改动容易误碰、审查困难、冲突概率高 | 按区域拆成 `home/header.dart`、`focus_section.dart`、`recent_section.dart`、`right_rail.dart`、`mobile_home.dart` |
+| ~~P2-9~~ | ~~`home_page.dart` 文件过大~~ | ✅ **已完成** | ~~`lib/src/core/app/home_page.dart` 超过 2200 行~~ | 已拆分为 `home_page.dart` (723行) + 5 个 part 文件：`home/header.dart`、`home/focus_section.dart`、`home/recent_section.dart`、`home/right_rail.dart`、`home/mobile_home.dart`，使用 Dart `part`/`part of` 机制 |
 | P2-10 | Thoughts desktop/mobile layout 参数过多 | `ThoughtsDesktopLayout`、`ThoughtsMobileLayout` 构造器参数列表很长 | 新增字段要同步多处，容易漏传 | 提取 `ThoughtsLayoutState` / `ThoughtsLayoutActions`，减少构造器噪声 |
 | P2-11 | 独立编辑页与抽屉编辑器存在重复状态逻辑 | `thoughts_editor_page.dart`、`thought_editor_drawer.dart` | 保存、图片、标签、归档逻辑容易分叉 | 提取 `ThoughtEditorForm` 或 editor controller，页面/抽屉只负责容器 |
 | P2-12 | Provider 层仍偏简单 FutureProvider | `thoughts_providers.dart` | 增删改后依赖手动 invalidate，复杂度上升后易漏刷新 | Thoughts 列表可迁移到 `AsyncNotifier`，集中封装 create/update/archive/restore |
