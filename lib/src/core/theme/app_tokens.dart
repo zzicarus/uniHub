@@ -99,22 +99,22 @@ abstract final class AppMobileSizes {
 abstract final class AppShadows {
   /// Strong floating shadow used for elevated elements.
   static const card = BoxShadow(
-    color: Color(0x0A0F172A),
-    blurRadius: 24,
-    offset: Offset(0, 12),
+    color: Color(0x080F172A),
+    blurRadius: 32,
+    offset: Offset(0, 16),
   );
 
   /// Soft card shadow for desktop cards — subtle, close to the surface.
   static const cardSoft = BoxShadow(
-    color: Color(0x08000000),
-    blurRadius: 8,
-    offset: Offset(0, 2),
+    color: Color(0x05000000),
+    blurRadius: 16,
+    offset: Offset(0, 4),
   );
 
   /// Elevated card shadow for hovered/interactive state.
   static const cardElevated = BoxShadow(
-    color: Color(0x0C000000),
-    blurRadius: 16,
-    offset: Offset(0, 6),
+    color: Color(0x08000000),
+    blurRadius: 24,
+    offset: Offset(0, 8),
   );
 }

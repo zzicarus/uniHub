@@ -32,12 +32,11 @@ abstract final class AppTheme {
       ),
       cardTheme: CardThemeData(
         color: colorScheme.surfaceContainerLow,
-        elevation: 1,
-        shadowColor: colorScheme.shadow.withValues(alpha: 0.08),
+        elevation: 0,
+        shadowColor: colorScheme.shadow.withValues(alpha: 0.06),
         margin: EdgeInsets.zero,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppRadius.lg),
-          side: BorderSide(color: colorScheme.outlineVariant),
+          borderRadius: BorderRadius.circular(AppRadius.xl),
         ),
       ),
       filledButtonTheme: FilledButtonThemeData(
@@ -173,12 +172,11 @@ abstract final class AppTheme {
       ),
       cardTheme: CardThemeData(
         color: darkSeed.surfaceContainerLow,
-        elevation: 1,
-        shadowColor: darkSeed.shadow.withValues(alpha: 0.3),
+        elevation: 0,
+        shadowColor: darkSeed.shadow.withValues(alpha: 0.15),
         margin: EdgeInsets.zero,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppRadius.lg),
-          side: BorderSide(color: darkSeed.outlineVariant),
+          borderRadius: BorderRadius.circular(AppRadius.xl),
         ),
       ),
       filledButtonTheme: FilledButtonThemeData(
