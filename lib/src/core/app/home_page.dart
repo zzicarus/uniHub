@@ -1,10 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:uni_hub/src/shared/widgets/app_compact_list_item.dart';
+import 'package:uni_hub/src/shared/widgets/app_icon_bubble.dart';
+import 'package:uni_hub/src/shared/widgets/app_panel.dart';
+import 'package:uni_hub/src/shared/widgets/app_search_box.dart';
+import 'package:uni_hub/src/shared/widgets/app_section_header.dart';
+
+import '../plugin/plugin_interface.dart';
 import '../theme/app_breakpoints.dart';
 import '../theme/app_tokens.dart';
 import 'dashboard_providers.dart';
-import '../plugin/plugin_interface.dart';
 
 part 'home/header.dart';
 part 'home/focus_section.dart';
@@ -33,26 +39,30 @@ class HomePage extends ConsumerWidget {
               children: [
                 Expanded(
                   child: SingleChildScrollView(
-                    padding: const EdgeInsets.fromLTRB(28, 28, 28, 36),
-                    child: ConstrainedBox(
-                      constraints: const BoxConstraints(maxWidth: 980),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const _HomeHeader(),
-                          const SizedBox(height: 28),
-                          const _FocusGrid(),
-                          const SizedBox(height: 18),
-                          _QuickAccessPanel(
-                            onThoughtsTap: () => context.go('/thoughts'),
-                          ),
-                          const SizedBox(height: 18),
-                          _RecentThoughtsPanel(
-                            onOpen: () => context.go('/thoughts'),
-                          ),
-                          const SizedBox(height: 18),
-                          const _HomeWorkGrid(),
-                        ],
+                    padding: const EdgeInsets.fromLTRB(32, 28, 32, 40),
+                    child: Center(
+                      child: ConstrainedBox(
+                        constraints: const BoxConstraints(
+                          maxWidth: AppDesktopSizes.desktopContentMaxWidth,
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const _HomeHeader(),
+                            const SizedBox(height: AppSpacing.xl),
+                            const _FocusGrid(),
+                            const SizedBox(height: AppSpacing.lg),
+                            _QuickAccessPanel(
+                              onThoughtsTap: () => context.go('/thoughts'),
+                            ),
+                            const SizedBox(height: AppSpacing.lg),
+                            _RecentThoughtsPanel(
+                              onOpen: () => context.go('/thoughts'),
+                            ),
+                            const SizedBox(height: AppSpacing.xl),
+                            const _HomeWorkGrid(),
+                          ],
+                        ),
                       ),
                     ),
                   ),
@@ -67,79 +77,16 @@ class HomePage extends ConsumerWidget {
   }
 }
 
-// ─── Reusable Section / Panel Widgets ───────────────────────────────
-
-class _SectionTitle extends StatelessWidget {
-  final String title;
-  final IconData? icon;
-  final String? trailing;
-  final VoidCallback? onTap;
-
-  const _SectionTitle({
-    required this.title,
-    this.icon,
-    this.trailing,
-    this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Row(
-      children: [
-        if (icon != null) ...[
-          Icon(icon, size: 18, color: Theme.of(context).colorScheme.primary),
-          const SizedBox(width: AppSpacing.xs),
-        ],
-        Expanded(child: Text(title, style: theme.textTheme.titleLarge)),
-        if (trailing != null)
-          InkWell(
-            borderRadius: BorderRadius.circular(AppRadius.xs),
-            onTap: onTap,
-            child: Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: AppSpacing.xs,
-                vertical: AppSpacing.xxs,
-              ),
-              child: Text(
-                '$trailing  →',
-                style: theme.textTheme.labelLarge?.copyWith(
-                  color: Theme.of(context).colorScheme.primary,
-                ),
-              ),
-            ),
-          ),
-      ],
-    );
-  }
-}
+// ─── Shared wrappers kept for the mobile part file ──────────────────
 
 class _Panel extends StatelessWidget {
   final Widget child;
-  final EdgeInsetsGeometry padding;
 
-  const _Panel({
-    required this.child,
-    this.padding = const EdgeInsets.all(AppSpacing.lg),
-  });
+  const _Panel({required this.child});
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-    return Material(
-      color: colorScheme.surface,
-      borderRadius: BorderRadius.circular(AppRadius.xl),
-      elevation: 0,
-      child: DecoratedBox(
-        decoration: BoxDecoration(
-          color: colorScheme.surface,
-          borderRadius: BorderRadius.circular(AppRadius.xl),
-          border: Border.all(color: colorScheme.outlineVariant.withValues(alpha: 0.25)),
-          boxShadow: const [AppShadows.cardSoft],
-        ),
-        child: Padding(padding: padding, child: child),
-      ),
-    );
+    return AppPanel(child: child);
   }
 }
 
@@ -156,14 +103,12 @@ class _IconBubble extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: 58,
-      height: 58,
-      decoration: BoxDecoration(
-        color: background,
-        shape: BoxShape.circle,
-      ),
-      child: Icon(icon, color: color, size: 28),
+    return AppIconBubble(
+      icon: icon,
+      color: color,
+      background: background,
+      size: 58,
+      iconSize: 28,
     );
   }
 }
@@ -184,7 +129,9 @@ class _PillButton extends StatelessWidget {
       decoration: BoxDecoration(
         color: colorScheme.surface,
         borderRadius: BorderRadius.circular(AppRadius.sm),
-        border: Border.all(color: colorScheme.outline),
+        border: Border.all(
+          color: colorScheme.outlineVariant.withValues(alpha: 0.5),
+        ),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -218,19 +165,21 @@ class _MetricCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
 
-    return _Panel(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+    return AppPanel(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.lg,
+        vertical: 16,
+      ),
       child: Row(
         children: [
-          Container(
-            width: 58,
-            height: 58,
-            decoration: BoxDecoration(
-              color: background,
-              shape: BoxShape.circle,
-            ),
-            child: Icon(icon, color: color, size: 28),
+          AppIconBubble(
+            icon: icon,
+            color: color,
+            background: background,
+            size: 58,
+            iconSize: 28,
           ),
           const SizedBox(width: 18),
           Expanded(
@@ -238,17 +187,32 @@ class _MetricCard extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title, style: theme.textTheme.labelLarge),
-                const SizedBox(height: 6),
+                Text(
+                  title,
+                  style: theme.textTheme.labelLarge?.copyWith(
+                    color: colorScheme.onSurfaceVariant,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 4),
                 Text(
                   value,
                   style: theme.textTheme.headlineMedium?.copyWith(
-                    fontSize: 26,
+                    fontSize: 27,
                     fontWeight: FontWeight.w800,
+                    color: colorScheme.onSurface,
+                    height: 1.05,
                   ),
                 ),
-                const SizedBox(height: 2),
-                Text(note, style: theme.textTheme.bodySmall),
+                const SizedBox(height: 3),
+                Text(
+                  note,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: colorScheme.onSurfaceVariant,
+                  ),
+                ),
               ],
             ),
           ),
@@ -275,83 +239,84 @@ class _ThoughtPreviewCard extends StatelessWidget {
     final color = _itemColor(item, colorScheme);
     final background = _itemBackground(color, colorScheme);
 
-    return Material(
-      color: colorScheme.surface,
-      borderRadius: BorderRadius.circular(AppRadius.xl),
-      elevation: 0,
-      child: DecoratedBox(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(AppRadius.xl),
-          border: Border.all(color: colorScheme.outlineVariant.withValues(alpha: 0.25)),
-          boxShadow: const [AppShadows.cardSoft],
-        ),
-        child: InkWell(
-          borderRadius: BorderRadius.circular(AppRadius.xl),
-          onTap: onTap,
-          child: Padding(
-            padding: const EdgeInsets.all(AppSpacing.md),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Flexible(
-                      child: Text(
-                        title,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: theme.textTheme.titleSmall?.copyWith(
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                    ),
-                    if (tag.isNotEmpty) ...[
-                      const SizedBox(width: AppSpacing.xs),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: AppSpacing.xs,
-                          vertical: AppSpacing.xxs,
-                        ),
-                        decoration: BoxDecoration(
-                          color: background.withValues(alpha: 0.62),
-                          borderRadius: BorderRadius.circular(AppRadius.full),
-                        ),
-                        child: Text(
-                          tag,
-                          style: theme.textTheme.labelMedium?.copyWith(
-                            color: color,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                    ],
-                    Icon(
-                      item.isPinned
-                          ? Icons.push_pin_rounded
-                          : Icons.star_border_rounded,
-                      color: item.isPinned
-                          ? colorScheme.primary
-                          : colorScheme.outline,
-                      size: 18,
-                    ),
-                  ],
+    return AppPanel(
+      onTap: onTap,
+      compact: true,
+      padding: const EdgeInsets.all(AppSpacing.md),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 6,
+                height: 6,
+                decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+              ),
+              const SizedBox(width: AppSpacing.xs),
+              Expanded(
+                child: Text(
+                  title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.w800,
+                  ),
                 ),
-                const SizedBox(height: AppSpacing.xs),
-                Expanded(
+              ),
+              Icon(
+                item.isPinned
+                    ? Icons.push_pin_rounded
+                    : Icons.star_border_rounded,
+                color: item.isPinned
+                    ? colorScheme.primary
+                    : colorScheme.outline,
+                size: 17,
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.xs),
+          Expanded(
+            child: Text(
+              body.isEmpty ? title : body,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: colorScheme.onSurfaceVariant,
+                height: 1.25,
+              ),
+            ),
+          ),
+          Row(
+            children: [
+              if (tag.isNotEmpty)
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.xs,
+                    vertical: 2,
+                  ),
+                  decoration: BoxDecoration(
+                    color: background,
+                    borderRadius: BorderRadius.circular(AppRadius.full),
+                  ),
                   child: Text(
-                    body,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: colorScheme.onSurfaceVariant,
+                    tag,
+                    style: theme.textTheme.labelSmall?.copyWith(
+                      color: color,
+                      fontWeight: FontWeight.w700,
                     ),
                   ),
                 ),
-                Text(time, style: theme.textTheme.bodySmall),
-              ],
-            ),
+              const Spacer(),
+              Text(
+                time,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: colorScheme.outline,
+                ),
+              ),
+            ],
           ),
-        ),
+        ],
       ),
     );
   }
@@ -377,150 +342,37 @@ class _ShortcutCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-    return Material(
-      color: colorScheme.surface,
-      borderRadius: BorderRadius.circular(AppRadius.xl),
-      elevation: 0,
-      child: DecoratedBox(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(AppRadius.xl),
-          border: Border.all(color: colorScheme.outlineVariant.withValues(alpha: 0.25)),
-          boxShadow: const [AppShadows.cardSoft],
-        ),
-        child: InkWell(
-          borderRadius: BorderRadius.circular(AppRadius.xl),
-          onTap: onTap,
-          child: Padding(
-            padding: const EdgeInsets.all(AppSpacing.sm),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Container(
-                  width: 40,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    color: background,
-                    borderRadius: BorderRadius.circular(AppRadius.md),
-                  ),
-                  child: Icon(icon, color: color, size: 22),
-                ),
-                const SizedBox(height: AppSpacing.sm),
-                Text(
-                  title,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: theme.textTheme.labelMedium?.copyWith(
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ],
+
+    return AppPanel(
+      onTap: onTap,
+      compact: true,
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.sm,
+        vertical: AppSpacing.md,
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          AppIconBubble(
+            icon: icon,
+            color: color,
+            background: background,
+            size: 42,
+            iconSize: 22,
+            shape: BoxShape.rectangle,
+            radius: AppRadius.lg,
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          Text(
+            title,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: theme.textTheme.labelLarge?.copyWith(
+              fontWeight: FontWeight.w800,
             ),
           ),
-        ),
+        ],
       ),
-    );
-  }
-}
-
-class _PanelHeader extends StatelessWidget {
-  final String title;
-  final IconData icon;
-
-  const _PanelHeader({required this.title, required this.icon});
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Row(
-      children: [
-        Icon(icon, size: 20, color: Theme.of(context).colorScheme.primary),
-        const SizedBox(width: AppSpacing.sm),
-        Expanded(child: Text(title, style: theme.textTheme.titleMedium)),
-      ],
-    );
-  }
-}
-
-class _CompactListItem extends StatelessWidget {
-  final IconData icon;
-  final Color color;
-  final Color background;
-  final String title;
-  final String subtitle;
-  final VoidCallback? onTap;
-
-  const _CompactListItem({
-    required this.icon,
-    required this.color,
-    required this.background,
-    required this.title,
-    required this.subtitle,
-    this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Padding(
-      padding: const EdgeInsets.only(bottom: AppSpacing.md),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(AppRadius.md),
-        child: Row(
-          children: [
-            _SmallIconBubble(icon: icon, color: color, background: background),
-            const SizedBox(width: AppSpacing.md),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: theme.textTheme.titleSmall,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  Text(
-                    subtitle,
-                    style: theme.textTheme.bodySmall,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ],
-              ),
-            ),
-            if (onTap != null)
-              Icon(
-                Icons.more_vert_rounded,
-                color: Theme.of(context).colorScheme.outline,
-              ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _SmallIconBubble extends StatelessWidget {
-  final IconData icon;
-  final Color color;
-  final Color background;
-
-  const _SmallIconBubble({
-    required this.icon,
-    required this.color,
-    required this.background,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 44,
-      height: 44,
-      decoration: BoxDecoration(
-        color: background,
-        borderRadius: BorderRadius.circular(AppRadius.md),
-      ),
-      child: Icon(icon, color: color, size: 22),
     );
   }
 }
@@ -541,70 +393,35 @@ class _ActivityLine extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
     return Padding(
-      padding: const EdgeInsets.only(bottom: AppSpacing.md),
+      padding: const EdgeInsets.only(bottom: AppSpacing.sm),
       child: Row(
         children: [
-          Icon(icon, size: 18, color: color),
+          AppIconBubble(
+            icon: icon,
+            color: color,
+            background: color.withValues(alpha: 0.10),
+            size: 34,
+            iconSize: 17,
+            shape: BoxShape.rectangle,
+            radius: AppRadius.sm,
+          ),
           const SizedBox(width: AppSpacing.sm),
           Expanded(
             child: Text(
               title,
-              style: theme.textTheme.bodyMedium,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: colorScheme.onSurface,
+              ),
               overflow: TextOverflow.ellipsis,
             ),
           ),
-          Text(time, style: theme.textTheme.bodySmall),
-        ],
-      ),
-    );
-  }
-}
-
-class _DataLine extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final String value;
-  final String change;
-  final Color color;
-  final Color background;
-
-  const _DataLine({
-    required this.icon,
-    required this.label,
-    required this.value,
-    required this.change,
-    required this.color,
-    required this.background,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Padding(
-      padding: const EdgeInsets.only(bottom: AppSpacing.md),
-      child: Row(
-        children: [
-          _SmallIconBubble(icon: icon, color: color, background: background),
-          const SizedBox(width: AppSpacing.md),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(label, style: theme.textTheme.bodySmall),
-                Text(
-                  value,
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-              ],
-            ),
-          ),
+          const SizedBox(width: AppSpacing.sm),
           Text(
-            change,
-            style: theme.textTheme.labelMedium?.copyWith(
-              color: Theme.of(context).colorScheme.outline,
+            time,
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: colorScheme.outline,
             ),
           ),
         ],
@@ -617,6 +434,7 @@ class _DataLine extends StatelessWidget {
 
 String _firstLine(String text) {
   final trimmed = text.trim();
+  if (trimmed.isEmpty) return '未命名想法';
   final firstLine = trimmed.split(RegExp(r'\s*\n\s*')).first;
   if (firstLine.length <= 20) return firstLine;
   return '${firstLine.substring(0, 20)}...';

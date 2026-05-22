@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:uni_hub/src/core/theme/app_tokens.dart';
+import 'package:uni_hub/src/shared/widgets/app_compact_list_item.dart';
+import 'package:uni_hub/src/shared/widgets/app_icon_bubble.dart';
+import 'package:uni_hub/src/shared/widgets/app_panel.dart';
+import 'package:uni_hub/src/shared/widgets/app_search_box.dart';
 
 /// Desktop-style white card with thin border and light shadow.
 /// Matches `_Panel` in home_page.dart.
@@ -15,21 +19,7 @@ class ThoughtPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-    return Material(
-      color: colorScheme.surface,
-      borderRadius: BorderRadius.circular(AppRadius.lg),
-      elevation: 0,
-      child: DecoratedBox(
-        decoration: BoxDecoration(
-          color: colorScheme.surface,
-          borderRadius: BorderRadius.circular(AppRadius.lg),
-          border: Border.all(color: colorScheme.outlineVariant),
-          boxShadow: const [AppShadows.cardSoft],
-        ),
-        child: Padding(padding: padding, child: child),
-      ),
-    );
+    return AppPanel(padding: padding, child: child);
   }
 }
 
@@ -47,14 +37,14 @@ class ThoughtIconBubble extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: 48,
-      height: 48,
-      decoration: BoxDecoration(
-        color: background,
-        borderRadius: BorderRadius.circular(AppRadius.md),
-      ),
-      child: Icon(icon, color: color, size: 24),
+    return AppIconBubble(
+      icon: icon,
+      color: color,
+      background: background,
+      size: 48,
+      iconSize: 24,
+      shape: BoxShape.rectangle,
+      radius: AppRadius.md,
     );
   }
 }
@@ -89,7 +79,9 @@ class ThoughtPillButton extends StatelessWidget {
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(AppRadius.sm),
             border: Border.all(
-              color: selected ? colorScheme.tertiary : colorScheme.outlineVariant,
+              color: selected
+                  ? colorScheme.tertiary
+                  : colorScheme.outlineVariant,
             ),
           ),
           child: Row(
@@ -123,46 +115,14 @@ class ThoughtSearchBox extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-    return Material(
-      color: colorScheme.surface,
-      borderRadius: BorderRadius.circular(AppRadius.md),
-      elevation: 0,
-      child: InkWell(
-        borderRadius: BorderRadius.circular(AppRadius.md),
-        onTap: () {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('全局搜索即将上线')),
-          );
-        },
-        child: Container(
-          width: 320,
-          height: 48,
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(AppRadius.md),
-            border: Border.all(color: colorScheme.outlineVariant),
-            boxShadow: const [AppShadows.cardSoft],
-          ),
-          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-          child: Row(
-            children: [
-              Icon(Icons.search_rounded, color: colorScheme.outline, size: 20),
-              const SizedBox(width: AppSpacing.xs),
-              Expanded(
-                child: Text(
-                  'Ctrl + K 全局搜索',
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    color: colorScheme.onSurfaceVariant,
-                  ),
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-              Icon(Icons.crop_free_rounded, color: colorScheme.outline, size: 16),
-            ],
-          ),
-        ),
-      ),
+    return AppSearchBox(
+      width: 320,
+      hintText: 'Ctrl + K 全局搜索',
+      onTap: () {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('全局搜索即将上线')));
+      },
     );
   }
 }
@@ -223,7 +183,9 @@ class ThoughtFilterChip extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
           decoration: BoxDecoration(
             border: Border.all(
-              color: selected ? colorScheme.primary : colorScheme.outlineVariant,
+              color: selected
+                  ? colorScheme.primary
+                  : colorScheme.outlineVariant,
             ),
             borderRadius: BorderRadius.circular(AppRadius.full),
           ),
@@ -366,41 +328,20 @@ class ThoughtCompactItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
+    final colorScheme = Theme.of(context).colorScheme;
     return Padding(
-      padding: const EdgeInsets.only(bottom: AppSpacing.md),
-      child: Row(
-        children: [
-          ThoughtIconBubble(
-            icon: Icons.lightbulb_outline,
-            color: colorScheme.onTertiaryContainer,
-            background: colorScheme.tertiaryContainer,
-          ),
-          const SizedBox(width: AppSpacing.md),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: theme.textTheme.titleSmall,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                Text(
-                  subtitle,
-                  style: theme.textTheme.bodySmall,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ],
-            ),
-          ),
-          Icon(
-            Icons.star_rounded,
-            color: colorScheme.tertiary,
-            size: 18,
-          ),
-        ],
+      padding: const EdgeInsets.only(bottom: AppSpacing.xs),
+      child: AppCompactListItem(
+        icon: Icons.lightbulb_outline,
+        color: colorScheme.onTertiaryContainer,
+        background: colorScheme.tertiaryContainer,
+        title: title,
+        subtitle: subtitle,
+        trailing: Icon(
+          Icons.star_rounded,
+          color: colorScheme.tertiary,
+          size: 18,
+        ),
       ),
     );
   }

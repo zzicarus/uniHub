@@ -12,31 +12,14 @@ class _HomeHeader extends StatelessWidget {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        Container(
-          width: 64,
-          height: 64,
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                colorScheme.tertiaryContainer,
-                colorScheme.tertiaryContainer.withValues(alpha: 0.45),
-              ],
-            ),
-            borderRadius: BorderRadius.circular(AppRadius.xl),
-            border: Border.all(
-              color: colorScheme.tertiary.withValues(alpha: 0.10),
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: colorScheme.tertiary.withValues(alpha: 0.12),
-                blurRadius: 24,
-                offset: const Offset(0, 10),
-              ),
-            ],
-          ),
-          child: Icon(_greetingIcon(), color: colorScheme.tertiary, size: 30),
+        AppIconBubble(
+          icon: _greetingIcon(),
+          color: AppColors.accent,
+          background: AppColors.yellowSoft,
+          size: 62,
+          iconSize: 30,
+          shape: BoxShape.rectangle,
+          radius: AppRadius.xl,
         ),
         const SizedBox(width: AppSpacing.xl),
         Expanded(
@@ -44,10 +27,12 @@ class _HomeHeader extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              _buildGreeting(theme),
+              _buildGreeting(theme, colorScheme),
               const SizedBox(height: AppSpacing.xxs),
               Text(
-                '专注当下，持续进步',
+                '专注当下，持续进步。把想法、任务与日程收拢到一个中台。',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
                 style: theme.textTheme.bodyMedium?.copyWith(
                   color: colorScheme.onSurfaceVariant,
                 ),
@@ -56,26 +41,34 @@ class _HomeHeader extends StatelessWidget {
           ),
         ),
         const SizedBox(width: AppSpacing.xl),
-        const _SearchBox(),
+        AppSearchBox(
+          width: 380,
+          hintText: '搜索想法、笔记、待办...',
+          onTap: () {
+            ScaffoldMessenger.of(
+              context,
+            ).showSnackBar(const SnackBar(content: Text('全局搜索即将上线')));
+          },
+        ),
         const SizedBox(width: AppSpacing.md),
         const _NotificationButton(),
       ],
     );
   }
 
-  Widget _buildGreeting(ThemeData theme) {
+  Widget _buildGreeting(ThemeData theme, ColorScheme colorScheme) {
     final hour = DateTime.now().hour;
-    String greeting;
-    if (hour >= 6 && hour < 12) {
-      greeting = '早上好，Alex';
-    } else if (hour >= 12 && hour < 18) {
-      greeting = '下午好，Alex';
-    } else {
-      greeting = '晚上好，Alex';
-    }
+    final greeting = switch (hour) {
+      >= 6 && < 12 => '早上好，Alex',
+      >= 12 && < 18 => '下午好，Alex',
+      _ => '晚上好，Alex',
+    };
     return Text(
       greeting,
-      style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
+      style: theme.textTheme.headlineSmall?.copyWith(
+        color: colorScheme.onSurface,
+        fontWeight: FontWeight.w800,
+      ),
       overflow: TextOverflow.ellipsis,
     );
   }
@@ -88,54 +81,6 @@ class _HomeHeader extends StatelessWidget {
   }
 }
 
-class _SearchBox extends StatelessWidget {
-  const _SearchBox();
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-    return Material(
-      color: colorScheme.surface,
-      borderRadius: BorderRadius.circular(AppRadius.xl),
-      elevation: 0,
-      child: InkWell(
-        borderRadius: BorderRadius.circular(AppRadius.xl),
-        onTap: () {
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(const SnackBar(content: Text('全局搜索即将上线')));
-        },
-        child: Container(
-          width: 400,
-          height: 48,
-          decoration: BoxDecoration(
-            color: colorScheme.surface,
-            borderRadius: BorderRadius.circular(AppRadius.xl),
-            border: Border.all(color: colorScheme.outlineVariant.withValues(alpha: 0.25)),
-            boxShadow: const [AppShadows.cardSoft],
-          ),
-          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-          child: Row(
-            children: [
-              Icon(Icons.search_rounded, color: colorScheme.outline),
-              const SizedBox(width: AppSpacing.xs),
-              Expanded(
-                child: Text(
-                  '搜索想法、笔记、待办...',
-                  style: theme.textTheme.bodyMedium,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-              Icon(Icons.crop_free_rounded, color: colorScheme.outline, size: 16),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
 class _NotificationButton extends StatelessWidget {
   const _NotificationButton();
 
@@ -145,29 +90,28 @@ class _NotificationButton extends StatelessWidget {
     return Stack(
       clipBehavior: Clip.none,
       children: [
-        Container(
-          width: 48,
-          height: 48,
-          decoration: BoxDecoration(
-            color: colorScheme.surface,
-            borderRadius: BorderRadius.circular(AppRadius.lg),
-            border: Border.all(color: colorScheme.outlineVariant.withValues(alpha: 0.25)),
-            boxShadow: const [AppShadows.cardSoft],
-          ),
-          child: Icon(
-            Icons.notifications_none_rounded,
-            color: colorScheme.onSurfaceVariant,
-            size: 22,
+        AppPanel(
+          compact: true,
+          padding: EdgeInsets.zero,
+          radius: AppRadius.lg,
+          child: SizedBox(
+            width: AppSizes.inputHeight,
+            height: AppSizes.inputHeight,
+            child: Icon(
+              Icons.notifications_none_rounded,
+              color: colorScheme.onSurfaceVariant,
+              size: 22,
+            ),
           ),
         ),
         Positioned(
-          right: 8,
-          top: 8,
+          right: 9,
+          top: 9,
           child: Container(
             width: AppSpacing.xs,
             height: AppSpacing.xs,
             decoration: BoxDecoration(
-              color: colorScheme.primary,
+              color: AppColors.primary,
               shape: BoxShape.circle,
             ),
           ),
