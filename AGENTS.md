@@ -8,7 +8,7 @@ UniHub 是一个 **桌面端优先** 的 Flutter 笔记应用，基于插件架�
 |------|------|
 | 技术栈 | Flutter + Riverpod + GoRouter + Drift(SQLite) + flutter_quill |
 | 架构 | 3 层：`core/`（基础设施）→ `shared/`（共享组件）→ `plugins/`（功能插件） |
-| 布局 | 响应式：桌面端侧栏 + 内容区（≥720px），移动端底部导航 |
+| 布局 | 响应式：桌面端侧栏 + 内容区（≥900px 三列，900-1279px 两列），移动端底部导航（<900px） |
 | 主题 | Material 3 + `ColorScheme.fromSeed`，设计令牌在 `app_tokens.dart` |
 
 ## 输出要求

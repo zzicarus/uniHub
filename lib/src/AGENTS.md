@@ -55,6 +55,15 @@ lib/src/
 
 > 本 section 由 sync-knowledge 自动管理，按时间倒序追加。
 
+### 2026-05-22: Thoughts Inbox V2 Phase 1 — 全局断点更新
+
+全局断点从 `mobileMax=719 / tabletMin=720 / wideMin=1120` 更新为 `mobileMax=899 / tabletMin=900 / wideMin=1280`：
+- `AppBreakpoints` 常量和 `WindowSize.of()` 逻辑同步更新
+- `home/recent_section.dart` 中硬编码 `720` 替换为 `AppBreakpoints.tabletMin`
+- `home_page_test.dart` 右侧栏测试窗口从 1440px 调整到 1600px（内容区需 ≥1280px）
+- `thoughts_desktop_layout.dart` 等 4 个文件通过常量自动继承
+- 内部网格阈值（`desktopContentMaxWidth=1120`、`_ThoughtGrid 980/640` 等）保持不变
+
 ### 2026-05-22: P1-1/P1-2 插件数据库与生命周期修复
 - `AppDatabase` 接收 `PluginRegistry`，`schemaVersion` 动态计算
 - `main.dart` 启动序列改为 `async main()`+`registry.initAll()`

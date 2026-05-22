@@ -62,6 +62,53 @@ thoughts/
 
 > **2026-05-21**：编辑状态逻辑已重构。`ThoughtEditorController` 和 `ThoughtEditorImageStrip` 提取至 `thoughts/ui/widgets/`，`thoughts_editor_page.dart` 和 `thought_editor_drawer.dart` 现为纯布局容器。
 
+### Inbox 模式 UI 结构（V2 Phase 1）
+
+Thoughts 页面现采用 Inbox 模式，布局分三档响应式：
+
+| 断点 | 布局 | 右侧栏 |
+|------|------|--------|
+| ≥1280px (expanded) | 三列：侧栏 + 内容 + 右侧栏 | 显示 |
+| 900-1279px (medium) | 两列：侧栏 + 内容 | 隐藏 |
+| <900px (compact) | 单列：移动端全屏 | 无 |
+
+**文件结构：**
+
+```
+thoughts/ui/
+├── layouts/                         ← 布局级组件
+│   ├── thoughts_desktop_layout.dart  — 桌面端布局（主内容 + 右侧栏）
+│   ├── thoughts_mobile_layout.dart   — 移动端单列布局
+│   ├── thought_composer.dart         — 轻量化 Composer（max 1080px, 96px input）
+│   ├── thought_filter_bar.dart       — 状态筛选 chips：全部/置顶/有图片/归档
+│   ├── thought_tag_filter_bar.dart   — 标签筛选栏（top 6 tags + more popover）
+│   ├── thought_selected_tags_bar.dart — 已选标签显示 + 清除
+│   └── thought_more_tags_popover.dart — 标签搜索弹窗
+├── widgets/                         ← 可复用 Widget
+│   ├── thought_card.dart             — 压缩卡片（max 180px, 1+2 lines, +N tags）
+│   ├── thought_context_menu.dart     — 7项右键菜单（2项 disabled）
+│   ├── thought_composer_controller.dart — Composer 状态管理（ChangeNotifier）
+│   ├── thought_state_templates.dart  — 空态/错误态模板（4空态+6错误态）
+│   ├── thought_pinned_panel.dart     — 置顶面板（max 3）
+│   ├── thought_pending_review_panel.dart — 待整理计数
+│   ├── thought_common_tags_panel.dart — 常用标签（max 8, 与主筛选同步）
+│   ├── thought_random_review_panel.dart — 随机回顾（session 级去重）
+│   └── thought_quick_actions_panel.dart — 快速操作（转为待办/笔记，disabled）
+│   ├── thought_editor_controller.dart — 编辑器状态管理
+│   ├── thought_editor_drawer.dart     — 编辑抽屉
+│   └── thought_editor_image_strip.dart — 编辑器中图片条
+```
+
+**Provider 链：** `allThoughtsProvider` → `thoughtStatusFilterProvider` → `tagFilterProvider` → `thoughtSearchDebouncedProvider` → `thoughtsListProvider`
+
+**右侧栏独立数据源：** `pinnedThoughtsProvider`、`pendingReviewProvider`、`commonTagsProvider`、`randomReviewProvider` 均 watch `allThoughtsProvider`（仅未归档），不受主内容筛选影响。
+
+**关键约束（Phase 1）：**
+- 数据库 schema 未变更（无 status/linkedTodoId/linkedNoteId/processedAt 列）
+- `tagFilterProvider` 保持 `StateProvider<String?>`（单标签筛选）
+- 转为待办/笔记按钮 disabled 并附带 Tooltip("即将推出")
+- 随机回顾使用内存 `Set<int>` 做会话去重（不持久化）
+
 ## 已知代码问题
 
 | 问题 | 位置 | 状态 |
@@ -85,3 +132,17 @@ thoughts/
 - `ThoughtContentCodec.mergeImagePaths` 增加可选 `existsChecker` 参数，解耦 `File.existsSync`
 - Provider 层拆分为 `imagePickerServiceProvider` + `imageStorageProvider`
 - 新增 13 个单元测试覆盖全路径
+
+### 2026-05-22: Thoughts Inbox V2 Phase 1 完成
+- 全局断点更新为 mobileMax=899 / tabletMin=900 / wideMin=1280
+- 新增 Provider：`thoughtStatusFilterProvider`（enum: all/pinned/withImages/archived）、`thoughtSearchQueryProvider` + `thoughtSearchDebouncedProvider`（300ms）、`pinnedThoughtsProvider`（top 3）、`pendingReviewProvider`、`commonTagsProvider`（top 8）、`randomReviewProvider`（session 去重）
+- `thoughtsListProvider` 重构为链式：archive → status → tag → search
+- 提取 `ThoughtComposerController`（ChangeNotifier + `ChangeNotifierProvider`），消除 `_LayoutParams` 单体
+- 新增 `ThoughtStateTemplate` 共享模板（4 空态 + 6 错误态），集成到桌面端和移动端布局
+- 桌面端布局重构：轻量化 Composer（max 1080px, 96px input）、状态筛选 chips、标签筛选栏（top 6 + popover）、已选标签清除栏、移除 pinned/unpinned 内容分割
+- 卡片压缩：maxHeight 180px、标题 1 行、正文 2 行、最多 3 个标签 +N 溢出
+- 右键菜单：`ThoughtContextMenu` 含 7 项（编辑/置顶/加标签/转为待办disabled/转为笔记disabled/归档/删除），确认对话框与 snackbar 反馈
+- 右侧栏重建：置顶（max 3）、待整理计数、常用标签（max 8，与主筛选同步）、随机回顾、快速操作（2 项 disabled）
+- 移动端并行更新：搜索框、水平滚动状态 chips、标签 chips（top 4）+ bottom sheet
+- `ThoughtsPage` 简化为纯编排层（无 `_LayoutParams`、无内联筛选逻辑）
+- 新增 27 个证据文件 + 553 行集成测试（thoughts_integration_test.dart）+ 809 行 QA 测试（thoughts_qa_test.dart），全量 244 测试通过
