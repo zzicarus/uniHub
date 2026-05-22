@@ -1,70 +1,28 @@
-import 'dart:io';
-import 'dart:typed_data';
-
 import 'package:flutter/material.dart';
-import 'package:flutter_quill/flutter_quill.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uni_hub/src/core/theme/app_breakpoints.dart';
 import 'package:uni_hub/src/core/theme/app_tokens.dart';
 import 'package:uni_hub/src/core/database/app_database.dart';
-import '../../data/thought_content_codec.dart';
 import '../widgets/thought_card.dart';
-import 'package:uni_hub/src/shared/ui/rich_text_editor/rich_text_editor.dart';
+import '../widgets/thought_pinned_panel.dart';
+import '../widgets/thought_pending_review_panel.dart';
+import '../widgets/thought_common_tags_panel.dart';
+import '../widgets/thought_random_review_panel.dart';
+import '../widgets/thought_quick_actions_panel.dart';
+import '../widgets/thought_context_menu.dart';
+import '../widgets/thought_state_templates.dart';
+import '../../providers/thoughts_providers.dart';
 import 'thoughts_shared_widgets.dart';
+import 'thought_composer.dart';
+import 'thought_filter_bar.dart';
+import 'thought_tag_filter_bar.dart';
+import 'thought_selected_tags_bar.dart';
 
 class ThoughtsDesktopLayout extends ConsumerWidget {
-  final AsyncValue<List<ThoughtsTableData>> thoughtsAsync;
-  final bool isArchived;
-  final QuillController contentController;
-  final TextEditingController tagTextController;
-  final List<String> tagChips;
-  final bool isSubmitting;
-  final bool canSubmit;
-  final bool isPinned;
-  final List<String> pendingImages;
-  final VoidCallback onSubmit;
-  final ValueChanged<String> onTagInput;
-  final ValueChanged<String> onRemoveChip;
-  final VoidCallback onTogglePin;
-  final VoidCallback onPickImage;
-  final void Function(int) onRemoveImage;
-  final VoidCallback onContentChanged;
-  final Future<String?> Function()? onEditorPickImage;
-  final Future<String?> Function(Uint8List)? onEditorPasteImage;
-  final ValueChanged<String> onImageAdded;
   final void Function(int) onThoughtTap;
-  final Future<void> Function(int) onArchive;
-  final Future<void> Function(int) onRestore;
-  final Map<String, int> tagStats;
-  final String? selectedTag;
-  final ValueChanged<String?> onTagFilterChanged;
 
   const ThoughtsDesktopLayout({
-    required this.thoughtsAsync,
-    required this.isArchived,
-    required this.contentController,
-    required this.tagTextController,
-    required this.tagChips,
-    required this.isSubmitting,
-    required this.canSubmit,
-    required this.isPinned,
-    required this.pendingImages,
-    required this.onSubmit,
-    required this.onTagInput,
-    required this.onRemoveChip,
-    required this.onTogglePin,
-    required this.onPickImage,
-    required this.onRemoveImage,
-    required this.onContentChanged,
-    required this.onEditorPickImage,
-    required this.onEditorPasteImage,
-    required this.onImageAdded,
     required this.onThoughtTap,
-    required this.onArchive,
-    required this.onRestore,
-    required this.tagStats,
-    required this.selectedTag,
-    required this.onTagFilterChanged,
     super.key,
   });
 
@@ -73,6 +31,12 @@ class ThoughtsDesktopLayout extends ConsumerWidget {
     final width = MediaQuery.of(context).size.width;
     final showRightRail = width >= AppBreakpoints.wideMin;
     final colorScheme = Theme.of(context).colorScheme;
+    final thoughtsAsync = ref.watch(thoughtsListProvider);
+    final isArchived = ref.watch(archiveFilterProvider);
+    final selectedTag = ref.watch(tagFilterProvider);
+    final thoughtsCount = ref.watch(thoughtsCountProvider);
+
+    final searchQuery = ref.watch(thoughtSearchQueryProvider);
 
     return ColoredBox(
       color: colorScheme.surfaceContainerLowest,
@@ -92,50 +56,55 @@ class ThoughtsDesktopLayout extends ConsumerWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    if (isArchived) ...[
-                      _ThoughtsHeader(isArchived: isArchived),
-                      const SizedBox(height: AppSpacing.xl),
-                    ],
-                    if (!isArchived) ...[
-                      _ThoughtComposer(
-                        contentController: contentController,
-                        tagTextController: tagTextController,
-                        tagChips: tagChips,
-                        isSubmitting: isSubmitting,
-                        canSubmit: canSubmit,
-                        isPinned: isPinned,
-                        pendingImages: pendingImages,
-                        onSubmit: onSubmit,
-                        onTagInput: onTagInput,
-                        onRemoveChip: onRemoveChip,
-                        onTogglePin: onTogglePin,
-                        onPickImage: onPickImage,
-                        onRemoveImage: onRemoveImage,
-                        onEditorPickImage: onEditorPickImage,
-                        onEditorPasteImage: onEditorPasteImage,
-                        onContentChanged: onContentChanged,
-                        onImageAdded: onImageAdded,
-                      ),
-                      const SizedBox(height: AppSpacing.xl),
-                    ],
-                    _ThoughtsToolbar(
-                      tagStats: tagStats,
-                      selectedTag: selectedTag,
+                    // Dynamic header with title, count, and search
+                    _ThoughtsHeader(
                       isArchived: isArchived,
-                      onTagFilterChanged: onTagFilterChanged,
+                      thoughtsCount: thoughtsCount,
                     ),
                     const SizedBox(height: AppSpacing.lg),
+
+                    // Lightweight composer (only when not archived)
+                    if (!isArchived) ...[
+                      const ThoughtComposer(),
+                      const SizedBox(height: AppSpacing.lg),
+                    ],
+
+                    // Status filter chips
+                    if (!isArchived) ...[
+                      const ThoughtFilterBar(),
+                      const SizedBox(height: AppSpacing.sm),
+                    ],
+
+                    // Tag filter bar
+                    if (!isArchived) ...[
+                      const ThoughtTagFilterBar(),
+                      const SizedBox(height: AppSpacing.sm),
+                    ],
+
+                    // Selected tags bar
+                    const ThoughtSelectedTagsBar(),
+                    const SizedBox(height: AppSpacing.lg),
+
+                    // Single grid (no pinned/unpinned split)
                     thoughtsAsync.when(
-                      loading: () => const ThoughtLoadingState(),
-                      error: (err, _) => ThoughtErrorState(error: err),
+                      loading: () => const Center(
+                        child: Padding(
+                          padding: EdgeInsets.all(AppSpacing.xxl),
+                          child: CircularProgressIndicator(),
+                        ),
+                      ),
+                      error: (err, _) => ThoughtStateTemplate.filterError(
+                        onRetry: () => ref.invalidate(thoughtsListProvider),
+                      ),
                       data: (thoughts) => _ThoughtsContent(
                         thoughts: thoughts,
                         isArchived: isArchived,
                         selectedTag: selectedTag,
+                        searchQuery: searchQuery,
                         onOpen: onThoughtTap,
-                        onTagTap: onTagFilterChanged,
-                        onArchive: onArchive,
-                        onRestore: onRestore,
+                        onTagTap: (tag) {
+                          ref.read(tagFilterProvider.notifier).state = tag;
+                        },
                       ),
                     ),
                   ],
@@ -143,24 +112,29 @@ class ThoughtsDesktopLayout extends ConsumerWidget {
               ),
             ),
           ),
-          if (showRightRail) _ThoughtsRightRail(thoughtsAsync: thoughtsAsync),
+          if (showRightRail) _ThoughtsRightRail(onThoughtTap: onThoughtTap),
         ],
       ),
     );
   }
 }
 
-// ─── Header (Archived View) ──────────────────────────────────────────
+// ─── Header with Dynamic Title and Search ────────────────────────────
 
 class _ThoughtsHeader extends StatelessWidget {
   final bool isArchived;
+  final int thoughtsCount;
 
-  const _ThoughtsHeader({required this.isArchived});
+  const _ThoughtsHeader({
+    required this.isArchived,
+    required this.thoughtsCount,
+  });
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
+
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -178,23 +152,44 @@ class _ThoughtsHeader extends StatelessWidget {
             size: 30,
           ),
         ),
-        const SizedBox(width: AppSpacing.xl),
+        const SizedBox(width: AppSpacing.lg),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                isArchived ? '归档想法' : '想法',
-                style: theme.textTheme.headlineMedium?.copyWith(
-                  fontSize: 28,
-                  fontWeight: FontWeight.w800,
-                ),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.baseline,
+                textBaseline: TextBaseline.alphabetic,
+                children: [
+                  Text(
+                    isArchived ? '归档想法' : '想法',
+                    style: theme.textTheme.headlineMedium?.copyWith(
+                      fontSize: 28,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  const SizedBox(width: AppSpacing.sm),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppSpacing.sm,
+                      vertical: 2,
+                    ),
+                    decoration: BoxDecoration(
+                      color: colorScheme.surfaceContainerHigh,
+                      borderRadius: BorderRadius.circular(AppRadius.full),
+                    ),
+                    child: Text(
+                      thoughtsCount.toString(),
+                      style: theme.textTheme.labelMedium?.copyWith(
+                        color: colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ),
+                ],
               ),
               const SizedBox(height: AppSpacing.xs),
               Text(
-                isArchived
-                    ? '查看已经归档的记录，必要时可恢复。'
-                    : '捕捉灵感，整理想法，让每个念头都有价值',
+                isArchived ? '查看已经归档的记录，必要时可恢复。' : '捕捉灵感，整理想法，让每个念头都有价值',
                 style: theme.textTheme.bodyLarge?.copyWith(
                   color: colorScheme.onSurfaceVariant,
                 ),
@@ -202,8 +197,8 @@ class _ThoughtsHeader extends StatelessWidget {
             ],
           ),
         ),
-        const SizedBox(width: AppSpacing.xl),
-        const ThoughtSearchBox(),
+        const SizedBox(width: AppSpacing.lg),
+        const _ThoughtLocalSearchBox(),
         const SizedBox(width: AppSpacing.md),
         Stack(
           clipBehavior: Clip.none,
@@ -228,351 +223,133 @@ class _ThoughtsHeader extends StatelessWidget {
   }
 }
 
-// ─── Composer ────────────────────────────────────────────────────────
+// ─── Local Search Box ────────────────────────────────────────────────
 
-class _ThoughtComposer extends StatelessWidget {
-  final QuillController contentController;
-  final TextEditingController tagTextController;
-  final List<String> tagChips;
-  final bool isSubmitting;
-  final bool canSubmit;
-  final bool isPinned;
-  final List<String> pendingImages;
-  final VoidCallback onSubmit;
-  final ValueChanged<String> onTagInput;
-  final ValueChanged<String> onRemoveChip;
-  final VoidCallback onTogglePin;
-  final VoidCallback onPickImage;
-  final void Function(int) onRemoveImage;
-  final VoidCallback onContentChanged;
-  final Future<String?> Function()? onEditorPickImage;
-  final Future<String?> Function(Uint8List)? onEditorPasteImage;
-  final ValueChanged<String> onImageAdded;
+class _ThoughtLocalSearchBox extends ConsumerStatefulWidget {
+  const _ThoughtLocalSearchBox();
 
-  const _ThoughtComposer({
-    required this.contentController,
-    required this.tagTextController,
-    required this.tagChips,
-    required this.isSubmitting,
-    required this.canSubmit,
-    required this.isPinned,
-    required this.pendingImages,
-    required this.onSubmit,
-    required this.onTagInput,
-    required this.onRemoveChip,
-    required this.onTogglePin,
-    required this.onPickImage,
-    required this.onRemoveImage,
-    required this.onContentChanged,
-    required this.onEditorPickImage,
-    required this.onEditorPasteImage,
-    required this.onImageAdded,
-  });
+  @override
+  ConsumerState<_ThoughtLocalSearchBox> createState() =>
+      _ThoughtLocalSearchBoxState();
+}
+
+class _ThoughtLocalSearchBoxState
+    extends ConsumerState<_ThoughtLocalSearchBox> {
+  final _controller = TextEditingController();
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    return ThoughtPanel(
-      padding: const EdgeInsets.all(AppSpacing.xl),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          ThoughtIconBubble(
-            icon: Icons.lightbulb_outline,
-            color: colorScheme.onPrimaryContainer,
-            background: colorScheme.primaryContainer,
+
+    return SizedBox(
+      width: 240,
+      child: TextField(
+        controller: _controller,
+        onChanged: (value) {
+          ref.read(thoughtSearchQueryProvider.notifier).state = value;
+        },
+        decoration: InputDecoration(
+          hintText: '搜索想法',
+          prefixIcon: const Icon(Icons.search_rounded, size: 20),
+          suffixIcon: _controller.text.isNotEmpty
+              ? IconButton(
+                  icon: const Icon(Icons.clear_rounded, size: 18),
+                  onPressed: () {
+                    _controller.clear();
+                    ref.read(thoughtSearchQueryProvider.notifier).state = '';
+                  },
+                )
+              : null,
+          isDense: true,
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.md,
+            vertical: AppSpacing.sm,
           ),
-          const SizedBox(width: AppSpacing.lg),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Text(
-                  '快速记录想法',
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-                const SizedBox(height: AppSpacing.md),
-                DecoratedBox(
-                  decoration: BoxDecoration(
-                    color: colorScheme.surfaceContainerLow,
-                    borderRadius: BorderRadius.circular(AppRadius.md),
-                    border: Border.all(color: colorScheme.outlineVariant),
-                  ),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(AppRadius.md),
-                    child: RichTextEditor(
-                      controller: contentController,
-                      minHeight: 112,
-                      placeholder: '今天有什么新想法？',
-                      onChanged: (_) => onContentChanged(),
-                      onPickImage: onEditorPickImage,
-                      onPasteImage: onEditorPasteImage,
-                      onImageAdded: onImageAdded,
-                    ),
-                  ),
-                ),
-                if (tagChips.isNotEmpty) ...[
-                  const SizedBox(height: AppSpacing.md),
-                  Wrap(
-                    spacing: AppSpacing.xs,
-                    runSpacing: AppSpacing.xs,
-                    children: tagChips.map((tag) {
-                      return Chip(
-                        label: Text(tag),
-                        deleteIcon: const Icon(Icons.close, size: 14),
-                        onDeleted: () => onRemoveChip(tag),
-                        materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                        visualDensity: VisualDensity.compact,
-                      );
-                    }).toList(),
-                  ),
-                ],
-                if (pendingImages.isNotEmpty) ...[
-                  const SizedBox(height: AppSpacing.md),
-                  SizedBox(
-                    height: 60,
-                    child: ListView.separated(
-                      scrollDirection: Axis.horizontal,
-                      itemCount: pendingImages.length,
-                      separatorBuilder: (_, _) =>
-                          const SizedBox(width: AppSpacing.sm),
-                      itemBuilder: (_, i) {
-                        return Stack(
-                          children: [
-                            ClipRRect(
-                              borderRadius: BorderRadius.circular(AppRadius.xs),
-                              child: Image.file(
-                                File(pendingImages[i]),
-                                width: 60,
-                                height: 60,
-                                fit: BoxFit.cover,
-                              ),
-                            ),
-                            Positioned(
-                              top: 1,
-                              right: 1,
-                              child: GestureDetector(
-                                onTap: () => onRemoveImage(i),
-                                child: Container(
-                                  decoration: BoxDecoration(
-                                    color: colorScheme.onSurfaceVariant
-                                        .withValues(alpha: 0.54),
-                                    shape: BoxShape.circle,
-                                  ),
-                                  padding: const EdgeInsets.all(AppSpacing.xxs),
-                                  child: Icon(
-                                    Icons.close,
-                                    size: 12,
-                                    color: colorScheme.onPrimary,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ],
-                        );
-                      },
-                    ),
-                  ),
-                ],
-                const SizedBox(height: AppSpacing.md),
-                Wrap(
-                  spacing: AppSpacing.sm,
-                  runSpacing: AppSpacing.sm,
-                  crossAxisAlignment: WrapCrossAlignment.center,
-                  children: [
-                    SizedBox(
-                      width: 150,
-                      child: TextField(
-                        controller: tagTextController,
-                        onChanged: onTagInput,
-                        decoration: const InputDecoration(
-                          hintText: '添加标签',
-                          prefixIcon: Icon(Icons.sell_outlined, size: 18),
-                          isDense: true,
-                        ),
-                        style: theme.textTheme.bodySmall,
-                      ),
-                    ),
-                    ThoughtPillButton(
-                      icon: Icons.image_outlined,
-                      label: pendingImages.isNotEmpty
-                          ? '图片 (${pendingImages.length})'
-                          : '图片',
-                      onTap: onPickImage,
-                    ),
-                    ThoughtPillButton(
-                      icon: isPinned ? Icons.push_pin : Icons.push_pin_outlined,
-                      label: isPinned ? '已置顶' : '置顶',
-                      selected: isPinned,
-                      onTap: onTogglePin,
-                    ),
-                    const Spacer(),
-                    FilledButton.icon(
-                      onPressed: canSubmit && !isSubmitting ? onSubmit : null,
-                      icon: const Icon(Icons.send_rounded, size: 18),
-                      label: Text(isSubmitting ? '保存中' : '记录想法'),
-                    ),
-                  ],
-                ),
-              ],
-            ),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(AppRadius.md),
+            borderSide: BorderSide(color: colorScheme.outlineVariant),
           ),
-        ],
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(AppRadius.md),
+            borderSide: BorderSide(color: colorScheme.outlineVariant),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(AppRadius.md),
+            borderSide: BorderSide(color: colorScheme.primary),
+          ),
+          filled: true,
+          fillColor: colorScheme.surface,
+        ),
+        style: theme.textTheme.bodyMedium,
       ),
     );
   }
 }
 
-// ─── Toolbar ─────────────────────────────────────────────────────────
+// ─── Content (Single Grid) ───────────────────────────────────────────
 
-class _ThoughtsToolbar extends StatelessWidget {
-  final Map<String, int> tagStats;
-  final String? selectedTag;
-  final bool isArchived;
-  final ValueChanged<String?> onTagFilterChanged;
-
-  const _ThoughtsToolbar({
-    required this.tagStats,
-    required this.selectedTag,
-    required this.isArchived,
-    required this.onTagFilterChanged,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-    final sortedTags = tagStats.entries.toList()
-      ..sort((a, b) => b.value.compareTo(a.value));
-    final total = tagStats.values.fold<int>(0, (sum, count) => sum + count);
-
-    return Wrap(
-      spacing: AppSpacing.sm,
-      runSpacing: AppSpacing.sm,
-      crossAxisAlignment: WrapCrossAlignment.center,
-      children: [
-        ThoughtFilterChip(
-          label: '全部',
-          value: total.toString(),
-          selected: selectedTag == null,
-          onTap: () => onTagFilterChanged(null),
-        ),
-        ...sortedTags.map((entry) {
-          return ThoughtFilterChip(
-            label: entry.key,
-            value: entry.value.toString(),
-            selected: selectedTag == entry.key,
-            onTap: () =>
-                onTagFilterChanged(selectedTag == entry.key ? null : entry.key),
-          );
-        }),
-        if (selectedTag != null && selectedTag!.isNotEmpty)
-          Chip(
-            label: Text('#$selectedTag'),
-            deleteIcon: const Icon(Icons.close, size: 14),
-            onDeleted: () => onTagFilterChanged(null),
-            backgroundColor: colorScheme.primary.withValues(alpha: 0.12),
-            side: BorderSide.none,
-            materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-            visualDensity: VisualDensity.compact,
-          ),
-        const Spacer(),
-        Container(
-          height: AppDesktopSizes.compactButtonHeight,
-          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
-          decoration: BoxDecoration(
-            color: colorScheme.surface,
-            borderRadius: BorderRadius.circular(AppRadius.sm),
-            border: Border.all(color: colorScheme.outlineVariant),
-            boxShadow: const [AppShadows.cardSoft],
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                isArchived ? '归档' : '最新',
-                style: theme.textTheme.labelMedium?.copyWith(
-                  color: colorScheme.onSurfaceVariant,
-                ),
-              ),
-              const SizedBox(width: AppSpacing.xs),
-              Icon(
-                Icons.keyboard_arrow_down_rounded,
-                size: 18,
-                color: colorScheme.outline,
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-// ─── Content (Pinned + All Thoughts) ────────────────────────────────
-
-class _ThoughtsContent extends StatelessWidget {
+class _ThoughtsContent extends ConsumerWidget {
   final List<ThoughtsTableData> thoughts;
   final bool isArchived;
   final String? selectedTag;
+  final String searchQuery;
   final void Function(int) onOpen;
   final ValueChanged<String> onTagTap;
-  final Future<void> Function(int)? onArchive;
-  final Future<void> Function(int)? onRestore;
 
   const _ThoughtsContent({
     required this.thoughts,
     required this.isArchived,
     required this.selectedTag,
+    required this.searchQuery,
     required this.onOpen,
     required this.onTagTap,
-    this.onArchive,
-    this.onRestore,
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     if (thoughts.isEmpty) {
-      return ThoughtEmptyState(isArchived: isArchived, tagFilter: selectedTag);
+      if (isArchived) {
+        return ThoughtStateTemplate.archiveEmpty();
+      }
+      if (selectedTag != null && selectedTag!.isNotEmpty) {
+        return ThoughtStateTemplate.filterNoResults(
+          selectedTag!,
+          onClearFilter: () {
+            ref.read(tagFilterProvider.notifier).state = null;
+          },
+        );
+      }
+      if (searchQuery.isNotEmpty) {
+        return ThoughtStateTemplate.searchNoResults(
+          searchQuery,
+          onClearSearch: () {
+            ref.read(thoughtSearchQueryProvider.notifier).state = '';
+          },
+        );
+      }
+      return ThoughtStateTemplate.noThoughts();
     }
-
-    final pinned = thoughts.where((t) => t.isPinned).toList();
-    final unpinned = thoughts.where((t) => !t.isPinned).toList();
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        if (!isArchived && pinned.isNotEmpty) ...[
-          ThoughtSectionLabel(
-            icon: Icons.push_pin_rounded,
-            title: '置顶想法',
-            count: pinned.length,
-          ),
-          const SizedBox(height: AppSpacing.md),
-          _ThoughtGrid(
-            thoughts: pinned,
-            onOpen: onOpen,
-            onTagTap: onTagTap,
-            onArchive: isArchived ? null : onArchive,
-            onRestore: isArchived ? onRestore : null,
-          ),
-          const SizedBox(height: AppSpacing.xl),
-        ],
         ThoughtSectionLabel(
           icon: isArchived ? Icons.archive_outlined : Icons.grid_view_rounded,
           title: isArchived ? '归档记录' : '全部想法',
-          count: unpinned.length,
+          count: thoughts.length,
         ),
         const SizedBox(height: AppSpacing.md),
         _ThoughtGrid(
-          thoughts: isArchived ? thoughts : unpinned,
+          thoughts: thoughts,
           onOpen: onOpen,
           onTagTap: onTagTap,
-          onArchive: isArchived ? null : onArchive,
-          onRestore: isArchived ? onRestore : null,
         ),
       ],
     );
@@ -581,23 +358,19 @@ class _ThoughtsContent extends StatelessWidget {
 
 // ─── Thought Grid ────────────────────────────────────────────────────
 
-class _ThoughtGrid extends StatelessWidget {
+class _ThoughtGrid extends ConsumerWidget {
   final List<ThoughtsTableData> thoughts;
   final void Function(int) onOpen;
   final ValueChanged<String> onTagTap;
-  final Future<void> Function(int)? onArchive;
-  final Future<void> Function(int)? onRestore;
 
   const _ThoughtGrid({
     required this.thoughts,
     required this.onOpen,
     required this.onTagTap,
-    this.onArchive,
-    this.onRestore,
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return LayoutBuilder(
       builder: (context, constraints) {
         final columns = constraints.maxWidth >= 980
@@ -627,12 +400,106 @@ class _ThoughtGrid extends StatelessWidget {
               imagePaths: t.imagePaths,
               onTap: () => onOpen(t.id),
               onTagTap: onTagTap,
-              onArchive: onArchive != null ? () => onArchive!(t.id) : null,
-              onRestore: onRestore != null ? () => onRestore!(t.id) : null,
+              onContextMenu: () => _handleContextMenu(
+                context,
+                ref,
+                t,
+              ),
             );
           },
         );
       },
+    );
+  }
+
+  Future<void> _handleContextMenu(
+    BuildContext context,
+    WidgetRef ref,
+    ThoughtsTableData thought,
+  ) async {
+    final renderBox = context.findRenderObject() as RenderBox?;
+    if (renderBox == null) return;
+    final position = renderBox.localToGlobal(Offset.zero);
+
+    final action = await showThoughtContextMenu(
+      context: context,
+      position: position,
+      isPinned: thought.isPinned,
+      isArchived: thought.archivedAt != null,
+    );
+
+    if (action == null || !context.mounted) return;
+
+    switch (action) {
+      case ThoughtContextAction.edit:
+        _openEditor(context, thought.id);
+      case ThoughtContextAction.togglePin:
+        await ref.read(thoughtsRepositoryProvider).togglePin(
+              thought.id,
+              !thought.isPinned,
+            );
+        ref.invalidate(thoughtsListProvider);
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(thought.isPinned ? '已取消置顶' : '已置顶'),
+              duration: const Duration(seconds: 1),
+            ),
+          );
+        }
+      case ThoughtContextAction.addTag:
+        await showThoughtTagDialog(
+          context: context,
+          ref: ref,
+          thoughtId: thought.id,
+        );
+      case ThoughtContextAction.toggleArchive:
+        if (thought.archivedAt != null) {
+          await ref.read(thoughtsRepositoryProvider).restoreThought(thought.id);
+          if (context.mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('想法已恢复')),
+            );
+          }
+        } else {
+          await ref.read(thoughtsRepositoryProvider).archiveThought(thought.id);
+          if (context.mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('想法已归档')),
+            );
+          }
+        }
+        ref.invalidate(thoughtsListProvider);
+      case ThoughtContextAction.delete:
+        final confirmed = await showThoughtDeleteDialog(context);
+        if (confirmed && context.mounted) {
+          await ref.read(thoughtsRepositoryProvider).deleteThought(thought.id);
+          ref.invalidate(thoughtsListProvider);
+          if (context.mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('想法已删除')),
+            );
+          }
+        }
+      case ThoughtContextAction.convertToTodo:
+      case ThoughtContextAction.convertToNote:
+        break;
+    }
+  }
+
+  void _openEditor(BuildContext context, int thoughtId) {
+    // Navigate to editor page or open drawer
+    // For now, show a snackbar since the editor route depends on app structure
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: const Text('打开编辑器'),
+        action: SnackBarAction(
+          label: '前往',
+          onPressed: () {
+            // Navigate to editor - depends on app routing
+          },
+        ),
+      ),
     );
   }
 }
@@ -640,41 +507,33 @@ class _ThoughtGrid extends StatelessWidget {
 // ─── Right Rail ──────────────────────────────────────────────────────
 
 class _ThoughtsRightRail extends StatelessWidget {
-  final AsyncValue<List<ThoughtsTableData>> thoughtsAsync;
+  final void Function(int thoughtId)? onThoughtTap;
 
-  const _ThoughtsRightRail({required this.thoughtsAsync});
+  const _ThoughtsRightRail({this.onThoughtTap});
 
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    final thoughts = thoughtsAsync.valueOrNull ?? const <ThoughtsTableData>[];
-    final pinned = thoughts.where((t) => t.isPinned).take(5).toList();
-    final tags = <String, int>{};
-    for (final thought in thoughts) {
-      for (final tag in _parseTags(thought.tags)) {
-        tags[tag] = (tags[tag] ?? 0) + 1;
-      }
-    }
-    final tagEntries = tags.entries.toList()
-      ..sort((a, b) => b.value.compareTo(a.value));
 
     return Container(
       width: AppDesktopSizes.rightRailWideWidth,
       decoration: BoxDecoration(
         color: colorScheme.surfaceContainerLowest,
-        border: Border(
-          left: BorderSide(color: colorScheme.outlineVariant),
-        ),
+        border: Border(left: BorderSide(color: colorScheme.outlineVariant)),
       ),
       child: SingleChildScrollView(
         padding: const EdgeInsets.all(AppSpacing.xl),
         child: Column(
           children: [
-            _PinnedThoughtsPanel(thoughts: pinned),
+            ThoughtPinnedPanel(onThoughtTap: onThoughtTap),
             const SizedBox(height: AppSpacing.xl),
-            _StatsPanel(total: thoughts.length, pinned: pinned.length),
+            const ThoughtPendingReviewPanel(),
             const SizedBox(height: AppSpacing.xl),
-            _TagsPanel(tags: tagEntries.take(10).toList()),
+            const ThoughtCommonTagsPanel(),
+            const SizedBox(height: AppSpacing.xl),
+            ThoughtRandomReviewPanel(onThoughtTap: onThoughtTap),
+            const SizedBox(height: AppSpacing.xl),
+            const ThoughtQuickActionsPanel(),
             const SizedBox(height: AppSpacing.xxl),
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -692,145 +551,4 @@ class _ThoughtsRightRail extends StatelessWidget {
       ),
     );
   }
-}
-
-// ─── Right Rail: Pinned Panel ────────────────────────────────────────
-
-class _PinnedThoughtsPanel extends StatelessWidget {
-  final List<ThoughtsTableData> thoughts;
-
-  const _PinnedThoughtsPanel({required this.thoughts});
-
-  @override
-  Widget build(BuildContext context) {
-    return ThoughtPanel(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          ThoughtPanelHeader(
-            title: '置顶想法',
-            count: thoughts.length,
-            icon: Icons.star_rounded,
-          ),
-          const SizedBox(height: AppSpacing.md),
-          if (thoughts.isEmpty)
-            const ThoughtSmallMutedText('暂无置顶想法')
-          else
-            ...thoughts.map(
-              (t) => ThoughtCompactItem(
-                title: ThoughtContentCodec.titleFromStored(t.content),
-                subtitle: _formatTimestamp(t.createdAt),
-              ),
-            ),
-        ],
-      ),
-    );
-  }
-}
-
-// ─── Right Rail: Stats Panel ─────────────────────────────────────────
-
-class _StatsPanel extends StatelessWidget {
-  final int total;
-  final int pinned;
-
-  const _StatsPanel({required this.total, required this.pinned});
-
-  @override
-  Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-    return ThoughtPanel(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const ThoughtPanelHeader(
-            title: '想法统计',
-            icon: Icons.bar_chart_rounded,
-          ),
-          const SizedBox(height: AppSpacing.md),
-          ThoughtStatRow(
-            icon: Icons.lightbulb_outline,
-            label: '总想法',
-            value: total.toString(),
-            color: colorScheme.primary,
-            background: colorScheme.primaryContainer,
-          ),
-          ThoughtStatRow(
-            icon: Icons.add_circle_outline_rounded,
-            label: '本页展示',
-            value: total.toString(),
-            color: colorScheme.secondary,
-            background: colorScheme.secondaryContainer,
-          ),
-          ThoughtStatRow(
-            icon: Icons.star_outline_rounded,
-            label: '置顶数量',
-            value: pinned.toString(),
-            color: colorScheme.tertiary,
-            background: colorScheme.tertiaryContainer,
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// ─── Right Rail: Tags Panel ──────────────────────────────────────────
-
-class _TagsPanel extends StatelessWidget {
-  final List<MapEntry<String, int>> tags;
-
-  const _TagsPanel({required this.tags});
-
-  @override
-  Widget build(BuildContext context) {
-    return ThoughtPanel(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const ThoughtPanelHeader(title: '热门标签', icon: Icons.sell_outlined),
-          const SizedBox(height: AppSpacing.md),
-          if (tags.isEmpty)
-            const ThoughtSmallMutedText('暂无标签')
-          else
-            Wrap(
-              spacing: AppSpacing.xs,
-              runSpacing: AppSpacing.xs,
-              children: tags.map((entry) {
-                return ThoughtTagChip(
-                  label: entry.key,
-                  count: entry.value,
-                );
-              }).toList(),
-            ),
-        ],
-      ),
-    );
-  }
-}
-
-// ─── Helpers ─────────────────────────────────────────────────────────
-
-List<String> _parseTags(String? tags) {
-  return (tags ?? '')
-      .split(',')
-      .map((s) => s.trim())
-      .where((s) => s.isNotEmpty)
-      .toList();
-}
-
-String _formatTimestamp(DateTime dt) {
-  final now = DateTime.now();
-  final today = DateTime(now.year, now.month, now.day);
-  final yesterday = today.subtract(const Duration(days: 1));
-  final date = DateTime(dt.year, dt.month, dt.day);
-
-  if (date == today) {
-    return '今天 ${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
-  } else if (date == yesterday) {
-    return '昨天 ${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
-  } else if (dt.year == now.year) {
-    return '${dt.month}月${dt.day}日';
-  }
-  return '${dt.year}-${dt.month.toString().padLeft(2, '0')}-${dt.day.toString().padLeft(2, '0')}';
 }
