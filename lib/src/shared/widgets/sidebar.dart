@@ -19,12 +19,8 @@ class Sidebar extends ConsumerWidget {
     return Container(
       width: AppDesktopSizes.sidebarWidth,
       decoration: BoxDecoration(
-        color: colorScheme.surface.withValues(alpha: 0.96),
-        border: Border(
-          right: BorderSide(
-            color: colorScheme.outlineVariant.withValues(alpha: 0.52),
-          ),
-        ),
+        color: colorScheme.surfaceContainerLowest,
+        border: Border(right: BorderSide(color: colorScheme.outlineVariant.withValues(alpha: 0.5))),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -389,27 +385,24 @@ class _NavItem extends StatelessWidget {
         ? colorScheme.onSurfaceVariant
         : colorScheme.outline;
     final bgColor = isSelected
-        ? colorScheme.primaryContainer.withValues(alpha: 0.72)
+        ? colorScheme.primaryContainer.withValues(alpha: 0.8)
         : Colors.transparent;
-    final radius = BorderRadius.circular(AppRadius.lg);
 
     return Padding(
       padding: EdgeInsets.symmetric(
         horizontal: compact ? AppSpacing.lg : AppSpacing.xl,
-        vertical: AppSpacing.xxs,
+        vertical: AppSpacing.xxs / 2,
       ),
       child: Material(
         color: bgColor,
-        borderRadius: radius,
-        elevation: isSelected ? 1 : 0,
-        shadowColor: colorScheme.primary.withValues(alpha: 0.10),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
         child: InkWell(
-          borderRadius: radius,
+          borderRadius: BorderRadius.circular(AppRadius.lg),
           onTap: onTap,
           child: SizedBox(
             height: compact
                 ? AppDesktopSizes.compactButtonHeight
-                : AppDesktopSizes.navItemHeight + 2,
+                : AppDesktopSizes.navItemHeight,
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
               child: Row(
@@ -422,9 +415,7 @@ class _NavItem extends StatelessWidget {
                       style: theme.textTheme.titleSmall?.copyWith(
                         color: foreground,
                         fontSize: compact ? 13 : 15,
-                        fontWeight: isSelected
-                            ? FontWeight.w700
-                            : FontWeight.w500,
+                        fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
                       ),
                       overflow: TextOverflow.ellipsis,
                     ),

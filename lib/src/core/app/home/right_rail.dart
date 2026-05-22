@@ -11,12 +11,8 @@ class _HomeRightRail extends StatelessWidget {
     return Container(
       width: AppDesktopSizes.rightRailWideWidth,
       decoration: BoxDecoration(
-        color: colorScheme.surfaceContainerLowest.withValues(alpha: 0.74),
-        border: Border(
-          left: BorderSide(
-            color: colorScheme.outlineVariant.withValues(alpha: 0.42),
-          ),
-        ),
+        color: colorScheme.surfaceContainerLowest,
+        border: Border(left: BorderSide(color: colorScheme.outlineVariant.withValues(alpha: 0.5))),
       ),
       child: SingleChildScrollView(
         padding: const EdgeInsets.fromLTRB(

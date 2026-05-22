@@ -12,13 +12,13 @@ class DesktopShell extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final colorScheme = Theme.of(context).colorScheme;
     return Scaffold(
-      backgroundColor: colorScheme.surface,
+      backgroundColor: colorScheme.surfaceContainerLowest,
       body: Row(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           const Sidebar(),
           Expanded(
-            child: ColoredBox(color: colorScheme.surface, child: child),
+            child: ColoredBox(color: colorScheme.surfaceContainerLowest, child: child),
           ),
         ],
       ),
