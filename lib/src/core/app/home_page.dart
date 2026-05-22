@@ -144,25 +144,15 @@ class _Panel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    final radius = BorderRadius.circular(AppRadius.xl);
     return Material(
-      color: colorScheme.surface.withValues(alpha: 0.96),
-      borderRadius: radius,
+      color: colorScheme.surface,
+      borderRadius: BorderRadius.circular(AppRadius.xl),
       elevation: 0,
       child: DecoratedBox(
         decoration: BoxDecoration(
-          color: colorScheme.surface.withValues(alpha: 0.96),
-          borderRadius: radius,
-          border: Border.all(
-            color: colorScheme.outlineVariant.withValues(alpha: 0.64),
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: colorScheme.shadow.withValues(alpha: 0.055),
-              blurRadius: 26,
-              offset: const Offset(0, 12),
-            ),
-          ],
+          color: colorScheme.surface,
+          borderRadius: BorderRadius.circular(AppRadius.xl),
+          boxShadow: const [AppShadows.cardSoft],
         ),
         child: Padding(padding: padding, child: child),
       ),
@@ -188,10 +178,9 @@ class _IconBubble extends StatelessWidget {
       height: 52,
       decoration: BoxDecoration(
         color: background,
-        borderRadius: BorderRadius.circular(AppRadius.xl),
-        border: Border.all(color: color.withValues(alpha: 0.10)),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
       ),
-      child: Icon(icon, color: color, size: 25),
+      child: Icon(icon, color: color, size: 26),
     );
   }
 }
@@ -246,60 +235,42 @@ class _MetricCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-    final radius = BorderRadius.circular(AppRadius.xl);
     return Material(
-      color: colorScheme.surface.withValues(alpha: 0.96),
-      borderRadius: radius,
+      color: theme.colorScheme.surface,
+      borderRadius: BorderRadius.circular(AppRadius.xl),
       elevation: 0,
       child: DecoratedBox(
         decoration: BoxDecoration(
-          color: colorScheme.surface.withValues(alpha: 0.96),
-          borderRadius: radius,
-          border: Border.all(
-            color: colorScheme.outlineVariant.withValues(alpha: 0.64),
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: colorScheme.shadow.withValues(alpha: 0.055),
-              blurRadius: 26,
-              offset: const Offset(0, 12),
-            ),
-          ],
+          color: theme.colorScheme.surface,
+          borderRadius: BorderRadius.circular(AppRadius.xl),
+          boxShadow: const [AppShadows.cardSoft],
         ),
         child: Padding(
           padding: const EdgeInsets.all(AppSpacing.lg),
-          child: Row(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Container(
                 width: 52,
                 height: 52,
                 decoration: BoxDecoration(
                   color: background,
-                  borderRadius: BorderRadius.circular(AppRadius.xl),
-                  border: Border.all(color: color.withValues(alpha: 0.10)),
+                  borderRadius: BorderRadius.circular(AppRadius.lg),
                 ),
-                child: Icon(icon, color: color, size: 25),
+                child: Icon(icon, color: color, size: 26),
               ),
-              const SizedBox(width: AppSpacing.lg),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(title, style: theme.textTheme.labelLarge),
-                    const SizedBox(height: AppSpacing.xxs),
-                    Text(
-                      value,
-                      style: theme.textTheme.headlineMedium?.copyWith(
-                        fontSize: 25,
-                        fontWeight: FontWeight.w900,
-                      ),
-                    ),
-                    Text(note, style: theme.textTheme.bodySmall),
-                  ],
+              const SizedBox(height: AppSpacing.md),
+              Text(title, style: theme.textTheme.labelLarge),
+              const SizedBox(height: AppSpacing.xxs),
+              Text(
+                value,
+                style: theme.textTheme.headlineMedium?.copyWith(
+                  fontSize: 28,
+                  fontWeight: FontWeight.w800,
                 ),
               ),
+              Text(note, style: theme.textTheme.bodySmall),
             ],
           ),
         ),
@@ -324,29 +295,18 @@ class _ThoughtPreviewCard extends StatelessWidget {
     final time = _formatTimestamp(item.createdAt);
     final color = _itemColor(item, colorScheme);
     final background = _itemBackground(color, colorScheme);
-    final radius = BorderRadius.circular(AppRadius.lg);
 
     return Material(
-      color: colorScheme.surface.withValues(alpha: 0.96),
-      borderRadius: radius,
+      color: colorScheme.surface,
+      borderRadius: BorderRadius.circular(AppRadius.xl),
       elevation: 0,
       child: DecoratedBox(
         decoration: BoxDecoration(
-          color: colorScheme.surface.withValues(alpha: 0.96),
-          borderRadius: radius,
-          border: Border.all(
-            color: colorScheme.outlineVariant.withValues(alpha: 0.64),
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: colorScheme.shadow.withValues(alpha: 0.045),
-              blurRadius: 18,
-              offset: const Offset(0, 8),
-            ),
-          ],
+          borderRadius: BorderRadius.circular(AppRadius.xl),
+          boxShadow: const [AppShadows.cardSoft],
         ),
         child: InkWell(
-          borderRadius: radius,
+          borderRadius: BorderRadius.circular(AppRadius.xl),
           onTap: onTap,
           child: Padding(
             padding: const EdgeInsets.all(AppSpacing.md),
@@ -438,28 +398,17 @@ class _ShortcutCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    final radius = BorderRadius.circular(AppRadius.lg);
     return Material(
-      color: colorScheme.surface.withValues(alpha: 0.96),
-      borderRadius: radius,
+      color: colorScheme.surface,
+      borderRadius: BorderRadius.circular(AppRadius.xl),
       elevation: 0,
       child: DecoratedBox(
         decoration: BoxDecoration(
-          color: colorScheme.surface.withValues(alpha: 0.96),
-          borderRadius: radius,
-          border: Border.all(
-            color: colorScheme.outlineVariant.withValues(alpha: 0.64),
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: colorScheme.shadow.withValues(alpha: 0.045),
-              blurRadius: 18,
-              offset: const Offset(0, 8),
-            ),
-          ],
+          borderRadius: BorderRadius.circular(AppRadius.xl),
+          boxShadow: const [AppShadows.cardSoft],
         ),
         child: InkWell(
-          borderRadius: radius,
+          borderRadius: BorderRadius.circular(AppRadius.xl),
           onTap: onTap,
           child: Padding(
             padding: const EdgeInsets.all(AppSpacing.sm),
@@ -471,8 +420,7 @@ class _ShortcutCard extends StatelessWidget {
                   height: 40,
                   decoration: BoxDecoration(
                     color: background,
-                    borderRadius: BorderRadius.circular(AppRadius.lg),
-                    border: Border.all(color: color.withValues(alpha: 0.10)),
+                    borderRadius: BorderRadius.circular(AppRadius.md),
                   ),
                   child: Icon(icon, color: color, size: 22),
                 ),
@@ -585,14 +533,13 @@ class _SmallIconBubble extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 40,
-      height: 40,
+      width: 44,
+      height: 44,
       decoration: BoxDecoration(
         color: background,
         borderRadius: BorderRadius.circular(AppRadius.md),
-        border: Border.all(color: color.withValues(alpha: 0.10)),
       ),
-      child: Icon(icon, color: color, size: 20),
+      child: Icon(icon, color: color, size: 22),
     );
   }
 }

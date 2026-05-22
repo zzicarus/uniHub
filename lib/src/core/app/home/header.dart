@@ -96,32 +96,23 @@ class _SearchBox extends StatelessWidget {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     return Material(
-      color: colorScheme.surface.withValues(alpha: 0.96),
-      borderRadius: BorderRadius.circular(AppRadius.lg),
+      color: colorScheme.surface,
+      borderRadius: BorderRadius.circular(AppRadius.xl),
       elevation: 0,
       child: InkWell(
-        borderRadius: BorderRadius.circular(AppRadius.lg),
+        borderRadius: BorderRadius.circular(AppRadius.xl),
         onTap: () {
           ScaffoldMessenger.of(
             context,
           ).showSnackBar(const SnackBar(content: Text('全局搜索即将上线')));
         },
         child: Container(
-          width: 384,
-          height: 52,
+          width: 360,
+          height: 48,
           decoration: BoxDecoration(
-            color: colorScheme.surface.withValues(alpha: 0.96),
-            borderRadius: BorderRadius.circular(AppRadius.lg),
-            border: Border.all(
-              color: colorScheme.outlineVariant.withValues(alpha: 0.68),
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: colorScheme.shadow.withValues(alpha: 0.045),
-                blurRadius: 18,
-                offset: const Offset(0, 8),
-              ),
-            ],
+            color: colorScheme.surface,
+            borderRadius: BorderRadius.circular(AppRadius.xl),
+            boxShadow: const [AppShadows.cardSoft],
           ),
           padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
           child: Row(
@@ -135,11 +126,7 @@ class _SearchBox extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
-              Icon(
-                Icons.crop_free_rounded,
-                color: colorScheme.outline,
-                size: 16,
-              ),
+              Icon(Icons.crop_free_rounded, color: colorScheme.outline, size: 16),
             ],
           ),
         ),
@@ -158,21 +145,12 @@ class _NotificationButton extends StatelessWidget {
       clipBehavior: Clip.none,
       children: [
         Container(
-          width: 52,
-          height: 52,
+          width: 48,
+          height: 48,
           decoration: BoxDecoration(
-            color: colorScheme.surface.withValues(alpha: 0.96),
+            color: colorScheme.surface,
             borderRadius: BorderRadius.circular(AppRadius.lg),
-            border: Border.all(
-              color: colorScheme.outlineVariant.withValues(alpha: 0.68),
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: colorScheme.shadow.withValues(alpha: 0.045),
-                blurRadius: 18,
-                offset: const Offset(0, 8),
-              ),
-            ],
+            boxShadow: const [AppShadows.cardSoft],
           ),
           child: Icon(
             Icons.notifications_none_rounded,

@@ -66,7 +66,7 @@ class _FocusGrid extends ConsumerWidget {
             crossAxisCount: columns,
             crossAxisSpacing: AppSpacing.md,
             mainAxisSpacing: AppSpacing.md,
-            childAspectRatio: columns == 4 ? 1.55 : 2.0,
+            childAspectRatio: columns == 4 ? 0.85 : 1.1,
           ),
           itemBuilder: (context, index) => metrics[index],
         );
