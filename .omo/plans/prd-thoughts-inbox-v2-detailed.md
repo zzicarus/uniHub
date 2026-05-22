@@ -85,12 +85,12 @@
 ┌────────────────┬────────────────────────────────────────────┬──────────────────────┐
 │ 左侧导航         │ 主内容区                                      │ 右侧辅助栏              │
 │                │ 快速记录 Composer                            │ 置顶想法                │
-│ 首页            │ 搜索 + 状态筛选                                │ 待整理                  │
-│ 想法            │ 标签筛选                                      │ 常用标签                │
-│   所有想法       │ 已选筛选条件                                  │ 随机回顾                │
-│   归档          │ 想法列表                                      │ 快捷操作                │
-│ 待办            │                                              │ 隐私提示                │
-│ 笔记            │                                              │                        │
+│ 首页            │ ┌─ 筛选面板 ──────────────────────────────┐ │ 待整理                  │
+│ 想法            │ │ Row 1: 搜索 | 状态 chips | 排序        │ │ 常用标签                │
+│   所有想法       │ │ Row 2: 标签筛选 (前5常用 + 更多标签)    │ │ 随机回顾                │
+│   归档          │ │ Row 3: 已选标签 + 清除 (条件显示)       │ │ 快捷操作                │
+│ 待办            │ └─────────────────────────────────────────┘ │ 隐私提示                │
+│ 笔记            │ 想法列表                                      │                        │
 └────────────────┴────────────────────────────────────────────┴──────────────────────┘
 ```
 
@@ -213,16 +213,16 @@ FAB：+
 
 ### 7.3 状态筛选项
 
-第一阶段状态筛选：
+第一阶段状态筛选（已实现）：
 
 ```text
-全部 / 置顶 / 有图片 / 归档
+全部 / 未整理 / 置顶 / 有图片 / 待办（disabled）
 ```
 
 第二阶段增加：
 
 ```text
-未整理 / 已处理 / 已转待办 / 已转笔记
+已处理 / 已转待办 / 已转笔记
 ```
 
 ### 7.4 状态筛选边界条件
@@ -1018,11 +1018,12 @@ Future<List<ThoughtsTableData>> queryThoughts({
 建议拆分：
 
 ```text
-lib/src/plugins/thoughts/ui/widgets/thought_composer.dart
-lib/src/plugins/thoughts/ui/widgets/thought_filter_bar.dart
-lib/src/plugins/thoughts/ui/widgets/thought_tag_filter_bar.dart
-lib/src/plugins/thoughts/ui/widgets/thought_selected_filters_bar.dart
-lib/src/plugins/thoughts/ui/widgets/thought_right_rail.dart
+lib/src/plugins/thoughts/ui/layouts/thought_filter_panel.dart       # 三行紧凑筛选面板（搜索+状态+标签+已选）
+lib/src/plugins/thoughts/ui/layouts/thought_filter_bar.dart         # 横向状态 chip：全部/未整理/置顶/有图片/待办
+lib/src/plugins/thoughts/ui/layouts/thought_tag_filter_bar.dart     # 标签筛选行：前5常用标签 + 更多标签
+lib/src/plugins/thoughts/ui/layouts/thought_selected_filters_bar.dart  # 已选标签条件栏 + 清除
+lib/src/plugins/thoughts/ui/layouts/thought_composer.dart           # 快速记录 Composer
+lib/src/plugins/thoughts/ui/layouts/thought_right_rail.dart         # 右侧栏
 lib/src/plugins/thoughts/ui/widgets/thought_pinned_panel.dart
 lib/src/plugins/thoughts/ui/widgets/thought_pending_review_panel.dart
 lib/src/plugins/thoughts/ui/widgets/thought_common_tags_panel.dart

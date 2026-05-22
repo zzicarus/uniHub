@@ -13,9 +13,7 @@ import '../widgets/thought_pinned_panel.dart';
 import '../widgets/thought_state_templates.dart';
 import '../widgets/thought_stats_panel.dart';
 import 'thought_composer.dart';
-import 'thought_filter_bar.dart';
-import 'thought_selected_tags_bar.dart';
-import 'thought_tag_filter_bar.dart';
+import 'thought_filter_panel.dart';
 import 'thoughts_shared_widgets.dart';
 
 class ThoughtsDesktopLayout extends ConsumerWidget {
@@ -63,7 +61,7 @@ class ThoughtsDesktopLayout extends ConsumerWidget {
                         const ThoughtComposer(),
                         const SizedBox(height: AppSpacing.lg),
                       ],
-                      _ThoughtControlsPanel(isArchived: isArchived),
+                      ThoughtFilterPanel(isArchived: isArchived),
                       const SizedBox(height: AppSpacing.lg),
                       thoughtsAsync.when(
                         loading: () => const ThoughtLoadingState(),
@@ -151,150 +149,6 @@ class _ThoughtsHeader extends StatelessWidget {
           ),
         ),
       ],
-    );
-  }
-}
-
-class _ThoughtControlsPanel extends StatelessWidget {
-  final bool isArchived;
-
-  const _ThoughtControlsPanel({required this.isArchived});
-
-  @override
-  Widget build(BuildContext context) {
-    return ThoughtPanel(
-      padding: EdgeInsets.zero,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(AppSpacing.sm),
-            child: Row(
-              children: [
-                const Expanded(flex: 7, child: _ThoughtLocalSearchBox()),
-                const SizedBox(width: AppSpacing.md),
-                if (!isArchived)
-                  const Expanded(flex: 9, child: ThoughtFilterBar())
-                else
-                  const Spacer(),
-                const SizedBox(width: AppSpacing.md),
-                _SortButton(),
-              ],
-            ),
-          ),
-          if (!isArchived) ...[
-            Divider(
-              height: 1,
-              color: Theme.of(context).colorScheme.outlineVariant,
-            ),
-            const Padding(
-              padding: EdgeInsets.fromLTRB(
-                AppSpacing.md,
-                AppSpacing.sm,
-                AppSpacing.md,
-                AppSpacing.xs,
-              ),
-              child: ThoughtTagFilterBar(),
-            ),
-            const ThoughtSelectedTagsBar(),
-          ],
-        ],
-      ),
-    );
-  }
-}
-
-class _ThoughtLocalSearchBox extends ConsumerStatefulWidget {
-  const _ThoughtLocalSearchBox();
-
-  @override
-  ConsumerState<_ThoughtLocalSearchBox> createState() =>
-      _ThoughtLocalSearchBoxState();
-}
-
-class _ThoughtLocalSearchBoxState
-    extends ConsumerState<_ThoughtLocalSearchBox> {
-  final _controller = TextEditingController();
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-
-    return SizedBox(
-      height: 42,
-      child: TextField(
-        controller: _controller,
-        onChanged: (value) {
-          ref.read(thoughtSearchQueryProvider.notifier).state = value;
-          setState(() {});
-        },
-        decoration: InputDecoration(
-          hintText: '搜索想法、标签、内容...',
-          prefixIcon: const Icon(Icons.search_rounded, size: 20),
-          suffixIcon: _controller.text.isNotEmpty
-              ? IconButton(
-                  icon: const Icon(Icons.clear_rounded, size: 18),
-                  onPressed: () {
-                    _controller.clear();
-                    ref.read(thoughtSearchQueryProvider.notifier).state = '';
-                    setState(() {});
-                  },
-                )
-              : null,
-          isDense: true,
-          contentPadding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.md,
-            vertical: AppSpacing.sm,
-          ),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(AppRadius.md),
-            borderSide: BorderSide(color: colorScheme.outlineVariant),
-          ),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(AppRadius.md),
-            borderSide: BorderSide(color: colorScheme.outlineVariant),
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(AppRadius.md),
-            borderSide: BorderSide(color: colorScheme.primary),
-          ),
-          filled: true,
-          fillColor: colorScheme.surface,
-        ),
-        style: theme.textTheme.bodyMedium,
-      ),
-    );
-  }
-}
-
-class _SortButton extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-    return Container(
-      height: 42,
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
-      decoration: BoxDecoration(
-        color: colorScheme.surface,
-        borderRadius: BorderRadius.circular(AppRadius.md),
-        border: Border.all(color: colorScheme.outlineVariant),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text('最新', style: theme.textTheme.labelMedium),
-          const SizedBox(width: AppSpacing.xs),
-          Icon(Icons.expand_more_rounded, size: 18, color: colorScheme.outline),
-        ],
-      ),
     );
   }
 }

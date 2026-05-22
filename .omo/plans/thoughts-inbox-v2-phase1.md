@@ -521,7 +521,7 @@ Wave FINAL (After ALL tasks — review):
   - Files: `thought_state_templates.dart`
   - Pre-commit: `flutter analyze`
 
-- [x] 5. Desktop Layout Rework
+- [x] 5. Desktop Layout Rework (post-phase-1: filter area consolidated into compact 3-row ThoughtFilterPanel)
 
   **What to do**:
   - Create `thought_composer.dart` in `ui/widgets/` — lightweight composer widget:

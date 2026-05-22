@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:uni_hub/src/core/theme/app_tokens.dart';
 import '../../providers/thoughts_providers.dart';
-import '../widgets/thought_tag_management_dialog.dart';
 
 class ThoughtTagFilterBar extends ConsumerWidget {
   const ThoughtTagFilterBar({super.key});
@@ -45,10 +44,6 @@ class ThoughtTagFilterBar extends ConsumerWidget {
                 _MoreTagsButton(
                   onTap: () => _showMoreTagsPopover(context, ref),
                 ),
-              _ManageTagsButton(
-                onTap: () =>
-                    showThoughtTagManagementDialog(context: context, ref: ref),
-              ),
             ],
           ),
         ),
@@ -153,17 +148,6 @@ class _MoreTagsButton extends StatelessWidget {
       label: '更多标签',
       onTap: onTap,
     );
-  }
-}
-
-class _ManageTagsButton extends StatelessWidget {
-  final VoidCallback onTap;
-
-  const _ManageTagsButton({required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    return _PlainTagButton(icon: Icons.tune_rounded, label: '管理', onTap: onTap);
   }
 }
 

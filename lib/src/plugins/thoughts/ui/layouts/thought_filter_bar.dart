@@ -13,36 +13,41 @@ class ThoughtFilterBar extends ConsumerWidget {
     final statusFilter = ref.watch(thoughtStatusFilterProvider);
     final isArchived = ref.watch(archiveFilterProvider);
 
-    return Wrap(
-      alignment: WrapAlignment.center,
-      spacing: AppSpacing.sm,
-      runSpacing: AppSpacing.xs,
-      children: [
-        _StatusChip(
-          label: '全部',
-          selected: statusFilter == ThoughtStatusFilter.all && !isArchived,
-          onTap: () => _setFilter(ref, ThoughtStatusFilter.all),
-        ),
-        _StatusChip(
-          label: '未整理',
-          selected: statusFilter == ThoughtStatusFilter.unorganized,
-          onTap: () => _setFilter(ref, ThoughtStatusFilter.unorganized),
-        ),
-        _StatusChip(
-          label: '置顶',
-          selected: statusFilter == ThoughtStatusFilter.pinned,
-          onTap: () => _setFilter(ref, ThoughtStatusFilter.pinned),
-        ),
-        _StatusChip(
-          label: '有图片',
-          selected: statusFilter == ThoughtStatusFilter.withImages,
-          onTap: () => _setFilter(ref, ThoughtStatusFilter.withImages),
-        ),
-        const Tooltip(
-          message: '待办联动即将推出',
-          child: _StatusChip(label: '待办', selected: false),
-        ),
-      ],
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _StatusChip(
+            label: '全部',
+            selected: statusFilter == ThoughtStatusFilter.all && !isArchived,
+            onTap: () => _setFilter(ref, ThoughtStatusFilter.all),
+          ),
+          const SizedBox(width: AppSpacing.sm),
+          _StatusChip(
+            label: '未整理',
+            selected: statusFilter == ThoughtStatusFilter.unorganized,
+            onTap: () => _setFilter(ref, ThoughtStatusFilter.unorganized),
+          ),
+          const SizedBox(width: AppSpacing.sm),
+          _StatusChip(
+            label: '置顶',
+            selected: statusFilter == ThoughtStatusFilter.pinned,
+            onTap: () => _setFilter(ref, ThoughtStatusFilter.pinned),
+          ),
+          const SizedBox(width: AppSpacing.sm),
+          _StatusChip(
+            label: '有图片',
+            selected: statusFilter == ThoughtStatusFilter.withImages,
+            onTap: () => _setFilter(ref, ThoughtStatusFilter.withImages),
+          ),
+          const SizedBox(width: AppSpacing.sm),
+          Tooltip(
+            message: '待办模块尚未接入',
+            child: _StatusChip(label: '待办', selected: false),
+          ),
+        ],
+      ),
     );
   }
 
@@ -72,8 +77,8 @@ class _StatusChip extends StatelessWidget {
         onTap: onTap,
         borderRadius: BorderRadius.circular(AppRadius.full),
         child: Container(
-          height: 36,
-          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+          height: 32,
+          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
           decoration: BoxDecoration(
             border: Border.all(
               color: selected
