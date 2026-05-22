@@ -37,6 +37,7 @@ abstract final class AppTheme {
         margin: EdgeInsets.zero,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppRadius.xl),
+          side: BorderSide(color: colorScheme.outlineVariant.withValues(alpha: 0.25)),
         ),
       ),
       filledButtonTheme: FilledButtonThemeData(
