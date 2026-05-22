@@ -385,7 +385,7 @@ class _NavItem extends StatelessWidget {
         ? colorScheme.onSurfaceVariant
         : colorScheme.outline;
     final bgColor = isSelected
-        ? colorScheme.primaryContainer.withValues(alpha: 0.8)
+        ? colorScheme.primaryContainer.withValues(alpha: 0.5)
         : Colors.transparent;
 
     return Padding(
@@ -395,9 +395,9 @@ class _NavItem extends StatelessWidget {
       ),
       child: Material(
         color: bgColor,
-        borderRadius: BorderRadius.circular(AppRadius.lg),
+        borderRadius: BorderRadius.circular(AppRadius.md),
         child: InkWell(
-          borderRadius: BorderRadius.circular(AppRadius.lg),
+          borderRadius: BorderRadius.circular(AppRadius.md),
           onTap: onTap,
           child: SizedBox(
             height: compact

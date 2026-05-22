@@ -114,7 +114,7 @@ void main() {
     final context = tester.element(find.text('资料库'));
     final selectedColor = Theme.of(
       context,
-    ).colorScheme.primaryContainer.withValues(alpha: 0.8);
+    ).colorScheme.primaryContainer.withValues(alpha: 0.5);
     final selectedMaterials = tester.widgetList<Material>(
       find.ancestor(of: find.text('资料库'), matching: find.byType(Material)),
     );
