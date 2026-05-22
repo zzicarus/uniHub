@@ -226,8 +226,9 @@ class _MobileSearchBox extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
         decoration: BoxDecoration(
           color: colorScheme.surface,
-          borderRadius: BorderRadius.circular(AppRadius.md),
-          border: Border.all(color: colorScheme.outline),
+          borderRadius: BorderRadius.circular(AppRadius.xl),
+          border: Border.all(color: colorScheme.outlineVariant.withValues(alpha: 0.25)),
+          boxShadow: const [AppShadows.cardSoft],
         ),
         child: Row(
           children: [
@@ -309,6 +310,7 @@ class _MobileQuickCaptureCardState
         decoration: BoxDecoration(
           color: colorScheme.surface,
           borderRadius: BorderRadius.circular(AppRadius.xl),
+          border: Border.all(color: colorScheme.outlineVariant.withValues(alpha: 0.25)),
           boxShadow: const [AppShadows.cardSoft],
         ),
         child: Padding(
@@ -458,6 +460,7 @@ class _MobileFocusCard extends StatelessWidget {
       child: DecoratedBox(
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(AppRadius.xl),
+          border: Border.all(color: Theme.of(context).colorScheme.outlineVariant.withValues(alpha: 0.25)),
           boxShadow: const [AppShadows.cardSoft],
         ),
         child: Padding(
@@ -562,6 +565,7 @@ class _MobileThoughtLine extends StatelessWidget {
         decoration: BoxDecoration(
           color: colorScheme.surface,
           borderRadius: BorderRadius.circular(AppRadius.xl),
+          border: Border.all(color: colorScheme.outlineVariant.withValues(alpha: 0.25)),
           boxShadow: const [AppShadows.cardSoft],
         ),
         child: InkWell(
@@ -711,6 +715,7 @@ class _MobileShortcutCard extends StatelessWidget {
       child: DecoratedBox(
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(AppRadius.xl),
+          border: Border.all(color: Theme.of(context).colorScheme.outlineVariant.withValues(alpha: 0.25)),
           boxShadow: const [AppShadows.cardSoft],
         ),
         child: InkWell(

@@ -112,6 +112,7 @@ class _SearchBox extends StatelessWidget {
           decoration: BoxDecoration(
             color: colorScheme.surface,
             borderRadius: BorderRadius.circular(AppRadius.xl),
+            border: Border.all(color: colorScheme.outlineVariant.withValues(alpha: 0.25)),
             boxShadow: const [AppShadows.cardSoft],
           ),
           padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
@@ -150,6 +151,7 @@ class _NotificationButton extends StatelessWidget {
           decoration: BoxDecoration(
             color: colorScheme.surface,
             borderRadius: BorderRadius.circular(AppRadius.lg),
+            border: Border.all(color: colorScheme.outlineVariant.withValues(alpha: 0.25)),
             boxShadow: const [AppShadows.cardSoft],
           ),
           child: Icon(

@@ -152,6 +152,7 @@ class _Panel extends StatelessWidget {
         decoration: BoxDecoration(
           color: colorScheme.surface,
           borderRadius: BorderRadius.circular(AppRadius.xl),
+          border: Border.all(color: colorScheme.outlineVariant.withValues(alpha: 0.25)),
           boxShadow: const [AppShadows.cardSoft],
         ),
         child: Padding(padding: padding, child: child),
@@ -243,6 +244,7 @@ class _MetricCard extends StatelessWidget {
         decoration: BoxDecoration(
           color: theme.colorScheme.surface,
           borderRadius: BorderRadius.circular(AppRadius.xl),
+          border: Border.all(color: theme.colorScheme.outlineVariant.withValues(alpha: 0.25)),
           boxShadow: const [AppShadows.cardSoft],
         ),
         child: Padding(
@@ -303,6 +305,7 @@ class _ThoughtPreviewCard extends StatelessWidget {
       child: DecoratedBox(
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(AppRadius.xl),
+          border: Border.all(color: colorScheme.outlineVariant.withValues(alpha: 0.25)),
           boxShadow: const [AppShadows.cardSoft],
         ),
         child: InkWell(
@@ -405,6 +408,7 @@ class _ShortcutCard extends StatelessWidget {
       child: DecoratedBox(
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(AppRadius.xl),
+          border: Border.all(color: colorScheme.outlineVariant.withValues(alpha: 0.25)),
           boxShadow: const [AppShadows.cardSoft],
         ),
         child: InkWell(
