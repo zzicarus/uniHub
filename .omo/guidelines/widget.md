@@ -564,6 +564,103 @@ Material(
 
 ---
 
+## Layout Overflow 预防
+
+禁止 GridView/ListView 卡片内容溢出（"RenderFlex overflowed"）。以下规则必须遵守：
+
+### 1. GridView childAspectRatio 内容验证公式
+
+每次使用 `childAspectRatio` 时，先做数学验证：
+
+```
+cellHeight = cellWidth / aspectRatio
+contentAvailable = cellHeight - 卡片垂直padding总和
+Assert: contentAvailable ≥ 所有固定尺寸子组件高度之和
+```
+
+**示例**：桌面端 `_ShortcutGrid` 中 `childAspectRatio: 1.6`，卡片 padding `vertical: 12`：
+- 网格宽度 132px → `cellHeight = 132 / 1.6 ≈ 82.5px`
+- 可用内容高度 = `82.5 - 24(padding) ≈ 58.5px`
+- 内容（icon 42 + spacing 8 + text ~20）≈ 70px ❌ → **调整 spacing 或 icon 尺寸，或降低 aspectRatio 使单元格变高**
+
+### 2. 固定尺寸组件必须缩放到适配
+
+卡片内的图标、头像、间距等固定尺寸组件必须能适应最小单元格。规则：
+
+| 场景 | 建议最大尺寸 | 替代方案 |
+|------|------------|---------|
+| GridView 卡片内的图标气泡 | 36px | 更紧凑时用 28-32px |
+| GridView 卡片内的间距 | `AppSpacing.xxs(4)` | 不用超过 `AppSpacing.xs(8)` |
+| Row/Column 中的文本 | `Flexible` 包裹 | 不使用固定 SizedBox 装文本 |
+
+### 3. 使用 Flexible 包裹文本做溢出保护
+
+任何出现在固定约束空间内的文本，必须用 `Flexible` 或 `Expanded` 包裹：
+
+```dart
+// ✅ 正确：Flexible 允许文本在空间不足时自动收缩
+Column(
+  children: [
+    Icon(...),
+    SizedBox(height: AppSpacing.xxs),
+    Flexible(
+      child: Text(
+        title,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,  // 必须有
+      ),
+    ),
+  ],
+)
+
+// ❌ 错误：文本被抛出约束，导致 RenderFlex overflow
+Column(
+  children: [
+    Icon(...),
+    Text(title),  // 无 Flexible，固定高度可能溢出
+  ],
+)
+```
+
+### 4. 固定尺寸内容用 FittedBox 安全缩放
+
+当图标/装饰需要保持比例但又必须匹配空间时，使用 `FittedBox` + `overflow: TextOverflow.ellipsis`：
+
+```dart
+// ✅ 安全：FittedBox 缩放内容到可用空间
+FittedBox(
+  fit: BoxFit.scaleDown,
+  child: Row(
+    mainAxisSize: MainAxisSize.min,
+    children: [
+      Icon(icon, size: 24),
+      SizedBox(width: 4),
+      Text(label),
+    ],
+  ),
+)
+```
+
+### 5. 每次修改卡片布局后的验证步骤
+
+| # | 检查项 | 方法 |
+|---|--------|------|
+| 1 | `flutter analyze` 通过 | 0 error 0 warning |
+| 2 | 在最小布局宽度下测试 UI | Desktop 卡片最小列宽 ≈ 108px |
+| 3 | 确认无黄色/黑色溢出条纹 | Debug mode 目视检查 |
+| 4 | `childAspectRatio` 重新验证 | 用上述公式重新计算内容是否仍适配 |
+
+### 6. 禁止的溢出修复方式
+
+| 禁止的做法 | 原因 | 正确做法 |
+|-----------|------|---------|
+| 给溢出 Column/Row 加 `overflow: ...` | 仅裁剪视觉，实际约束冲突仍在 | 缩小固定内容尺寸或用 Flexible |
+| 增加 `clipBehavior: Clip.hardEdge` | 隐藏问题而非解决 | 重新计算内容 vs 容器大小 |
+| 无依据地降低 `childAspectRatio` | 可能让其他卡片变得过高 | 先验证固定内容的必要尺寸，再做调整 |
+
+
+---
+
 ## ColorScheme vs AppTokens 决策树
 
 ```

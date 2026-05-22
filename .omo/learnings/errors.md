@@ -2,6 +2,28 @@
 
 > agent 在运行过程中遇到的错误记录于此，避免重复犯错。
 
+## 2026-05-22: GridView childAspectRatio 导致卡片内容溢出
+
+**场景**：Desktop 首页 `_ShortcutCard` 在 GridView 中产生 `A RenderFlex overflowed by 11 pixels on the bottom`。Column 约束为 w=108.6, h=58.8（由 `childAspectRatio: 1.6` 推导），而内容高度约 70px（icon 42px + spacing 8px + text ~20px）。
+
+**根因**：`GridView.builder` 的 `childAspectRatio: 1.6` 决定了每个网格项的高宽比，但卡片内部使用了固定尺寸的子组件（`AppIconBubble(size: 42)`、`SizedBox(height: 8)`），导致：
+- 网格项高度 = 宽度 / 1.6
+- 减去卡片 padding 后，可用空间不足容纳固定内容
+- 修改卡片布局时，常增大图标/间距但没有同步调整 aspectRatio，造成重复溢出
+
+**修复**：
+1. 将 `AppIconBubble` 的 `size` 从 42 降到 30、`iconSize` 从 22 降到 16
+2. 将 `SizedBox` 间距从 `xs(8)` 缩到 `xxs(4)`
+3. 将 `Text` 包裹在 `Flexible` 中，让文本能在空间不足时自动收缩
+4. 总内容高度约 54px，可安全放入 58.8px
+
+**避免**（强制检查清单）：
+1. 使用 `childAspectRatio` 时，先根据网格宽度和 padding 推算出可用内容高度
+2. 用公式验证：`cellHeight = cellWidth / aspectRatio` → `contentAvailable = cellHeight - padding` → `contentAvailable ≥ totalContentHeight`
+3. 对文本类子组件始终使用 `Flexible`/`Expanded` 包裹，不要假设文本一定适配套件大小
+4. 卡片内固定尺寸组件（图标、头像、装饰框）优先用较小的 Token（`AppSizes`），不要超 36px 除非有明显设计理由
+5. 修改卡片布局后，在最小容器宽度（约 108px — 对应 6 列快捷入口）下验证是否溢出
+
 ## 格式
 
 每条记录包含：
