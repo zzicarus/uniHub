@@ -357,18 +357,20 @@ class _ShortcutCard extends StatelessWidget {
             icon: icon,
             color: color,
             background: background,
-            size: 42,
-            iconSize: 22,
+            size: 30,
+            iconSize: 16,
             shape: BoxShape.rectangle,
             radius: AppRadius.lg,
           ),
-          const SizedBox(height: AppSpacing.xs),
-          Text(
-            title,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: theme.textTheme.labelLarge?.copyWith(
-              fontWeight: FontWeight.w800,
+          const SizedBox(height: AppSpacing.xxs),
+          Flexible(
+            child: Text(
+              title,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: theme.textTheme.labelLarge?.copyWith(
+                fontWeight: FontWeight.w800,
+              ),
             ),
           ),
         ],
