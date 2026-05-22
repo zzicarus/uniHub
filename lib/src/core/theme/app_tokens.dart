@@ -24,14 +24,14 @@ abstract final class AppColors {
 }
 
 abstract final class AppFonts {
-  static const decorative = 'LXGW WenKai Screen';
-  static const fallback = <String>[
-    'Roboto',
-    'Segoe UI',
-    'PingFang SC',
-    'Microsoft YaHei',
-    'Noto Sans CJK SC',
-  ];
+  /// Primary Latin / UI font — used as the default for all text.
+  static const sansLatin = 'Inter';
+
+  /// CJK fallback font — renders Chinese characters that Inter does not cover.
+  static const sansCJK = 'Noto Sans SC';
+
+  /// Monospace font for code, commands, and paths.
+  static const mono = 'JetBrains Mono';
 }
 
 abstract final class AppSpacing {

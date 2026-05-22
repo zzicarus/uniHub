@@ -148,33 +148,31 @@ void main() {
   });
 
   group('AppFonts', () {
-    test('decorative is a non-null String', () {
-      expect(AppFonts.decorative, isA<String>());
-      expect(AppFonts.decorative, isNotNull);
+    test('sansLatin is a non-null String', () {
+      expect(AppFonts.sansLatin, isA<String>());
+      expect(AppFonts.sansLatin, isNotNull);
     });
 
-    test('decorative has the expected font family value', () {
-      expect(AppFonts.decorative, equals('LXGW WenKai Screen'));
+    test('sansLatin has the expected font family value', () {
+      expect(AppFonts.sansLatin, equals('Inter'));
     });
 
-    test('fallback is a non-null List<String>', () {
-      expect(AppFonts.fallback, isA<List<String>>());
-      expect(AppFonts.fallback, isNotNull);
+    test('sansCJK is a non-null String', () {
+      expect(AppFonts.sansCJK, isA<String>());
+      expect(AppFonts.sansCJK, isNotNull);
     });
 
-    test('fallback contains Roboto as first entry', () {
-      expect(AppFonts.fallback.first, equals('Roboto'));
+    test('sansCJK has the expected font family value', () {
+      expect(AppFonts.sansCJK, equals('Noto Sans SC'));
     });
 
-    test('fallback contains expected font families', () {
-      expect(AppFonts.fallback, contains('Segoe UI'));
-      expect(AppFonts.fallback, contains('PingFang SC'));
-      expect(AppFonts.fallback, contains('Microsoft YaHei'));
-      expect(AppFonts.fallback, contains('Noto Sans CJK SC'));
+    test('mono is a non-null String', () {
+      expect(AppFonts.mono, isA<String>());
+      expect(AppFonts.mono, isNotNull);
     });
 
-    test('fallback has at least 5 font families', () {
-      expect(AppFonts.fallback.length, greaterThanOrEqualTo(5));
+    test('mono has the expected font family value', () {
+      expect(AppFonts.mono, equals('JetBrains Mono'));
     });
   });
 }
