@@ -59,7 +59,11 @@ class ThoughtsPlugin extends UniHubPlugin {
       path: '/thoughts/:id',
       name: RouteNames.thoughtEditor,
       builder: (context, state) {
-        final id = int.parse(state.pathParameters['id']!);
+        final idStr = state.pathParameters['id']!;
+        final id = int.tryParse(idStr);
+        if (id == null) {
+          return const ThoughtsListPage();
+        }
         return ThoughtsEditorPage(thoughtId: id);
       },
     ),
@@ -92,7 +96,7 @@ class ThoughtsPlugin extends UniHubPlugin {
             colorHex: t.color,
             isPinned: t.isPinned,
             createdAt: t.createdAt,
-            routePath: '/thoughts',
+            routePath: '/thoughts/${t.id}',
           ),
         )
         .toList();
@@ -116,7 +120,7 @@ class ThoughtsPlugin extends UniHubPlugin {
             colorHex: t.color,
             isPinned: true,
             createdAt: t.createdAt,
-            routePath: '/thoughts',
+            routePath: '/thoughts/${t.id}',
           ),
         )
         .toList();
@@ -149,7 +153,7 @@ class ThoughtsPlugin extends UniHubPlugin {
       colorHex: created.color,
       isPinned: created.isPinned,
       createdAt: created.createdAt,
-      routePath: '/thoughts',
+      routePath: '/thoughts/${created.id}',
     );
   }
 
