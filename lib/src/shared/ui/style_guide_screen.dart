@@ -104,6 +104,7 @@ class _FontSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
+    final colorScheme = Theme.of(context).colorScheme;
 
     return _Section(
       title: '字体策略',
@@ -113,26 +114,45 @@ class _FontSection extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Material 3 默认字体', style: textTheme.titleMedium),
+              Text('Inter + Noto Sans SC', style: textTheme.titleMedium),
               const SizedBox(height: AppSpacing.xs),
               Text(
-                '课程、活动、想法记录和表单正文继续使用 Flutter Material 平台默认字体。',
+                '英文 / 数字 / UI 标签使用 Inter，中文自动回退到 Noto Sans SC。'
+                '代码与路径使用 JetBrains Mono。',
                 style: textTheme.bodyMedium,
               ),
               const SizedBox(height: AppSpacing.md),
+              // Latin demo
               Text(
-                '霞鹜文楷屏幕阅读版',
-                style: textTheme.titleLarge?.copyWith(
-                  fontFamily: AppFonts.decorative,
-                  fontFamilyFallback: AppFonts.fallback,
+                'Inter — The quick brown fox jumps over the lazy dog.',
+                style: textTheme.bodyLarge?.copyWith(
+                  fontFamily: AppFonts.sansLatin,
                 ),
               ),
               const SizedBox(height: AppSpacing.xs),
+              // CJK demo
               Text(
-                '适合品牌短句、空状态标题和轻量情绪化文案，不用于大段正文和密集列表。',
+                'Noto Sans SC — 用中文记录每一天的想法和灵感。',
+                style: textTheme.bodyLarge?.copyWith(
+                  fontFamily: AppFonts.sansCJK,
+                ),
+              ),
+              const SizedBox(height: AppSpacing.xs),
+              // Mixed demo (Inter with CJK fallback)
+              Text(
+                '今天是 Friday, 计划完成 3 个 tasks。',
+                style: textTheme.bodyLarge?.copyWith(
+                  fontFamily: AppFonts.sansLatin,
+                  fontFamilyFallback: const [AppFonts.sansCJK],
+                ),
+              ),
+              const SizedBox(height: AppSpacing.md),
+              // Mono demo
+              Text(
+                'JetBrains Mono — const theme = Theme.of(context);',
                 style: textTheme.bodyMedium?.copyWith(
-                  fontFamily: AppFonts.decorative,
-                  fontFamilyFallback: AppFonts.fallback,
+                  fontFamily: AppFonts.mono,
+                  color: colorScheme.primary,
                 ),
               ),
             ],

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 import 'app_tokens.dart';
 
@@ -13,7 +14,8 @@ abstract final class AppTheme {
       colorScheme: colorScheme,
       scaffoldBackgroundColor: colorScheme.surface,
       canvasColor: colorScheme.surface,
-      fontFamilyFallback: AppFonts.fallback,
+      fontFamily: AppFonts.sansLatin,
+      fontFamilyFallback: const [AppFonts.sansCJK],
     );
 
     return base.copyWith(
@@ -156,7 +158,8 @@ abstract final class AppTheme {
       colorScheme: darkSeed,
       scaffoldBackgroundColor: darkSeed.surface,
       canvasColor: darkSeed.surface,
-      fontFamilyFallback: AppFonts.fallback,
+      fontFamily: AppFonts.sansLatin,
+      fontFamilyFallback: const [AppFonts.sansCJK],
     );
 
     return base.copyWith(
@@ -272,60 +275,73 @@ abstract final class AppTheme {
   }
 
   static TextTheme _textTheme(TextTheme base, ColorScheme colorScheme) {
-    return base.copyWith(
-      headlineMedium: TextStyle(
+    // Apply Inter as primary font via GoogleFonts, then customise colors/sizes.
+    // fontFamilyFallback is set per-style so CJK characters fall back to Noto Sans SC.
+    final interTheme = GoogleFonts.interTextTheme(base);
+
+    return interTheme.copyWith(
+      headlineMedium: interTheme.headlineMedium?.copyWith(
         color: colorScheme.onSurface,
         fontSize: 28,
         height: 1.29,
         fontWeight: FontWeight.w700,
+        fontFamilyFallback: const [AppFonts.sansCJK],
       ),
-      titleLarge: TextStyle(
+      titleLarge: interTheme.titleLarge?.copyWith(
         color: colorScheme.onSurface,
         fontSize: 22,
         height: 1.36,
         fontWeight: FontWeight.w700,
+        fontFamilyFallback: const [AppFonts.sansCJK],
       ),
-      titleMedium: TextStyle(
+      titleMedium: interTheme.titleMedium?.copyWith(
         color: colorScheme.onSurface,
         fontSize: 16,
         height: 1.5,
         fontWeight: FontWeight.w600,
+        fontFamilyFallback: const [AppFonts.sansCJK],
       ),
-      titleSmall: TextStyle(
+      titleSmall: interTheme.titleSmall?.copyWith(
         color: colorScheme.onSurface,
         fontSize: 14,
         height: 1.43,
         fontWeight: FontWeight.w600,
+        fontFamilyFallback: const [AppFonts.sansCJK],
       ),
-      bodyLarge: TextStyle(
+      bodyLarge: interTheme.bodyLarge?.copyWith(
         color: colorScheme.onSurface,
         fontSize: 16,
         height: 1.5,
         fontWeight: FontWeight.w400,
+        fontFamilyFallback: const [AppFonts.sansCJK],
       ),
-      bodyMedium: TextStyle(
+      bodyMedium: interTheme.bodyMedium?.copyWith(
         color: colorScheme.onSurfaceVariant,
         fontSize: 14,
         height: 1.57,
         fontWeight: FontWeight.w400,
+        fontFamilyFallback: const [AppFonts.sansCJK],
       ),
-      bodySmall: TextStyle(
+      bodySmall: interTheme.bodySmall?.copyWith(
         color: colorScheme.outline,
         fontSize: 12,
         height: 1.5,
         fontWeight: FontWeight.w400,
+        fontFamilyFallback: const [AppFonts.sansCJK],
       ),
-      labelLarge: TextStyle(
+      labelLarge: interTheme.labelLarge?.copyWith(
         color: colorScheme.onSurface,
         fontSize: 14,
         height: 1.43,
         fontWeight: FontWeight.w600,
+        fontFamilyFallback: const [AppFonts.sansCJK],
       ),
-      labelMedium: TextStyle(
+      labelMedium: interTheme.labelMedium?.copyWith(
         color: colorScheme.onSurfaceVariant,
         fontSize: 12,
         height: 1.33,
         fontWeight: FontWeight.w600,
+        fontFamilyFallback: const [AppFonts.sansCJK],
       ),
     );
   }
