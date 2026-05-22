@@ -69,6 +69,7 @@ abstract final class AppDesktopSizes {
   static const sidebarWidth = 286.0;
   static const rightRailWidth = 300.0;
   static const rightRailWideWidth = 320.0;
+  static const desktopContentMaxWidth = 1120.0;
   static const topBarHeight = 56.0;
   static const navItemHeight = 48.0;
   static const compactButtonHeight = 36.0;
@@ -94,9 +95,9 @@ abstract final class AppShadows {
     offset: Offset(0, 16),
   );
 
-  /// Soft card shadow for desktop cards — subtle, close to the surface.
+  /// Soft card shadow for dashboard cards — subtle but visible on light gray.
   static const cardSoft = BoxShadow(
-    color: Color(0x080F172A),
+    color: Color(0x0A0F172A),
     blurRadius: 24,
     offset: Offset(0, 8),
   );

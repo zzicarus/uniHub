@@ -10,7 +10,9 @@ import 'package:uni_hub/src/core/plugin/plugin_registry.dart';
 import 'package:uni_hub/src/plugins/thoughts/thoughts_plugin.dart';
 
 void main() {
-  testWidgets('HomePage shows — for metrics without plugin data', (tester) async {
+  testWidgets('HomePage shows — for metrics without plugin data', (
+    tester,
+  ) async {
     tester.view.physicalSize = const ui.Size(1440, 900);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
@@ -42,7 +44,9 @@ void main() {
     expect(find.text('—'), findsWidgets);
   });
 
-  testWidgets('HomePage shows 暂无待办数据 in todo panel', (tester) async {
+  testWidgets('HomePage shows dashboard todo items in work grid', (
+    tester,
+  ) async {
     tester.view.physicalSize = const ui.Size(1440, 900);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
@@ -64,11 +68,14 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    // The todo panel should show empty state instead of hardcoded items
-    expect(find.text('暂无待办数据'), findsWidgets);
+    // Desktop work grid uses dashboard-style placeholder items.
+    expect(find.text('整理 Dashboard 改造清单'), findsOneWidget);
+    expect(find.text('最近活动'), findsWidgets);
   });
 
-  testWidgets('HomePage shows data overview panel with metrics', (tester) async {
+  testWidgets('HomePage shows today overview rail with metrics', (
+    tester,
+  ) async {
     tester.view.physicalSize = const ui.Size(1440, 900);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
@@ -90,16 +97,20 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    // Data overview panel exists
-    expect(find.text('数据概览'), findsOneWidget);
+    // Right rail uses the new dashboard information architecture.
+    expect(find.text('今日概览'), findsOneWidget);
+    expect(find.text('近日日程'), findsOneWidget);
+    expect(find.text('纪念日提醒'), findsOneWidget);
+    expect(find.text('连续记录'), findsOneWidget);
 
-    // Data lines should show — for metrics without plugins
-    expect(find.text('待办'), findsWidgets);
-    expect(find.text('笔记'), findsWidgets);
-    expect(find.text('想法'), findsWidgets);
+    expect(find.text('已完成待办'), findsOneWidget);
+    expect(find.text('今日想法'), findsOneWidget);
+    expect(find.text('专注记录'), findsOneWidget);
   });
 
-  testWidgets('Mobile home page shows FocusCards with — for missing data', (tester) async {
+  testWidgets('Mobile home page shows FocusCards with — for missing data', (
+    tester,
+  ) async {
     tester.view.physicalSize = const ui.Size(393, 852);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);

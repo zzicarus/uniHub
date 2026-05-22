@@ -7,7 +7,6 @@ class _FocusGrid extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final colorScheme = Theme.of(context).colorScheme;
     final statsAsync = ref.watch(dashboardStatsProvider);
     final thoughtsCount =
         statsAsync.whenOrNull(
@@ -24,33 +23,33 @@ class _FocusGrid extends ConsumerWidget {
       _MetricCard(
         title: '今日待办',
         value: '—',
-        note: '待完成',
-        color: colorScheme.primary,
-        background: colorScheme.primaryContainer,
+        note: '2/6 已完成',
+        color: AppColors.primary,
+        background: AppColors.primarySoft,
         icon: Icons.fact_check_outlined,
       ),
       _MetricCard(
         title: '想法总数',
         value: '$thoughtsCount',
         note: '累计记录',
-        color: colorScheme.tertiary,
-        background: colorScheme.tertiaryContainer,
+        color: AppColors.purple,
+        background: AppColors.purpleSoft,
         icon: Icons.lightbulb_outline,
       ),
       _MetricCard(
         title: '本周笔记',
         value: '—',
         note: '较上周 +2',
-        color: colorScheme.secondary,
-        background: colorScheme.secondaryContainer,
+        color: AppColors.secondary,
+        background: AppColors.greenSoft,
         icon: Icons.description_outlined,
       ),
       _MetricCard(
         title: '纪念日',
         value: '—',
-        note: '即将到来',
-        color: colorScheme.error,
-        background: colorScheme.errorContainer,
+        note: '最近 1 天后',
+        color: AppColors.error,
+        background: AppColors.roseSoft,
         icon: Icons.event_available_outlined,
       ),
     ];
@@ -66,7 +65,7 @@ class _FocusGrid extends ConsumerWidget {
             crossAxisCount: columns,
             crossAxisSpacing: AppSpacing.md,
             mainAxisSpacing: AppSpacing.md,
-            childAspectRatio: columns == 4 ? 1.4 : 1.5,
+            childAspectRatio: columns == 4 ? 2.05 : 2.2,
           ),
           itemBuilder: (context, index) => metrics[index],
         );

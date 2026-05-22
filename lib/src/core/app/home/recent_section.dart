@@ -14,36 +14,46 @@ class _RecentThoughtsGrid extends ConsumerWidget {
       error: (error, stack) => _buildErrorState(context, ref, error),
       data: (items) {
         if (items.isEmpty) return _buildEmptyState(context);
-        return _buildDataGrid(context, items);
+        return _buildDataGrid(context, items.take(6).toList());
       },
     );
   }
 
   Widget _buildLoadingGrid(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    return Wrap(
-      spacing: AppSpacing.md,
-      runSpacing: AppSpacing.md,
-      children: List.generate(
-        4,
-        (_) => SizedBox(
-          width: 200,
-          height: 244,
-          child: Container(
-            decoration: BoxDecoration(
-              color: colorScheme.surfaceContainerHigh,
-              borderRadius: BorderRadius.circular(AppRadius.md),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final spacing = AppSpacing.md;
+        final columns = constraints.maxWidth >= 760 ? 3 : 1;
+        final cardWidth =
+            (constraints.maxWidth - (columns - 1) * spacing) / columns;
+        return Wrap(
+          spacing: spacing,
+          runSpacing: spacing,
+          children: List.generate(
+            columns,
+            (_) => SizedBox(
+              width: cardWidth,
+              height: 108,
+              child: AppPanel(
+                compact: true,
+                child: Center(
+                  child: CircularProgressIndicator(
+                    color: colorScheme.primary,
+                    strokeWidth: 2,
+                  ),
+                ),
+              ),
             ),
-            child: const Center(child: CircularProgressIndicator()),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 
   Widget _buildErrorState(BuildContext context, WidgetRef ref, Object error) {
     final colorScheme = Theme.of(context).colorScheme;
-    return _Panel(
+    return AppPanel(
       child: Padding(
         padding: const EdgeInsets.all(AppSpacing.xl),
         child: Column(
@@ -68,7 +78,7 @@ class _RecentThoughtsGrid extends ConsumerWidget {
 
   Widget _buildEmptyState(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    return _Panel(
+    return AppPanel(
       child: Center(
         child: Padding(
           padding: const EdgeInsets.all(AppSpacing.xxl),
@@ -99,12 +109,12 @@ class _RecentThoughtsGrid extends ConsumerWidget {
         final columns = constraints.maxWidth >= 760 ? 3 : 1;
         final cardWidth =
             (constraints.maxWidth - (columns - 1) * spacing) / columns;
-        const cardHeight = 104.0;
+        const cardHeight = 112.0;
 
         return Wrap(
           spacing: spacing,
           runSpacing: spacing,
-          children: items.map((item) {
+          children: items.take(3).map((item) {
             return SizedBox(
               width: cardWidth,
               height: cardHeight,
@@ -127,12 +137,12 @@ class _QuickAccessPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return _Panel(
+    return AppPanel(
       padding: const EdgeInsets.all(AppSpacing.lg),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const _SectionTitle(title: '快捷入口', icon: Icons.favorite_border),
+          const AppSectionHeader(title: '快捷入口', icon: Icons.bolt_outlined),
           const SizedBox(height: AppSpacing.md),
           _ShortcutGrid(onThoughtsTap: onThoughtsTap),
         ],
@@ -148,16 +158,16 @@ class _RecentThoughtsPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return _Panel(
+    return AppPanel(
       padding: const EdgeInsets.all(AppSpacing.lg),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _SectionTitle(
+          AppSectionHeader(
             title: '最近想法',
             icon: Icons.lightbulb_outline,
-            trailing: '查看全部',
-            onTap: onOpen,
+            trailingText: '查看全部',
+            onTrailingTap: onOpen,
           ),
           const SizedBox(height: AppSpacing.md),
           const _RecentThoughtsGrid(),
@@ -215,44 +225,44 @@ class _ShortcutGrid extends StatelessWidget {
         icon: Icons.add_rounded,
         title: '新建想法',
         subtitle: '快速记录想法',
-        color: colorScheme.primary,
-        background: colorScheme.primaryContainer,
+        color: AppColors.primary,
+        background: AppColors.primarySoft,
         onTap: onThoughtsTap,
       ),
       _ShortcutCard(
         icon: Icons.edit_rounded,
         title: '新建笔记',
         subtitle: '沉淀知识',
-        color: colorScheme.tertiary,
-        background: colorScheme.tertiaryContainer,
+        color: AppColors.purple,
+        background: AppColors.purpleSoft,
       ),
       _ShortcutCard(
         icon: Icons.check_box_outlined,
         title: '添加待办',
         subtitle: '管理任务',
-        color: colorScheme.secondary,
-        background: colorScheme.secondaryContainer,
+        color: AppColors.secondary,
+        background: AppColors.greenSoft,
       ),
       _ShortcutCard(
         icon: Icons.bookmark_border_rounded,
         title: '收藏内容',
         subtitle: '稍后查看',
-        color: colorScheme.error,
-        background: colorScheme.errorContainer,
+        color: AppColors.error,
+        background: AppColors.roseSoft,
       ),
       _ShortcutCard(
         icon: Icons.event_available_outlined,
         title: '新建日程',
         subtitle: '安排时间',
-        color: colorScheme.tertiary,
-        background: colorScheme.tertiaryContainer,
+        color: AppColors.accent,
+        background: AppColors.yellowSoft,
       ),
       _ShortcutCard(
         icon: Icons.more_horiz_rounded,
         title: '更多',
         subtitle: '查看入口',
         color: colorScheme.onSurfaceVariant,
-        background: colorScheme.surfaceContainerHigh,
+        background: AppColors.surfaceMuted,
       ),
     ];
     return LayoutBuilder(
@@ -266,7 +276,7 @@ class _ShortcutGrid extends StatelessWidget {
             crossAxisCount: columns,
             crossAxisSpacing: AppSpacing.md,
             mainAxisSpacing: AppSpacing.md,
-            childAspectRatio: 1.15,
+            childAspectRatio: 1.6,
           ),
           itemBuilder: (context, index) => items[index],
         );

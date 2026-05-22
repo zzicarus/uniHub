@@ -19,8 +19,12 @@ class Sidebar extends ConsumerWidget {
     return Container(
       width: AppDesktopSizes.sidebarWidth,
       decoration: BoxDecoration(
-        color: colorScheme.surfaceContainerLowest,
-        border: Border(right: BorderSide(color: colorScheme.outlineVariant.withValues(alpha: 0.5))),
+        color: AppColors.background,
+        border: Border(
+          right: BorderSide(
+            color: colorScheme.outlineVariant.withValues(alpha: 0.5),
+          ),
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -147,25 +151,15 @@ class _LogoMark extends StatelessWidget {
       width: 46,
       height: 46,
       decoration: BoxDecoration(
+        color: AppColors.primarySoft,
         borderRadius: BorderRadius.circular(AppRadius.lg),
-        boxShadow: [
-          BoxShadow(
-            color: colorScheme.primary.withValues(alpha: 0.18),
-            blurRadius: 18,
-            offset: const Offset(0, 8),
-          ),
-        ],
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [colorScheme.primaryContainer, colorScheme.primary],
-        ),
+        border: Border.all(color: colorScheme.primary.withValues(alpha: 0.12)),
       ),
       child: Center(
         child: Text(
           'U',
           style: TextStyle(
-            color: colorScheme.onPrimary,
+            color: colorScheme.primary,
             fontSize: 24,
             height: 1,
             fontWeight: FontWeight.w900,
@@ -185,13 +179,19 @@ class _UserTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: Colors.transparent,
-      borderRadius: BorderRadius.circular(AppRadius.md),
+      color: colorScheme.surface,
+      borderRadius: BorderRadius.circular(AppRadius.lg),
       child: InkWell(
-        borderRadius: BorderRadius.circular(AppRadius.md),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
         onTap: () {},
-        child: Padding(
+        child: Container(
           padding: const EdgeInsets.all(AppSpacing.sm),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(AppRadius.lg),
+            border: Border.all(
+              color: colorScheme.outlineVariant.withValues(alpha: 0.32),
+            ),
+          ),
           child: Row(
             children: [
               CircleAvatar(
@@ -380,13 +380,11 @@ class _NavItem extends StatelessWidget {
     final isEnabled = onTap != null;
     final colorScheme = theme.colorScheme;
     final foreground = isSelected
-        ? colorScheme.primary
+        ? AppColors.primary
         : isEnabled
-        ? colorScheme.onSurfaceVariant
+        ? colorScheme.onSurfaceVariant.withValues(alpha: 0.82)
         : colorScheme.outline;
-    final bgColor = isSelected
-        ? colorScheme.primaryContainer.withValues(alpha: 0.5)
-        : Colors.transparent;
+    final bgColor = isSelected ? AppColors.primarySoft : Colors.transparent;
 
     return Padding(
       padding: EdgeInsets.symmetric(
@@ -415,7 +413,9 @@ class _NavItem extends StatelessWidget {
                       style: theme.textTheme.titleSmall?.copyWith(
                         color: foreground,
                         fontSize: compact ? 13 : 15,
-                        fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                        fontWeight: isSelected
+                            ? FontWeight.w800
+                            : FontWeight.w500,
                       ),
                       overflow: TextOverflow.ellipsis,
                     ),

@@ -1,3 +1,5 @@
+import 'dart:ui' as ui;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -6,6 +8,7 @@ import 'package:uni_hub/src/core/plugin/plugin_interface.dart';
 import 'package:uni_hub/src/core/plugin/plugin_registry.dart';
 import 'package:uni_hub/src/core/router/route_names.dart';
 import 'package:uni_hub/src/shared/widgets/sidebar.dart';
+import 'package:uni_hub/src/core/theme/app_tokens.dart';
 
 void main() {
   PluginRegistry registryWithPluginNav() {
@@ -77,6 +80,11 @@ void main() {
     WidgetTester tester, {
     String initialLocation = '/',
   }) async {
+    tester.view.physicalSize = const ui.Size(1440, 900);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
@@ -111,10 +119,7 @@ void main() {
   testWidgets('active item uses selected highlight color', (tester) async {
     await pumpSidebar(tester, initialLocation: '/library');
 
-    final context = tester.element(find.text('资料库'));
-    final selectedColor = Theme.of(
-      context,
-    ).colorScheme.primaryContainer.withValues(alpha: 0.5);
+    const selectedColor = AppColors.primarySoft;
     final selectedMaterials = tester.widgetList<Material>(
       find.ancestor(of: find.text('资料库'), matching: find.byType(Material)),
     );
