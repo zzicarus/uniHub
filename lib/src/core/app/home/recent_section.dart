@@ -184,7 +184,7 @@ class _HomeWorkGrid extends StatelessWidget {
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        final isTwoColumn = constraints.maxWidth >= 720;
+        final isTwoColumn = constraints.maxWidth >= AppBreakpoints.tabletMin;
         final children = const [_TodoPanel(), _ActivityPanel()];
         if (!isTwoColumn) {
           return const Column(

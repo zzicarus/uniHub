@@ -76,7 +76,8 @@ void main() {
   testWidgets('HomePage shows today overview rail with metrics', (
     tester,
   ) async {
-    tester.view.physicalSize = const ui.Size(1440, 900);
+    // 1600px: content area after sidebar (286px) = 1314px ≥ wideMin=1280
+    tester.view.physicalSize = const ui.Size(1600, 900);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);

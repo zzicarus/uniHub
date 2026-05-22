@@ -3,9 +3,9 @@ import 'package:flutter/material.dart';
 enum WindowSize { compact, medium, expanded }
 
 abstract final class AppBreakpoints {
-  static const double mobileMax = 719;
-  static const double tabletMin = 720;
-  static const double wideMin = 1120;
+  static const double mobileMax = 899;
+  static const double tabletMin = 900;
+  static const double wideMin = 1280;
 
   static bool isCompact(BuildContext context) =>
       MediaQuery.of(context).size.width < tabletMin;
