@@ -17,68 +17,50 @@ class HomePage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final colorScheme = Theme.of(context).colorScheme;
     return Scaffold(
-      backgroundColor: colorScheme.surfaceContainerLowest,
-      body: DecoratedBox(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              colorScheme.primaryContainer.withValues(alpha: 0.18),
-              colorScheme.surfaceContainerLowest,
-              colorScheme.tertiaryContainer.withValues(alpha: 0.10),
-            ],
-            stops: const [0.0, 0.48, 1.0],
-          ),
-        ),
-        child: SafeArea(
-          child: LayoutBuilder(
-            builder: (context, constraints) {
-              if (constraints.maxWidth < AppBreakpoints.tabletMin) {
-                return const _MobileHomeView();
-              }
-              final isWide = constraints.maxWidth >= AppBreakpoints.wideMin;
-              return Row(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Expanded(
-                    child: SingleChildScrollView(
-                      padding: const EdgeInsets.fromLTRB(
-                        AppSpacing.xxl,
-                        AppSpacing.xxl,
-                        AppSpacing.xxl,
-                        AppSpacing.section,
-                      ),
-                      child: ConstrainedBox(
-                        constraints: const BoxConstraints(maxWidth: 1080),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const _HomeHeader(),
-                            const SizedBox(height: AppSpacing.xxl),
-                            const _FocusGrid(),
-                            const SizedBox(height: AppSpacing.lg),
-                            _QuickAccessPanel(
-                              onThoughtsTap: () => context.go('/thoughts'),
-                            ),
-                            const SizedBox(height: AppSpacing.lg),
-                            _RecentThoughtsPanel(
-                              onOpen: () => context.go('/thoughts'),
-                            ),
-                            const SizedBox(height: AppSpacing.lg),
-                            const _HomeWorkGrid(),
-                          ],
-                        ),
+      backgroundColor: AppColors.background,
+      body: SafeArea(
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            if (constraints.maxWidth < AppBreakpoints.tabletMin) {
+              return const _MobileHomeView();
+            }
+
+            final isWide = constraints.maxWidth >= AppBreakpoints.wideMin;
+
+            return Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Expanded(
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.fromLTRB(28, 28, 28, 36),
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 980),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const _HomeHeader(),
+                          const SizedBox(height: 28),
+                          const _FocusGrid(),
+                          const SizedBox(height: 18),
+                          _QuickAccessPanel(
+                            onThoughtsTap: () => context.go('/thoughts'),
+                          ),
+                          const SizedBox(height: 18),
+                          _RecentThoughtsPanel(
+                            onOpen: () => context.go('/thoughts'),
+                          ),
+                          const SizedBox(height: 18),
+                          const _HomeWorkGrid(),
+                        ],
                       ),
                     ),
                   ),
-                  if (isWide) const _HomeRightRail(),
-                ],
-              );
-            },
-          ),
+                ),
+                if (isWide) const _HomeRightRail(),
+              ],
+            );
+          },
         ),
       ),
     );
@@ -175,13 +157,13 @@ class _IconBubble extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 52,
-      height: 52,
+      width: 58,
+      height: 58,
       decoration: BoxDecoration(
         color: background,
-        borderRadius: BorderRadius.circular(AppRadius.lg),
+        shape: BoxShape.circle,
       ),
-      child: Icon(icon, color: color, size: 26),
+      child: Icon(icon, color: color, size: 28),
     );
   }
 }
@@ -236,46 +218,41 @@ class _MetricCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return Material(
-      color: theme.colorScheme.surface,
-      borderRadius: BorderRadius.circular(AppRadius.xl),
-      elevation: 0,
-      child: DecoratedBox(
-        decoration: BoxDecoration(
-          color: theme.colorScheme.surface,
-          borderRadius: BorderRadius.circular(AppRadius.xl),
-          border: Border.all(color: theme.colorScheme.outlineVariant.withValues(alpha: 0.25)),
-          boxShadow: const [AppShadows.cardSoft],
-        ),
-        child: Padding(
-          padding: const EdgeInsets.all(AppSpacing.lg),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Container(
-                width: 52,
-                height: 52,
-                decoration: BoxDecoration(
-                  color: background,
-                  borderRadius: BorderRadius.circular(AppRadius.lg),
-                ),
-                child: Icon(icon, color: color, size: 26),
-              ),
-              const SizedBox(height: AppSpacing.md),
-              Text(title, style: theme.textTheme.labelLarge),
-              const SizedBox(height: AppSpacing.xxs),
-              Text(
-                value,
-                style: theme.textTheme.headlineMedium?.copyWith(
-                  fontSize: 28,
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
-              Text(note, style: theme.textTheme.bodySmall),
-            ],
+
+    return _Panel(
+      padding: const EdgeInsets.all(20),
+      child: Row(
+        children: [
+          Container(
+            width: 58,
+            height: 58,
+            decoration: BoxDecoration(
+              color: background,
+              shape: BoxShape.circle,
+            ),
+            child: Icon(icon, color: color, size: 28),
           ),
-        ),
+          const SizedBox(width: 18),
+          Expanded(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(title, style: theme.textTheme.labelLarge),
+                const SizedBox(height: 6),
+                Text(
+                  value,
+                  style: theme.textTheme.headlineMedium?.copyWith(
+                    fontSize: 26,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(note, style: theme.textTheme.bodySmall),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }

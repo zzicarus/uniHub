@@ -13,8 +13,8 @@ class _HomeHeader extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         Container(
-          width: 60,
-          height: 60,
+          width: 64,
+          height: 64,
           decoration: BoxDecoration(
             gradient: LinearGradient(
               begin: Alignment.topLeft,
@@ -107,7 +107,7 @@ class _SearchBox extends StatelessWidget {
           ).showSnackBar(const SnackBar(content: Text('全局搜索即将上线')));
         },
         child: Container(
-          width: 360,
+          width: 400,
           height: 48,
           decoration: BoxDecoration(
             color: colorScheme.surface,
