@@ -66,6 +66,17 @@ main()
 
 > 本 section 由 sync-knowledge 自动管理，按时间倒序追加。
 
+### 2026-05-22: 全局视觉风格改造（卡片去边框 + 大圆角 + 柔和阴影）
+- **app_tokens.dart** — `AppShadows` 全部柔化：`cardSoft` blur 8→16、`card` blur 24→32、`cardElevated` blur 16→24，透明度降低（弥散漂浮感）
+- **app_theme.dart** — `CardTheme` 圆角 16→20px（`AppRadius.lg`→`AppRadius.xl`），移除边框 `side`，elevation 设为 0（阴影由各组件自行控制）
+- **desktop_shell.dart** — 背景色改为 `surfaceContainerLowest`（更柔和的浅色背景）
+- **home_page.dart** — `_Panel`、`_MetricCard`、`_ShortcutCard`、`_ThoughtPreviewCard`、`_IconBubble` 统一去边框、圆角改为 `AppRadius.xl`(20px)、使用 `AppShadows.cardSoft` 弥散阴影
+- **home/header.dart** — `_SearchBox` 圆角改为 `AppRadius.xl`(20px)、移除边框；`_NotificationButton` 圆角改为 `AppRadius.lg`(16px)、移除边框
+- **home/right_rail.dart** — 分隔线透明度减半（`alpha: 0.5`）
+- **home/mobile_home.dart** — `_MobileQuickCaptureCard`、`_MobileFocusCard`、`_MobileThoughtLine`、`_MobileShortcutCard` 同步改造：去边框、`AppRadius.xl`(20px)、`AppShadows.cardSoft`
+- **home/focus_section.dart** — 统计卡片网格改用 `SliverGridDelegateWithFixedCrossAxisCount`，纵横比 `childAspectRatio: 0.85`（4 列）/ `1.1`（2 列），适应纵向布局
+- **统计卡片** `_MetricCard` 从横向 `Row`（图标左，文字右）改为纵向 `Column`（图标在上，标题/数值/副标题垂直排列），图标容器增大至 52×52
+
 ### 2026-05-22: P1-1/P1-2 插件数据库与生命周期修复
 - **AppDatabase** 现在接收 `PluginRegistry`，`schemaVersion` 动态计算（取所有插件版本的最大值），构造函数增加 debug 模式断言验证插件表与集中注册表一致性
 - **main.dart** 启动序列改为 `async main()`，在 `runApp()` 之前调用 `registry.initAll()`，使用 `overrideWithValue` 传递已初始化的 registry

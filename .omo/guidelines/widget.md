@@ -399,6 +399,126 @@ MaterialApp.router(
 
 ---
 
+## UI Pattern: Borderless Cards with Soft Shadow
+
+**What**: 当前全局卡片风格已从「细边框 + 微弱阴影」迁移至「无边框 + 弥散阴影」模式。所有卡片组件统一使用 `Material` + `DecoratedBox` 组合，通过 `AppShadows.cardSoft` 实现漂浮感。
+
+**Why**: 移除边框减少视觉噪音，让内容层级通过阴影深度区分，营造更干净通透的界面效果。
+
+### 标准卡片模板
+
+```dart
+Material(
+  color: colorScheme.surface,
+  borderRadius: BorderRadius.circular(AppRadius.xl),  // 20px
+  elevation: 0,
+  child: DecoratedBox(
+    decoration: BoxDecoration(
+      color: colorScheme.surface,
+      borderRadius: BorderRadius.circular(AppRadius.xl),
+      boxShadow: const [AppShadows.cardSoft],
+    ),
+    child: Padding(
+      padding: const EdgeInsets.all(AppSpacing.lg),
+      child: /* 内容 */,
+    ),
+  ),
+);
+```
+
+### 可交互卡片（InkWell + 阴影）
+
+```dart
+Material(
+  color: colorScheme.surface,
+  borderRadius: BorderRadius.circular(AppRadius.xl),
+  elevation: 0,
+  child: DecoratedBox(
+    decoration: BoxDecoration(
+      borderRadius: BorderRadius.circular(AppRadius.xl),
+      boxShadow: const [AppShadows.cardSoft],
+    ),
+    child: InkWell(
+      borderRadius: BorderRadius.circular(AppRadius.xl),
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.all(AppSpacing.md),
+        child: /* 内容 */,
+      ),
+    ),
+  ),
+);
+```
+
+### 统计卡片（Metric Card）
+
+统计卡片使用纵向（`Column`）布局，图标在上，数值/副标题依次排列：
+
+```dart
+Material(
+  color: colorScheme.surface,
+  borderRadius: BorderRadius.circular(AppRadius.xl),
+  elevation: 0,
+  child: DecoratedBox(
+    decoration: BoxDecoration(
+      color: colorScheme.surface,
+      borderRadius: BorderRadius.circular(AppRadius.xl),
+      boxShadow: const [AppShadows.cardSoft],
+    ),
+    child: Padding(
+      padding: const EdgeInsets.all(AppSpacing.lg),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          // 大图标在上（52×52）
+          Container(
+            width: 52,
+            height: 52,
+            decoration: BoxDecoration(
+              color: background,
+              borderRadius: BorderRadius.circular(AppRadius.lg),
+            ),
+            child: Icon(icon, color: color, size: 26),
+          ),
+          const SizedBox(height: AppSpacing.md),
+          Text(title, style: theme.textTheme.labelLarge),
+          const SizedBox(height: AppSpacing.xxs),
+          Text(
+            value,
+            style: theme.textTheme.headlineMedium?.copyWith(
+              fontSize: 28,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          Text(note, style: theme.textTheme.bodySmall),
+        ],
+      ),
+    ),
+  ),
+);
+```
+
+### 阴影系统
+
+阴影定义在 `app_tokens.dart` 中，全表如下：
+
+| Token | blurRadius | offset | 透明度 | 用途 |
+|-------|-----------|--------|--------|------|
+| `AppShadows.cardSoft` | 16px | (0, 4) | 2%（浅色） | 默认卡片、面板 |
+| `AppShadows.cardElevated` | 24px | (0, 8) | 3%（浅色） | 悬停/交互态 |
+| `AppShadows.card` | 32px | (0, 16) | 3%（浅色） | 浮动元素、弹窗 |
+
+> 暗色模式下阴影透明度相应提高（`alpha: 0.15`），保持层次感。
+
+### 可接受的使用差异
+
+- 最小圆角变体：对于紧凑场景（侧栏选中态等）可使用 `AppRadius.lg`(16px)
+- 无阴影变体：非浮层表面（面板内部元素）可以不设 `boxShadow`
+- **禁止**：恢复卡片边框 `Border.all(color: outlineVariant)`（除非有强语义理由）
+
+---
+
 ## ColorScheme vs AppTokens 决策树
 
 ```
