@@ -399,11 +399,53 @@ MaterialApp.router(
 
 ---
 
-## UI Pattern: Borderless Cards with Soft Shadow
+## 配色系统
 
-**What**: 当前全局卡片风格已从「细边框 + 微弱阴影」迁移至「无边框 + 弥散阴影」模式。所有卡片组件统一使用 `Material` + `DecoratedBox` 组合，通过 `AppShadows.cardSoft` 实现漂浮感。
+### 种子色机制
 
-**Why**: 移除边框减少视觉噪音，让内容层级通过阴影深度区分，营造更干净通透的界面效果。
+整个配色由单一种子色驱动。Current: `Color(0xFF64B5F6)`（小清新蓝）。
+
+```
+app_tokens.dart: AppColors.primary = 0xFF64B5F6
+  └─ app_theme.dart: ColorScheme.fromSeed(seedColor: AppColors.primary)
+       └─ 自动生成: primary / secondary / tertiary / error / surface / outline 等
+            └─ 各组件通过 colorScheme.xxx 引用
+```
+
+**改动种子色即可全局换色**。修改 `app_tokens.dart:4` 的 hex 值后 `flutter run` 热重载即时生效。
+
+### AppColors 设计令牌
+
+`app_tokens.dart` 定义了三类颜色常量：
+
+| 类别 | 示例 | 数量 |
+|------|------|------|
+| 语义色 | `primary`, `secondary`, `error`, `success`, `warning` | 7 |
+| 表面色 | `background`, `surface`, `surfaceElevated`, `surfaceMuted`, `surfaceSubtle` | 5 |
+| 柔和变体 | `primarySoft`, `secondarySoft`, `blueSoft`, `greenSoft` 等 | 10+ |
+| 文字色 | `textPrimary`, `textSecondary`, `textTertiary` | 3 |
+| 边框色 | `border`, `borderSoft` | 2 |
+| 装饰色 | `purple`, `purpleSoft` | 2 |
+
+### 卡片与边框色值速查
+
+| 元素 | 边框值 | 阴影 |
+|------|--------|------|
+| 首页卡片 (Panel/Metric/Shortcut/Thought) | `outlineVariant` alpha 0.25 | `AppShadows.cardSoft` |
+| 移动端卡片 | `outlineVariant` alpha 0.25 | `AppShadows.cardSoft` |
+| 搜索框 / 通知按钮 | `outlineVariant` alpha 0.25 | `AppShadows.cardSoft` |
+| CardTheme 全局默认 | `outlineVariant` alpha 0.25 | shadow 0.06 |
+| 侧栏分隔线 / 右栏分隔线 | `outlineVariant` alpha 0.5 | — |
+| 全局 CardTheme 背景 | `surfaceContainerLow` | — |
+| 桌面框架背景 | `surfaceContainerLowest` | — |
+
+---
+
+## UI Pattern: Soft Shadow Cards with Subtle Border
+
+**What**: 卡片采用「弥散阴影 + 极淡边框」组合来实现漂浮感和区域界定。默认边框为 `outlineVariant.withValues(alpha: 0.25)`（极淡灰色），视觉上几乎无感但能确保卡片在浅色背景上边界清晰。框架分隔线（侧栏右边缘、右栏左边缘）使用 `outlineVariant.withValues(alpha: 0.5)`。
+
+**Why**: 弥散阴影提供深度层次，极淡边框在阴影不足的场景（密排列、移动端小屏）下保持区域辨识。设计意图是「漂浮但不模糊」——卡片之间靠边框轻微界定，靠阴影区分层级。
 
 ### 标准卡片模板
 
@@ -515,7 +557,10 @@ Material(
 
 - 最小圆角变体：对于紧凑场景（侧栏选中态等）可使用 `AppRadius.lg`(16px)
 - 无阴影变体：非浮层表面（面板内部元素）可以不设 `boxShadow`
-- **禁止**：恢复卡片边框 `Border.all(color: outlineVariant)`（除非有强语义理由）
+- 边框使用规则：
+  - 独立卡片（首页各面板、统计卡、快捷入口）：使用 `outlineVariant.withValues(alpha: 0.25)`
+  - 框架分隔线（侧栏、右栏边缘）：使用 `outlineVariant.withValues(alpha: 0.5)`（更明显但不到 1.0）
+  - **禁止**：使用全不透明边框 `alpha: 1.0` 的 `outlineVariant`——这会破坏通透感
 
 ---
 

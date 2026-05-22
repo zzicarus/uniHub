@@ -66,6 +66,15 @@ main()
 
 > 本 section 由 sync-knowledge 自动管理，按时间倒序追加。
 
+### 2026-05-22: 配色调整至蓝白色系 + 卡片边界恢复
+- **app_tokens.dart** — 种子色 `AppColors.primary` 从 `0xFF4F6BFF`（靛蓝）改为 `0xFF64B5F6`（浅蓝）；配套 `primaryDark`、`primarySoft`、`border` 等 30 个色彩常量同步调整；`AppShadows` 透明度保持低值
+- **app_theme.dart** — `CardTheme.side` 恢复为 `outlineVariant.withValues(alpha: 0.25)`（极淡边框）；亮/暗主题 seedColor 跟随新值
+- **home_page.dart** — `_Panel`、`_MetricCard`、`_ShortcutCard`、`_ThoughtPreviewCard` 全部恢复 `Border.all(color: outlineVariant.withValues(alpha: 0.25))`
+- **home/header.dart** — `_SearchBox`、`_NotificationButton` 恢复淡边框（alpha 0.25）
+- **home/mobile_home.dart** — 5 处移动端卡片同步恢复淡边框
+- **shared/widgets/sidebar.dart**、**home/right_rail.dart** — 分隔线透明度设为 `alpha: 0.5`
+- **设计原则**：由「无边框+阴影」改为「极淡边框(alpha 0.25)+弥散阴影」——漂浮但边界清晰
+
 ### 2026-05-22: 全局视觉风格改造（卡片去边框 + 大圆角 + 柔和阴影）
 - **app_tokens.dart** — `AppShadows` 全部柔化：`cardSoft` blur 8→16、`card` blur 24→32、`cardElevated` blur 16→24，透明度降低（弥散漂浮感）
 - **app_theme.dart** — `CardTheme` 圆角 16→20px（`AppRadius.lg`→`AppRadius.xl`），移除边框 `side`，elevation 设为 0（阴影由各组件自行控制）
