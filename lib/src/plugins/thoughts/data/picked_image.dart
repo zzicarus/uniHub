@@ -5,8 +5,5 @@ class PickedImage {
   final Uint8List bytes;
   final String extension;
 
-  const PickedImage({
-    required this.bytes,
-    required this.extension,
-  });
+  const PickedImage({required this.bytes, required this.extension});
 }

@@ -160,7 +160,7 @@ void main() {
 
     test('archive + tag filter', () async {
       container.read(archiveFilterProvider.notifier).state = true;
-      container.read(tagFilterProvider.notifier).state = 'work';
+      container.read(selectedTagFiltersProvider.notifier).state = {'work'};
 
       final thoughts = await container.read(thoughtsListProvider.future);
       expect(thoughts, hasLength(1));
@@ -171,7 +171,7 @@ void main() {
       container.read(archiveFilterProvider.notifier).state = false;
       container.read(thoughtStatusFilterProvider.notifier).state =
           ThoughtStatusFilter.pinned;
-      container.read(tagFilterProvider.notifier).state = 'work';
+      container.read(selectedTagFiltersProvider.notifier).state = {'work'};
       container.read(thoughtSearchQueryProvider.notifier).state = 'image';
 
       final thoughts = await container.read(thoughtsListProvider.future);
@@ -182,7 +182,7 @@ void main() {
     test('withImages + tag filter', () async {
       container.read(thoughtStatusFilterProvider.notifier).state =
           ThoughtStatusFilter.withImages;
-      container.read(tagFilterProvider.notifier).state = 'work';
+      container.read(selectedTagFiltersProvider.notifier).state = {'work'};
 
       final thoughts = await container.read(thoughtsListProvider.future);
       expect(thoughts, hasLength(1));
@@ -193,7 +193,7 @@ void main() {
       container.read(archiveFilterProvider.notifier).state = false;
       container.read(thoughtStatusFilterProvider.notifier).state =
           ThoughtStatusFilter.pinned;
-      container.read(tagFilterProvider.notifier).state = 'work';
+      container.read(selectedTagFiltersProvider.notifier).state = {'work'};
       container.read(thoughtSearchQueryProvider.notifier).state = 'nonexistent';
 
       final thoughts = await container.read(thoughtsListProvider.future);
@@ -254,7 +254,9 @@ void main() {
 
     test('pinnedThoughtsProvider ignores main content filters', () async {
       // Set restrictive filters on main content
-      container.read(tagFilterProvider.notifier).state = 'nonexistent';
+      container.read(selectedTagFiltersProvider.notifier).state = {
+        'nonexistent',
+      };
       container.read(thoughtSearchQueryProvider.notifier).state = 'no-match';
       container.read(thoughtStatusFilterProvider.notifier).state =
           ThoughtStatusFilter.pinned;
@@ -275,7 +277,9 @@ void main() {
     });
 
     test('randomReviewProvider ignores all filters', () async {
-      container.read(tagFilterProvider.notifier).state = 'nonexistent';
+      container.read(selectedTagFiltersProvider.notifier).state = {
+        'nonexistent',
+      };
       container.read(archiveFilterProvider.notifier).state = true;
       container.read(thoughtSearchQueryProvider.notifier).state = 'no-match';
 
@@ -290,9 +294,7 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           theme: ThemeData(useMaterial3: true),
-          home: Scaffold(
-            body: ThoughtStateTemplate.noThoughts(),
-          ),
+          home: Scaffold(body: ThoughtStateTemplate.noThoughts()),
         ),
       );
       await tester.pumpAndSettle();
@@ -305,9 +307,7 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           theme: ThemeData(useMaterial3: true),
-          home: Scaffold(
-            body: ThoughtStateTemplate.filterNoResults('work'),
-          ),
+          home: Scaffold(body: ThoughtStateTemplate.filterNoResults('work')),
         ),
       );
       await tester.pumpAndSettle();
@@ -319,9 +319,7 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           theme: ThemeData(useMaterial3: true),
-          home: Scaffold(
-            body: ThoughtStateTemplate.searchNoResults('xyz'),
-          ),
+          home: Scaffold(body: ThoughtStateTemplate.searchNoResults('xyz')),
         ),
       );
       await tester.pumpAndSettle();
@@ -334,9 +332,7 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           theme: ThemeData(useMaterial3: true),
-          home: Scaffold(
-            body: ThoughtStateTemplate.archiveEmpty(),
-          ),
+          home: Scaffold(body: ThoughtStateTemplate.archiveEmpty()),
         ),
       );
       await tester.pumpAndSettle();
@@ -454,8 +450,9 @@ void main() {
       expect(find.byIcon(Icons.archive_outlined), findsNothing);
     });
 
-    testWidgets('desktop card shows restore action for archived',
-        (tester) async {
+    testWidgets('desktop card shows restore action for archived', (
+      tester,
+    ) async {
       await tester.pumpWidget(
         MaterialApp(
           theme: ThemeData(useMaterial3: true),
@@ -494,11 +491,7 @@ void main() {
           ],
           child: MaterialApp(
             theme: ThemeData(useMaterial3: true),
-            home: Scaffold(
-              body: ThoughtsMobileLayout(
-                onThoughtTap: (_) {},
-              ),
-            ),
+            home: Scaffold(body: ThoughtsMobileLayout(onThoughtTap: (_) {})),
           ),
         ),
       );
@@ -513,14 +506,14 @@ void main() {
     // Note: Full ThoughtsPage widget tests are skipped because flutter_quill's
     // RichTextEditor causes rendering assertions in the test environment.
     // These scenarios are covered by manual QA and the existing integration tests.
-    testWidgets('composer renders with all controls', skip: true, (tester) async {
+    testWidgets('composer renders with all controls', skip: true, (
+      tester,
+    ) async {
       await tester.pumpWidget(
         ProviderScope(
           child: MaterialApp(
             theme: ThemeData(useMaterial3: true),
-            home: const Scaffold(
-              body: ThoughtsPage(),
-            ),
+            home: const Scaffold(body: ThoughtsPage()),
           ),
         ),
       );
@@ -626,8 +619,8 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(find.text('flutter'), findsOneWidget);
-      expect(find.text('dart'), findsOneWidget);
+      expect(find.text('#flutter'), findsOneWidget);
+      expect(find.text('#dart'), findsOneWidget);
     });
 
     testWidgets('card archive callback is triggered', (tester) async {
@@ -690,11 +683,7 @@ void main() {
       db = AppDatabase(NativeDatabase.memory(), registry);
       final now = DateTime.now();
 
-      await _insertThought(
-        db,
-        content: 'Active thought',
-        createdAt: now,
-      );
+      await _insertThought(db, content: 'Active thought', createdAt: now);
       await _insertThought(
         db,
         content: 'Archived thought',
@@ -788,17 +777,19 @@ Future<int> _insertThought(
   DateTime? archivedAt,
 }) {
   final timestamp = createdAt ?? DateTime.now();
-  return db.into(db.thoughtsTable).insert(
-    ThoughtsTableCompanion(
-      content: Value(content),
-      tags: Value(tags),
-      isPinned: Value(isPinned),
-      imagePaths: Value(imagePaths),
-      createdAt: Value(timestamp),
-      updatedAt: Value(timestamp),
-      archivedAt: Value(archivedAt),
-    ),
-  );
+  return db
+      .into(db.thoughtsTable)
+      .insert(
+        ThoughtsTableCompanion(
+          content: Value(content),
+          tags: Value(tags),
+          isPinned: Value(isPinned),
+          imagePaths: Value(imagePaths),
+          createdAt: Value(timestamp),
+          updatedAt: Value(timestamp),
+          archivedAt: Value(archivedAt),
+        ),
+      );
 }
 
 // Helper to compute WindowSize without BuildContext

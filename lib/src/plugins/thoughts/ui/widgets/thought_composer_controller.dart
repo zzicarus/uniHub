@@ -10,7 +10,9 @@ import '../../data/thought_image_service.dart';
 import '../../providers/thoughts_providers.dart';
 import 'package:uni_hub/src/shared/ui/rich_text_editor/rich_text_editor.dart';
 
-final composerProvider = ChangeNotifierProvider<ThoughtComposerController>((ref) {
+final composerProvider = ChangeNotifierProvider<ThoughtComposerController>((
+  ref,
+) {
   return ThoughtComposerController(ref: ref);
 });
 
@@ -54,7 +56,9 @@ class ThoughtComposerController extends ChangeNotifier {
   }
 
   Future<String> onPasteImage(Uint8List bytes) async {
-    final path = await ref.read(thoughtImageServiceProvider).saveImageBytes(bytes);
+    final path = await ref
+        .read(thoughtImageServiceProvider)
+        .saveImageBytes(bytes);
     _addPendingImage(
       path: path,
       image: PickedImage(bytes: bytes, extension: '.png'),
@@ -104,7 +108,9 @@ class ThoughtComposerController extends ChangeNotifier {
   }
 
   void syncContentState() {
-    final encoded = ThoughtContentCodec.encodeDocument(contentController.document);
+    final encoded = ThoughtContentCodec.encodeDocument(
+      contentController.document,
+    );
     final hasContent =
         contentController.document.toPlainText().trim().isNotEmpty ||
         ThoughtContentCodec.imagePathsFromStored(encoded).isNotEmpty;
@@ -165,7 +171,9 @@ class ThoughtComposerController extends ChangeNotifier {
   }
 
   Future<void> submit() async {
-    final content = ThoughtContentCodec.encodeDocument(contentController.document);
+    final content = ThoughtContentCodec.encodeDocument(
+      contentController.document,
+    );
     final hasContent =
         contentController.document.toPlainText().trim().isNotEmpty ||
         ThoughtContentCodec.imagePathsFromStored(content).isNotEmpty;
@@ -189,7 +197,7 @@ class ThoughtComposerController extends ChangeNotifier {
           ),
         ),
       );
-      ref.invalidate(thoughtsListProvider);
+      ref.invalidate(allThoughtsProvider);
       clear();
     } finally {
       if (_isSubmitting) {

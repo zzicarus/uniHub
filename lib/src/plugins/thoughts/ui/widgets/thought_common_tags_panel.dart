@@ -4,25 +4,35 @@ import 'package:uni_hub/src/core/theme/app_tokens.dart';
 import 'package:uni_hub/src/plugins/thoughts/providers/thoughts_providers.dart';
 import 'package:uni_hub/src/plugins/thoughts/ui/layouts/thoughts_shared_widgets.dart';
 
-/// Right rail panel showing top 8 tags sorted by frequency from unarchived thoughts.
-/// Each tag is tappable to set [tagFilterProvider].
-/// Syncs with main tag filter.
-/// Data source: [commonTagsProvider] (global).
 class ThoughtCommonTagsPanel extends ConsumerWidget {
   const ThoughtCommonTagsPanel({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final commonTags = ref.watch(commonTagsProvider);
-    final currentTagFilter = ref.watch(tagFilterProvider);
+    final commonTags = ref.watch(commonTagsProvider).take(6).toList();
+    final selectedTags = ref.watch(selectedTagFiltersProvider);
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
 
     return ThoughtPanel(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const ThoughtPanelHeader(
-            title: '常用标签',
-            icon: Icons.sell_outlined,
+          Row(
+            children: [
+              const Expanded(
+                child: ThoughtPanelHeader(
+                  title: '常用标签',
+                  icon: Icons.sell_outlined,
+                ),
+              ),
+              Text(
+                '点击筛选',
+                style: theme.textTheme.labelSmall?.copyWith(
+                  color: colorScheme.onSurfaceVariant,
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: AppSpacing.md),
           if (commonTags.isEmpty)
@@ -32,14 +42,28 @@ class ThoughtCommonTagsPanel extends ConsumerWidget {
               spacing: AppSpacing.xs,
               runSpacing: AppSpacing.xs,
               children: commonTags.map((entry) {
-                final isSelected = currentTagFilter == entry.key;
-                return ThoughtTagChip(
-                  label: entry.key,
-                  count: entry.value,
-                  onTap: () {
-                    ref.read(tagFilterProvider.notifier).state =
-                        isSelected ? null : entry.key;
+                final isSelected = selectedTags.contains(entry.key);
+                return FilterChip(
+                  label: Text('#${entry.key}   ${entry.value}'),
+                  selected: isSelected,
+                  onSelected: (_) {
+                    final current = ref.read(selectedTagFiltersProvider);
+                    ref.read(selectedTagFiltersProvider.notifier).state =
+                        toggleTagInFilter(current, entry.key);
                   },
+                  selectedColor: AppColors.primarySoft,
+                  checkmarkColor: AppColors.primary,
+                  side: BorderSide(
+                    color: isSelected
+                        ? AppColors.primary
+                        : colorScheme.outlineVariant,
+                  ),
+                  labelStyle: theme.textTheme.labelMedium?.copyWith(
+                    color: isSelected
+                        ? AppColors.primary
+                        : colorScheme.onSurfaceVariant,
+                    fontWeight: FontWeight.w700,
+                  ),
                 );
               }).toList(),
             ),

@@ -22,18 +22,18 @@ class ThoughtPinnedPanel extends ConsumerWidget {
         children: [
           pinnedAsync.when(
             loading: () => const ThoughtPanelHeader(
-              title: '置顶',
-              icon: Icons.star_rounded,
+              title: '置顶想法',
+              icon: Icons.push_pin_rounded,
               count: 0,
             ),
             error: (_, _) => const ThoughtPanelHeader(
-              title: '置顶',
-              icon: Icons.star_rounded,
+              title: '置顶想法',
+              icon: Icons.push_pin_rounded,
               count: 0,
             ),
             data: (pinned) => ThoughtPanelHeader(
-              title: '置顶',
-              icon: Icons.star_rounded,
+              title: '置顶想法',
+              icon: Icons.push_pin_rounded,
               count: pinned.length,
             ),
           ),
@@ -64,22 +64,20 @@ class ThoughtPinnedPanel extends ConsumerWidget {
                                     ),
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
-                                    style: Theme.of(
-                                      context,
-                                    ).textTheme.bodyMedium?.copyWith(
-                                      fontWeight: FontWeight.w600,
-                                    ),
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .bodyMedium
+                                        ?.copyWith(fontWeight: FontWeight.w600),
                                   ),
                                   const SizedBox(height: 2),
                                   Text(
                                     _formatTimestamp(t.createdAt),
-                                    style: Theme.of(
-                                      context,
-                                    ).textTheme.bodySmall?.copyWith(
-                                      color: Theme.of(
-                                        context,
-                                      ).colorScheme.onSurfaceVariant,
-                                    ),
+                                    style: Theme.of(context).textTheme.bodySmall
+                                        ?.copyWith(
+                                          color: Theme.of(
+                                            context,
+                                          ).colorScheme.onSurfaceVariant,
+                                        ),
                                   ),
                                 ],
                               ),

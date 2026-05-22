@@ -58,9 +58,7 @@ class _ThoughtsPageState extends ConsumerState<ThoughtsPage> {
         body: SafeArea(
           child: AdaptiveLayout(
             mobile: (_) => ThoughtsMobileLayout(onThoughtTap: _openEditor),
-            desktop: (_) => ThoughtsDesktopLayout(
-              onThoughtTap: _openEditor,
-            ),
+            desktop: (_) => ThoughtsDesktopLayout(onThoughtTap: _openEditor),
           ),
         ),
       ),

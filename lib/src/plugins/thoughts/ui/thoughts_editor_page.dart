@@ -278,4 +278,3 @@ class _ThoughtsEditorPageState extends ConsumerState<ThoughtsEditorPage> {
     );
   }
 }
-

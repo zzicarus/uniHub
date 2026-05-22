@@ -16,7 +16,7 @@ import 'thoughts_shared_widgets.dart';
 /// Reads directly from shared providers (same as desktop):
 /// - [thoughtStatusFilterProvider] — status filter state
 /// - [thoughtSearchQueryProvider] — search query
-/// - [tagFilterProvider] — active tag filter
+/// - [selectedTagFiltersProvider] — active tag filters
 /// - [archiveFilterProvider] — archive toggle
 /// - [composerProvider] — composer controller
 /// - [thoughtsListProvider] — filtered thought list
@@ -350,6 +350,12 @@ class _MobileFilterChips extends ConsumerWidget {
               ),
               const SizedBox(width: AppSpacing.sm),
               _StatusChip(
+                label: '未整理',
+                status: ThoughtStatusFilter.unorganized,
+                current: statusFilter,
+              ),
+              const SizedBox(width: AppSpacing.sm),
+              _StatusChip(
                 label: '置顶',
                 status: ThoughtStatusFilter.pinned,
                 current: statusFilter,
@@ -441,15 +447,17 @@ class _TagChip extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final selectedTag = ref.watch(tagFilterProvider);
+    final selectedTags = ref.watch(selectedTagFiltersProvider);
     return ThoughtFilterChip(
       label: entry.key,
       value: entry.value.toString(),
-      selected: selectedTag == entry.key,
+      selected: selectedTags.contains(entry.key),
       onTap: () {
-        ref.read(tagFilterProvider.notifier).state = selectedTag == entry.key
-            ? null
-            : entry.key;
+        final current = ref.read(selectedTagFiltersProvider);
+        ref.read(selectedTagFiltersProvider.notifier).state = toggleTagInFilter(
+          current,
+          entry.key,
+        );
       },
     );
   }
@@ -474,7 +482,7 @@ class _MoreTagsButton extends ConsumerWidget {
     showModalBottomSheet(
       context: context,
       builder: (ctx) {
-        final selectedTag = ref.watch(tagFilterProvider);
+        final selectedTags = ref.watch(selectedTagFiltersProvider);
         return SafeArea(
           child: Padding(
             padding: const EdgeInsets.all(AppSpacing.lg),
@@ -494,7 +502,8 @@ class _MoreTagsButton extends ConsumerWidget {
                     const Spacer(),
                     TextButton(
                       onPressed: () {
-                        ref.read(tagFilterProvider.notifier).state = null;
+                        ref.read(selectedTagFiltersProvider.notifier).state =
+                            const <String>{};
                         Navigator.of(ctx).pop();
                       },
                       child: const Text('清除'),
@@ -509,11 +518,11 @@ class _MoreTagsButton extends ConsumerWidget {
                     return ThoughtFilterChip(
                       label: entry.key,
                       value: entry.value.toString(),
-                      selected: selectedTag == entry.key,
+                      selected: selectedTags.contains(entry.key),
                       onTap: () {
-                        ref.read(tagFilterProvider.notifier).state =
-                            selectedTag == entry.key ? null : entry.key;
-                        Navigator.of(ctx).pop();
+                        final current = ref.read(selectedTagFiltersProvider);
+                        ref.read(selectedTagFiltersProvider.notifier).state =
+                            toggleTagInFilter(current, entry.key);
                       },
                     );
                   }).toList(),
@@ -534,20 +543,30 @@ class _SelectedTagBanner extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final selectedTag = ref.watch(tagFilterProvider);
-    if (selectedTag == null || selectedTag.isEmpty) {
+    final selectedTags = ref.watch(selectedTagFiltersProvider).toList()..sort();
+    if (selectedTags.isEmpty) {
       return const SizedBox.shrink();
     }
 
     final colorScheme = Theme.of(context).colorScheme;
-    return Chip(
-      label: Text('#$selectedTag'),
-      deleteIcon: const Icon(Icons.close, size: 14),
-      onDeleted: () => ref.read(tagFilterProvider.notifier).state = null,
-      backgroundColor: colorScheme.primary.withValues(alpha: 0.12),
-      side: BorderSide.none,
-      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-      visualDensity: VisualDensity.compact,
+    return Wrap(
+      spacing: AppSpacing.xs,
+      runSpacing: AppSpacing.xs,
+      children: selectedTags.map((tag) {
+        return Chip(
+          label: Text('#$tag'),
+          deleteIcon: const Icon(Icons.close, size: 14),
+          onDeleted: () {
+            final current = ref.read(selectedTagFiltersProvider);
+            ref.read(selectedTagFiltersProvider.notifier).state =
+                removeTagFromFilter(current, tag);
+          },
+          backgroundColor: colorScheme.primary.withValues(alpha: 0.12),
+          side: BorderSide.none,
+          materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          visualDensity: VisualDensity.compact,
+        );
+      }).toList(),
     );
   }
 }
@@ -562,7 +581,7 @@ class _MobileThoughtGrid extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final isArchived = ref.watch(archiveFilterProvider);
-    final selectedTag = ref.watch(tagFilterProvider);
+    final selectedTags = ref.watch(selectedTagFiltersProvider);
     final searchQuery = ref.watch(thoughtSearchQueryProvider);
 
     return ref
@@ -582,11 +601,12 @@ class _MobileThoughtGrid extends ConsumerWidget {
               if (isArchived) {
                 return ThoughtStateTemplate.archiveEmpty();
               }
-              if (selectedTag != null && selectedTag.isNotEmpty) {
+              if (selectedTags.isNotEmpty) {
                 return ThoughtStateTemplate.filterNoResults(
-                  selectedTag,
+                  selectedTags.join('、'),
                   onClearFilter: () {
-                    ref.read(tagFilterProvider.notifier).state = null;
+                    ref.read(selectedTagFiltersProvider.notifier).state =
+                        const <String>{};
                   },
                 );
               }
@@ -652,7 +672,9 @@ class _MobileThoughtCard extends ConsumerWidget {
         imagePaths: thought.imagePaths,
         onTap: () => onThoughtTap(thought.id),
         onTagTap: (tag) {
-          ref.read(tagFilterProvider.notifier).state = tag;
+          final current = ref.read(selectedTagFiltersProvider);
+          ref.read(selectedTagFiltersProvider.notifier).state =
+              toggleTagInFilter(current, tag);
         },
       ),
     );
@@ -672,11 +694,10 @@ class _MobileThoughtCard extends ConsumerWidget {
       case ThoughtContextAction.edit:
         _openEditor(context);
       case ThoughtContextAction.togglePin:
-        await ref.read(thoughtsRepositoryProvider).togglePin(
-              thought.id,
-              !thought.isPinned,
-            );
-        ref.invalidate(thoughtsListProvider);
+        await ref
+            .read(thoughtsRepositoryProvider)
+            .togglePin(thought.id, !thought.isPinned);
+        ref.invalidate(allThoughtsProvider);
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -695,28 +716,28 @@ class _MobileThoughtCard extends ConsumerWidget {
         if (isArchived) {
           await ref.read(thoughtsRepositoryProvider).restoreThought(thought.id);
           if (context.mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('想法已恢复')),
-            );
+            ScaffoldMessenger.of(
+              context,
+            ).showSnackBar(const SnackBar(content: Text('想法已恢复')));
           }
         } else {
           await ref.read(thoughtsRepositoryProvider).archiveThought(thought.id);
           if (context.mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('想法已归档')),
-            );
+            ScaffoldMessenger.of(
+              context,
+            ).showSnackBar(const SnackBar(content: Text('想法已归档')));
           }
         }
-        ref.invalidate(thoughtsListProvider);
+        ref.invalidate(allThoughtsProvider);
       case ThoughtContextAction.delete:
         final confirmed = await showThoughtDeleteDialog(context);
         if (confirmed && context.mounted) {
           await ref.read(thoughtsRepositoryProvider).deleteThought(thought.id);
-          ref.invalidate(thoughtsListProvider);
+          ref.invalidate(allThoughtsProvider);
           if (context.mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('想法已删除')),
-            );
+            ScaffoldMessenger.of(
+              context,
+            ).showSnackBar(const SnackBar(content: Text('想法已删除')));
           }
         }
       case ThoughtContextAction.convertToTodo:
@@ -727,10 +748,7 @@ class _MobileThoughtCard extends ConsumerWidget {
 
   void _openEditor(BuildContext context) {
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('打开编辑器'),
-        duration: Duration(seconds: 1),
-      ),
+      const SnackBar(content: Text('打开编辑器'), duration: Duration(seconds: 1)),
     );
   }
 }

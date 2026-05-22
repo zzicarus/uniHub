@@ -1,12 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uni_hub/src/core/theme/app_tokens.dart';
+import 'package:uni_hub/src/plugins/thoughts/providers/thought_status_filter.dart';
 import 'package:uni_hub/src/plugins/thoughts/providers/thoughts_providers.dart';
 import 'package:uni_hub/src/plugins/thoughts/ui/layouts/thoughts_shared_widgets.dart';
 
-/// Right rail panel showing count of untagged + unarchived thoughts.
-/// Phase 1: count badge only, no status filter action on tap.
-/// Data source: [pendingReviewProvider] (global, unarchived-only).
 class ThoughtPendingReviewPanel extends ConsumerWidget {
   const ThoughtPendingReviewPanel({super.key});
 
@@ -14,6 +12,7 @@ class ThoughtPendingReviewPanel extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final pendingAsync = ref.watch(pendingReviewProvider);
     final colorScheme = Theme.of(context).colorScheme;
+    final theme = Theme.of(context);
 
     return ThoughtPanel(
       child: Column(
@@ -22,17 +21,17 @@ class ThoughtPendingReviewPanel extends ConsumerWidget {
           pendingAsync.when(
             loading: () => const ThoughtPanelHeader(
               title: '待整理',
-              icon: Icons.pending_outlined,
+              icon: Icons.check_box_outlined,
               count: 0,
             ),
             error: (_, _) => const ThoughtPanelHeader(
               title: '待整理',
-              icon: Icons.pending_outlined,
+              icon: Icons.check_box_outlined,
               count: 0,
             ),
             data: (pending) => ThoughtPanelHeader(
               title: '待整理',
-              icon: Icons.pending_outlined,
+              icon: Icons.check_box_outlined,
               count: pending.length,
             ),
           ),
@@ -42,23 +41,35 @@ class ThoughtPendingReviewPanel extends ConsumerWidget {
             error: (_, _) => const ThoughtSmallMutedText('加载失败'),
             data: (pending) {
               if (pending.isEmpty) {
-                return ThoughtSmallMutedText('所有想法都已整理');
+                return const ThoughtSmallMutedText('所有想法都已整理');
               }
               return Row(
                 children: [
-                  Icon(
-                    Icons.info_outline_rounded,
-                    size: 16,
-                    color: colorScheme.secondary,
-                  ),
-                  const SizedBox(width: AppSpacing.xs),
                   Expanded(
-                    child: Text(
-                      '${pending.length} 个想法缺少标签',
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: colorScheme.onSurfaceVariant,
+                    child: RichText(
+                      text: TextSpan(
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: colorScheme.onSurfaceVariant,
+                        ),
+                        children: [
+                          TextSpan(
+                            text: '${pending.length} 条未整理\n',
+                            style: theme.textTheme.titleSmall?.copyWith(
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                          const TextSpan(text: '想法值得被好好整理'),
+                        ],
                       ),
                     ),
+                  ),
+                  FilledButton(
+                    onPressed: () {
+                      ref.read(archiveFilterProvider.notifier).state = false;
+                      ref.read(thoughtStatusFilterProvider.notifier).state =
+                          ThoughtStatusFilter.unorganized;
+                    },
+                    child: const Text('开始整理'),
                   ),
                 ],
               );

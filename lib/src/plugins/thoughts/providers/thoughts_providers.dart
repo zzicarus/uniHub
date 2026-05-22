@@ -39,7 +39,46 @@ final thoughtImageServiceProvider = Provider<ThoughtImageService>((ref) {
   );
 });
 
+/// Active tag filters for the thoughts page.
+///
+/// Tags are multi-select. Keep the set immutable when writing:
+/// `ref.read(selectedTagFiltersProvider.notifier).state = {...current, tag}`.
+final selectedTagFiltersProvider = StateProvider<Set<String>>(
+  (ref) => const <String>{},
+);
+
+@Deprecated('Use selectedTagFiltersProvider for multi-select tag filters.')
 final tagFilterProvider = StateProvider<String?>((ref) => null);
+
+Set<String> toggleTagInFilter(Set<String> current, String tag) {
+  final normalized = tag.trim();
+  if (normalized.isEmpty) return current;
+  final next = Set<String>.from(current);
+  if (!next.remove(normalized)) {
+    next.add(normalized);
+  }
+  return next;
+}
+
+Set<String> renameTagInFilter(
+  Set<String> current,
+  String oldTag,
+  String newTag,
+) {
+  final normalizedOld = oldTag.trim();
+  final normalizedNew = newTag.trim();
+  if (normalizedOld.isEmpty || normalizedNew.isEmpty) return current;
+  final next = Set<String>.from(current);
+  if (next.remove(normalizedOld)) {
+    next.add(normalizedNew);
+  }
+  return next;
+}
+
+Set<String> removeTagFromFilter(Set<String> current, String tag) {
+  final next = Set<String>.from(current)..remove(tag.trim());
+  return next;
+}
 
 final archiveFilterProvider = StateProvider<bool>((ref) => false);
 
@@ -82,7 +121,7 @@ final thoughtsListProvider = FutureProvider<List<ThoughtsTableData>>((
 ) async {
   final thoughts = await ref.watch(allThoughtsProvider.future);
   final statusFilter = ref.watch(thoughtStatusFilterProvider);
-  final tagFilter = ref.watch(tagFilterProvider);
+  final selectedTags = ref.watch(selectedTagFiltersProvider);
   final searchQuery = await ref.watch(thoughtSearchDebouncedProvider.future);
 
   final archived = statusFilter == ThoughtStatusFilter.archived
@@ -97,7 +136,7 @@ final thoughtsListProvider = FutureProvider<List<ThoughtsTableData>>((
 
   final archiveFiltered = _filterByArchive(thoughts, archived);
   final statusFiltered = _filterByStatus(archiveFiltered, statusFilter);
-  final tagFiltered = _filterByTag(statusFiltered, tagFilter);
+  final tagFiltered = _filterByTags(statusFiltered, selectedTags);
   return _filterBySearch(tagFiltered, searchQuery);
 });
 
@@ -143,9 +182,10 @@ final _randomReviewSeenIdsProvider = StateProvider<Set<int>>((ref) => <int>{});
 final randomReviewProvider = FutureProvider<ThoughtsTableData?>((ref) async {
   final thoughts = await ref.watch(allThoughtsProvider.future);
   final cutoff = DateTime.now().subtract(const Duration(days: 7));
-  final candidates = _filterByArchive(thoughts, false)
-      .where((thought) => thought.createdAt.isBefore(cutoff))
-      .toList();
+  final candidates = _filterByArchive(
+    thoughts,
+    false,
+  ).where((thought) => thought.createdAt.isBefore(cutoff)).toList();
   if (candidates.isEmpty) return null;
 
   final seenIds = ref.read(_randomReviewSeenIdsProvider);
@@ -188,28 +228,35 @@ List<ThoughtsTableData> _filterByStatus(
 ) {
   return switch (filter) {
     ThoughtStatusFilter.all || ThoughtStatusFilter.archived => thoughts,
-    ThoughtStatusFilter.pinned => thoughts
-        .where((thought) => thought.isPinned)
-        .toList(),
-    ThoughtStatusFilter.withImages => thoughts
-        .where(
-          (thought) =>
-              (thought.imagePaths?.trim().isNotEmpty ?? false) ||
-              ThoughtContentCodec.imagePathsFromStored(
-                thought.content,
-              ).isNotEmpty,
-        )
-        .toList(),
+    ThoughtStatusFilter.unorganized =>
+      thoughts.where((thought) => _parseTags(thought.tags).isEmpty).toList(),
+    ThoughtStatusFilter.pinned =>
+      thoughts.where((thought) => thought.isPinned).toList(),
+    ThoughtStatusFilter.withImages =>
+      thoughts
+          .where(
+            (thought) =>
+                (thought.imagePaths?.trim().isNotEmpty ?? false) ||
+                ThoughtContentCodec.imagePathsFromStored(
+                  thought.content,
+                ).isNotEmpty,
+          )
+          .toList(),
   };
 }
 
-List<ThoughtsTableData> _filterByTag(
+List<ThoughtsTableData> _filterByTags(
   List<ThoughtsTableData> thoughts,
-  String? tagFilter,
+  Set<String> selectedTags,
 ) {
-  if (tagFilter == null || tagFilter.isEmpty) return thoughts;
+  final normalizedSelected = selectedTags
+      .map((tag) => tag.trim())
+      .where((tag) => tag.isNotEmpty)
+      .toSet();
+  if (normalizedSelected.isEmpty) return thoughts;
   return thoughts.where((thought) {
-    return _parseTags(thought.tags).contains(tagFilter);
+    final thoughtTags = _parseTags(thought.tags).toSet();
+    return normalizedSelected.every(thoughtTags.contains);
   }).toList();
 }
 

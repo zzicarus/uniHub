@@ -16,10 +16,7 @@ class ThoughtQuickActionsPanel extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const ThoughtPanelHeader(
-            title: '快捷操作',
-            icon: Icons.bolt_outlined,
-          ),
+          const ThoughtPanelHeader(title: '快捷操作', icon: Icons.bolt_outlined),
           const SizedBox(height: AppSpacing.md),
           Tooltip(
             message: '即将推出',
@@ -31,9 +28,7 @@ class ThoughtQuickActionsPanel extends StatelessWidget {
                 label: const Text('转为待办'),
                 style: OutlinedButton.styleFrom(
                   foregroundColor: colorScheme.onSurfaceVariant,
-                  padding: const EdgeInsets.symmetric(
-                    vertical: AppSpacing.xs,
-                  ),
+                  padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
                 ),
               ),
             ),
@@ -49,9 +44,7 @@ class ThoughtQuickActionsPanel extends StatelessWidget {
                 label: const Text('转为笔记'),
                 style: OutlinedButton.styleFrom(
                   foregroundColor: colorScheme.onSurfaceVariant,
-                  padding: const EdgeInsets.symmetric(
-                    vertical: AppSpacing.xs,
-                  ),
+                  padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
                 ),
               ),
             ),

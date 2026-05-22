@@ -23,10 +23,7 @@ class ThoughtRandomReviewPanel extends ConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const ThoughtPanelHeader(
-            title: '随机回顾',
-            icon: Icons.casino_outlined,
-          ),
+          const ThoughtPanelHeader(title: '随机回顾', icon: Icons.casino_outlined),
           const SizedBox(height: AppSpacing.md),
           randomAsync.when(
             loading: () => const ThoughtSmallMutedText('加载中...'),
@@ -51,7 +48,9 @@ class ThoughtRandomReviewPanel extends ConsumerWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            ThoughtContentCodec.titleFromStored(thought.content),
+                            ThoughtContentCodec.titleFromStored(
+                              thought.content,
+                            ),
                             maxLines: 2,
                             overflow: TextOverflow.ellipsis,
                             style: Theme.of(context).textTheme.bodyMedium
@@ -61,9 +60,7 @@ class ThoughtRandomReviewPanel extends ConsumerWidget {
                           Text(
                             _formatRelativeDate(thought.createdAt),
                             style: Theme.of(context).textTheme.bodySmall
-                                ?.copyWith(
-                                  color: colorScheme.onSurfaceVariant,
-                                ),
+                                ?.copyWith(color: colorScheme.onSurfaceVariant),
                           ),
                         ],
                       ),

@@ -53,7 +53,7 @@ void main() {
         container.read(archiveFilterProvider.notifier).state = false;
         container.read(thoughtStatusFilterProvider.notifier).state =
             ThoughtStatusFilter.pinned;
-        container.read(tagFilterProvider.notifier).state = 'work';
+        container.read(selectedTagFiltersProvider.notifier).state = {'work'};
         container.read(thoughtSearchQueryProvider.notifier).state = 'ALPHA';
 
         final thoughts = await container.read(thoughtsListProvider.future);
@@ -62,6 +62,59 @@ void main() {
         expect(container.read(thoughtsCountProvider), 1);
       },
     );
+
+    test('multi-tag filter uses intersection semantics', () async {
+      final id = await _insertThought(
+        db,
+        content: 'Focused work note',
+        tags: 'work,focus',
+        createdAt: DateTime.now(),
+      );
+      container.invalidate(allThoughtsProvider);
+      container.read(selectedTagFiltersProvider.notifier).state = {
+        'work',
+        'focus',
+      };
+
+      final thoughts = await container.read(thoughtsListProvider.future);
+
+      expect(thoughts.map((thought) => thought.id), [id]);
+    });
+
+    test('repository can rename and delete tags globally', () async {
+      final repo = container.read(thoughtsRepositoryProvider);
+      container.read(selectedTagFiltersProvider.notifier).state = {'personal'};
+
+      final renamed = await repo.renameTag('personal', 'life');
+      container
+          .read(selectedTagFiltersProvider.notifier)
+          .state = renameTagInFilter(
+        container.read(selectedTagFiltersProvider),
+        'personal',
+        'life',
+      );
+      container.invalidate(allThoughtsProvider);
+      await container.read(allThoughtsProvider.future);
+
+      expect(renamed, 2);
+      expect(container.read(selectedTagFiltersProvider), {'life'});
+      expect(
+        container.read(commonTagsProvider).map((entry) => entry.key),
+        contains('life'),
+      );
+      expect(
+        container.read(commonTagsProvider).map((entry) => entry.key),
+        isNot(contains('personal')),
+      );
+
+      final deleted = await repo.deleteTagEverywhere('image');
+      container.invalidate(allThoughtsProvider);
+      await container.read(allThoughtsProvider.future);
+
+      expect(deleted, 1);
+      final personalImage = await repo.getThought(seeded.personalImage);
+      expect(personalImage?.tags, 'life');
+    });
 
     test('archived status filter selects the archive bucket', () async {
       container.read(archiveFilterProvider.notifier).state = false;
@@ -111,7 +164,7 @@ void main() {
     );
 
     test('right rail providers ignore tag and search filters', () async {
-      container.read(tagFilterProvider.notifier).state = 'personal';
+      container.read(selectedTagFiltersProvider.notifier).state = {'personal'};
       container.read(thoughtSearchQueryProvider.notifier).state = 'no-match';
 
       final pinned = await container.read(pinnedThoughtsProvider.future);

@@ -24,11 +24,36 @@ class ThoughtComposer extends ConsumerWidget {
     return ConstrainedBox(
       constraints: const BoxConstraints(maxWidth: 1080),
       child: ThoughtPanel(
-        padding: const EdgeInsets.all(AppSpacing.lg),
+        padding: const EdgeInsets.all(AppSpacing.md),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // Rich text input area (96-120px height)
+            Row(
+              children: [
+                Container(
+                  width: 32,
+                  height: 32,
+                  decoration: BoxDecoration(
+                    color: AppColors.primarySoft,
+                    borderRadius: BorderRadius.circular(AppRadius.sm),
+                  ),
+                  child: const Icon(
+                    Icons.lightbulb_outline,
+                    size: 20,
+                    color: AppColors.primary,
+                  ),
+                ),
+                const SizedBox(width: AppSpacing.sm),
+                Text(
+                  '快速记录想法',
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: AppSpacing.sm),
+            // Rich text input area (close to the reference 100px editor)
             DecoratedBox(
               decoration: BoxDecoration(
                 color: colorScheme.surfaceContainerLow,
@@ -39,7 +64,7 @@ class ThoughtComposer extends ConsumerWidget {
                 borderRadius: BorderRadius.circular(AppRadius.md),
                 child: RichTextEditor(
                   controller: composer.contentController,
-                  minHeight: 96,
+                  minHeight: 104,
                   placeholder: '今天有什么新想法？',
                   onChanged: (_) => composer.syncContentState(),
                   onPickImage: composer.onPickEditorImage,
@@ -96,8 +121,9 @@ class ThoughtComposer extends ConsumerWidget {
                             onTap: () => composer.removePendingImage(i),
                             child: Container(
                               decoration: BoxDecoration(
-                                color: colorScheme.onSurfaceVariant
-                                    .withValues(alpha: 0.54),
+                                color: colorScheme.onSurfaceVariant.withValues(
+                                  alpha: 0.54,
+                                ),
                                 shape: BoxShape.circle,
                               ),
                               padding: const EdgeInsets.all(AppSpacing.xxs),
@@ -118,74 +144,89 @@ class ThoughtComposer extends ConsumerWidget {
 
             const SizedBox(height: AppSpacing.sm),
 
-            // Action row
-            Wrap(
-              spacing: AppSpacing.sm,
-              runSpacing: AppSpacing.sm,
-              crossAxisAlignment: WrapCrossAlignment.center,
+            Row(
               children: [
-                // Tag input
-                SizedBox(
-                  width: 140,
-                  child: TextField(
-                    controller: composer.tagTextController,
-                    onChanged: composer.handleTagInput,
-                    decoration: const InputDecoration(
-                      hintText: '添加标签',
-                      prefixIcon: Icon(Icons.sell_outlined, size: 18),
-                      isDense: true,
-                    ),
-                    style: theme.textTheme.bodySmall,
+                Expanded(
+                  child: Wrap(
+                    spacing: AppSpacing.sm,
+                    runSpacing: AppSpacing.sm,
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    children: [
+                      SizedBox(
+                        width: 128,
+                        height: 40,
+                        child: TextField(
+                          controller: composer.tagTextController,
+                          onChanged: composer.handleTagInput,
+                          decoration: InputDecoration(
+                            hintText: '添加标签',
+                            prefixIcon: const Icon(
+                              Icons.sell_outlined,
+                              size: 18,
+                            ),
+                            isDense: true,
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: AppSpacing.sm,
+                              vertical: AppSpacing.sm,
+                            ),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(AppRadius.sm),
+                            ),
+                          ),
+                          style: theme.textTheme.bodySmall,
+                        ),
+                      ),
+                      ThoughtPillButton(
+                        icon: Icons.image_outlined,
+                        label: composer.pendingImagePaths.isNotEmpty
+                            ? '图片 (${composer.pendingImagePaths.length})'
+                            : '图片',
+                        onTap: composer.pickImageForComposer,
+                      ),
+                      ThoughtPillButton(
+                        icon: composer.isPinned
+                            ? Icons.push_pin_rounded
+                            : Icons.push_pin_outlined,
+                        label: composer.isPinned ? '已置顶' : '置顶',
+                        selected: composer.isPinned,
+                        onTap: composer.togglePin,
+                      ),
+                      Tooltip(
+                        message: '即将推出',
+                        child: ThoughtPillButton(
+                          icon: Icons.check_box_outlined,
+                          label: '转为待办',
+                          onTap: null,
+                        ),
+                      ),
+                      Tooltip(
+                        message: '即将推出',
+                        child: ThoughtPillButton(
+                          icon: Icons.note_alt_outlined,
+                          label: '转为笔记',
+                          onTap: null,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-
-                // Image button
-                ThoughtPillButton(
-                  icon: Icons.image_outlined,
-                  label: composer.pendingImagePaths.isNotEmpty
-                      ? '图片 (${composer.pendingImagePaths.length})'
-                      : '图片',
-                  onTap: composer.pickImageForComposer,
-                ),
-
-                // Pin button
-                ThoughtPillButton(
-                  icon: composer.isPinned
-                      ? Icons.push_pin_rounded
-                      : Icons.push_pin_outlined,
-                  label: composer.isPinned ? '已置顶' : '置顶',
-                  selected: composer.isPinned,
-                  onTap: composer.togglePin,
-                ),
-
-                // Disabled: Convert to todo
-                Tooltip(
-                  message: '即将推出',
-                  child: ThoughtPillButton(
-                    icon: Icons.check_box_outlined,
-                    label: '转为待办',
-                    onTap: null,
+                Text(
+                  'Ctrl + Enter 快速保存',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: colorScheme.onSurfaceVariant,
                   ),
                 ),
-
-                // Disabled: Convert to note
-                Tooltip(
-                  message: '即将推出',
-                  child: ThoughtPillButton(
-                    icon: Icons.note_alt_outlined,
-                    label: '转为笔记',
-                    onTap: null,
-                  ),
-                ),
-
-                const Spacer(),
-
-                // Submit button
+                const SizedBox(width: AppSpacing.md),
                 FilledButton.icon(
-                  onPressed:
-                      composer.canSubmit && !composer.isSubmitting
-                          ? composer.submit
-                          : null,
+                  style: FilledButton.styleFrom(
+                    minimumSize: const Size(128, 40),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(AppRadius.sm),
+                    ),
+                  ),
+                  onPressed: composer.canSubmit && !composer.isSubmitting
+                      ? composer.submit
+                      : null,
                   icon: const Icon(Icons.send_rounded, size: 18),
                   label: Text(composer.isSubmitting ? '保存中' : '记录想法'),
                 ),

@@ -57,9 +57,7 @@ Future<ThoughtContextAction?> showThoughtContextMenu({
       PopupMenuItem(
         value: ThoughtContextAction.toggleArchive,
         child: _MenuItem(
-          icon: isArchived
-              ? Icons.unarchive_outlined
-              : Icons.archive_outlined,
+          icon: isArchived ? Icons.unarchive_outlined : Icons.archive_outlined,
           label: isArchived ? '取消归档' : '归档',
           highlightColor: isArchived ? colorScheme.primary : null,
         ),
@@ -101,26 +99,19 @@ Future<void> showThoughtTagDialog({
 
   final newTags = await showDialog<List<String>>(
     context: context,
-    builder: (ctx) => _TagDialog(
-      currentTags: currentTags,
-      controller: controller,
-    ),
+    builder: (ctx) =>
+        _TagDialog(currentTags: currentTags, controller: controller),
   );
 
   if (newTags != null && context.mounted) {
     final tagsString = newTags.isEmpty ? null : newTags.join(',');
-    await ref.read(thoughtsRepositoryProvider).updateThought(
-          thoughtId,
-          tags: tagsString,
-        );
-    ref.invalidate(thoughtsListProvider);
-    ref.invalidate(commonTagsProvider);
+    await ref
+        .read(thoughtsRepositoryProvider)
+        .updateTags(thoughtId, tagsString);
+    ref.invalidate(allThoughtsProvider);
     if (context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('标签已更新'),
-          duration: Duration(seconds: 1),
-        ),
+        const SnackBar(content: Text('标签已更新'), duration: Duration(seconds: 1)),
       );
     }
   }
@@ -188,15 +179,11 @@ class _MenuItem extends StatelessWidget {
   }
 }
 
-
 class _TagDialog extends StatefulWidget {
   final List<String> currentTags;
   final TextEditingController controller;
 
-  const _TagDialog({
-    required this.currentTags,
-    required this.controller,
-  });
+  const _TagDialog({required this.currentTags, required this.controller});
 
   @override
   State<_TagDialog> createState() => _TagDialogState();
@@ -241,10 +228,7 @@ class _TagDialogState extends State<_TagDialog> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           if (_tags.isNotEmpty) ...[
-            Text(
-              '当前标签',
-              style: Theme.of(context).textTheme.labelMedium,
-            ),
+            Text('当前标签', style: Theme.of(context).textTheme.labelMedium),
             const SizedBox(height: AppSpacing.xs),
             Wrap(
               spacing: AppSpacing.xxs,
@@ -277,10 +261,7 @@ class _TagDialogState extends State<_TagDialog> {
           onPressed: () => Navigator.of(context).pop(),
           child: const Text('取消'),
         ),
-        FilledButton(
-          onPressed: _save,
-          child: const Text('保存'),
-        ),
+        FilledButton(onPressed: _save, child: const Text('保存')),
       ],
     );
   }

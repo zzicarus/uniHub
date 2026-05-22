@@ -76,9 +76,7 @@ class ThoughtStateTemplate extends StatelessWidget {
   /// Title: "还没有想法"
   /// Subtitle: "记录第一个念头..."
   /// Action: "记录想法" (only when [onRecord] is provided)
-  factory ThoughtStateTemplate.noThoughts({
-    VoidCallback? onRecord,
-  }) {
+  factory ThoughtStateTemplate.noThoughts({VoidCallback? onRecord}) {
     return ThoughtStateTemplate(
       icon: Icons.lightbulb_outline,
       title: '还没有想法',

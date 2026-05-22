@@ -61,29 +61,25 @@ class _ThoughtCardState extends ConsumerState<ThoughtCard> {
         borderRadius: BorderRadius.circular(AppRadius.lg),
         onTap: widget.onTap,
         child: Container(
-          constraints: const BoxConstraints(maxHeight: 180),
           padding: const EdgeInsets.all(AppSpacing.md),
           decoration: BoxDecoration(
+            color: colorScheme.surface,
             borderRadius: BorderRadius.circular(AppRadius.lg),
-            border: Border.all(color: colorScheme.outlineVariant),
+            border: Border.all(
+              color: colorScheme.outlineVariant.withValues(alpha: 0.85),
+            ),
             boxShadow: const [AppShadows.cardSoft],
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _buildHeaderRow(theme, colorScheme),
-              const SizedBox(height: AppSpacing.sm),
-              _buildTitle(theme, title),
               const SizedBox(height: AppSpacing.xs),
-              _buildBody(theme, colorScheme, body),
+              _buildTitle(theme, title),
+              const SizedBox(height: AppSpacing.xxs),
+              Expanded(child: _buildBody(theme, colorScheme, body)),
               if (tagList.isNotEmpty || images.isNotEmpty)
-                _buildTagsSection(
-                  theme,
-                  colorScheme,
-                  tagList,
-                  images,
-                  accent,
-                ),
+                _buildTagsSection(theme, colorScheme, tagList, images, accent),
             ],
           ),
         ),
@@ -101,24 +97,6 @@ class _ThoughtCardState extends ConsumerState<ThoughtCard> {
             overflow: TextOverflow.ellipsis,
           ),
         ),
-        if (widget.onContextMenu != null)
-          GestureDetector(
-            onTap: widget.onContextMenu,
-            child: Container(
-              width: 28,
-              height: 28,
-              decoration: BoxDecoration(
-                color: colorScheme.surface,
-                borderRadius: BorderRadius.circular(AppRadius.xs),
-                border: Border.all(color: colorScheme.outline),
-              ),
-              child: Icon(
-                Icons.more_horiz_rounded,
-                size: 16,
-                color: colorScheme.onSurfaceVariant,
-              ),
-            ),
-          ),
         if (widget.isPinned)
           Padding(
             padding: const EdgeInsets.only(left: AppSpacing.xxs),
@@ -126,6 +104,15 @@ class _ThoughtCardState extends ConsumerState<ThoughtCard> {
               Icons.push_pin_rounded,
               size: 18,
               color: colorScheme.primary,
+            ),
+          )
+        else if (widget.onContextMenu != null)
+          GestureDetector(
+            onTap: widget.onContextMenu,
+            child: Icon(
+              Icons.more_horiz_rounded,
+              size: 18,
+              color: colorScheme.onSurfaceVariant,
             ),
           ),
       ],
@@ -137,9 +124,7 @@ class _ThoughtCardState extends ConsumerState<ThoughtCard> {
       title,
       maxLines: 1,
       overflow: TextOverflow.ellipsis,
-      style: theme.textTheme.titleSmall?.copyWith(
-        fontWeight: FontWeight.w700,
-      ),
+      style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
     );
   }
 
@@ -150,7 +135,7 @@ class _ThoughtCardState extends ConsumerState<ThoughtCard> {
       overflow: TextOverflow.ellipsis,
       style: theme.textTheme.bodySmall?.copyWith(
         color: colorScheme.onSurfaceVariant,
-        height: 1.5,
+        height: 1.45,
       ),
     );
   }
@@ -162,19 +147,33 @@ class _ThoughtCardState extends ConsumerState<ThoughtCard> {
     List<String> images,
     Color accent,
   ) {
-    return Wrap(
-      spacing: AppSpacing.xxs,
-      runSpacing: AppSpacing.xxs,
-      crossAxisAlignment: WrapCrossAlignment.center,
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.end,
       children: [
-        if (images.isNotEmpty)
-          _ImageBadge(accent: accent, colorScheme: colorScheme),
-        ..._buildTagChips(tagList, theme, accent),
+        Expanded(
+          child: Wrap(
+            spacing: AppSpacing.xxs,
+            runSpacing: AppSpacing.xxs,
+            children: _buildTagChips(tagList, theme, accent),
+          ),
+        ),
+        if (images.isNotEmpty) ...[
+          const SizedBox(width: AppSpacing.xs),
+          Icon(
+            Icons.image_outlined,
+            size: 16,
+            color: colorScheme.onSurfaceVariant,
+          ),
+        ],
       ],
     );
   }
 
-  List<Widget> _buildTagChips(List<String> tagList, ThemeData theme, Color accent) {
+  List<Widget> _buildTagChips(
+    List<String> tagList,
+    ThemeData theme,
+    Color accent,
+  ) {
     const maxVisible = 3;
     final visible = tagList.take(maxVisible).toList();
     final overflow = tagList.length - maxVisible;
@@ -183,10 +182,10 @@ class _ThoughtCardState extends ConsumerState<ThoughtCard> {
       ...visible.map((tag) {
         return ActionChip(
           label: Text(
-            tag,
+            '#$tag',
             style: theme.textTheme.labelMedium?.copyWith(
               color: accent,
-              fontWeight: FontWeight.w600,
+              fontWeight: FontWeight.w800,
               fontSize: 11,
             ),
           ),
@@ -200,7 +199,10 @@ class _ThoughtCardState extends ConsumerState<ThoughtCard> {
       }),
       if (overflow > 0)
         Container(
-          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xxs, vertical: 2),
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.xxs,
+            vertical: 2,
+          ),
           decoration: BoxDecoration(
             color: theme.colorScheme.surfaceContainerHigh,
             borderRadius: BorderRadius.circular(AppRadius.full),
@@ -248,41 +250,5 @@ class _ThoughtCardState extends ConsumerState<ThoughtCard> {
       return '${dt.month}月${dt.day}日 ${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
     }
     return '${dt.year}-${dt.month.toString().padLeft(2, '0')}-${dt.day.toString().padLeft(2, '0')}';
-  }
-}
-
-class _ImageBadge extends StatelessWidget {
-  final Color accent;
-  final ColorScheme colorScheme;
-
-  const _ImageBadge({required this.accent, required this.colorScheme});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.sm,
-        vertical: AppSpacing.xxs,
-      ),
-      decoration: BoxDecoration(
-        color: accent.withValues(alpha: 0.10),
-        borderRadius: BorderRadius.circular(AppRadius.full),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(Icons.image_outlined, size: 13, color: accent),
-          const SizedBox(width: AppSpacing.xxs),
-          Text(
-            '图片',
-            style: Theme.of(context).textTheme.labelMedium?.copyWith(
-              color: accent,
-              fontWeight: FontWeight.w600,
-              fontSize: 11,
-            ),
-          ),
-        ],
-      ),
-    );
   }
 }

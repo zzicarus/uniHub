@@ -262,8 +262,7 @@ class _ThoughtEditorDrawerState extends ConsumerState<ThoughtEditorDrawer> {
                 label: const Text('删除'),
                 style: OutlinedButton.styleFrom(
                   foregroundColor: Theme.of(context).colorScheme.error,
-                  side: BorderSide(
-                      color: Theme.of(context).colorScheme.error),
+                  side: BorderSide(color: Theme.of(context).colorScheme.error),
                 ),
               ),
             ],
@@ -273,4 +272,3 @@ class _ThoughtEditorDrawerState extends ConsumerState<ThoughtEditorDrawer> {
     );
   }
 }
-

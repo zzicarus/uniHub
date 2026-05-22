@@ -15,8 +15,8 @@ class ThoughtImageService {
   ThoughtImageService({
     required ImagePickerService picker,
     required ImageStorage storage,
-  })  : _picker = picker,
-        _storage = storage;
+  }) : _picker = picker,
+       _storage = storage;
 
   /// 从图库选择图片并保存到应用存储目录。
   ///

@@ -78,10 +78,7 @@ class ThoughtsPlugin extends UniHubPlugin {
   // ─── Dashboard methods ───────────────────────────────────────────
 
   @override
-  Future<List<DashboardItem>> getRecentItems(
-    Ref ref, {
-    int count = 4,
-  }) async {
+  Future<List<DashboardItem>> getRecentItems(Ref ref, {int count = 4}) async {
     final repo = ref.read(thoughtsRepositoryProvider);
     final thoughts = await repo.getThoughts(archived: false);
     thoughts.sort((a, b) => b.createdAt.compareTo(a.createdAt));
@@ -103,10 +100,7 @@ class ThoughtsPlugin extends UniHubPlugin {
   }
 
   @override
-  Future<List<DashboardItem>> getPinnedItems(
-    Ref ref, {
-    int count = 3,
-  }) async {
+  Future<List<DashboardItem>> getPinnedItems(Ref ref, {int count = 3}) async {
     final repo = ref.read(thoughtsRepositoryProvider);
     final thoughts = await repo.getThoughts(archived: false);
     final pinned = thoughts.where((t) => t.isPinned).take(count).toList();

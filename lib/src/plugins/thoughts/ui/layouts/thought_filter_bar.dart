@@ -5,10 +5,6 @@ import 'package:uni_hub/src/core/theme/app_tokens.dart';
 import '../../providers/thought_status_filter.dart';
 import '../../providers/thoughts_providers.dart';
 
-/// Status filter bar with chips: 全部 / 置顶 / 有图片 / 归档.
-///
-/// Uses [thoughtStatusFilterProvider] for the active filter and
-/// [archiveFilterProvider] for the archive toggle.
 class ThoughtFilterBar extends ConsumerWidget {
   const ThoughtFilterBar({super.key});
 
@@ -18,84 +14,71 @@ class ThoughtFilterBar extends ConsumerWidget {
     final isArchived = ref.watch(archiveFilterProvider);
 
     return Wrap(
-      spacing: AppSpacing.xs,
+      alignment: WrapAlignment.center,
+      spacing: AppSpacing.sm,
       runSpacing: AppSpacing.xs,
       children: [
         _StatusChip(
           label: '全部',
           selected: statusFilter == ThoughtStatusFilter.all && !isArchived,
-          onTap: () {
-            ref.read(thoughtStatusFilterProvider.notifier).state =
-                ThoughtStatusFilter.all;
-            ref.read(archiveFilterProvider.notifier).state = false;
-          },
+          onTap: () => _setFilter(ref, ThoughtStatusFilter.all),
+        ),
+        _StatusChip(
+          label: '未整理',
+          selected: statusFilter == ThoughtStatusFilter.unorganized,
+          onTap: () => _setFilter(ref, ThoughtStatusFilter.unorganized),
         ),
         _StatusChip(
           label: '置顶',
           selected: statusFilter == ThoughtStatusFilter.pinned,
-          onTap: () {
-            ref.read(archiveFilterProvider.notifier).state = false;
-            ref.read(thoughtStatusFilterProvider.notifier).state =
-                ThoughtStatusFilter.pinned;
-          },
+          onTap: () => _setFilter(ref, ThoughtStatusFilter.pinned),
         ),
         _StatusChip(
           label: '有图片',
           selected: statusFilter == ThoughtStatusFilter.withImages,
-          onTap: () {
-            ref.read(archiveFilterProvider.notifier).state = false;
-            ref.read(thoughtStatusFilterProvider.notifier).state =
-                ThoughtStatusFilter.withImages;
-          },
+          onTap: () => _setFilter(ref, ThoughtStatusFilter.withImages),
         ),
-        _StatusChip(
-          label: '归档',
-          selected: isArchived || statusFilter == ThoughtStatusFilter.archived,
-          onTap: () {
-            final currentlyArchived = isArchived ||
-                statusFilter == ThoughtStatusFilter.archived;
-            ref.read(archiveFilterProvider.notifier).state = !currentlyArchived;
-            ref.read(thoughtStatusFilterProvider.notifier).state =
-                !currentlyArchived
-                    ? ThoughtStatusFilter.archived
-                    : ThoughtStatusFilter.all;
-          },
+        const Tooltip(
+          message: '待办联动即将推出',
+          child: _StatusChip(label: '待办', selected: false),
         ),
       ],
     );
+  }
+
+  void _setFilter(WidgetRef ref, ThoughtStatusFilter filter) {
+    ref.read(archiveFilterProvider.notifier).state = false;
+    ref.read(thoughtStatusFilterProvider.notifier).state = filter;
   }
 }
 
 class _StatusChip extends StatelessWidget {
   final String label;
   final bool selected;
-  final VoidCallback onTap;
+  final VoidCallback? onTap;
 
-  const _StatusChip({
-    required this.label,
-    required this.selected,
-    required this.onTap,
-  });
+  const _StatusChip({required this.label, required this.selected, this.onTap});
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
+    final enabled = onTap != null;
 
     return Material(
-      color: selected ? colorScheme.primaryContainer : Colors.transparent,
+      color: selected ? AppColors.primary : colorScheme.surfaceContainerLow,
       borderRadius: BorderRadius.circular(AppRadius.full),
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(AppRadius.full),
         child: Container(
-          height: 32,
-          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+          height: 36,
+          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
           decoration: BoxDecoration(
             border: Border.all(
               color: selected
-                  ? colorScheme.primary
-                  : colorScheme.outlineVariant,
+                  ? AppColors.primary
+                  : colorScheme.outlineVariant.withValues(alpha: 0.55),
             ),
             borderRadius: BorderRadius.circular(AppRadius.full),
           ),
@@ -104,9 +87,11 @@ class _StatusChip extends StatelessWidget {
               label,
               style: theme.textTheme.labelMedium?.copyWith(
                 color: selected
-                    ? colorScheme.onPrimaryContainer
-                    : colorScheme.onSurfaceVariant,
-                fontWeight: selected ? FontWeight.w600 : null,
+                    ? Colors.white
+                    : enabled
+                    ? colorScheme.onSurfaceVariant
+                    : colorScheme.outline,
+                fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
               ),
             ),
           ),

@@ -139,7 +139,7 @@ class ThoughtEditorController {
       imagePaths: ThoughtImageService.encodeImagePaths(images),
     );
     ref.invalidate(thoughtProvider(thoughtId));
-    ref.invalidate(thoughtsListProvider);
+    ref.invalidate(allThoughtsProvider);
     isDirty = false;
     _notifyStateChanged();
   }
@@ -170,7 +170,7 @@ class ThoughtEditorController {
     if (confirmed == true) {
       await ref.read(thoughtImageServiceProvider).deleteImages(images);
       await ref.read(thoughtsRepositoryProvider).deleteThought(thoughtId);
-      ref.invalidate(thoughtsListProvider);
+      ref.invalidate(allThoughtsProvider);
     }
   }
 
@@ -178,14 +178,14 @@ class ThoughtEditorController {
   Future<void> archive() async {
     final repo = ref.read(thoughtsRepositoryProvider);
     await repo.archiveThought(thoughtId);
-    ref.invalidate(thoughtsListProvider);
+    ref.invalidate(allThoughtsProvider);
   }
 
   /// 恢复当前 thought。
   Future<void> restore() async {
     final repo = ref.read(thoughtsRepositoryProvider);
     await repo.restoreThought(thoughtId);
-    ref.invalidate(thoughtsListProvider);
+    ref.invalidate(allThoughtsProvider);
     isArchived = false;
     isDirty = false;
     _notifyStateChanged();
@@ -233,14 +233,14 @@ class ThoughtEditorController {
   /// 供 [RichTextEditor.onPickImage] 回调使用。
   Future<String?> onPickImage() async {
     final path = await ref.read(thoughtImageServiceProvider).pickImage();
-    return path != null
-        ? ThoughtContentCodec.imageSourceForPath(path)
-        : null;
+    return path != null ? ThoughtContentCodec.imageSourceForPath(path) : null;
   }
 
   /// 供 [RichTextEditor.onPasteImage] 回调使用。
   Future<String?> onPasteImage(Uint8List bytes) async {
-    final path = await ref.read(thoughtImageServiceProvider).saveImageBytes(bytes);
+    final path = await ref
+        .read(thoughtImageServiceProvider)
+        .saveImageBytes(bytes);
     return ThoughtContentCodec.imageSourceForPath(path);
   }
 

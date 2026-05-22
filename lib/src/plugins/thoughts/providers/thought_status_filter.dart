@@ -1,1 +1,1 @@
-enum ThoughtStatusFilter { all, pinned, withImages, archived }
+enum ThoughtStatusFilter { all, unorganized, pinned, withImages, archived }

@@ -65,8 +65,7 @@ void main() {
       expect(thoughts.map((t) => t.content), contains('Archived thought'));
     });
 
-    test('thoughtsListProvider composes all filters in correct order',
-        () async {
+    test('thoughtsListProvider composes all filters in correct order', () async {
       final now = DateTime.now();
       // Active, pinned, tagged 'work'
       await _insertThought(
@@ -104,7 +103,7 @@ void main() {
       container.read(archiveFilterProvider.notifier).state = false;
       container.read(thoughtStatusFilterProvider.notifier).state =
           ThoughtStatusFilter.pinned;
-      container.read(tagFilterProvider.notifier).state = 'work';
+      container.read(selectedTagFiltersProvider.notifier).state = {'work'};
       container.read(thoughtSearchQueryProvider.notifier).state = 'pinned';
 
       final thoughts = await container.read(thoughtsListProvider.future);
@@ -127,7 +126,7 @@ void main() {
         createdAt: now.subtract(const Duration(hours: 1)),
       );
 
-      container.read(tagFilterProvider.notifier).state = 'flutter';
+      container.read(selectedTagFiltersProvider.notifier).state = {'flutter'};
 
       final thoughts = await container.read(thoughtsListProvider.future);
       expect(thoughts, hasLength(1));
@@ -139,11 +138,7 @@ void main() {
     // verified by code inspection in thoughts_providers.dart.
     test('search debounce delays query application', skip: true, () async {
       final now = DateTime.now();
-      await _insertThought(
-        db,
-        content: 'Searchable content',
-        createdAt: now,
-      );
+      await _insertThought(db, content: 'Searchable content', createdAt: now);
 
       container.read(thoughtSearchQueryProvider.notifier).state = 'search';
 
@@ -158,17 +153,19 @@ void main() {
       expect(afterDebounce, 'search');
     });
 
-    test('archive filter toggles to true when archived status selected',
-        () async {
-      container.read(archiveFilterProvider.notifier).state = false;
-      container.read(thoughtStatusFilterProvider.notifier).state =
-          ThoughtStatusFilter.archived;
+    test(
+      'archive filter toggles to true when archived status selected',
+      () async {
+        container.read(archiveFilterProvider.notifier).state = false;
+        container.read(thoughtStatusFilterProvider.notifier).state =
+            ThoughtStatusFilter.archived;
 
-      await container.read(thoughtsListProvider.future);
-      await Future<void>.delayed(Duration.zero);
+        await container.read(thoughtsListProvider.future);
+        await Future<void>.delayed(Duration.zero);
 
-      expect(container.read(archiveFilterProvider), isTrue);
-    });
+        expect(container.read(archiveFilterProvider), isTrue);
+      },
+    );
   });
 
   group('Thoughts integration - right rail independence', () {
@@ -221,7 +218,9 @@ void main() {
     });
 
     test('pinnedThoughtsProvider ignores tag and search filters', () async {
-      container.read(tagFilterProvider.notifier).state = 'nonexistent';
+      container.read(selectedTagFiltersProvider.notifier).state = {
+        'nonexistent',
+      };
       container.read(thoughtSearchQueryProvider.notifier).state = 'no-match';
 
       final pinned = await container.read(pinnedThoughtsProvider.future);
@@ -234,7 +233,9 @@ void main() {
       // Ensure allThoughtsProvider has loaded before reading commonTagsProvider
       await container.read(allThoughtsProvider.future);
 
-      container.read(tagFilterProvider.notifier).state = 'nonexistent';
+      container.read(selectedTagFiltersProvider.notifier).state = {
+        'nonexistent',
+      };
       container.read(thoughtSearchQueryProvider.notifier).state = 'no-match';
 
       final tags = container.read(commonTagsProvider);
@@ -243,7 +244,9 @@ void main() {
     });
 
     test('pendingReviewProvider ignores tag and search filters', () async {
-      container.read(tagFilterProvider.notifier).state = 'nonexistent';
+      container.read(selectedTagFiltersProvider.notifier).state = {
+        'nonexistent',
+      };
       container.read(thoughtSearchQueryProvider.notifier).state = 'no-match';
 
       final pending = await container.read(pendingReviewProvider.future);
@@ -252,7 +255,9 @@ void main() {
     });
 
     test('randomReviewProvider ignores tag and search filters', () async {
-      container.read(tagFilterProvider.notifier).state = 'nonexistent';
+      container.read(selectedTagFiltersProvider.notifier).state = {
+        'nonexistent',
+      };
       container.read(thoughtSearchQueryProvider.notifier).state = 'no-match';
 
       final random = await container.read(randomReviewProvider.future);
@@ -266,9 +271,7 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           theme: ThemeData(useMaterial3: true),
-          home: Scaffold(
-            body: ThoughtStateTemplate.noThoughts(),
-          ),
+          home: Scaffold(body: ThoughtStateTemplate.noThoughts()),
         ),
       );
       await tester.pumpAndSettle();
@@ -277,15 +280,11 @@ void main() {
       expect(find.text('记录第一个念头...'), findsOneWidget);
     });
 
-    testWidgets('filterNoResults variant', (
-      tester,
-    ) async {
+    testWidgets('filterNoResults variant', (tester) async {
       await tester.pumpWidget(
         MaterialApp(
           theme: ThemeData(useMaterial3: true),
-          home: Scaffold(
-            body: ThoughtStateTemplate.filterNoResults('work'),
-          ),
+          home: Scaffold(body: ThoughtStateTemplate.filterNoResults('work')),
         ),
       );
       await tester.pumpAndSettle();
@@ -297,9 +296,7 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           theme: ThemeData(useMaterial3: true),
-          home: Scaffold(
-            body: ThoughtStateTemplate.archiveEmpty(),
-          ),
+          home: Scaffold(body: ThoughtStateTemplate.archiveEmpty()),
         ),
       );
       await tester.pumpAndSettle();
@@ -312,9 +309,7 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           theme: ThemeData(useMaterial3: true),
-          home: Scaffold(
-            body: ThoughtStateTemplate.filterError(),
-          ),
+          home: Scaffold(body: ThoughtStateTemplate.filterError()),
         ),
       );
       await tester.pumpAndSettle();
@@ -331,9 +326,7 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           theme: ThemeData(useMaterial3: true),
-          home: Scaffold(
-            body: ThoughtStateTemplate.saveError(),
-          ),
+          home: Scaffold(body: ThoughtStateTemplate.saveError()),
         ),
       );
       await tester.pumpAndSettle();
@@ -348,9 +341,7 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           theme: ThemeData(useMaterial3: true),
-          home: Scaffold(
-            body: ThoughtStateTemplate.imageError(),
-          ),
+          home: Scaffold(body: ThoughtStateTemplate.imageError()),
         ),
       );
       await tester.pumpAndSettle();
@@ -365,9 +356,7 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           theme: ThemeData(useMaterial3: true),
-          home: Scaffold(
-            body: ThoughtStateTemplate.deleteError(),
-          ),
+          home: Scaffold(body: ThoughtStateTemplate.deleteError()),
         ),
       );
       await tester.pumpAndSettle();
@@ -382,9 +371,7 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           theme: ThemeData(useMaterial3: true),
-          home: Scaffold(
-            body: ThoughtStateTemplate.archiveError(),
-          ),
+          home: Scaffold(body: ThoughtStateTemplate.archiveError()),
         ),
       );
       await tester.pumpAndSettle();
@@ -399,9 +386,7 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           theme: ThemeData(useMaterial3: true),
-          home: Scaffold(
-            body: ThoughtStateTemplate.restoreError(),
-          ),
+          home: Scaffold(body: ThoughtStateTemplate.restoreError()),
         ),
       );
       await tester.pumpAndSettle();
@@ -416,9 +401,7 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           theme: ThemeData(useMaterial3: true),
-          home: Scaffold(
-            body: ThoughtStateTemplate.filterError(),
-          ),
+          home: Scaffold(body: ThoughtStateTemplate.filterError()),
         ),
       );
       await tester.pumpAndSettle();
@@ -525,8 +508,8 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(find.text('flutter'), findsOneWidget);
-      expect(find.text('dart'), findsOneWidget);
+      expect(find.text('#flutter'), findsOneWidget);
+      expect(find.text('#dart'), findsOneWidget);
     });
   });
 }
@@ -540,14 +523,16 @@ Future<int> _insertThought(
   DateTime? archivedAt,
 }) {
   final timestamp = createdAt ?? DateTime.now();
-  return db.into(db.thoughtsTable).insert(
-    ThoughtsTableCompanion(
-      content: Value(content),
-      tags: Value(tags),
-      isPinned: Value(isPinned),
-      createdAt: Value(timestamp),
-      updatedAt: Value(timestamp),
-      archivedAt: Value(archivedAt),
-    ),
-  );
+  return db
+      .into(db.thoughtsTable)
+      .insert(
+        ThoughtsTableCompanion(
+          content: Value(content),
+          tags: Value(tags),
+          isPinned: Value(isPinned),
+          createdAt: Value(timestamp),
+          updatedAt: Value(timestamp),
+          archivedAt: Value(archivedAt),
+        ),
+      );
 }
