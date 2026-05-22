@@ -178,10 +178,10 @@ class _MetricCard extends StatelessWidget {
             icon: icon,
             color: color,
             background: background,
-            size: 58,
-            iconSize: 28,
+            size: 48,
+            iconSize: 22,
           ),
-          const SizedBox(width: 18),
+          const SizedBox(width: AppSpacing.md),
           Expanded(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -189,14 +189,18 @@ class _MetricCard extends StatelessWidget {
               children: [
                 Text(
                   title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                   style: theme.textTheme.labelLarge?.copyWith(
                     color: colorScheme.onSurfaceVariant,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: 2),
                 Text(
                   value,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                   style: theme.textTheme.headlineMedium?.copyWith(
                     fontSize: 27,
                     fontWeight: FontWeight.w800,
@@ -204,13 +208,15 @@ class _MetricCard extends StatelessWidget {
                     height: 1.05,
                   ),
                 ),
-                const SizedBox(height: 3),
-                Text(
-                  note,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: colorScheme.onSurfaceVariant,
+                const SizedBox(height: 2),
+                Flexible(
+                  child: Text(
+                    note,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: colorScheme.onSurfaceVariant,
+                    ),
                   ),
                 ),
               ],
