@@ -9,10 +9,6 @@ void main() {
       expect(AppColors.primary, isNotNull);
     });
 
-    test('primaryDark is non-null', () {
-      expect(AppColors.primaryDark, isNotNull);
-    });
-
     test('secondary is non-null', () {
       expect(AppColors.secondary, isNotNull);
     });
@@ -21,12 +17,8 @@ void main() {
       expect(AppColors.accent, isNotNull);
     });
 
-    test('success is non-null', () {
-      expect(AppColors.success, isNotNull);
-    });
-
-    test('warning is non-null', () {
-      expect(AppColors.warning, isNotNull);
+    test('purple is non-null', () {
+      expect(AppColors.purple, isNotNull);
     });
 
     test('error is non-null', () {
@@ -43,16 +35,31 @@ void main() {
       expect(AppColors.surface, isA<Color>());
     });
 
-    test('surfaceElevated is a valid Color', () {
-      expect(AppColors.surfaceElevated, isNotNull);
-    });
-
     test('surfaceMuted is a valid Color', () {
       expect(AppColors.surfaceMuted, isNotNull);
     });
 
-    test('surfaceSubtle is a valid Color', () {
-      expect(AppColors.surfaceSubtle, isNotNull);
+    test('textPrimary is a valid Color', () {
+      expect(AppColors.textPrimary, isNotNull);
+      expect(AppColors.textPrimary, isA<Color>());
+    });
+
+    test('textSecondary is a valid Color', () {
+      expect(AppColors.textSecondary, isNotNull);
+      expect(AppColors.textSecondary, isA<Color>());
+    });
+
+    test('textTertiary is a valid Color', () {
+      expect(AppColors.textTertiary, isNotNull);
+      expect(AppColors.textTertiary, isA<Color>());
+    });
+
+    test('soft color variants are all valid Colors', () {
+      expect(AppColors.primarySoft, isA<Color>());
+      expect(AppColors.greenSoft, isA<Color>());
+      expect(AppColors.purpleSoft, isA<Color>());
+      expect(AppColors.yellowSoft, isA<Color>());
+      expect(AppColors.roseSoft, isA<Color>());
     });
   });
 

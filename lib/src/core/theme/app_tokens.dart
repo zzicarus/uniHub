@@ -1,36 +1,26 @@
 import 'package:flutter/material.dart';
 
 abstract final class AppColors {
-  static const primary = Color(0xFF64B5F6);
-  static const primaryDark = Color(0xFF42A5F5);
-  static const secondary = Color(0xFF14B8A6);
+  static const primary = Color(0xFF4F6BFF);
+  static const secondary = Color(0xFF22C55E);
   static const accent = Color(0xFFF59E0B);
-  static const success = Color(0xFF22C55E);
-  static const warning = Color(0xFFF59E0B);
-  static const error = Color(0xFFEF4444);
+  static const purple = Color(0xFF8B5CF6);
+  static const error = Color(0xFFF43F5E);
 
-  static const background = Color(0xFFF7F9FD);
+  static const background = Color(0xFFFAFBFE);
   static const surface = Color(0xFFFFFFFF);
-  static const surfaceElevated = Color(0xFFFCFDFF);
-  static const surfaceMuted = Color(0xFFF1F5F9);
-  static const surfaceSubtle = Color(0xFFF8FAFC);
-  static const border = Color(0xFFE4E9F2);
-  static const borderSoft = Color(0xFFF0F3F8);
-  static const primarySoft = Color(0xFFE3F2FD);
-  static const secondarySoft = Color(0xFFEFFCF9);
-  static const accentSoft = Color(0xFFFFF7E6);
-  static const purple = Color(0xFF7C3AED);
-  static const purpleSoft = Color(0xFFF3E8FF);
-  static const blueSoft = Color(0xFFEDF5FF);
-  static const greenSoft = Color(0xFFEFF9F2);
-  static const yellowSoft = Color(0xFFFFF8E5);
-  static const roseSoft = Color(0xFFFFF1F5);
-  static const successSoft = Color(0xFFEFF9F2);
-  static const errorSoft = Color(0xFFFFF1F2);
+  static const surfaceMuted = Color(0xFFF6F8FC);
+  static const border = Color(0xFFE8ECF4);
 
-  static const textPrimary = Color(0xFF0F172A);
-  static const textSecondary = Color(0xFF475569);
-  static const textTertiary = Color(0xFF94A3B8);
+  static const textPrimary = Color(0xFF111827);
+  static const textSecondary = Color(0xFF667085);
+  static const textTertiary = Color(0xFF98A2B3);
+
+  static const primarySoft = Color(0xFFEFF3FF);
+  static const greenSoft = Color(0xFFEFFAF3);
+  static const purpleSoft = Color(0xFFF4F0FF);
+  static const yellowSoft = Color(0xFFFFF7E8);
+  static const roseSoft = Color(0xFFFFF0F4);
 }
 
 abstract final class AppFonts {
@@ -76,9 +66,9 @@ abstract final class AppSizes {
 }
 
 abstract final class AppDesktopSizes {
-  static const sidebarWidth = 260.0;
+  static const sidebarWidth = 286.0;
   static const rightRailWidth = 300.0;
-  static const rightRailWideWidth = 330.0;
+  static const rightRailWideWidth = 320.0;
   static const topBarHeight = 56.0;
   static const navItemHeight = 48.0;
   static const compactButtonHeight = 36.0;
@@ -106,9 +96,9 @@ abstract final class AppShadows {
 
   /// Soft card shadow for desktop cards — subtle, close to the surface.
   static const cardSoft = BoxShadow(
-    color: Color(0x05000000),
-    blurRadius: 16,
-    offset: Offset(0, 4),
+    color: Color(0x080F172A),
+    blurRadius: 24,
+    offset: Offset(0, 8),
   );
 
   /// Elevated card shadow for hovered/interactive state.
