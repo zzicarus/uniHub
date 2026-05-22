@@ -348,7 +348,7 @@ class _ShortcutCard extends StatelessWidget {
       compact: true,
       padding: const EdgeInsets.symmetric(
         horizontal: AppSpacing.sm,
-        vertical: AppSpacing.md,
+        vertical: AppSpacing.sm,
       ),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -362,7 +362,7 @@ class _ShortcutCard extends StatelessWidget {
             shape: BoxShape.rectangle,
             radius: AppRadius.lg,
           ),
-          const SizedBox(height: AppSpacing.sm),
+          const SizedBox(height: AppSpacing.xs),
           Text(
             title,
             maxLines: 1,
