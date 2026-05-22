@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/widget_previews.dart';
 
 import '../../core/theme/app_tokens.dart';
 
@@ -43,3 +44,27 @@ class UniPanel extends StatelessWidget {
     );
   }
 }
+
+// ----------------------------------------------------------------------
+// Previews
+// ----------------------------------------------------------------------
+
+@Preview(name: 'UniPanel with text', group: 'Shared')
+Widget uniPanelTextPreview() => const UniPanel(
+      padding: EdgeInsets.all(16),
+      child: Text('面板内容示例，展示 UniPanel 的基础外观。'),
+    );
+
+@Preview(name: 'UniPanel with column', group: 'Shared')
+Widget uniPanelColumnPreview() => UniPanel(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: const [
+          Text('标题', style: TextStyle(fontWeight: FontWeight.bold)),
+          SizedBox(height: 8),
+          Text('这里是面板内容，支持任意子组件。'),
+        ],
+      ),
+    );

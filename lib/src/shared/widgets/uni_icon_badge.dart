@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/widget_previews.dart';
 
 import '../../core/theme/app_tokens.dart';
 
@@ -37,4 +38,42 @@ class UniIconBadge extends StatelessWidget {
       ),
     );
   }
+}
+
+// ----------------------------------------------------------------------
+// Previews
+// ----------------------------------------------------------------------
+
+@Preview(name: 'UniIconBadge primary', group: 'Shared')
+Widget uniIconBadgePrimaryPreview() {
+  return const Padding(
+    padding: EdgeInsets.all(8),
+    child: UniIconBadge(
+      icon: Icons.task_alt_rounded,
+      color: Color(0xFF4F6BFF),
+    ),
+  );
+}
+
+@Preview(name: 'UniIconBadge secondary', group: 'Shared')
+Widget uniIconBadgeSecondaryPreview() {
+  return const Padding(
+    padding: EdgeInsets.all(8),
+    child: UniIconBadge(
+      icon: Icons.lightbulb_outline,
+      color: Color(0xFF22C55E),
+    ),
+  );
+}
+
+@Preview(name: 'UniIconBadge custom size', group: 'Shared')
+Widget uniIconBadgeCustomSizePreview() {
+  return const Padding(
+    padding: EdgeInsets.all(8),
+    child: UniIconBadge(
+      icon: Icons.error_outline_rounded,
+      color: Color(0xFFF43F5E),
+      size: 64,
+    ),
+  );
 }

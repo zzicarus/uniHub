@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/widget_previews.dart';
 import 'package:uni_hub/src/core/theme/app_tokens.dart';
 
 /// A colored circular dot used for selecting thought colors.
@@ -66,4 +67,45 @@ List<Color> thoughtAvailableColors(ColorScheme colorScheme) => [
 /// Converts a [Color] to a hex string (e.g., `"FF5733"`) without `#` prefix.
 String thoughtColorToHex(Color c) {
   return '#${c.toARGB32().toRadixString(16).padLeft(8, '0').substring(2).toUpperCase()}';
+}
+
+// ----------------------------------------------------------------------
+// Previews
+// ----------------------------------------------------------------------
+
+@Preview(name: 'ThoughtColorDot selected', group: 'Thoughts')
+Widget thoughtColorDotSelectedPreview() {
+  return Padding(
+    padding: const EdgeInsets.all(8),
+    child: ThoughtColorDot(
+      color: const Color(0xFF4F6BFF),
+      isSelected: true,
+      onTap: () {},
+    ),
+  );
+}
+
+@Preview(name: 'ThoughtColorDot unselected', group: 'Thoughts')
+Widget thoughtColorDotUnselectedPreview() {
+  return Padding(
+    padding: const EdgeInsets.all(8),
+    child: ThoughtColorDot(
+      color: const Color(0xFF22C55E),
+      isSelected: false,
+      onTap: () {},
+    ),
+  );
+}
+
+@Preview(name: 'ThoughtColorDot default (no color)', group: 'Thoughts')
+Widget thoughtColorDotDefaultPreview() {
+  return Padding(
+    padding: const EdgeInsets.all(8),
+    child: ThoughtColorDot(
+      color: null,
+      isSelected: false,
+      label: '默认',
+      onTap: () {},
+    ),
+  );
 }

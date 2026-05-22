@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/widget_previews.dart';
 
 import '../../core/theme/app_tokens.dart';
 
@@ -45,4 +46,32 @@ class UniPill extends StatelessWidget {
       ),
     );
   }
+}
+
+// ----------------------------------------------------------------------
+// Previews
+// ----------------------------------------------------------------------
+
+@Preview(name: 'UniPill primary', group: 'Shared')
+Widget uniPillPrimaryPreview() {
+  return const Padding(
+    padding: EdgeInsets.all(8),
+    child: UniPill(
+      label: '课程',
+      color: Color(0xFF4F6BFF),
+      tint: Color(0xFFEFF3FF),
+    ),
+  );
+}
+
+@Preview(name: 'UniPill secondary', group: 'Shared')
+Widget uniPillSecondaryPreview() {
+  return const Padding(
+    padding: EdgeInsets.all(8),
+    child: UniPill(
+      label: '已完成',
+      color: Color(0xFF22C55E),
+      tint: Color(0xFFEFFAF3),
+    ),
+  );
 }
