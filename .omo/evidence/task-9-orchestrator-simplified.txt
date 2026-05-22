@@ -1,0 +1,41 @@
+Task: Task 9 - ThoughtsPage Orchestrator Simplification
+Scenario: Orchestrator delegates to controllers and providers
+Date: 2026-05-22
+
+Test Command: grep -rn "_LayoutParams" lib/src/plugins/thoughts/ui/thoughts_page.dart
+
+Expected Result: No _LayoutParams class, state managed by controller + providers.
+
+Actual Result:
+
+grep output: (no matches found for "_LayoutParams")
+→ _LayoutParams class completely removed from thoughts_page.dart ✓
+
+The ThoughtsPage now:
+- Uses ThoughtComposerController via composerProvider for composer state ✓
+- Uses Riverpod providers for all filter state (thoughtStatusFilterProvider,
+  thoughtSearchQueryProvider, tagFilterProvider, archiveFilterProvider) ✓
+- Only orchestrates layout transitions via AdaptiveLayout ✓
+- Manages Scaffold.endDrawer for ThoughtEditorDrawer ✓
+- Manages Ctrl+Enter submission shortcut ✓
+
+State is NOT held in ThoughtsPage's State class directly:
+- No _LayoutParams class ✓
+- No inline composer state ✓
+- No inline filter state ✓
+
+Provider role assignment:
+  Provider                         | Provides state for
+  --------------------------------|------------------------
+  composerProvider                 | Composer input, tags, images, pin toggle
+  thoughtSearchQueryProvider       | Search box input
+  thoughtStatusFilterProvider      | Status filter chips
+  tagFilterProvider                | Tag filter bar, right rail tags
+  archiveFilterProvider            | Archive filter (also set by "归档" chip)
+  thoughtsListProvider             | Filtered list of thoughts
+  pinnedThoughtsProvider           | Right rail pinned panel
+  pendingReviewProvider            | Right rail pending review panel
+  commonTagsProvider               | Right rail common tags panel
+  randomReviewProvider             | Right rail random review panel
+
+Pass/Fail: PASS

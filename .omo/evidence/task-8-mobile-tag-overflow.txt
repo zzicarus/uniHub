@@ -1,0 +1,30 @@
+Task: Task 8 - Mobile Layout Parallel Update
+Scenario: Mobile tag overflow opens bottom sheet
+Date: 2026-05-22
+
+Expected Result: Overflow tags accessible via bottom sheet.
+
+Verification: Code inspection of thoughts_mobile_layout.dart.
+
+Mobile layout tag handling:
+- Horizontal scrolling tag filter chips (top 4 tags shown)
+- "More tags" button that opens bottom sheet with full tag list
+- Uses same tagFilterProvider as desktop for tag selection
+
+Key components in mobile layout:
+```dart
+// From thoughts_mobile_layout.dart
+// Tag chips are rendered in a horizontal ListView
+// "更多" button triggers showModalBottomSheet with full tag list
+```
+
+Mobile tag filter bar differs from desktop:
+- Desktop: top 6 tags visible, "+" button opens popover
+- Mobile: top 4 tags visible in horizontal scroll, "更多" button opens bottom sheet
+- Both use the same commonTagsProvider and tagFilterProvider
+
+The widget-level integration tests in thoughts_qa_test.dart could not be run due to
+compilation errors (see task-1-breakpoint-constants.txt).
+
+Pass/Fail: PARTIAL (mobile widget test blocked by source code compilation error;
+            layout structure verified by code inspection)

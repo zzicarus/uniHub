@@ -1,0 +1,34 @@
+Task: Task 6 - Thought Card Compression + Context Menu
+Scenario: Context menu shows all items with correct enabled/disabled states
+Date: 2026-05-22
+
+Expected Result: Context menu works with correct states and callbacks.
+
+Verification: Code inspection of thought_context_menu.dart.
+
+The context menu implementation includes:
+
+Menu Items (7 total):
+1. "编辑" — enabled, calls onEdit
+2. "置顶" / "取消置顶" — enabled, calls onTogglePin (toggles based on isPinned)
+3. "加标签" — enabled, opens tag input
+4. "转为待办" — DISABLED, tooltip "即将推出"
+5. "转为笔记" — DISABLED, tooltip "即将推出"
+6. "归档" / "取消归档" — enabled, calls onArchive/onRestore
+7. "删除" — enabled, shows confirmation AlertDialog("确认删除?")
+
+Widget tests in thoughts_qa_test.dart (lines 430-511):
+- "desktop card shows archive action on hover" — COMPILATION ERROR
+- "desktop card shows restore action for archived" — COMPILATION ERROR
+- "mobile long-press shows context menu" — COMPILATION ERROR (was already skip: true)
+
+These tests could not be compiled because ThoughtCard's API was changed during Task 6
+(removed onArchive/onRestore named parameters in favor of context menu callbacks),
+but the test files and desktop_layout.dart were not updated to match.
+
+The context menu file (thought_context_menu.dart) has compilation errors itself:
+- Line 89: type mismatch (_DisabledMenuItem can't be assigned to PopupMenuEntry<_ContextAction>)
+- Line 159: showSnackBar not a method on ScaffoldState (deprecated API)
+
+Pass/Fail: FAIL (context menu has type errors and cannot be compiled; card API mismatch
+            between ThoughtCard and its callers)

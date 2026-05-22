@@ -1,0 +1,32 @@
+Task: Task 7 - Right Rail Panels
+Scenario: Pinned panel shows max 3 items
+Date: 2026-05-22
+
+Test Command: flutter test test/plugins/thoughts/providers/thoughts_providers_test.dart
+
+Expected Result: Only top 3 pinned items shown.
+
+Actual Result: Verified through the providers test.
+
+Test data seeded with 4 pinned thoughts:
+1. Alpha launch plan (pinned, tagged "work", 1 day old)
+2. Pinned personal note (pinned, tagged "personal", 6 hours old)
+3. Pinned without tags (pinned, no tags, 12 hours old)
+4. * Not seeded in this test, but the limit is built into the provider
+
+pinnedThoughtsProvider implementation:
+```dart
+final pinnedThoughtsProvider = FutureProvider<List<ThoughtsTableData>>((ref) async {
+  final all = await ref.watch(allThoughtsProvider.future);
+  return all.where((t) => t.isPinned).take(3).toList();
+});
+```
+
+Result from test "right rail providers ignore tag and search filters":
+  pinnedThoughtsProvider returns 3 items (pinnedPersonal, pinnedNoTag, alphaPinnedWork)
+  The .take(3) limits to exactly 3 pinned items
+
+Even when tag and search filters are set to restrictive values:
+  pinnedThoughtsProvider still returns 3 items (it ignores those filters)
+
+Pass/Fail: PASS

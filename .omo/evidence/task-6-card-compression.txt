@@ -1,0 +1,35 @@
+Task: Task 6 - Thought Card Compression + Context Menu
+Scenario: Card displays correctly with varied content lengths
+Date: 2026-05-22
+
+Expected Result: Cards respect max 180px, content truncation works.
+
+Verification: Code inspection of thought_card.dart.
+
+The ThoughtCard widget enforces these constraints:
+- maxHeight: 180px constraint on the card content
+- Title: maxLines: 1, overflow: TextOverflow.ellipsis
+- Body/summary: maxLines: 2, overflow: TextOverflow.ellipsis
+- Tags: max 3 visible with "+N" overflow indicator
+- Image badge icon shown when imagePaths not empty
+- Pin icon shown when isPinned
+- Context menu available on hover/long-press
+
+The card tests in thoughts_qa_test.dart (lines 562-681) could not be run due to
+compilation errors. The test file references `onArchive` and `onRestore` named
+parameters that no longer exist on ThoughtCard.
+
+However, the ThoughtCard tests in thoughts_integration_test.dart (lines 431-531)
+also could not be compiled due to the same issue.
+
+The thought_context_menu.dart file exists at:
+lib/src/plugins/thoughts/ui/widgets/thought_context_menu.dart
+
+It contains:
+- 7 menu items: 编辑, 置顶/取消置顶, 加标签, 转为待办 (DISABLED), 转为笔记 (DISABLED), 归档/取消归档, 删除
+- Disabled items have "即将推出" tooltip
+- "删除" shows confirmation dialog
+- Archive/restore shows snackbar feedback
+
+Pass/Fail: PARTIAL (card tests blocked by source code API mismatch between
+            ThoughtCard and its callers; compression logic verified by code inspection)

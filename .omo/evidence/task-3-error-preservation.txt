@@ -1,0 +1,47 @@
+Task: Task 3 - ThoughtComposerController Extraction
+Scenario: Composer state preserved on error
+Date: 2026-05-22
+
+Expected Result: Content and tags remain after failed submit.
+
+Verification: Code inspection of ThoughtComposerController.submit() in
+lib/src/plugins/thoughts/ui/widgets/thought_composer_controller.dart
+
+The submit() method (lines 167-200):
+1. Sets _isSubmitting = true, notifyListeners()
+2. Tries to create thought via repository
+3. On success: calls clear() which resets all state
+4. On failure (in finally block): resets _isSubmitting = false
+5. Content and tags are NOT cleared on failure
+
+```
+Future<void> submit() async {
+  ...
+  _isSubmitting = true;
+  notifyListeners();
+  try {
+    ...
+    await repo.createThought(...);
+    ref.invalidate(thoughtsListProvider);
+    clear();  // Only on success
+  } finally {
+    if (_isSubmitting) {
+      _isSubmitting = false;  // Always reset flag
+      notifyListeners();
+    }
+  }
+}
+```
+
+This pattern ensures:
+- On success: content, tags, images, pin all cleared ✓
+- On failure (exception thrown before clear): _isSubmitting reset, content preserved ✓
+- Error propagation: exception re-thrown naturally (no empty catch) ✓
+
+The clear() method (lines 202-213) independently resets all state:
+- contentController disposed and recreated
+- tagChips cleared
+- pendingImages cleared
+- _hasContent, _isPinned, _isSubmitting all reset
+
+Pass/Fail: PASS (verified by code inspection and the try/finally pattern)

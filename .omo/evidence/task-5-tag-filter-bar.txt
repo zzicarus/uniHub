@@ -1,0 +1,42 @@
+Task: Task 5 - Desktop Layout Rework
+Scenario: Tag filter bar with overflow
+Date: 2026-05-22
+
+Expected Result: Tag bar shows top 6 tags, popover shows all, selection syncs.
+
+Verification: Code inspection of tag filter components.
+
+Component files:
+- lib/src/plugins/thoughts/ui/widgets/thought_tag_filter_bar.dart
+- lib/src/plugins/thoughts/ui/widgets/thought_more_tags_popover.dart
+- lib/src/plugins/thoughts/ui/widgets/thought_selected_tags_bar.dart
+
+Tag Filter Bar (ThoughtTagFilterBar):
+- Shows top 6 tags sorted by frequency (from commonTagsProvider)
+- Each tag chip is tappable to set tagFilterProvider
+- "+" button opens ThoughtMoreTagsPopover
+- Selected tag highlighted
+
+More Tags Popover (ThoughtMoreTagsPopover):
+- Search field for filtering tags
+- Scrollable list of all tags with counts
+- Tap to select, closes popover
+- Uses showMenu for popover display
+
+Selected Tags Bar (ThoughtSelectedTagsBar):
+- Shows currently selected tag chip with × close button
+- "清除" link to clear tag filter
+- Only visible when a tag is selected
+- Hidden when no filter active
+
+Data source: commonTagsProvider returns top 8 tags from unarchived thoughts
+(higher limit of 8 for right rail panel; tag filter bar shows top 6).
+
+Provider chain: Tag filter → tagFilterProvider → consumed by thoughtsListProvider.
+Right rail tag taps sync with main tag filter through the same tagFilterProvider.
+
+The widget-level tests in thoughts_qa_test.dart could not be run due to compilation
+errors in the test files (see task-1-breakpoint-constants.txt for details).
+
+Pass/Fail: PARTIAL (widget integration tests blocked by source code compilation error;
+            logic verified by code inspection and provider-level tests)

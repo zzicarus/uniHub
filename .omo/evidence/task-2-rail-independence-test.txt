@@ -1,0 +1,26 @@
+Task: Task 2 - Provider Layer Refactoring
+Scenario: Right rail providers ignore main content filters
+Date: 2026-05-22
+
+Test Command: flutter test test/plugins/thoughts/providers/thoughts_providers_test.dart --name "right rail"
+
+Expected Result: Right rail providers show global unarchived data, not affected by main content filters.
+
+Actual Result: Test "right rail providers ignore tag and search filters" PASSED.
+
+Steps Performed:
+1. Set tagFilterProvider to "personal"
+2. Set thoughtSearchQueryProvider to "no-match"
+3. Verified results:
+
+Provider                    | Expected (global)               | Actual Result
+----------------------------|---------------------------------|---------------------
+pinnedThoughtsProvider      | 3 pinned from ALL unarchived    | 3 items ✓
+pendingReviewProvider       | untagged+unarchived globally    | 2 items ✓
+commonTagsProvider          | top tags from ALL unarchived    | personal, image, work ✓
+randomReviewProvider        | 1 random from ALL unarchived    | betaUntaggedOld ✓
+
+Analysis: Right rail providers only watch `allThoughtsProvider`, not `tagFilterProvider`,
+`thoughtSearchQueryProvider`, or `thoughtStatusFilterProvider`. This confirms independence.
+
+Pass/Fail: PASS

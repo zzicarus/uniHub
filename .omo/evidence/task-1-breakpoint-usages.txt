@@ -1,0 +1,47 @@
+Task: Task 1 - Global Breakpoint Update
+Scenario: All usages found and updated
+Date: 2026-05-22
+
+Test Command: grep -rn "mobileMax\|tabletMin\|wideMin" lib/src/
+
+Expected Result: No hardcoded old breakpoint values remain. All references use the new constants.
+
+Actual Result - All references to breakpoint constants in lib/src/:
+
+lib/src/core/theme/app_breakpoints.dart:
+  6:  static const double mobileMax = 899;
+  7:  static const double tabletMin = 900;
+  8:  static const double wideMin = 1280;
+  11: MediaQuery.of(context).size.width < tabletMin;
+  15: return w >= tabletMin && w < wideMin;
+  19: MediaQuery.of(context).size.width >= wideMin;
+  23: if (width >= wideMin) return WindowSize.expanded;
+  24: if (width >= tabletMin) return WindowSize.medium;
+
+lib/src/plugins/thoughts/ui/layouts/thoughts_desktop_layout.dart:
+  35: final showRightRail = width >= AppBreakpoints.wideMin;
+
+lib/src/shared/widgets/adaptive_layout.dart:
+  21: if (width >= AppBreakpoints.tabletMin) {
+
+lib/src/core/app/home/recent_section.dart:
+  187: final isTwoColumn = constraints.maxWidth >= AppBreakpoints.tabletMin;
+
+lib/src/core/app/adaptive_shell.dart:
+  17: if (constraints.maxWidth < AppBreakpoints.tabletMin) {
+
+lib/src/core/app/home_page.dart:
+  31: if (constraints.maxWidth < AppBreakpoints.tabletMin) {
+  35: final isWide = constraints.maxWidth >= AppBreakpoints.wideMin;
+
+Old Value Check (grep for |719|720|1120| in lib/src/):
+  lib/src/core/theme/app_tokens.dart:72:  static const desktopContentMaxWidth = 1120.0;
+  → This is NOT a breakpoint value — it's a content width constraint (documented as not changed).
+
+Conclusion: Zero old breakpoint values (719, 720) remain in layout logic. The only 1120 reference is
+the unrelated `desktopContentMaxWidth` content width constraint.
+
+Verification: flutter analyze → 2 warnings (unused import, unused variable in desktop_layout.dart)
+These are pre-existing issues, not related to breakpoint changes.
+
+Pass/Fail: PASS

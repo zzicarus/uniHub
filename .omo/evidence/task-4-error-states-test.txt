@@ -1,0 +1,50 @@
+Task: Task 4 - Shared State Template Widgets
+Scenario: Error state helpers produce correct messages
+Date: 2026-05-22
+
+Test Command: flutter test test/plugins/thoughts/ui/widgets/thought_state_templates_test.dart --name "error"
+
+Expected Result: All 6 error messages match PRD specifications.
+
+Actual Result: 22/22 tests passed (all error state tests pass).
+
+Error State Variants:
+1. saveError
+   - "保存失败" ✓
+   - "请稍后重试" ✓
+   - With retry: "重试" button shown ✓
+   - Retry callback triggered on tap ✓
+
+2. imageError
+   - "图片添加失败" ✓
+   - "请检查文件权限" ✓
+   - With retry: "重试" button shown ✓
+
+3. deleteError
+   - "删除失败" ✓
+   - "请稍后重试" ✓
+   - With retry: "重试" button shown ✓
+
+4. archiveError
+   - "归档失败" ✓
+   - "请稍后重试" ✓
+   - Icon: Icons.archive_outlined ✓
+   - With retry: "重试" button shown ✓
+
+5. restoreError
+   - "恢复失败" ✓
+   - "请稍后重试" ✓
+   - Icon: Icons.unarchive_outlined ✓
+   - With retry: "重试" button shown ✓
+
+6. filterError
+   - "加载失败" ✓
+   - "请重试" ✓
+   - "重试" button always present ✓
+   - Icon: Icons.cloud_off_outlined ✓
+   - Retry callback triggered on tap ✓
+   - Without callback: retry button hidden ✓
+
+All messages match PRD specifications exactly. ✓
+
+Pass/Fail: PASS

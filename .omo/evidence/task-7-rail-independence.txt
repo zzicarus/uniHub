@@ -1,0 +1,37 @@
+Task: Task 7 - Right Rail Panels
+Scenario: Right rail shows global data independent of main filters
+Date: 2026-05-22
+
+Test Command: flutter test test/plugins/thoughts/providers/thoughts_providers_test.dart --name "right rail"
+
+Expected Result: Right rail data doesn't change when main filters change.
+
+Actual Result: Test "right rail providers ignore tag and search filters" PASSED (5/5 provider tests).
+
+Steps:
+1. Set tagFilterProvider = "personal" and thoughtSearchQueryProvider = "no-match" on main content
+2. Verified right rail providers return global unarchived data:
+
+   pinnedThoughtsProvider:
+
+     Returns 3 pinned items from ALL unarchived, ignoring tag/search filters
+     Result: seeded.pinnedPersonal, seeded.pinnedNoTag, seeded.alphaPinnedWork
+     
+   pendingReviewProvider:
+     Returns all untagged+unarchived thoughts, ignoring tag/search filters
+     Result: seeded.pinnedNoTag, seeded.betaUntaggedOld
+     
+   commonTagsProvider:
+     Returns top 8 tags from ALL unarchived thoughts, ignoring tag/search filters
+     Result: personal (2), image (1), work (2) — sorted by frequency
+     
+   randomReviewProvider:
+     Returns 1 random old thought, ignoring tag/search filters
+     Result: seeded.betaUntaggedOld (created >7 days ago)
+
+Provider Implementation:
+- All right rail providers watch `allThoughtsProvider` (unarchived only)
+- None watch `tagFilterProvider`, `thoughtSearchQueryProvider`, or `thoughtStatusFilterProvider`
+- This is enforced by the provider dependency graph
+
+Pass/Fail: PASS

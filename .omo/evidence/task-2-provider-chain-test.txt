@@ -1,0 +1,39 @@
+Task: Task 2 - Provider Layer Refactoring
+Scenario: Provider chain filter order correct
+Date: 2026-05-22
+
+Test Command: flutter test test/plugins/thoughts/providers/thoughts_providers_test.dart
+
+Expected Result: Filter chain composes correctly in archive → status → tag → search order.
+Thoughts not matching all active filters should not appear in result.
+
+Actual Result: 5/5 tests passed. All tests passed.
+
+Test Cases:
+1. "composes archive, status, tag, then debounced search filters" ✓
+   - Sets archive=false, status=pinned, tag="work", search="ALPHA"
+   - Verified only "Alpha launch plan" (id=seeded.alphaPinnedWork) returned
+   - thoughtsCountProvider returns 1
+
+2. "archived status filter selects the archive bucket" ✓
+   - Sets archive=false, status=archived
+   - Returns only "Archived alpha work" (id=seeded.archivedWork)
+   - archiveFilterProvider is toggled to true
+
+3. "search matches plain text content and tags case-insensitively" ✓
+   - Search "PERSONAL" matches both content ("Pinned personal note") and tag ("personal,image")
+   - Search "beta" matches content ("Beta review candidate")
+   - Case-insensitive matching confirmed
+
+4. "withImages status uses image metadata without changing schema" ✓
+   - Returns only thought with imagePaths (Gallery notes, id=seeded.personalImage)
+   - No schema changes needed (filter is provider-level)
+
+5. "right rail providers ignore tag and search filters" ✓
+   - With restrictive tag/search filters set:
+   - pinnedThoughtsProvider returns 3 pinned thoughts (global)
+   - pendingReviewProvider returns 2 untagged thoughts (global)
+   - commonTagsProvider returns 3 tags (personal, image, work)
+   - randomReviewProvider returns betaUntaggedOld
+
+Pass/Fail: PASS

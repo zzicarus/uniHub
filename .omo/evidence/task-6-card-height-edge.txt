@@ -1,0 +1,37 @@
+Task: Task 6 - Thought Card Compression + Context Menu
+Scenario: Card height constraint with edge cases
+Date: 2026-05-22
+
+Expected Result: Cards never exceed 180px regardless of content.
+
+Verification: Code inspection of thought_card.dart ThoughtCard build method.
+
+The card uses a widget structure that enforces max height:
+```dart
+// From thought_card.dart
+ConstrainedBox(
+  constraints: BoxConstraints(maxHeight: 180),
+  child: Card(
+    child: ...
+  ),
+)
+```
+
+Content handling:
+- Empty content (whitespace only): Title shows "想法" fallback, body minimal → well under 180px
+- 10 tags: _buildTagChips takes maxVisible=3, shows 3 tags + "+N" overflow indicator
+- 3 images: _ImageBadge icon shown, only 1 icon regardless of count
+- Long text: Title limited to 1 line, body to 2 lines via TextOverflow.ellipsis
+
+Edge cases:
+- The constrained box ensures max 180px regardless of content
+- The card does NOT use minHeight, so empty content renders compact
+- The +N tag overflow shows tagList.length - maxVisible (e.g., "+2" for 5 tags)
+- Pin icon (push_pin_rounded) shown for isPinned=true
+- Image badge icon shown for images.isNotEmpty
+
+Widget tests for these scenarios (in thoughts_qa_test.dart lines 562-681) could not be
+run due to compilation errors in the test file.
+
+Pass/Fail: PARTIAL (edge case widget tests blocked by compilation error;
+            max 180px constraint verified by code inspection)

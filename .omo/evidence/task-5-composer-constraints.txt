@@ -1,0 +1,33 @@
+Task: Task 5 - Desktop Layout Rework
+Scenario: Lightweight composer renders with correct constraints
+Date: 2026-05-22
+
+Expected Result: Composer respects width and height constraints (max 1080px width, 96-120px input height).
+
+Verification: Code inspection of ThoughtComposer widget in
+lib/src/plugins/thoughts/ui/widgets/thought_composer.dart
+
+Widget structure:
+- The composer is wrapped in Center with a max width constraint of 1080px
+- Input area has minimum height of 96px (AppSpacing.xxl * 3 = 96)
+- The composer uses ThoughtComposerController for state management
+
+Key constraints:
+```dart
+// From thought_composer.dart
+const SizedBox(width: 1080)  // max width constraint
+```
+
+The composer widget tests in `thoughts_qa_test.dart` (lines 517-559) are skipped:
+  "composer renders with all controls" - skip: true
+  "composer pin toggle works" - skip: true
+  "composer tag chips work" - skip: true
+
+Reason for skip: "Full ThoughtsPage widget tests are skipped because flutter_quill's
+RichTextEditor causes rendering assertions in the test environment."
+
+These composer scenarios are covered by unit tests in thought_composer_controller_test.dart
+(which has a compilation error due to unrelated source issue - see task-3-controller-lifecycle.txt).
+
+Pass/Fail: PARTIAL (widget tests skipped due to flutter_quill test limitations;
+            composer structure verified by code inspection)
