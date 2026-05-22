@@ -13,8 +13,7 @@ class ThoughtCard extends ConsumerStatefulWidget {
   final String? imagePaths;
   final VoidCallback onTap;
   final void Function(String tag) onTagTap;
-  final VoidCallback? onArchive;
-  final VoidCallback? onRestore;
+  final VoidCallback? onContextMenu;
 
   const ThoughtCard({
     required this.id,
@@ -26,8 +25,7 @@ class ThoughtCard extends ConsumerStatefulWidget {
     this.imagePaths,
     required this.onTap,
     required this.onTagTap,
-    this.onArchive,
-    this.onRestore,
+    this.onContextMenu,
     super.key,
   });
 
@@ -36,8 +34,6 @@ class ThoughtCard extends ConsumerStatefulWidget {
 }
 
 class _ThoughtCardState extends ConsumerState<ThoughtCard> {
-  bool _hovered = false;
-
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -57,129 +53,168 @@ class _ThoughtCardState extends ConsumerState<ThoughtCard> {
     final title = ThoughtContentCodec.titleFromStored(widget.content);
     final body = ThoughtContentCodec.plainTextFromStored(widget.content);
 
-    return MouseRegion(
-      onEnter: (_) => setState(() => _hovered = true),
-      onExit: (_) => setState(() => _hovered = false),
-      child: Material(
-        color: colorScheme.surface,
+    return Material(
+      color: colorScheme.surface,
+      borderRadius: BorderRadius.circular(AppRadius.lg),
+      elevation: 0,
+      child: InkWell(
         borderRadius: BorderRadius.circular(AppRadius.lg),
-        elevation: 0,
-        child: InkWell(
-          borderRadius: BorderRadius.circular(AppRadius.lg),
-          onTap: widget.onTap,
-          child: Container(
-            constraints: const BoxConstraints(
-              minHeight: AppSizes.cardMinHeight,
-            ),
-            padding: const EdgeInsets.all(AppSpacing.md),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(AppRadius.lg),
-              border: Border.all(color: colorScheme.outlineVariant),
-              boxShadow: _hovered
-                  ? const [AppShadows.cardElevated]
-                  : const [AppShadows.cardSoft],
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // ── Timestamp + Actions ──
-                Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        _formatTimestamp(widget.createdAt),
-                        style: theme.textTheme.bodySmall,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                    if (widget.onRestore != null && _hovered)
-                      _ActionIcon(
-                        icon: Icons.unarchive_outlined,
-                        color: colorScheme.onSurfaceVariant,
-                        onTap: widget.onRestore,
-                      ),
-                    if (widget.onArchive != null && _hovered && !widget.isPinned)
-                      _ActionIcon(
-                        icon: Icons.archive_outlined,
-                        color: colorScheme.onSurfaceVariant,
-                        onTap: widget.onArchive,
-                      ),
-                    Icon(
-                      widget.isPinned
-                          ? Icons.push_pin_rounded
-                          : Icons.more_horiz_rounded,
-                      size: 18,
-                      color: widget.isPinned
-                          ? colorScheme.primary
-                          : colorScheme.outline,
-                    ),
-                  ],
+        onTap: widget.onTap,
+        child: Container(
+          constraints: const BoxConstraints(maxHeight: 180),
+          padding: const EdgeInsets.all(AppSpacing.md),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(AppRadius.lg),
+            border: Border.all(color: colorScheme.outlineVariant),
+            boxShadow: const [AppShadows.cardSoft],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildHeaderRow(theme, colorScheme),
+              const SizedBox(height: AppSpacing.sm),
+              _buildTitle(theme, title),
+              const SizedBox(height: AppSpacing.xs),
+              _buildBody(theme, colorScheme, body),
+              if (tagList.isNotEmpty || images.isNotEmpty)
+                _buildTagsSection(
+                  theme,
+                  colorScheme,
+                  tagList,
+                  images,
+                  accent,
                 ),
-                const SizedBox(height: AppSpacing.sm),
-
-                // ── Title ──
-                Text(
-                  title,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: theme.textTheme.titleSmall?.copyWith(
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                const SizedBox(height: AppSpacing.xs),
-
-                // ── Body ──
-                Expanded(
-                  child: Text(
-                    body,
-                    maxLines: 3,
-                    overflow: TextOverflow.ellipsis,
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: colorScheme.onSurfaceVariant,
-                      height: 1.5,
-                    ),
-                  ),
-                ),
-
-                // ── Tags & Attachments ──
-                if (tagList.isNotEmpty || images.isNotEmpty) ...[
-                  const SizedBox(height: AppSpacing.sm),
-                  Wrap(
-                    spacing: AppSpacing.xxs,
-                    runSpacing: AppSpacing.xxs,
-                    crossAxisAlignment: WrapCrossAlignment.center,
-                    children: [
-                      if (images.isNotEmpty)
-                        _ImageBadge(accent: accent, colorScheme: colorScheme),
-                      ...tagList.map((tag) {
-                        return ActionChip(
-                          label: Text(
-                            tag,
-                            style: theme.textTheme.labelMedium?.copyWith(
-                              color: accent,
-                              fontWeight: FontWeight.w600,
-                              fontSize: 11,
-                            ),
-                          ),
-                          onPressed: () => widget.onTagTap(tag),
-                          backgroundColor: accent.withValues(alpha: 0.10),
-                          side: BorderSide.none,
-                          materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                          visualDensity: VisualDensity.compact,
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: AppSpacing.xs - 2,
-                          ),
-                        );
-                      }),
-                    ],
-                  ),
-                ],
-              ],
-            ),
+            ],
           ),
         ),
       ),
     );
+  }
+
+  Widget _buildHeaderRow(ThemeData theme, ColorScheme colorScheme) {
+    return Row(
+      children: [
+        Expanded(
+          child: Text(
+            _formatTimestamp(widget.createdAt),
+            style: theme.textTheme.bodySmall,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
+        if (widget.onContextMenu != null)
+          GestureDetector(
+            onTap: widget.onContextMenu,
+            child: Container(
+              width: 28,
+              height: 28,
+              decoration: BoxDecoration(
+                color: colorScheme.surface,
+                borderRadius: BorderRadius.circular(AppRadius.xs),
+                border: Border.all(color: colorScheme.outline),
+              ),
+              child: Icon(
+                Icons.more_horiz_rounded,
+                size: 16,
+                color: colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ),
+        if (widget.isPinned)
+          Padding(
+            padding: const EdgeInsets.only(left: AppSpacing.xxs),
+            child: Icon(
+              Icons.push_pin_rounded,
+              size: 18,
+              color: colorScheme.primary,
+            ),
+          ),
+      ],
+    );
+  }
+
+  Widget _buildTitle(ThemeData theme, String title) {
+    return Text(
+      title,
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
+      style: theme.textTheme.titleSmall?.copyWith(
+        fontWeight: FontWeight.w700,
+      ),
+    );
+  }
+
+  Widget _buildBody(ThemeData theme, ColorScheme colorScheme, String body) {
+    return Text(
+      body,
+      maxLines: 2,
+      overflow: TextOverflow.ellipsis,
+      style: theme.textTheme.bodySmall?.copyWith(
+        color: colorScheme.onSurfaceVariant,
+        height: 1.5,
+      ),
+    );
+  }
+
+  Widget _buildTagsSection(
+    ThemeData theme,
+    ColorScheme colorScheme,
+    List<String> tagList,
+    List<String> images,
+    Color accent,
+  ) {
+    return Wrap(
+      spacing: AppSpacing.xxs,
+      runSpacing: AppSpacing.xxs,
+      crossAxisAlignment: WrapCrossAlignment.center,
+      children: [
+        if (images.isNotEmpty)
+          _ImageBadge(accent: accent, colorScheme: colorScheme),
+        ..._buildTagChips(tagList, theme, accent),
+      ],
+    );
+  }
+
+  List<Widget> _buildTagChips(List<String> tagList, ThemeData theme, Color accent) {
+    const maxVisible = 3;
+    final visible = tagList.take(maxVisible).toList();
+    final overflow = tagList.length - maxVisible;
+
+    return [
+      ...visible.map((tag) {
+        return ActionChip(
+          label: Text(
+            tag,
+            style: theme.textTheme.labelMedium?.copyWith(
+              color: accent,
+              fontWeight: FontWeight.w600,
+              fontSize: 11,
+            ),
+          ),
+          onPressed: () => widget.onTagTap(tag),
+          backgroundColor: accent.withValues(alpha: 0.10),
+          side: BorderSide.none,
+          materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          visualDensity: VisualDensity.compact,
+          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xs - 2),
+        );
+      }),
+      if (overflow > 0)
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xxs, vertical: 2),
+          decoration: BoxDecoration(
+            color: theme.colorScheme.surfaceContainerHigh,
+            borderRadius: BorderRadius.circular(AppRadius.full),
+          ),
+          child: Text(
+            '+$overflow',
+            style: theme.textTheme.labelMedium?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+              fontWeight: FontWeight.w600,
+              fontSize: 11,
+            ),
+          ),
+        ),
+    ];
   }
 
   Color _hexToColor(String hex) {
@@ -236,11 +271,7 @@ class _ImageBadge extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(
-            Icons.image_outlined,
-            size: 13,
-            color: accent,
-          ),
+          Icon(Icons.image_outlined, size: 13, color: accent),
           const SizedBox(width: AppSpacing.xxs),
           Text(
             '图片',
@@ -251,35 +282,6 @@ class _ImageBadge extends StatelessWidget {
             ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _ActionIcon extends StatelessWidget {
-  final IconData icon;
-  final Color color;
-  final VoidCallback? onTap;
-
-  const _ActionIcon({required this.icon, required this.color, this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-    return Padding(
-      padding: const EdgeInsets.only(right: AppSpacing.xxs),
-      child: GestureDetector(
-        onTap: onTap,
-        child: Container(
-          width: 28,
-          height: 28,
-          decoration: BoxDecoration(
-            color: colorScheme.surface,
-            borderRadius: BorderRadius.circular(AppRadius.xs),
-            border: Border.all(color: colorScheme.outline),
-          ),
-          child: Icon(icon, size: 16, color: color),
-        ),
       ),
     );
   }
