@@ -220,7 +220,7 @@ class _MetricCard extends StatelessWidget {
     final theme = Theme.of(context);
 
     return _Panel(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
       child: Row(
         children: [
           Container(
