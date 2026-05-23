@@ -55,16 +55,53 @@ main()
 
 ## 主题
 
-- Material 3 + `ColorScheme.fromSeed(seedColor: AppColors.primary)`
-- 亮/暗色通过 `ThemeMode.system` 自动切换
-- 所有 Widget 使用 `Theme.of(context).colorScheme`（不直接使用 AppColors 常量）
-- 设计令牌 Token 定义在 `app_tokens.dart`（AppSpacing、AppRadius、AppSizes 等）
+### 架构概览
+
+v2 引入了**多预设主题系统**，核心文件：
+
+| 文件 | 职责 |
+|------|------|
+| `app_theme_tokens.dart` | `UniHubThemeColors`（`ThemeExtension`）定义产品级语义颜色；通过 `context.appColors` 扩展访问 |
+| `app_theme_preset.dart` | `AppThemePreset` 枚举（uniBlue / paper / forest / sakura / amber / graphite） |
+| `app_theme_registry.dart` | `AppThemeRegistry` 统一管理所有预设的亮/暗色板 |
+| `theme_settings_provider.dart` | `ThemeSettings` + `Notifier`，运行时切换预设和亮暗模式 |
+| `app_theme.dart` | `AppTheme.build(preset, brightness)` 工厂方法，替代原来的 `light`/`dark` getter |
+
+### 使用方法
+
+```dart
+// 旧方式（v1）：
+Theme.of(context).colorScheme.primary
+
+// 新方式（v2）——推荐：
+context.appColors.primary         // 产品级语义颜色
+context.appColors.sidebarBackground
+context.appColors.textSecondary
+```
+
+### 关键约定
+
+- 所有 Widget 优先使用 `context.appColors`（`UniHubThemeColors`）
+- `colorScheme` 保留给 M3 系统级颜色（`onSurface`、`primaryContainer` 等）
+- 主题入口统一通过 `AppTheme.build(preset: ..., brightness: ...)` 构造
+- 运行时可切换：`ref.read(themeSettingsProvider.notifier).setPreset(AppThemePreset.forest)`
+- 设计令牌（间距、圆角、字号）仍定义在 `app_tokens.dart`
 
 ---
 
 ## 近期变更
 
 > 本 section 由 sync-knowledge 自动管理，按时间倒序追加。
+
+### 2026-05-23: 引入多预设主题系统（v2）
+- **app_theme_tokens.dart（新增）** — `UniHubThemeColors` 继承 `ThemeExtension`，定义 21 个产品级语义颜色（background、sidebarBackground、panelBackground、textPrimary 等）；提供 `context.appColors` 扩展
+- **app_theme_preset.dart（新增）** — `AppThemePreset` 枚举：uniBlue / paper / forest / sakura / amber / graphite
+- **app_theme_registry.dart（新增）** — `AppThemeRegistry.colorsOf(preset, brightness)` 统一管理 6 个预设 × 2 种亮度 = 12 套色板
+- **theme_settings_provider.dart（新增）** — `ThemeSettingsController` Notifier，支持运行时切换 preset 和 ThemeMode
+- **app_theme.dart** — 重写为 `AppTheme.build(preset, brightness)` 工厂方法，`light`/`dark` getter 改为兼容入口；`cardTheme` 暗色模式自适应移除卡片边框
+- **home_page.dart / right_rail.dart / sidebar.dart / app_panel.dart** — 从 `colorScheme` 迁移至 `context.appColors`，消除 `AppColors` 常量的直接使用
+- **app.dart** — `MaterialApp.router` 接入 `themeSettingsProvider`，theme/darkTheme 改为 `AppTheme.build()` 调用
+- **设计原则**：由单预设硬编码变为多预设运行时切换，所有视觉颜色收敛到 `UniHubThemeColors` 统一管理
 
 ### 2026-05-22: 配色调整至蓝白色系 + 卡片边界恢复
 - **app_tokens.dart** — 种子色 `AppColors.primary` 从 `0xFF4F6BFF`（靛蓝）改为 `0xFF64B5F6`（浅蓝）；配套 `primaryDark`、`primarySoft`、`border` 等 30 个色彩常量同步调整；`AppShadows` 透明度保持低值
