@@ -8,14 +8,13 @@ class _HomeRightRail extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
+    final appColors = context.appColors;
     return Container(
       width: AppDesktopSizes.rightRailWideWidth,
       decoration: BoxDecoration(
-        color: AppColors.background,
+        color: appColors.background,
         border: Border(
-          left: BorderSide(
-            color: colorScheme.outlineVariant.withValues(alpha: 0.5),
-          ),
+          left: BorderSide(color: appColors.border),
         ),
       ),
       child: SingleChildScrollView(

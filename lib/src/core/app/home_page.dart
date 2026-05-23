@@ -10,6 +10,7 @@ import 'package:uni_hub/src/shared/widgets/app_section_header.dart';
 import '../plugin/plugin_interface.dart';
 import '../theme/app_breakpoints.dart';
 import '../theme/app_tokens.dart';
+import '../theme/app_theme_tokens.dart';
 import 'dashboard_providers.dart';
 
 part 'home/header.dart';
@@ -24,7 +25,7 @@ class HomePage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: context.appColors.background,
       body: SafeArea(
         child: LayoutBuilder(
           builder: (context, constraints) {
