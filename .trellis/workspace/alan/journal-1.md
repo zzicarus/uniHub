@@ -396,3 +396,36 @@ Refactored Thoughts and HomePage UI to strictly follow Material 3 Tonal styling.
 ### Next Steps
 
 - None - task complete
+
+
+## Session 13: 新增通用 AppCommonTagsPanel
+
+**Date**: 2026-05-23
+**Task**: 新增通用 AppCommonTagsPanel
+**Branch**: `main`
+
+### Summary
+
+完成 TagKit Leaf 2.1: 新增 lib/src/shared/widgets/tags/app_common_tags_panel.dart，使用 AppPanel 外层容器 + title/helperText/icon 头部 + Wrap 渲染 AppTagChip 标签列表 + 空态 emptyText，不依赖 thoughts 组件与 AppColors 静态色，flutter analyze 通过。
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `94e8ab5` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
