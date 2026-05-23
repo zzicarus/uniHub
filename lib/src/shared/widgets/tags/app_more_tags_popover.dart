@@ -124,8 +124,8 @@ class _AppMoreTagsPopoverContentState
             )
             .toList();
 
-    return SizedBox(
-      width: 320,
+    return ConstrainedBox(
+      constraints: const BoxConstraints(maxWidth: 420),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,

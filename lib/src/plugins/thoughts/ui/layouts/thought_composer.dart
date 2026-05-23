@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:uni_hub/src/core/theme/app_tokens.dart';
 import 'package:uni_hub/src/shared/ui/rich_text_editor/rich_text_editor.dart';
+import '../../providers/thoughts_providers.dart';
 import '../widgets/thought_composer_controller.dart';
 import 'thoughts_shared_widgets.dart';
 
@@ -20,6 +21,18 @@ class ThoughtComposer extends ConsumerWidget {
     final composer = ref.watch(composerProvider);
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
+
+    final existingTags = ref.watch(commonTagsProvider);
+    final tagInput = composer.tagTextController.text.trim().toLowerCase();
+    final tagSuggestions = tagInput.isEmpty
+        ? const <String>[]
+        : existingTags
+            .map((e) => e.key)
+            .where((tag) =>
+                tag.toLowerCase().contains(tagInput) &&
+                !composer.tagChips.contains(tag))
+            .take(5)
+            .toList();
 
     return ConstrainedBox(
       constraints: const BoxConstraints(maxWidth: 1080),
@@ -152,29 +165,80 @@ class ThoughtComposer extends ConsumerWidget {
                     runSpacing: AppSpacing.sm,
                     crossAxisAlignment: WrapCrossAlignment.center,
                     children: [
-                      SizedBox(
-                        width: 128,
-                        height: 40,
-                        child: TextField(
-                          controller: composer.tagTextController,
-                          onChanged: composer.handleTagInput,
-                          decoration: InputDecoration(
-                            hintText: '添加标签',
-                            prefixIcon: const Icon(
-                              Icons.sell_outlined,
-                              size: 18,
-                            ),
-                            isDense: true,
-                            contentPadding: const EdgeInsets.symmetric(
-                              horizontal: AppSpacing.sm,
-                              vertical: AppSpacing.sm,
-                            ),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(AppRadius.sm),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          SizedBox(
+                            width: 128,
+                            height: 40,
+                            child: TextField(
+                              controller: composer.tagTextController,
+                              onChanged: composer.handleTagInput,
+                              decoration: InputDecoration(
+                                hintText: '添加标签',
+                                prefixIcon: const Icon(
+                                  Icons.sell_outlined,
+                                  size: 18,
+                                ),
+                                isDense: true,
+                                contentPadding: const EdgeInsets.symmetric(
+                                  horizontal: AppSpacing.sm,
+                                  vertical: AppSpacing.sm,
+                                ),
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(AppRadius.sm),
+                                ),
+                              ),
+                              style: theme.textTheme.bodySmall,
                             ),
                           ),
-                          style: theme.textTheme.bodySmall,
-                        ),
+                          if (composer.tagErrorMessage != null)
+                            Padding(
+                              padding: const EdgeInsets.only(top: 2),
+                              child: Text(
+                                composer.tagErrorMessage!,
+                                style: theme.textTheme.labelSmall?.copyWith(
+                                  color: colorScheme.error,
+                                  fontSize: 10,
+                                ),
+                              ),
+                            ),
+                          if (tagSuggestions.isNotEmpty && composer.tagErrorMessage == null)
+                            Padding(
+                              padding: const EdgeInsets.only(top: 4),
+                              child: Wrap(
+                                spacing: AppSpacing.xxs,
+                                runSpacing: AppSpacing.xxs,
+                                children: tagSuggestions.map((tag) {
+                                  return Material(
+                                    color: colorScheme.tertiaryContainer.withValues(alpha: 0.5),
+                                    borderRadius: BorderRadius.circular(AppRadius.full),
+                                    child: InkWell(
+                                      borderRadius: BorderRadius.circular(AppRadius.full),
+                                      onTap: () {
+                                        composer.tagTextController.clear();
+                                        composer.handleTagInput('$tag,');
+                                      },
+                                      child: Padding(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: AppSpacing.sm,
+                                          vertical: AppSpacing.xxs,
+                                        ),
+                                        child: Text(
+                                          '#$tag',
+                                          style: theme.textTheme.labelSmall?.copyWith(
+                                            color: colorScheme.onTertiaryContainer,
+                                            fontWeight: FontWeight.w700,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  );
+                                }).toList(),
+                              ),
+                            ),
+                        ],
                       ),
                       ThoughtPillButton(
                         icon: Icons.image_outlined,

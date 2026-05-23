@@ -706,3 +706,212 @@ FittedBox(
 └─ 我要设置字体
     └─ ✅ → AppFonts.decorative + fallback 或默认 textTheme
 ```
+
+---
+
+## TagKit Widget Patterns
+
+TagKit 是一组可复用的标签相关组件，位于 `lib/src/shared/widgets/tags/`，核心逻辑位于 `lib/src/shared/tags/`。所有 UI 组件不依赖任何 Provider，通过回调与业务层通信。
+
+### 组件层级
+
+| 层 | 文件 | 职责 | 使用方 |
+|----|------|------|--------|
+| **核心逻辑** | `shared/tags/tag_models.dart` | `AppTagStat`、`TagMatchMode`、`TagValidationResult` | 所有层 |
+| | `shared/tags/tag_codec.dart` | 标签 normalize、parse、encode、validate | 数据层、Provider |
+| | `shared/tags/tag_filter_logic.dart` | toggle、matches、countTags、sortStats | Provider、测试 |
+| **基础组件** | `app_tag_chip.dart` | `AppTagChip`（单选标签 chip）、`AppSelectedTagChip`（已选标签带删除）、`AppMoreTagsButton`（更多按钮） | 所有组合组件 |
+| **组合组件** | `app_tag_filter_bar.dart` | 标签筛选栏：label + chip 列表 + 更多按钮 | 插件页 |
+| | `app_selected_tags_bar.dart` | 已选标签栏：显示选中标签 + 逐个/批量清除 + +N 溢出指示 | 插件页 |
+| | `app_common_tags_panel.dart` | 常用标签面板：标题 + 图标 + 辅助文字 + 标签列表 | 侧栏 |
+| | `app_more_tags_popover.dart` | 更多标签弹层 Content（当前 showDialog，后续 anchored popover） | 筛选栏 |
+| **插件 Adapter** | `thoughts/.../thought_common_tags_panel.dart` | 将 provider 数据转为 `AppCommonTagsPanel` props | thoughts 侧栏 |
+
+### 组件设计约束
+
+```dart
+// ✅ 正确：无 Provider 依赖，全部通过构造器 + 回调
+AppTagFilterBar(
+  tags: tagStats,
+  selectedTags: selectedTags,
+  onTagToggle: (tag) => /* 处理切换 */,
+  onMoreTap: () => /* 打开弹层 */,
+)
+
+// ❌ 错误：组件内部读取 Provider
+class AppTagFilterBar extends ConsumerWidget { /* ... */ }
+```
+
+### 使用规则
+
+| 规则 | 说明 | 实际代码 |
+|------|------|----------|
+| 数据传入而非查询 | 组件通过 `required` 参数接收数据，不在内部读取 Provider 或数据库 | `AppTagFilterBar.tags`、`AppSelectedTagsBar.selectedTags` |
+| 回调而非直接写状态 | 用户交互通过 `ValueChanged<String>` / `VoidCallback` 通知父级 | `onTagToggle`、`onRemove`、`onClear` |
+| 纯 Widget 布局 | 组件只负责渲染和交互反馈，不包含业务逻辑 | `AppCommonTagsPanel.build()` 仅组合子组件 |
+| Shared 层组件用 `StatelessWidget` | 不需要 Riverpod，保持复用性 | `AppTagChip`、`AppTagFilterBar` 全部继承 `StatelessWidget` |
+| `UniHubThemeColors` extension 注册 | 需要 `context.appColors` 的组件要求 `ThemeData.extensions` 注册 | `AppPanel`、`AppCommonTagsPanel` |
+
+### 插件接入模式
+
+插件通过 **Adapter Widget** 接入 TagKit：
+
+1. 在插件 `providers/` 中定义数据 Provider（如 `commonTagsProvider`、`selectedTagFiltersProvider`）
+2. 在插件 `ui/widgets/` 中创建 Adapter Widget（如 `ThoughtCommonTagsPanel`）
+3. Adapter 内部读取 Provider，将数据转为 `AppTagStat` 等组件参数
+4. 将组件参数传入 `AppCommonTagsPanel` 等通用组件
+
+参考 `lib/src/plugins/thoughts/ui/widgets/thought_common_tags_panel.dart`。
+
+```dart
+// 标准 Adapter 模式
+class ThoughtCommonTagsPanel extends ConsumerWidget {
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final commonTags = ref.watch(commonTagsProvider).take(8).toList();
+    final selectedTags = ref.watch(selectedTagFiltersProvider);
+
+    final tagStats = commonTags
+        .map((e) => AppTagStat(name: e.key, count: e.value))
+        .toList();
+
+    return AppCommonTagsPanel(
+      tags: tagStats,
+      selectedTags: selectedTags,
+      onTagToggle: (tag) {
+        final current = ref.read(selectedTagFiltersProvider);
+        ref.read(selectedTagFiltersProvider.notifier).state =
+            toggleTagInFilter(current, tag);
+      },
+      // 默认参数 title/helperText/icon/maxVisibleTags/emptyText
+    );
+  }
+}
+```
+
+### 标签输入校验模式
+
+在 `ThoughtComposerController.handleTagInput()` 和 `ThoughtEditorController.handleTagInput()` 中调用 `TagCodec.validate()` 过滤无效标签。
+
+```dart
+// 标准校验模式
+void handleTagInput(String value) {
+  if (value.isEmpty) {
+    tagErrorMessage = null;
+    notifyListeners();
+    return;
+  }
+  final shouldCommit = value.endsWith(',') || value.endsWith(' ');
+  if (!shouldCommit) return;
+
+  final candidates = value
+      .split(RegExp('[, ]+'))
+      .map((s) => s.trim())
+      .where((s) => s.isNotEmpty);
+
+  for (final tag in candidates) {
+    final validation = TagCodec.validate(tag);
+    if (!validation.isValid) {
+      tagErrorMessage = validation.message;  // 显示给用户
+      notifyListeners();
+      continue;
+    }
+    if (!_tagChips.contains(tag)) {
+      _tagChips.add(tag);
+    }
+  }
+  tagTextController.clear();
+  notifyListeners();
+}
+```
+
+**校验规则**（`TagCodec.validate()`）：
+- 空标签 -> 拒绝
+- 长度 > 20 字符 -> 拒绝
+- 包含非法字符（非中文/英文/数字/_-） -> 拒绝
+- 自动去除 `#` 前缀
+
+**UI 侧**：控制器需要暴露 `tagErrorMessage` 字段，UI 在标签输入框的 `InputDecoration.errorText` 或独立的 `Text` widget 中展示。错误信息应在下次有效输入时自动清除。
+
+### 标签自动补全模式
+
+在标签输入框中，输入时显示已有标签候选列表，帮助用户快速选择已存在的标签，避免创建同义标签。
+
+```dart
+// 在 ConsumerWidget build() 中计算建议
+final existingTags = ref.watch(commonTagsProvider);
+final tagInput = composer.tagTextController.text.trim().toLowerCase();
+final tagSuggestions = tagInput.isEmpty
+    ? const <String>[]
+    : existingTags
+        .map((e) => e.key)
+        .where((tag) =>
+            tag.toLowerCase().contains(tagInput) &&
+            !composer.tagChips.contains(tag))
+        .take(5)
+        .toList();
+```
+
+**UI 侧**：在标签输入框下方，用一个 `Wrap` + 小号 `Material` chip 展示候选标签，点击后调用 `handleTagInput('$tag,')` 添加。仅在无校验错误时显示。
+
+```dart
+// 建议标签渲染
+Padding(
+  padding: const EdgeInsets.only(top: 4),
+  child: Wrap(
+    spacing: AppSpacing.xs,
+    runSpacing: AppSpacing.xxs,
+    children: tagSuggestions.map((tag) {
+      return Material(
+        color: colorScheme.tertiaryContainer.withValues(alpha: 0.5),
+        borderRadius: BorderRadius.circular(AppRadius.full),
+        child: InkWell(
+          onTap: () {
+            tagTextController.clear();
+            handleTagInput('$tag,');
+          },
+          child: Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.sm,
+              vertical: AppSpacing.xxs,
+            ),
+            child: Text('#$tag',
+              style: theme.textTheme.labelSmall?.copyWith(
+                color: colorScheme.onTertiaryContainer,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+        ),
+      );
+    }).toList(),
+  ),
+)
+```
+
+### 移动端标签 Widget 接入模式
+
+移动端标签 Widget 应与桌面端使用同一套共享组件（`shared/widgets/tags/`），保持视觉和行为一致。接入策略是**轻量替换**——保留当前布局结构，只将内部 Widget 替换为共享组件。
+
+| 位置 | 旧 Widget | 新 Widget |
+|------|-----------|-----------|
+| `_TagChip`（移动端标签筛选行） | `ThoughtFilterChip` | `AppTagChip(compact: true)` |
+| `_MoreTagsButton`（移动端"更多标签"按钮） | `ThoughtFilterChip` | `AppMoreTagsButton` |
+| `_SelectedTagBanner`（移动端已选标签行） | 原始 `Chip` | `AppSelectedTagsBar`（含 +N 溢出、批量清除） |
+| 底部弹出层（`_showTagsBottomSheet`） | `ThoughtFilterChip` | `AppMoreTagsPopoverContent` |
+
+**规则**：
+- 不创建 mobile-specific adapter widget，在 `build` 方法中就地转换数据类型（`MapEntry` → `AppTagStat`）
+- 共享组件 `AppMoreTagsPopoverContent` 已改用 `ConstrainedBox(maxWidth: 420)`，同时适配桌面 Dialog 和移动端 BottomSheet
+- `AppTagChip(compact: true)` 为移动端水平布局提供更小的 chip 尺寸
+
+### 测试要求
+
+每个 TagKit widget 必须有对应的 widget 测试文件：
+
+| 组件 | 测试文件 | 覆盖要求 |
+|------|----------|----------|
+| `AppTagChip` | `test/shared/widgets/tags/app_tag_chip_test.dart` | label、count、selected、onTap、compact、leadingIcon |
+| `AppTagFilterBar` | `test/shared/widgets/tags/app_tag_filter_bar_test.dart` | label、empty、onTagToggle、showCounts、maxVisibleTags、onMoreTap、horizontalScroll |
+| `AppSelectedTagsBar` | `test/shared/widgets/tags/app_selected_tags_bar_test.dart` | label、empty、onRemove、onClear、+N、clearLabel |
+| `AppCommonTagsPanel` | `test/shared/widgets/tags/app_common_tags_panel_test.dart` | title、helperText、empty、tag chips、count、selected、maxVisibleTags |

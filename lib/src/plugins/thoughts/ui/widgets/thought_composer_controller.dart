@@ -8,6 +8,7 @@ import '../../data/picked_image.dart';
 import '../../data/thought_content_codec.dart';
 import '../../data/thought_image_service.dart';
 import '../../providers/thoughts_providers.dart';
+import 'package:uni_hub/src/shared/tags/tag_codec.dart';
 import 'package:uni_hub/src/shared/ui/rich_text_editor/rich_text_editor.dart';
 
 final composerProvider = ChangeNotifierProvider<ThoughtComposerController>((
@@ -33,6 +34,8 @@ class ThoughtComposerController extends ChangeNotifier {
   ThoughtComposerController({required this.ref}) {
     contentController = _createContentController();
   }
+
+  String? tagErrorMessage;
 
   List<String> get tagChips => List.unmodifiable(_tagChips);
   List<PickedImage> get pendingImages => List.unmodifiable(_pendingImages);
@@ -121,7 +124,11 @@ class ThoughtComposerController extends ChangeNotifier {
   }
 
   void handleTagInput(String value) {
-    if (value.isEmpty) return;
+    if (value.isEmpty) {
+      tagErrorMessage = null;
+      notifyListeners();
+      return;
+    }
     final shouldCommit = value.endsWith(',') || value.endsWith(' ');
     if (!shouldCommit) return;
 
@@ -132,13 +139,20 @@ class ThoughtComposerController extends ChangeNotifier {
 
     var changed = false;
     for (final tag in candidates) {
+      final validation = TagCodec.validate(tag);
+      if (!validation.isValid) {
+        tagErrorMessage = validation.message;
+        notifyListeners();
+        continue;
+      }
       if (!_tagChips.contains(tag)) {
+        tagErrorMessage = null;
         _tagChips.add(tag);
         changed = true;
       }
     }
     tagTextController.clear();
-    if (changed) notifyListeners();
+    if (changed || tagErrorMessage != null) notifyListeners();
   }
 
   void removeChip(String tag) {
@@ -217,6 +231,7 @@ class ThoughtComposerController extends ChangeNotifier {
     _hasContent = false;
     _isPinned = false;
     _isSubmitting = false;
+    tagErrorMessage = null;
     notifyListeners();
   }
 

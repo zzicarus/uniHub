@@ -44,32 +44,44 @@ ProviderScope(
 
 ```
 test/
-└── src/
-    ├── core/
-    │   ├── database/
-    │   ├── plugin/
-    │   └── search/
-    └── plugins/
-        └── thoughts/
-            └── data/
+├── core/
+│   ├── app/
+│   ├── database/
+│   ├── plugin/
+│   ├── router/
+│   ├── search/
+│   └── theme/
+├── plugins/
+│   └── thoughts/
+│       ├── data/
+│       ├── providers/
+│       └── ui/
+│           └── widgets/
+├── shared/
+│   ├── tags/
+│   └── widgets/
+│       └── tags/
+└── widget_test.dart
 ```
 
-## 当前覆盖情况（约 112 测试用例，13 个测试文件）
+## 当前覆盖情况（约 140 测试用例，33 个测试文件）
 
 > 最后核对日期：2026-05-23
 
 | 目录 | 覆盖 | 说明 |
 |------|------|------|
-| `core/database/` | 33% | (1/3 文件有测试) |
+| `core/app/` | 100% | (4/4 文件) |
+| `core/database/` | 33% | (1/3 文件) |
 | `core/plugin/` | 50% | (1/2) |
 | `core/search/` | 50% | (1/2) |
-| `thoughts/data/` | 80% | (4/5 主数据文件有测试) |
-| `thoughts/providers/` | 100% | 10 条测试覆盖筛选链、标签多选 all 语义、排序、tag filter 连锁效果、右侧栏独立性 |
-| `core/app/` | 25% | (1/4 文件有测试) |
-| `core/router/` | **0%** | **完全未覆盖** |
-| `core/theme/` | **0%** | **完全未覆盖** |
-| `thoughts/ui/` | **0%** | **完全未覆盖** |
-| `shared/` | 25% | 新增 `tags/` (2 文件 50 条) + `widgets/tags/` (1 文件 8 条) |
+| `core/router/` | 100% | (2/2 文件) |
+| `core/theme/` | 100% | (4/4 文件) |
+| `thoughts/data/` | 80% | (4/5 主数据文件) |
+| `thoughts/providers/` | 100% | 10 条 |
+| `thoughts/ui/` | 40% | 含 widgets 子目录 (2/5 当前可见 UI 文件) |
+| `shared/tags/` | 67% | (2/3 文件: tag_codec, tag_filter_logic; tag_models 待覆盖) |
+| `shared/widgets/tags/` | 80% | (4/5 文件: app_tag_chip, app_tag_filter_bar, app_selected_tags_bar, app_common_tags_panel; app_more_tags_popover 待覆盖) |
+| `shared/widgets/`（非 tags） | 86% | (6/7 其他通用组件) |
 
 **新增功能时建议至少为对应目录添加基本覆盖。**
 
@@ -118,6 +130,13 @@ git status
 ## 近期变更
 
 > 本 section 由 sync-knowledge 自动管理，按时间倒序追加。
+
+### 2026-05-23: TagKit widget 测试覆盖 + 适配 AppCommonTagsPanel
+- 新增 `test/shared/widgets/tags/app_common_tags_panel_test.dart` — 8 条（title/helperText/empty/tag chips/count/selected/maxVisibleTags）
+- 新增 `test/shared/widgets/tags/app_tag_filter_bar_test.dart` — 10 条（label/empty/onTagToggle/showCounts/maxVisibleTags/onMoreTap/horizontalScroll）
+- 新增 `test/shared/widgets/tags/app_selected_tags_bar_test.dart` — 7 条（empty/label/onRemove/onClear/+N/clearLabel）
+- `shared/widgets/tags/` 覆盖从 1→4 文件，`shared/` 总体覆盖从 25%→75%
+- 移除 `thought_common_tags_panel.dart` 的手写布局，改为委托 `AppCommonTagsPanel`
 
 ### 2026-05-23: 标签系统共享模块测试
 - 新增 `test/shared/tags/tag_codec_test.dart` — 26 条（normalize/parse/encode/validate）

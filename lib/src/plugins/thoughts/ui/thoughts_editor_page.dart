@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:uni_hub/src/core/theme/app_tokens.dart';
+import '../providers/thoughts_providers.dart';
 import 'widgets/thought_color_picker.dart';
 import 'widgets/thought_editor_controller.dart';
 import 'widgets/thought_editor_image_strip.dart';
@@ -52,6 +53,18 @@ class _ThoughtsEditorPageState extends ConsumerState<ThoughtsEditorPage> {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final ctrl = _controller;
+
+    final existingTags = ref.watch(commonTagsProvider);
+    final tagInput = ctrl.tagTextController.text.trim().toLowerCase();
+    final tagSuggestions = tagInput.isEmpty
+        ? const <String>[]
+        : existingTags
+            .map((e) => e.key)
+            .where((tag) =>
+                tag.toLowerCase().contains(tagInput) &&
+                !ctrl.tagChips.contains(tag))
+            .take(5)
+            .toList();
 
     if (!ctrl.isLoaded) {
       return Scaffold(
@@ -183,12 +196,51 @@ class _ThoughtsEditorPageState extends ConsumerState<ThoughtsEditorPage> {
               TextField(
                 controller: ctrl.tagTextController,
                 onChanged: ctrl.handleTagInput,
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                   hintText: '添加标签（空格或逗号分隔）',
                   isDense: true,
+                  errorText: ctrl.tagErrorMessage,
+                  errorStyle: theme.textTheme.labelSmall?.copyWith(
+                    color: colorScheme.error,
+                    fontSize: 10,
+                  ),
                 ),
                 style: theme.textTheme.bodySmall,
               ),
+              if (tagSuggestions.isNotEmpty && ctrl.tagErrorMessage == null)
+                Padding(
+                  padding: const EdgeInsets.only(top: 4),
+                  child: Wrap(
+                    spacing: AppSpacing.xs,
+                    runSpacing: AppSpacing.xxs,
+                    children: tagSuggestions.map((tag) {
+                      return Material(
+                        color: colorScheme.tertiaryContainer.withValues(alpha: 0.5),
+                        borderRadius: BorderRadius.circular(AppRadius.full),
+                        child: InkWell(
+                          borderRadius: BorderRadius.circular(AppRadius.full),
+                          onTap: () {
+                            ctrl.tagTextController.clear();
+                            ctrl.handleTagInput('$tag,');
+                          },
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: AppSpacing.sm,
+                              vertical: AppSpacing.xxs,
+                            ),
+                            child: Text(
+                              '#$tag',
+                              style: theme.textTheme.labelSmall?.copyWith(
+                                color: colorScheme.onTertiaryContainer,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ),
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                ),
 
               const SizedBox(height: AppSpacing.lg),
 

@@ -8,6 +8,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../data/thought_content_codec.dart';
 import '../../data/thought_image_service.dart';
 import '../../providers/thoughts_providers.dart';
+import 'package:uni_hub/src/shared/tags/tag_codec.dart';
 import 'package:uni_hub/src/shared/ui/rich_text_editor/rich_text_editor.dart';
 
 /// 集中管理想法编辑器的全部业务状态与操作。
@@ -33,6 +34,7 @@ class ThoughtEditorController {
   bool isArchived = false;
   bool isDirty = false;
   bool isLoaded = false;
+  String? tagErrorMessage;
 
   Timer? _autoSaveTimer;
 
@@ -120,6 +122,7 @@ class ThoughtEditorController {
     selectedColor = thought.color;
     isPinned = thought.isPinned;
     isArchived = thought.archivedAt != null;
+    tagErrorMessage = null;
     isLoaded = true;
     isDirty = false;
     _notifyStateChanged();
@@ -201,13 +204,25 @@ class ThoughtEditorController {
 
   /// 处理标签输入（空格或逗号分隔）。
   void handleTagInput(String value) {
+    if (value.isEmpty) {
+      tagErrorMessage = null;
+      _notifyStateChanged();
+      return;
+    }
     final delimiter = value.contains(',') ? ',' : ' ';
     if (value.endsWith(delimiter)) {
       final tag = value.substring(0, value.length - 1).trim();
-      if (tag.isNotEmpty && !tagChips.contains(tag)) {
-        tagChips.add(tag);
-        isDirty = true;
-        _notifyStateChanged();
+      if (tag.isNotEmpty) {
+        final validation = TagCodec.validate(tag);
+        if (!validation.isValid) {
+          tagErrorMessage = validation.message;
+          _notifyStateChanged();
+        } else if (!tagChips.contains(tag)) {
+          tagChips.add(tag);
+          tagErrorMessage = null;
+          isDirty = true;
+          _notifyStateChanged();
+        }
       }
       tagTextController.clear();
       _scheduleAutoSave();

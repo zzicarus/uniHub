@@ -83,18 +83,17 @@ thoughts/ui/
 │   ├── thought_filter_bar.dart       — 状态筛选 chips：全部/置顶/有图片/归档
 │   ├── thought_tag_filter_bar.dart   — 标签筛选栏 adapter（委托 AppTagFilterBar）
 │   ├── thought_selected_tags_bar.dart — 已选标签栏 adapter（委托 AppSelectedTagsBar）
-│   └── thought_more_tags_popover.dart — 标签搜索弹窗
 ├── widgets/                         ← 可复用 Widget
 │   ├── thought_card.dart             — 压缩卡片（max 180px, 1+2 lines, +N tags）
 │   ├── thought_context_menu.dart     — 7项右键菜单（2项 disabled）
-│   ├── thought_composer_controller.dart — Composer 状态管理（ChangeNotifier）
+│   ├── thought_composer_controller.dart — Composer 状态管理（ChangeNotifier，含 TagCodec 校验 + tagErrorMessage）
 │   ├── thought_state_templates.dart  — 空态/错误态模板（4空态+6错误态）
 │   ├── thought_pinned_panel.dart     — 置顶面板（max 3）
 │   ├── thought_pending_review_panel.dart — 待整理计数
 │   ├── thought_common_tags_panel.dart — 常用标签 panel（max 8, 使用 AppTagChip）
 │   ├── thought_random_review_panel.dart — 随机回顾（session 级去重）
 │   └── thought_quick_actions_panel.dart — 快速操作（转为待办/笔记，disabled）
-│   ├── thought_editor_controller.dart — 编辑器状态管理
+│   ├── thought_editor_controller.dart — 编辑器状态管理（含 TagCodec 校验 + tagErrorMessage）
 │   ├── thought_editor_drawer.dart     — 编辑抽屉
 │   └── thought_editor_image_strip.dart — 编辑器中图片条
 ```

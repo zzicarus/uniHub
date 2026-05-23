@@ -37,12 +37,21 @@ lib/src/
 │   ├── router/               # GoRouter 路由定义
 │   ├── search/               # 全局搜索
 │   └── theme/                # Material 3 主题配置与 Token
-├── shared/
+├── shared/                   # 共享组件层
+│   ├── tags/                 # TagKit 核心层（纯函数，无 UI 依赖）
+│   │   ├── tag_models.dart           # AppTagStat、TagMatchMode、TagValidationResult
+│   │   ├── tag_codec.dart            # 标签编解码：normalize、parseCommaSeparated、validate
+│   │   └── tag_filter_logic.dart     # 过滤逻辑：toggle、matches、countTags、sortStats
 │   ├── ui/                   # 可复用 UI 组件
-│   │   ├── panels/           # AppPanel、SidebarPanel
 │   │   ├── rich_text_editor/ # 富文本编辑器
-│   │   └── widgets/          # 通用 Widget（AppIconBubble 等）
-│   └── extensions/           # Dart extension 方法
+│   │   └── style_guide_screen.dart   # 样式指南页面
+│   └── widgets/              # 通用 Widget
+│       └── tags/             # TagKit UI 组件（无 Provider 依赖）
+│           ├── app_tag_chip.dart          # AppTagChip、AppSelectedTagChip、AppMoreTagsButton
+│           ├── app_tag_filter_bar.dart    # AppTagFilterBar
+│           ├── app_selected_tags_bar.dart # AppSelectedTagsBar
+│           ├── app_common_tags_panel.dart # AppCommonTagsPanel
+│           └── app_more_tags_popover.dart # AppMoreTagsPopover
 ├── plugins/
 │   └── thoughts/             # Thoughts 功能插件
 │       ├── data/             # DAO+Repository+Service
@@ -80,6 +89,8 @@ plugins/thoughts/
 | 类型 | 命名规则 | 示例 |
 |------|----------|------|
 | Widget | snake_case + `_page`/`_panel`/`_card` | `thought_list_page.dart`, `thought_card.dart` |
+| TagKit 组件 | snake_case + `app_` 前缀 | `app_tag_chip.dart`, `app_tag_filter_bar.dart` |
+| TagKit 核心 | snake_case | `tag_codec.dart`, `tag_filter_logic.dart` |
 | Provider | 描述性名 + `_provider` | `thoughts_providers.dart`, `database_provider.dart` |
 | DAO | 表名 + `_dao` | `thoughts_dao.dart` |
 | Repository | 模块名 + `_repository` | `thoughts_repository.dart` |
@@ -106,3 +117,9 @@ plugins/thoughts/
 - `data/`: DAO → Repository → Service 的分层清晰
 - `providers/`: 用 `@riverpod` 注解生成 Provider，filter state 用 `StateProvider`/`NotifierProvider`
 - `ui/`: pages 层负责页面编排，widgets 层负责可复用组件
+
+参考 `lib/src/shared/tags/` 和 `lib/src/shared/widgets/tags/` — TagKit 组件复用模式：
+
+- `tags/`: 纯函数核心，零依赖，方便跨插件复用过滤逻辑
+- `widgets/tags/`: 无 Provider 依赖的 UI 组件，通过回调与业务层通信
+- 插件通过 adapter（如 `ThoughtCommonTagsPanel`）将 provider 数据转为组件 props

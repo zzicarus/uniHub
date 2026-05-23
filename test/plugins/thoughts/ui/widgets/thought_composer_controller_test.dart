@@ -94,6 +94,63 @@ void main() {
       expect(controller.canSubmit, isTrue);
     });
 
+    group('tag validation', () {
+      test('rejects tags longer than 20 characters and sets tagErrorMessage', () {
+        final controller = container.read(composerProvider);
+        expect(controller.tagErrorMessage, isNull);
+
+        controller.handleTagInput('${'a' * 21},');
+
+        expect(controller.tagChips, isEmpty);
+        expect(controller.tagErrorMessage, isNotNull);
+        expect(controller.tagErrorMessage, contains('20'));
+      });
+
+      test('rejects tags with special characters and sets tagErrorMessage', () {
+        final controller = container.read(composerProvider);
+
+        controller.handleTagInput('hello@world,');
+
+        expect(controller.tagChips, isEmpty);
+        expect(controller.tagErrorMessage, isNotNull);
+        expect(controller.tagErrorMessage, contains('只能包含'));
+      });
+
+      test('accepts valid tags and clears tagErrorMessage', () {
+        final controller = container.read(composerProvider);
+
+        controller.handleTagInput('bad@tag,');
+        expect(controller.tagErrorMessage, isNotNull);
+
+        controller.handleTagInput('valid-tag,');
+
+        expect(controller.tagChips, contains('valid-tag'));
+        expect(controller.tagErrorMessage, isNull);
+      });
+
+      test('clears tagErrorMessage when input is cleared', () {
+        final controller = container.read(composerProvider);
+
+        controller.handleTagInput('toolonggggggggggggggggggggg,');
+        expect(controller.tagErrorMessage, isNotNull);
+
+        controller.handleTagInput('');
+
+        expect(controller.tagErrorMessage, isNull);
+      });
+
+      test('clear resets tagErrorMessage', () {
+        final controller = container.read(composerProvider);
+
+        controller.handleTagInput('bad@tag,');
+        expect(controller.tagErrorMessage, isNotNull);
+
+        controller.clear();
+
+        expect(controller.tagErrorMessage, isNull);
+      });
+    });
+
     test('picks image bytes, saves a path, and allows submit', () async {
       final controller = container.read(composerProvider);
       final bytes = Uint8List.fromList([1, 2, 3]);

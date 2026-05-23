@@ -3,6 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uni_hub/src/core/theme/app_tokens.dart';
 import 'package:uni_hub/src/core/database/app_database.dart';
 import 'package:uni_hub/src/shared/ui/rich_text_editor/rich_text_editor.dart';
+import 'package:uni_hub/src/shared/tags/tag_models.dart';
+import 'package:uni_hub/src/shared/widgets/tags/app_more_tags_popover.dart';
+import 'package:uni_hub/src/shared/widgets/tags/app_selected_tags_bar.dart';
+import 'package:uni_hub/src/shared/widgets/tags/app_tag_chip.dart';
 import '../../providers/thought_status_filter.dart';
 import '../../providers/thoughts_providers.dart';
 import '../widgets/thought_card.dart';
@@ -176,6 +180,18 @@ class _MobileComposer extends ConsumerWidget {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
+    final existingTags = ref.watch(commonTagsProvider);
+    final tagInput = composer.tagTextController.text.trim().toLowerCase();
+    final tagSuggestions = tagInput.isEmpty
+        ? const <String>[]
+        : existingTags
+            .map((e) => e.key)
+            .where((tag) =>
+                tag.toLowerCase().contains(tagInput) &&
+                !composer.tagChips.contains(tag))
+            .take(5)
+            .toList();
+
     return ThoughtPanel(
       padding: const EdgeInsets.all(AppSpacing.lg),
       child: Column(
@@ -281,13 +297,52 @@ class _MobileComposer extends ConsumerWidget {
           TextField(
             controller: composer.tagTextController,
             onChanged: composer.handleTagInput,
-            decoration: const InputDecoration(
+            decoration: InputDecoration(
               hintText: '添加标签，空格或逗号确认',
-              prefixIcon: Icon(Icons.sell_outlined, size: 18),
+              prefixIcon: const Icon(Icons.sell_outlined, size: 18),
               isDense: true,
+              errorText: composer.tagErrorMessage,
+              errorStyle: theme.textTheme.labelSmall?.copyWith(
+                color: colorScheme.error,
+                fontSize: 10,
+              ),
             ),
             style: theme.textTheme.bodySmall,
           ),
+          if (tagSuggestions.isNotEmpty && composer.tagErrorMessage == null)
+            Padding(
+              padding: const EdgeInsets.only(top: 4),
+              child: Wrap(
+                spacing: AppSpacing.xs,
+                runSpacing: AppSpacing.xxs,
+                children: tagSuggestions.map((tag) {
+                  return Material(
+                    color: colorScheme.tertiaryContainer.withValues(alpha: 0.5),
+                    borderRadius: BorderRadius.circular(AppRadius.full),
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(AppRadius.full),
+                      onTap: () {
+                        composer.tagTextController.clear();
+                        composer.handleTagInput('$tag,');
+                      },
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: AppSpacing.sm,
+                          vertical: AppSpacing.xxs,
+                        ),
+                        child: Text(
+                          '#$tag',
+                          style: theme.textTheme.labelSmall?.copyWith(
+                            color: colorScheme.onTertiaryContainer,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                    ),
+                  );
+                }).toList(),
+              ),
+            ),
           const SizedBox(height: AppSpacing.md),
           Wrap(
             spacing: AppSpacing.sm,
@@ -448,10 +503,11 @@ class _TagChip extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final selectedTags = ref.watch(selectedTagFiltersProvider);
-    return ThoughtFilterChip(
+    return AppTagChip(
       label: entry.key,
-      value: entry.value.toString(),
+      count: entry.value,
       selected: selectedTags.contains(entry.key),
+      compact: true,
       onTap: () {
         final current = ref.read(selectedTagFiltersProvider);
         ref.read(selectedTagFiltersProvider.notifier).state = toggleTagInFilter(
@@ -470,64 +526,35 @@ class _MoreTagsButton extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    return ThoughtFilterChip(
-      label: '更多标签',
-      value: allTags.length.toString(),
-      selected: false,
+    return AppMoreTagsButton(
       onTap: () => _showTagsBottomSheet(context, ref),
     );
   }
 
   void _showTagsBottomSheet(BuildContext context, WidgetRef ref) {
+    final tagStats = allTags
+        .map((e) => AppTagStat(name: e.key, count: e.value))
+        .toList();
+    final selectedTags = ref.read(selectedTagFiltersProvider);
+
     showModalBottomSheet(
       context: context,
       builder: (ctx) {
-        final selectedTags = ref.watch(selectedTagFiltersProvider);
         return SafeArea(
           child: Padding(
             padding: const EdgeInsets.all(AppSpacing.lg),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Icon(
-                      Icons.sell_outlined,
-                      size: 20,
-                      color: Theme.of(ctx).colorScheme.primary,
-                    ),
-                    const SizedBox(width: AppSpacing.sm),
-                    Text('全部标签', style: Theme.of(ctx).textTheme.titleMedium),
-                    const Spacer(),
-                    TextButton(
-                      onPressed: () {
-                        ref.read(selectedTagFiltersProvider.notifier).state =
-                            const <String>{};
-                        Navigator.of(ctx).pop();
-                      },
-                      child: const Text('清除'),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: AppSpacing.md),
-                Wrap(
-                  spacing: AppSpacing.sm,
-                  runSpacing: AppSpacing.sm,
-                  children: allTags.map((entry) {
-                    return ThoughtFilterChip(
-                      label: entry.key,
-                      value: entry.value.toString(),
-                      selected: selectedTags.contains(entry.key),
-                      onTap: () {
-                        final current = ref.read(selectedTagFiltersProvider);
-                        ref.read(selectedTagFiltersProvider.notifier).state =
-                            toggleTagInFilter(current, entry.key);
-                      },
-                    );
-                  }).toList(),
-                ),
-              ],
+            child: AppMoreTagsPopoverContent(
+              tags: tagStats,
+              selectedTags: selectedTags,
+              onTagToggle: (tag) {
+                final current = ref.read(selectedTagFiltersProvider);
+                ref.read(selectedTagFiltersProvider.notifier).state =
+                    toggleTagInFilter(current, tag);
+              },
+              onClear: () {
+                ref.read(selectedTagFiltersProvider.notifier).state =
+                    const <String>{};
+              },
             ),
           ),
         );
@@ -543,30 +570,21 @@ class _SelectedTagBanner extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final selectedTags = ref.watch(selectedTagFiltersProvider).toList()..sort();
-    if (selectedTags.isEmpty) {
-      return const SizedBox.shrink();
-    }
+    final selectedTags = ref.watch(selectedTagFiltersProvider);
 
-    final colorScheme = Theme.of(context).colorScheme;
-    return Wrap(
-      spacing: AppSpacing.xs,
-      runSpacing: AppSpacing.xs,
-      children: selectedTags.map((tag) {
-        return Chip(
-          label: Text('#$tag'),
-          deleteIcon: const Icon(Icons.close, size: 14),
-          onDeleted: () {
-            final current = ref.read(selectedTagFiltersProvider);
-            ref.read(selectedTagFiltersProvider.notifier).state =
-                removeTagFromFilter(current, tag);
-          },
-          backgroundColor: colorScheme.primary.withValues(alpha: 0.12),
-          side: BorderSide.none,
-          materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-          visualDensity: VisualDensity.compact,
-        );
-      }).toList(),
+    return AppSelectedTagsBar(
+      selectedTags: selectedTags,
+      label: '已选标签',
+      clearLabel: '清除',
+      onRemove: (tag) {
+        final current = ref.read(selectedTagFiltersProvider);
+        ref.read(selectedTagFiltersProvider.notifier).state =
+            removeTagFromFilter(current, tag);
+      },
+      onClear: () {
+        ref.read(selectedTagFiltersProvider.notifier).state =
+            const <String>{};
+      },
     );
   }
 }
