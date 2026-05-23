@@ -12,6 +12,9 @@ import '../data/thought_content_codec.dart';
 import '../data/thought_image_service.dart';
 import '../data/thoughts_dao.dart';
 import '../data/thoughts_repository.dart';
+import 'package:uni_hub/src/shared/tags/tag_codec.dart';
+import 'package:uni_hub/src/shared/tags/tag_filter_logic.dart';
+import 'package:uni_hub/src/shared/tags/tag_models.dart';
 import 'thought_status_filter.dart';
 
 final thoughtsDaoProvider = Provider<ThoughtsDao>((ref) {
@@ -51,13 +54,7 @@ final selectedTagFiltersProvider = StateProvider<Set<String>>(
 final tagFilterProvider = StateProvider<String?>((ref) => null);
 
 Set<String> toggleTagInFilter(Set<String> current, String tag) {
-  final normalized = tag.trim();
-  if (normalized.isEmpty) return current;
-  final next = Set<String>.from(current);
-  if (!next.remove(normalized)) {
-    next.add(normalized);
-  }
-  return next;
+  return TagFilterLogic.toggle(current, tag);
 }
 
 Set<String> renameTagInFilter(
@@ -65,19 +62,11 @@ Set<String> renameTagInFilter(
   String oldTag,
   String newTag,
 ) {
-  final normalizedOld = oldTag.trim();
-  final normalizedNew = newTag.trim();
-  if (normalizedOld.isEmpty || normalizedNew.isEmpty) return current;
-  final next = Set<String>.from(current);
-  if (next.remove(normalizedOld)) {
-    next.add(normalizedNew);
-  }
-  return next;
+  return TagFilterLogic.rename(current, oldTag, newTag);
 }
 
 Set<String> removeTagFromFilter(Set<String> current, String tag) {
-  final next = Set<String>.from(current)..remove(tag.trim());
-  return next;
+  return TagFilterLogic.remove(current, tag);
 }
 
 final archiveFilterProvider = StateProvider<bool>((ref) => false);
@@ -168,13 +157,12 @@ final pendingReviewProvider = FutureProvider<List<ThoughtsTableData>>((
 final commonTagsProvider = Provider<List<MapEntry<String, int>>>((ref) {
   final thoughtsAsync = ref.watch(allThoughtsProvider);
   final thoughts = thoughtsAsync.valueOrNull ?? const <ThoughtsTableData>[];
-  final entries = _tagCounts(_filterByArchive(thoughts, false)).entries.toList()
-    ..sort((a, b) {
-      final byCount = b.value.compareTo(a.value);
-      if (byCount != 0) return byCount;
-      return a.key.compareTo(b.key);
-    });
-  return entries.take(8).toList();
+  final counts = _tagCounts(_filterByArchive(thoughts, false));
+  final stats = TagFilterLogic.sortStats(counts);
+  return stats
+      .map((s) => MapEntry(s.name, s.count))
+      .take(8)
+      .toList();
 });
 
 final _randomReviewSeenIdsProvider = StateProvider<Set<int>>((ref) => <int>{});
@@ -249,14 +237,13 @@ List<ThoughtsTableData> _filterByTags(
   List<ThoughtsTableData> thoughts,
   Set<String> selectedTags,
 ) {
-  final normalizedSelected = selectedTags
-      .map((tag) => tag.trim())
-      .where((tag) => tag.isNotEmpty)
-      .toSet();
-  if (normalizedSelected.isEmpty) return thoughts;
+  if (selectedTags.isEmpty) return thoughts;
   return thoughts.where((thought) {
-    final thoughtTags = _parseTags(thought.tags).toSet();
-    return normalizedSelected.every(thoughtTags.contains);
+    return TagFilterLogic.matches(
+      itemTags: TagCodec.parseCommaSeparated(thought.tags),
+      selectedTags: selectedTags,
+      mode: TagMatchMode.all,
+    );
   }).toList();
 }
 
@@ -276,20 +263,11 @@ List<ThoughtsTableData> _filterBySearch(
 }
 
 Map<String, int> _tagCounts(List<ThoughtsTableData> thoughts) {
-  final stats = <String, int>{};
-  for (final thought in thoughts) {
-    for (final tag in _parseTags(thought.tags)) {
-      stats[tag] = (stats[tag] ?? 0) + 1;
-    }
-  }
-  return stats;
+  return TagFilterLogic.countTags(
+    thoughts.map((t) => TagCodec.parseCommaSeparated(t.tags)),
+  );
 }
 
 List<String> _parseTags(String? tags) {
-  if (tags == null || tags.isEmpty) return const [];
-  return tags
-      .split(',')
-      .map((tag) => tag.trim())
-      .where((tag) => tag.isNotEmpty)
-      .toList();
+  return TagCodec.parseCommaSeparated(tags);
 }

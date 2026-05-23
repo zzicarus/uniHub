@@ -8,7 +8,7 @@ import 'package:uni_hub/src/core/plugin/plugin_interface.dart';
 import 'package:uni_hub/src/core/plugin/plugin_registry.dart';
 import 'package:uni_hub/src/core/router/route_names.dart';
 import 'package:uni_hub/src/shared/widgets/sidebar.dart';
-import 'package:uni_hub/src/core/theme/app_tokens.dart';
+import 'package:uni_hub/src/core/theme/app_theme_tokens.dart';
 
 void main() {
   PluginRegistry registryWithPluginNav() {
@@ -76,6 +76,38 @@ void main() {
     );
   }
 
+  ThemeData testTheme() {
+    return ThemeData(
+      useMaterial3: true,
+      extensions: const <ThemeExtension<dynamic>>[
+        UniHubThemeColors(
+          background: Color(0xFFFAFBFE),
+          surface: Color(0xFFFFFFFF),
+          surfaceMuted: Color(0xFFF6F8FC),
+          border: Color(0xFFE8ECF4),
+          borderStrong: Color(0xFFD1D5DB),
+          primary: Color(0xFF4F6BFF),
+          primaryHover: Color(0xFF3B55E0),
+          primarySoft: Color(0xFFEFF3FF),
+          success: Color(0xFF22C55E),
+          successSoft: Color(0xFFEFFAF3),
+          warning: Color(0xFFF59E0B),
+          warningSoft: Color(0xFFFFF7E8),
+          purple: Color(0xFF8B5CF6),
+          purpleSoft: Color(0xFFF4F0FF),
+          danger: Color(0xFFF43F5E),
+          dangerSoft: Color(0xFFFFF0F4),
+          textPrimary: Color(0xFF111827),
+          textSecondary: Color(0xFF667085),
+          textTertiary: Color(0xFF98A2B3),
+          sidebarBackground: Color(0xFFF6F8FC),
+          navSelectedBackground: Color(0xFFEFF3FF),
+          panelBackground: Color(0xFFFFFFFF),
+        ),
+      ],
+    );
+  }
+
   Future<void> pumpSidebar(
     WidgetTester tester, {
     String initialLocation = '/',
@@ -91,6 +123,7 @@ void main() {
           pluginRegistryProvider.overrideWithValue(registryWithPluginNav()),
         ],
         child: MaterialApp.router(
+          theme: testTheme(),
           routerConfig: router(initialLocation: initialLocation),
         ),
       ),
@@ -119,13 +152,20 @@ void main() {
   testWidgets('active item uses selected highlight color', (tester) async {
     await pumpSidebar(tester, initialLocation: '/library');
 
-    const selectedColor = AppColors.primarySoft;
-    final selectedMaterials = tester.widgetList<Material>(
-      find.ancestor(of: find.text('资料库'), matching: find.byType(Material)),
+    final theme = testTheme();
+    final selectedColor =
+        theme.extension<UniHubThemeColors>()!.navSelectedBackground;
+
+    // _NavItem wraps the selected label in a Material with navSelectedBackground.
+    final materials = tester.widgetList<Material>(
+      find.ancestor(
+        of: find.text('资料库'),
+        matching: find.byType(Material),
+      ),
     );
 
     expect(
-      selectedMaterials.any((material) => material.color == selectedColor),
+      materials.any((material) => material.color == selectedColor),
       isTrue,
     );
   });

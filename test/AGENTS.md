@@ -54,21 +54,22 @@ test/
             └── data/
 ```
 
-## 当前覆盖情况（约 54 测试用例，7 个测试文件）
+## 当前覆盖情况（约 112 测试用例，13 个测试文件）
 
-> 最后核对日期：2026-05-22
+> 最后核对日期：2026-05-23
 
 | 目录 | 覆盖 | 说明 |
 |------|------|------|
 | `core/database/` | 33% | (1/3 文件有测试) |
 | `core/plugin/` | 50% | (1/2) |
 | `core/search/` | 50% | (1/2) |
-| `thoughts/data/` | 80% | (4/5 主数据文件有测试；新增 `ThoughtImageService` 测试 13 条，使用 `FakeImageStorage`/`FakeImagePicker` 避免文件系统依赖) |
-| `core/app/` | 25% | (1/4 文件有测试，4 条 widget 测试：主题切换 UI) |
+| `thoughts/data/` | 80% | (4/5 主数据文件有测试) |
+| `thoughts/providers/` | 100% | 10 条测试覆盖筛选链、标签多选 all 语义、排序、tag filter 连锁效果、右侧栏独立性 |
+| `core/app/` | 25% | (1/4 文件有测试) |
 | `core/router/` | **0%** | **完全未覆盖** |
 | `core/theme/` | **0%** | **完全未覆盖** |
 | `thoughts/ui/` | **0%** | **完全未覆盖** |
-| `shared/` | **0%** | **完全未覆盖** |
+| `shared/` | 25% | 新增 `tags/` (2 文件 50 条) + `widgets/tags/` (1 文件 8 条) |
 
 **新增功能时建议至少为对应目录添加基本覆盖。**
 
@@ -117,6 +118,14 @@ git status
 ## 近期变更
 
 > 本 section 由 sync-knowledge 自动管理，按时间倒序追加。
+
+### 2026-05-23: 标签系统共享模块测试
+- 新增 `test/shared/tags/tag_codec_test.dart` — 26 条（normalize/parse/encode/validate）
+- 新增 `test/shared/tags/tag_filter_logic_test.dart` — 24 条（toggle/remove/rename/matches/count/sort）
+- 新增 `test/shared/widgets/tags/app_tag_chip_test.dart` — 8 条（label/count/selected/onTap/compact/icon）
+- `thoughts_providers_test.dart` 从 7 增至 10 条（all 语义验证、commonTagsProvider 排序、tag filter 连锁效果）
+- 修复预先存在的 4 个测试失败（settings_page_test 文本变更 + sidebar_test 主题扩展缺失）
+- `shared/` 覆盖从 0% 提升至 25%，`thoughts/providers/` 覆盖 100%
 
 ### 2026-05-23: 增加设置页主题切换测试覆盖
 - `settings_page_theme_test.dart`（新增）— 4 条 widget 测试：验证「主题模式」「主题预设」显示、6 个预设名称渲染、点击 Forest 切换预设、点击深色切换模式

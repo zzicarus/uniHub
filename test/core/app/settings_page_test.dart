@@ -40,7 +40,8 @@ void main() {
     expect(find.text('管理偏好、数据与应用体验'), findsOneWidget);
     expect(find.text('外观'), findsOneWidget);
     expect(find.text('数据'), findsOneWidget);
-    expect(find.text('界面主题'), findsOneWidget);
+    expect(find.text('主题模式'), findsOneWidget);
+    expect(find.text('主题预设'), findsOneWidget);
     expect(find.text('本地数据库'), findsOneWidget);
   });
 }

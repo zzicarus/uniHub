@@ -81,8 +81,8 @@ thoughts/ui/
 │   ├── thoughts_mobile_layout.dart   — 移动端单列布局
 │   ├── thought_composer.dart         — 轻量化 Composer（max 1080px, 96px input）
 │   ├── thought_filter_bar.dart       — 状态筛选 chips：全部/置顶/有图片/归档
-│   ├── thought_tag_filter_bar.dart   — 标签筛选栏（top 6 tags + more popover）
-│   ├── thought_selected_tags_bar.dart — 已选标签显示 + 清除
+│   ├── thought_tag_filter_bar.dart   — 标签筛选栏 adapter（委托 AppTagFilterBar）
+│   ├── thought_selected_tags_bar.dart — 已选标签栏 adapter（委托 AppSelectedTagsBar）
 │   └── thought_more_tags_popover.dart — 标签搜索弹窗
 ├── widgets/                         ← 可复用 Widget
 │   ├── thought_card.dart             — 压缩卡片（max 180px, 1+2 lines, +N tags）
@@ -91,7 +91,7 @@ thoughts/ui/
 │   ├── thought_state_templates.dart  — 空态/错误态模板（4空态+6错误态）
 │   ├── thought_pinned_panel.dart     — 置顶面板（max 3）
 │   ├── thought_pending_review_panel.dart — 待整理计数
-│   ├── thought_common_tags_panel.dart — 常用标签（max 8, 与主筛选同步）
+│   ├── thought_common_tags_panel.dart — 常用标签 panel（max 8, 使用 AppTagChip）
 │   ├── thought_random_review_panel.dart — 随机回顾（session 级去重）
 │   └── thought_quick_actions_panel.dart — 快速操作（转为待办/笔记，disabled）
 │   ├── thought_editor_controller.dart — 编辑器状态管理
@@ -117,12 +117,20 @@ thoughts/ui/
 | 遗留 Markdown fallback 路径 | `thought_content_codec.dart` | 未修复 |
 | 主页使用硬编码 Mock 数据（5 个 TODO） | `home_page.dart` | 未修复 |
 | ~~图片服务硬依赖平台 API~~ | ~~`thought_image_service.dart`~~ | ✅ **P2-15 已完成** |
+| ~~标签 UI 与 provider 强耦合于 thoughts 内部~~ | ~~`thoughts/ui/layouts/thought_tag_filter_bar.dart`~~ | ✅ **已完成 → 提取共享 tag system** |
 
 ---
 
 ## 近期变更
 
 > 本 section 由 sync-knowledge 自动管理，按时间倒序追加。
+
+### 2026-05-23: 标签系统提取为共享模块
+- 新增 `lib/src/shared/tags/`：`tag_models.dart`（`AppTagStat`/`TagMatchMode`/`TagValidationResult`）、`tag_codec.dart`（`TagCodec` 归一化/解析/校验）、`tag_filter_logic.dart`（`TagFilterLogic` 切换/匹配/统计/排序）
+- 新增 `lib/src/shared/widgets/tags/`：`AppTagChip`、`AppSelectedTagChip`、`AppMoreTagsButton`、`AppTagFilterBar`、`AppSelectedTagsBar`、`AppMoreTagsPopoverContent`
+- `ThoughtTagFilterBar`、`ThoughtSelectedTagsBar`、`ThoughtCommonTagsPanel` 重写为 adapter，委托共享组件，消除内联 `FilterChip`/`InputChip` 样式重复
+- `thoughts_providers.dart`：`_parseTags`/`_tagCounts`/`_filterByTags` 迁移至 `TagCodec`/`TagFilterLogic`；`toggleTagInFilter`/`renameTagInFilter`/`removeTagFromFilter` 委托给 `TagFilterLogic`
+- 新增 58 个测试（tag_codec 26 + tag_filter_logic 24 + app_tag_chip 8），providers 测试从 7 增至 10
 
 ### 2026-05-22: P2-15 图片服务抽象为依赖注入模式
 - `ThoughtImageService` 改为构造器注入 `ImagePickerService` + `ImageStorage`，不再直接依赖 `ImagePicker`/`File`/`path_provider`

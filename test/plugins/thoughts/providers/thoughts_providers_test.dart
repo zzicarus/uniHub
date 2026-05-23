@@ -163,6 +163,88 @@ void main() {
       },
     );
 
+    test('multi-tag filter uses all semantics (intersection) by default', () async {
+      // Verifies that tags must ALL match — the shared TagFilterLogic default.
+      final id = await _insertThought(
+        db,
+        content: 'Work + focus note',
+        tags: 'work,focus',
+        createdAt: DateTime.now(),
+      );
+      container.invalidate(allThoughtsProvider);
+
+      // Both 'work' and 'focus' → should match
+      container.read(selectedTagFiltersProvider.notifier).state = {
+        'work',
+        'focus',
+      };
+      var thoughts = await container.read(thoughtsListProvider.future);
+      expect(thoughts.map((thought) => thought.id), contains(id));
+
+      // Only 'work' and a non-existent tag → should NOT match
+      container.read(selectedTagFiltersProvider.notifier).state = {
+        'work',
+        'nonexistent',
+      };
+      container.invalidate(thoughtsListProvider);
+      thoughts = await container.read(thoughtsListProvider.future);
+      expect(thoughts.map((thought) => thought.id), isNot(contains(id)));
+    });
+
+    test('commonTagsProvider sorts by count descending', () async {
+      // Ensure allThoughtsProvider resolves before reading commonTagsProvider.
+      await container.read(allThoughtsProvider.future);
+
+      // Seed: personal=2, work=1, image=1 (archived excluded)
+      // Expected order by count desc, then name asc: personal > image > work
+      var tags = container.read(commonTagsProvider);
+      expect(tags.length, greaterThanOrEqualTo(3));
+      expect(tags[0].key, 'personal');
+      expect(tags[0].value, 2);
+      expect(tags[1].key, 'image');
+      expect(tags[1].value, 1);
+      expect(tags[2].key, 'work');
+      expect(tags[2].value, 1);
+
+      // Add three thoughts with the same tag → often count becomes 3
+      for (var i = 0; i < 3; i++) {
+        await _insertThought(
+          db,
+          content: 'Often tagged note $i',
+          tags: 'often',
+          createdAt: DateTime.now(),
+        );
+      }
+      container.invalidate(allThoughtsProvider);
+      await container.read(allThoughtsProvider.future);
+      tags = container.read(commonTagsProvider);
+      expect(tags[0].key, 'often');
+      expect(tags[0].value, 3);
+    });
+
+    test('selectedTagFiltersProvider filters thoughtsListProvider', () async {
+      // Ensure async providers are resolved.
+      await container.read(allThoughtsProvider.future);
+
+      // Initially no filter → all unarchived thoughts visible.
+      var thoughts = await container.read(thoughtsListProvider.future);
+      expect(thoughts.length, greaterThanOrEqualTo(5));
+
+      // Apply a tag filter → only matching thoughts remain.
+      container.read(selectedTagFiltersProvider.notifier).state = {'image'};
+      container.invalidate(thoughtsListProvider);
+      thoughts = await container.read(thoughtsListProvider.future);
+      expect(thoughts.length, 1);
+      expect(thoughts.first.id, seeded.personalImage);
+
+      // Clear filter → all thoughts visible again.
+      container.read(selectedTagFiltersProvider.notifier).state =
+          const <String>{};
+      container.invalidate(thoughtsListProvider);
+      thoughts = await container.read(thoughtsListProvider.future);
+      expect(thoughts.length, greaterThanOrEqualTo(5));
+    });
+
     test('right rail providers ignore tag and search filters', () async {
       container.read(selectedTagFiltersProvider.notifier).state = {'personal'};
       container.read(thoughtSearchQueryProvider.notifier).state = 'no-match';
