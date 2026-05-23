@@ -3,6 +3,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import 'package:uni_hub/src/core/theme/app_theme.dart';
+import 'package:uni_hub/src/core/theme/app_theme_preset.dart';
+import 'package:uni_hub/src/core/theme/app_theme_registry.dart';
+import 'package:uni_hub/src/core/theme/app_theme_tokens.dart';
 
 /// Verifies ThemeData structure without failing on google_fonts' async font
 /// loading attempts (which time out / fail in test environments).
@@ -124,6 +127,39 @@ void main() {
         final dark = AppTheme.dark;
         await consumeFontLoadErrors(tester);
         expect(light.brightness, isNot(equals(dark.brightness)));
+      });
+    });
+
+    group('build', () {
+      test('registers UniHubThemeColors extension', () {
+        final theme = AppTheme.build(
+          preset: AppThemePreset.uniBlue,
+          brightness: Brightness.light,
+        );
+        expect(theme.extension<UniHubThemeColors>(), isNotNull);
+      });
+
+      test('generates different primary colors for different presets', () {
+        final uniBlue = AppTheme.build(
+          preset: AppThemePreset.uniBlue,
+          brightness: Brightness.light,
+        );
+        final paper = AppTheme.build(
+          preset: AppThemePreset.paper,
+          brightness: Brightness.light,
+        );
+        expect(
+          uniBlue.colorScheme.primary,
+          isNot(equals(paper.colorScheme.primary)),
+        );
+      });
+
+      test('scaffoldBackgroundColor matches registry background', () {
+        final preset = AppThemePreset.uniBlue;
+        final brightness = Brightness.light;
+        final theme = AppTheme.build(preset: preset, brightness: brightness);
+        final expected = AppThemeRegistry.colorsOf(preset, brightness);
+        expect(theme.scaffoldBackgroundColor, expected.background);
       });
     });
   });

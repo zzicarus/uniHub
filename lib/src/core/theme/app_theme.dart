@@ -1,32 +1,64 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import 'app_theme_preset.dart';
+import 'app_theme_registry.dart';
 import 'app_tokens.dart';
 
 abstract final class AppTheme {
-  static ThemeData get light {
+  /// 根据 [preset] 和 [brightness] 构建完整的 [ThemeData]。
+  static ThemeData build({
+    required AppThemePreset preset,
+    required Brightness brightness,
+  }) {
+    final colors = AppThemeRegistry.colorsOf(preset, brightness);
+    final isLight = brightness == Brightness.light;
+
     final colorScheme = ColorScheme.fromSeed(
-      seedColor: AppColors.primary,
-      brightness: Brightness.light,
+      seedColor: colors.primary,
+      brightness: brightness,
+    ).copyWith(
+      primary: colors.primary,
+      onPrimary: isLight ? const Color(0xFFFFFFFF) : const Color(0xFF000000),
+      primaryContainer: colors.primarySoft,
+      onPrimaryContainer: colors.primary,
+      secondary: colors.purple,
+      tertiary: colors.warning,
+      error: colors.danger,
+      surface: colors.surface,
+      onSurface: colors.textPrimary,
+      onSurfaceVariant: colors.textSecondary,
+      outline: colors.border,
+      outlineVariant: colors.borderStrong,
+      surfaceContainerLowest: colors.background,
+      surfaceContainerLow: colors.surfaceMuted,
+      surfaceContainer: colors.surface,
+      surfaceContainerHigh:
+          Color.lerp(colors.surfaceMuted, colors.border, 0.5)!,
+      surfaceContainerHighest: colors.border,
     );
+
     final base = ThemeData(
       useMaterial3: true,
       colorScheme: colorScheme,
-      scaffoldBackgroundColor: colorScheme.surface,
-      canvasColor: colorScheme.surface,
+      scaffoldBackgroundColor: colors.background,
+      canvasColor: colors.background,
       fontFamily: AppFonts.sansLatin,
       fontFamilyFallback: const [AppFonts.sansCJK],
+      extensions: <ThemeExtension<dynamic>>[
+        colors,
+      ],
     );
 
     return base.copyWith(
       textTheme: _textTheme(base.textTheme, colorScheme),
       appBarTheme: AppBarTheme(
-        backgroundColor: colorScheme.surface,
-        foregroundColor: colorScheme.onSurface,
+        backgroundColor: colors.surface,
+        foregroundColor: colors.textPrimary,
         elevation: 0,
         centerTitle: false,
         titleTextStyle: TextStyle(
-          color: colorScheme.onSurface,
+          color: colors.textPrimary,
           fontSize: 20,
           height: 1.4,
           fontWeight: FontWeight.w700,
@@ -35,22 +67,24 @@ abstract final class AppTheme {
       cardTheme: CardThemeData(
         color: colorScheme.surfaceContainerLow,
         elevation: 0,
-        shadowColor: colorScheme.shadow.withValues(alpha: 0.06),
+        shadowColor: colorScheme.shadow.withValues(alpha: isLight ? 0.06 : 0.15),
         margin: EdgeInsets.zero,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppRadius.xl),
-          side: BorderSide(color: colorScheme.outlineVariant.withValues(alpha: 0.25)),
+          side: isLight
+              ? BorderSide(
+                  color: colorScheme.outlineVariant.withValues(alpha: 0.25),
+                )
+              : BorderSide.none,
         ),
       ),
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
           minimumSize: const Size(64, AppSizes.buttonHeight),
-          backgroundColor: colorScheme.primary,
+          backgroundColor: colors.primary,
           foregroundColor: colorScheme.onPrimary,
           disabledBackgroundColor: colorScheme.surfaceContainerHighest,
-          disabledForegroundColor: colorScheme.onSurface.withValues(
-            alpha: 0.38,
-          ),
+          disabledForegroundColor: colors.textPrimary.withValues(alpha: 0.38),
           textStyle: const TextStyle(
             fontSize: 14,
             height: 1.43,
@@ -64,11 +98,9 @@ abstract final class AppTheme {
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
           minimumSize: const Size(64, AppSizes.buttonHeight),
-          foregroundColor: colorScheme.primary,
-          disabledForegroundColor: colorScheme.onSurface.withValues(
-            alpha: 0.38,
-          ),
-          side: BorderSide(color: colorScheme.outline),
+          foregroundColor: colors.primary,
+          disabledForegroundColor: colors.textPrimary.withValues(alpha: 0.38),
+          side: BorderSide(color: colors.border),
           textStyle: const TextStyle(
             fontSize: 14,
             height: 1.43,
@@ -81,10 +113,8 @@ abstract final class AppTheme {
       ),
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
-          foregroundColor: colorScheme.primary,
-          disabledForegroundColor: colorScheme.onSurface.withValues(
-            alpha: 0.38,
-          ),
+          foregroundColor: colors.primary,
+          disabledForegroundColor: colors.textPrimary.withValues(alpha: 0.38),
           textStyle: const TextStyle(
             fontSize: 14,
             height: 1.43,
@@ -94,32 +124,32 @@ abstract final class AppTheme {
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: colorScheme.surfaceContainerLow,
+        fillColor: colors.surface,
         contentPadding: const EdgeInsets.symmetric(
           horizontal: AppSpacing.md,
           vertical: AppSpacing.sm,
         ),
-        hintStyle: TextStyle(color: colorScheme.outline),
-        labelStyle: TextStyle(color: colorScheme.onSurfaceVariant),
-        border: _inputBorder(colorScheme.outline),
-        enabledBorder: _inputBorder(colorScheme.outline),
-        focusedBorder: _inputBorder(colorScheme.primary),
-        errorBorder: _inputBorder(colorScheme.error),
-        focusedErrorBorder: _inputBorder(colorScheme.error),
+        hintStyle: TextStyle(color: colors.textTertiary),
+        labelStyle: TextStyle(color: colors.textSecondary),
+        border: _inputBorder(colors.border),
+        enabledBorder: _inputBorder(colors.border),
+        focusedBorder: _inputBorder(colors.primary),
+        errorBorder: _inputBorder(colors.danger),
+        focusedErrorBorder: _inputBorder(colors.danger),
       ),
       listTileTheme: ListTileThemeData(
         minTileHeight: AppSizes.listItem,
         contentPadding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
-        iconColor: colorScheme.onSurfaceVariant,
-        textColor: colorScheme.onSurface,
+        iconColor: colors.textSecondary,
+        textColor: colors.textPrimary,
         titleTextStyle: TextStyle(
-          color: colorScheme.onSurface,
+          color: colors.textPrimary,
           fontSize: 16,
           height: 1.5,
           fontWeight: FontWeight.w600,
         ),
         subtitleTextStyle: TextStyle(
-          color: colorScheme.onSurfaceVariant,
+          color: colors.textSecondary,
           fontSize: 14,
           height: 1.55,
           fontWeight: FontWeight.w400,
@@ -127,152 +157,38 @@ abstract final class AppTheme {
       ),
       chipTheme: ChipThemeData(
         backgroundColor: colorScheme.surfaceContainerHigh,
-        selectedColor: colorScheme.primaryContainer,
+        selectedColor: isLight ? colors.primarySoft : colors.primary.withValues(alpha: 0.12),
         labelStyle: TextStyle(
-          color: colorScheme.onSurfaceVariant,
+          color: colors.textSecondary,
           fontSize: 12,
           height: 1.33,
           fontWeight: FontWeight.w600,
         ),
-        side: BorderSide(color: colorScheme.outlineVariant),
+        side: BorderSide(color: colors.border),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppRadius.full),
         ),
       ),
       dividerTheme: DividerThemeData(
-        color: colorScheme.outlineVariant,
+        color: colors.border,
         thickness: 1,
         space: 1,
       ),
-      iconTheme: IconThemeData(color: colorScheme.onSurfaceVariant, size: 22),
+      iconTheme: IconThemeData(color: colors.textSecondary, size: 22),
     );
   }
 
-  static ThemeData get dark {
-    final darkSeed = ColorScheme.fromSeed(
-      seedColor: AppColors.primary,
-      brightness: Brightness.dark,
-    );
-    final base = ThemeData(
-      useMaterial3: true,
-      colorScheme: darkSeed,
-      scaffoldBackgroundColor: darkSeed.surface,
-      canvasColor: darkSeed.surface,
-      fontFamily: AppFonts.sansLatin,
-      fontFamilyFallback: const [AppFonts.sansCJK],
-    );
+  /// 兼容入口：Uni Blue 浅色主题。
+  static ThemeData get light => build(
+        preset: AppThemePreset.uniBlue,
+        brightness: Brightness.light,
+      );
 
-    return base.copyWith(
-      textTheme: _textTheme(base.textTheme, darkSeed),
-      appBarTheme: AppBarTheme(
-        elevation: 0,
-        centerTitle: false,
-        titleTextStyle: TextStyle(
-          color: darkSeed.onSurface,
-          fontSize: 20,
-          height: 1.4,
-          fontWeight: FontWeight.w700,
-        ),
-      ),
-      cardTheme: CardThemeData(
-        color: darkSeed.surfaceContainerLow,
-        elevation: 0,
-        shadowColor: darkSeed.shadow.withValues(alpha: 0.15),
-        margin: EdgeInsets.zero,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppRadius.xl),
-        ),
-      ),
-      filledButtonTheme: FilledButtonThemeData(
-        style: FilledButton.styleFrom(
-          minimumSize: const Size(64, AppSizes.buttonHeight),
-          textStyle: const TextStyle(
-            fontSize: 14,
-            height: 1.43,
-            fontWeight: FontWeight.w600,
-          ),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppRadius.sm),
-          ),
-        ),
-      ),
-      outlinedButtonTheme: OutlinedButtonThemeData(
-        style: OutlinedButton.styleFrom(
-          minimumSize: const Size(64, AppSizes.buttonHeight),
-          textStyle: const TextStyle(
-            fontSize: 14,
-            height: 1.43,
-            fontWeight: FontWeight.w600,
-          ),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppRadius.sm),
-          ),
-        ),
-      ),
-      textButtonTheme: TextButtonThemeData(
-        style: TextButton.styleFrom(
-          textStyle: const TextStyle(
-            fontSize: 14,
-            height: 1.43,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-      ),
-      inputDecorationTheme: InputDecorationTheme(
-        filled: true,
-        fillColor: darkSeed.surfaceContainerLow,
-        contentPadding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.md,
-          vertical: AppSpacing.sm,
-        ),
-        hintStyle: TextStyle(color: darkSeed.outline),
-        labelStyle: TextStyle(color: darkSeed.onSurfaceVariant),
-        border: _inputBorder(darkSeed.outline),
-        enabledBorder: _inputBorder(darkSeed.outline),
-        focusedBorder: _inputBorder(darkSeed.primary),
-        errorBorder: _inputBorder(darkSeed.error),
-        focusedErrorBorder: _inputBorder(darkSeed.error),
-      ),
-      listTileTheme: ListTileThemeData(
-        minTileHeight: AppSizes.listItem,
-        contentPadding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
-        iconColor: darkSeed.onSurfaceVariant,
-        textColor: darkSeed.onSurface,
-        titleTextStyle: TextStyle(
-          color: darkSeed.onSurface,
-          fontSize: 16,
-          height: 1.5,
-          fontWeight: FontWeight.w600,
-        ),
-        subtitleTextStyle: TextStyle(
-          color: darkSeed.onSurfaceVariant,
-          fontSize: 14,
-          height: 1.55,
-          fontWeight: FontWeight.w400,
-        ),
-      ),
-      chipTheme: ChipThemeData(
-        backgroundColor: darkSeed.surfaceContainerHigh,
-        selectedColor: darkSeed.primary.withValues(alpha: 0.12),
-        labelStyle: TextStyle(
-          color: darkSeed.onSurfaceVariant,
-          fontSize: 12,
-          height: 1.33,
-          fontWeight: FontWeight.w600,
-        ),
-        side: BorderSide(color: darkSeed.outline),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppRadius.full),
-        ),
-      ),
-      dividerTheme: DividerThemeData(
-        color: darkSeed.outlineVariant,
-        thickness: 1,
-        space: 1,
-      ),
-      iconTheme: IconThemeData(color: darkSeed.onSurfaceVariant, size: 22),
-    );
-  }
+  /// 兼容入口：Uni Blue 深色主题。
+  static ThemeData get dark => build(
+        preset: AppThemePreset.uniBlue,
+        brightness: Brightness.dark,
+      );
 
   static TextTheme _textTheme(TextTheme base, ColorScheme colorScheme) {
     // Apply Inter as primary font via GoogleFonts, then customise colors/sizes.
