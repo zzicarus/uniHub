@@ -83,7 +83,26 @@ class AppMoreTagsPopoverContent extends StatefulWidget {
 class _AppMoreTagsPopoverContentState
     extends State<AppMoreTagsPopoverContent> {
   final _searchController = TextEditingController();
+  late Set<String> _localSelectedTags;
   String _searchQuery = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _localSelectedTags = Set<String>.from(widget.selectedTags);
+  }
+
+  @override
+  void didUpdateWidget(covariant AppMoreTagsPopoverContent oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (!_hasSameTags(widget.selectedTags, oldWidget.selectedTags)) {
+      _localSelectedTags = Set<String>.from(widget.selectedTags);
+    }
+  }
+
+  bool _hasSameTags(Set<String> a, Set<String> b) {
+    return a.length == b.length && a.containsAll(b);
+  }
 
   @override
   void dispose() {
@@ -180,8 +199,17 @@ class _AppMoreTagsPopoverContentState
                         return AppTagChip(
                           label: tag.name,
                           count: tag.count,
-                          selected: widget.selectedTags.contains(tag.name),
-                          onTap: () => widget.onTagToggle(tag.name),
+                          selected: _localSelectedTags.contains(tag.name),
+                          onTap: () {
+                            setState(() {
+                              if (_localSelectedTags.contains(tag.name)) {
+                                _localSelectedTags.remove(tag.name);
+                              } else {
+                                _localSelectedTags.add(tag.name);
+                              }
+                            });
+                            widget.onTagToggle(tag.name);
+                          },
                         );
                       }).toList(),
                     ),
@@ -202,8 +230,8 @@ class _AppMoreTagsPopoverContentState
                 if (widget.onClear != null)
                   TextButton(
                     onPressed: () {
+                      setState(_localSelectedTags.clear);
                       widget.onClear!();
-                      setState(() {});
                     },
                     child: Text(
                       '清空',
