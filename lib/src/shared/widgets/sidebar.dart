@@ -5,6 +5,7 @@ import '../../core/plugin/plugin_interface.dart';
 import '../../core/plugin/plugin_registry.dart';
 import '../../core/router/route_names.dart';
 import '../../core/theme/app_tokens.dart';
+import '../../core/theme/app_theme_tokens.dart';
 
 class Sidebar extends ConsumerWidget {
   const Sidebar({super.key});
@@ -14,16 +15,14 @@ class Sidebar extends ConsumerWidget {
     final registry = ref.watch(pluginRegistryProvider);
     final location = GoRouterState.of(context).uri.toString();
     final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
+    final appColors = context.appColors;
 
     return Container(
       width: AppDesktopSizes.sidebarWidth,
       decoration: BoxDecoration(
-        color: AppColors.background,
+        color: appColors.sidebarBackground,
         border: Border(
-          right: BorderSide(
-            color: colorScheme.outlineVariant.withValues(alpha: 0.5),
-          ),
+          right: BorderSide(color: appColors.border),
         ),
       ),
       child: Column(
@@ -133,7 +132,7 @@ class Sidebar extends ConsumerWidget {
               AppSpacing.lg,
               AppSpacing.xl,
             ),
-            child: _UserTile(colorScheme: colorScheme, theme: theme),
+            child: const _UserTile(),
           ),
         ],
       ),
@@ -146,20 +145,26 @@ class _LogoMark extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final appColors = context.appColors;
     return Container(
       width: 46,
       height: 46,
       decoration: BoxDecoration(
-        color: AppColors.primarySoft,
+        color: appColors.primary,
         borderRadius: BorderRadius.circular(AppRadius.lg),
-        border: Border.all(color: colorScheme.primary.withValues(alpha: 0.12)),
+        boxShadow: [
+          BoxShadow(
+            color: appColors.primary.withValues(alpha: 0.18),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: Center(
         child: Text(
           'U',
           style: TextStyle(
-            color: colorScheme.primary,
+            color: Colors.white,
             fontSize: 24,
             height: 1,
             fontWeight: FontWeight.w900,
@@ -171,15 +176,15 @@ class _LogoMark extends StatelessWidget {
 }
 
 class _UserTile extends StatelessWidget {
-  final ColorScheme colorScheme;
-  final ThemeData theme;
-
-  const _UserTile({required this.colorScheme, required this.theme});
+  const _UserTile();
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final appColors = context.appColors;
+
     return Material(
-      color: colorScheme.surface,
+      color: appColors.panelBackground,
       borderRadius: BorderRadius.circular(AppRadius.lg),
       child: InkWell(
         borderRadius: BorderRadius.circular(AppRadius.lg),
@@ -188,19 +193,17 @@ class _UserTile extends StatelessWidget {
           padding: const EdgeInsets.all(AppSpacing.sm),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(AppRadius.lg),
-            border: Border.all(
-              color: colorScheme.outlineVariant.withValues(alpha: 0.32),
-            ),
+            border: Border.all(color: appColors.border),
           ),
           child: Row(
             children: [
               CircleAvatar(
                 radius: 18,
-                backgroundColor: colorScheme.primaryContainer,
+                backgroundColor: appColors.primarySoft,
                 child: Text(
                   'A',
                   style: theme.textTheme.titleSmall?.copyWith(
-                    color: colorScheme.primary,
+                    color: appColors.primary,
                     fontSize: 16,
                     fontWeight: FontWeight.w800,
                   ),
@@ -223,7 +226,7 @@ class _UserTile extends StatelessWidget {
               Icon(
                 Icons.more_horiz_rounded,
                 size: 18,
-                color: colorScheme.outline,
+                color: appColors.textTertiary,
               ),
             ],
           ),
@@ -377,14 +380,14 @@ class _NavItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final appColors = context.appColors;
     final isEnabled = onTap != null;
-    final colorScheme = theme.colorScheme;
     final foreground = isSelected
-        ? AppColors.primary
+        ? appColors.primary
         : isEnabled
-        ? colorScheme.onSurfaceVariant.withValues(alpha: 0.82)
-        : colorScheme.outline;
-    final bgColor = isSelected ? AppColors.primarySoft : Colors.transparent;
+        ? appColors.textSecondary
+        : appColors.textTertiary;
+    final bgColor = isSelected ? appColors.navSelectedBackground : Colors.transparent;
 
     return Padding(
       padding: EdgeInsets.symmetric(

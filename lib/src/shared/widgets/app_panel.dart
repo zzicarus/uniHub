@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:uni_hub/src/core/theme/app_tokens.dart';
+import 'package:uni_hub/src/core/theme/app_theme_tokens.dart';
 
 /// UniHub dashboard panel with unified desktop card styling.
 class AppPanel extends StatelessWidget {
@@ -28,21 +29,16 @@ class AppPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final appColors = context.appColors;
     final resolvedRadius = radius ?? AppRadius.xl;
     final resolvedBackground =
         background ??
-        (selected
-            ? Color.alphaBlend(
-                colorScheme.primary.withValues(alpha: 0.06),
-                colorScheme.surface,
-              )
-            : colorScheme.surface);
+        (selected ? appColors.primarySoft : appColors.panelBackground);
     final resolvedBorder =
         borderColor ??
         (selected
-            ? colorScheme.primary.withValues(alpha: 0.42)
-            : colorScheme.outlineVariant.withValues(alpha: 0.35));
+            ? appColors.primary.withValues(alpha: 0.28)
+            : appColors.border);
     final resolvedPadding =
         padding ?? EdgeInsets.all(compact ? AppSpacing.md : AppSpacing.lg);
     final borderRadius = BorderRadius.circular(resolvedRadius);
