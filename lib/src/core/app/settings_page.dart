@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../theme/app_tokens.dart';
+import '../theme/app_theme_tokens.dart';
+import 'settings/appearance_settings_section.dart';
 
 class SettingsPage extends ConsumerWidget {
   const SettingsPage({super.key});
@@ -10,7 +12,7 @@ class SettingsPage extends ConsumerWidget {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     return Scaffold(
-      backgroundColor: colorScheme.surface,
+      backgroundColor: context.appColors.background,
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(AppSpacing.xxl),
@@ -43,21 +45,7 @@ class SettingsPage extends ConsumerWidget {
                   ],
                 ),
                 const SizedBox(height: AppSpacing.xxl),
-                const _SettingsPanel(
-                  title: '外观',
-                  children: [
-                    _SettingsRow(
-                      icon: Icons.palette_outlined,
-                      title: '界面主题',
-                      subtitle: '当前使用浅色主题',
-                    ),
-                    _SettingsRow(
-                      icon: Icons.desktop_windows_outlined,
-                      title: '桌面布局',
-                      subtitle: 'Windows 使用侧栏与右侧信息栏',
-                    ),
-                  ],
-                ),
+                const AppearanceSettingsSection(),
                 const SizedBox(height: AppSpacing.xl),
                 const _SettingsPanel(
                   title: '数据',
@@ -92,12 +80,12 @@ class _SettingsPanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
+    final colors = context.appColors;
     return Container(
       decoration: BoxDecoration(
-        color: colorScheme.surfaceContainerLow,
+        color: colors.panelBackground,
         borderRadius: BorderRadius.circular(AppRadius.lg),
-        border: Border.all(color: colorScheme.outlineVariant),
+        border: Border.all(color: colors.border),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

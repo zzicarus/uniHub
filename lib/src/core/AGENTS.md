@@ -93,6 +93,11 @@ context.appColors.textSecondary
 
 > 本 section 由 sync-knowledge 自动管理，按时间倒序追加。
 
+### 2026-05-23: 设置页外观设置组件化重构
+- **appearance_settings_section.dart（新增）** — `AppearanceSettingsSection` ConsumerWidget，将外观设置（主题模式切换 + 主题预设选择）从 `settings_page.dart` 提取为独立可复用组件
+- **settings\_page.dart** — 外观面板替换为 `AppearanceSettingsSection`；Scaffold backgroundColor 切换至 `context.appColors.background`；`_SettingsPanel` 样式改用 `panelBackground`/`border` Token
+- **主题设置 UI 完成**：ThemeMode SegmentedButton（跟随系统/浅色/深色）+ ThemePresetGrid 响应式卡片列表（6 预设，3/2/1 列自适应），交互通过 `themeSettingsProvider` 即时生效
+
 ### 2026-05-23: 引入多预设主题系统（v2）
 - **app_theme_tokens.dart（新增）** — `UniHubThemeColors` 继承 `ThemeExtension`，定义 21 个产品级语义颜色（background、sidebarBackground、panelBackground、textPrimary 等）；提供 `context.appColors` 扩展
 - **app_theme_preset.dart（新增）** — `AppThemePreset` 枚举：uniBlue / paper / forest / sakura / amber / graphite

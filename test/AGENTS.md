@@ -64,7 +64,7 @@ test/
 | `core/plugin/` | 50% | (1/2) |
 | `core/search/` | 50% | (1/2) |
 | `thoughts/data/` | 80% | (4/5 主数据文件有测试；新增 `ThoughtImageService` 测试 13 条，使用 `FakeImageStorage`/`FakeImagePicker` 避免文件系统依赖) |
-| `core/app/` | **0%** | **完全未覆盖** |
+| `core/app/` | 25% | (1/4 文件有测试，4 条 widget 测试：主题切换 UI) |
 | `core/router/` | **0%** | **完全未覆盖** |
 | `core/theme/` | **0%** | **完全未覆盖** |
 | `thoughts/ui/` | **0%** | **完全未覆盖** |
@@ -117,6 +117,10 @@ git status
 ## 近期变更
 
 > 本 section 由 sync-knowledge 自动管理，按时间倒序追加。
+
+### 2026-05-23: 增加设置页主题切换测试覆盖
+- `settings_page_theme_test.dart`（新增）— 4 条 widget 测试：验证「主题模式」「主题预设」显示、6 个预设名称渲染、点击 Forest 切换预设、点击深色切换模式
+- `core/app/` 覆盖从 0% 提升至 25%
 
 ### 2026-05-22: 增加数据库测试覆盖
 - `database_test.dart` 新增 3 个测试用例（schemaVersion 计算、跨插件取最大值、缺失表断言）
