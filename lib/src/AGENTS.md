@@ -35,8 +35,8 @@ lib/src/
 - Provider 注入：使用 `ProviderScope` overrides 注入 test DB 和 PluginRegistry
 - 零 mockito：目前全部通过手写 stub 实现
 - 详细测试约定见 [`test/AGENTS.md`](../../test/AGENTS.md)
-- 代理任务分类与委派指南见 [`.omo/guidelines/agent-workflow.md`](../../.omo/guidelines/agent-workflow.md)
-- 知识同步映射规则见 [`.omo/knowledge-map.json`](../../.omo/knowledge-map.json)
+- Trellis 开发工作流见 [`.trellis/workflow.md`](../../.trellis/workflow.md)
+- 项目 Spec 规范见 [`.trellis/spec/`](../../.trellis/spec/)
 
 ---
 

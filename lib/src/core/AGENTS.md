@@ -46,7 +46,7 @@ main()
 
 ## 数据库
 
-详见 `.omo/guidelines/database.md`。核心注意：
+详见 `.trellis/spec/backend/database-guidelines.md`。核心注意：
 
 - `AppDatabase` 通过遍历插件 `tables` 合并所有表
 - 表定义统一放在 `core/database/tables/` 下，插件不直接引入数据库表

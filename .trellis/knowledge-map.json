@@ -1,0 +1,105 @@
+{
+  "version": 2,
+  "description": "代码改动到文档更新的映射规则。由 agent 在 Review 阶段使用（从 OMO 恢复并适配到 Trellis 体系）",
+  "mappings": [
+    {
+      "id": "core-plugin",
+      "patterns": ["lib/src/core/plugin/**"],
+      "docs": [
+        { "path": "lib/src/core/plugin/AGENTS.md", "updateMode": "append" }
+      ],
+      "description": "插件系统接口或注册机制变更"
+    },
+    {
+      "id": "core-infra",
+      "patterns": ["lib/src/core/app/**", "lib/src/core/router/**"],
+      "docs": [
+        { "path": "lib/src/core/AGENTS.md", "updateMode": "append" }
+      ],
+      "description": "基础设施（路由/启动/布局/生命周期）变更"
+    },
+    {
+      "id": "database",
+      "patterns": ["lib/src/core/database/**"],
+      "docs": [
+        { "path": ".trellis/spec/backend/database-guidelines.md", "updateMode": "inject" }
+      ],
+      "description": "数据库表结构、DAO 或查询变更"
+    },
+    {
+      "id": "widget-pattern",
+      "patterns": ["lib/src/shared/widgets/**", "lib/src/core/theme/**"],
+      "docs": [
+        { "path": ".trellis/spec/frontend/component-guidelines.md", "updateMode": "inject" }
+      ],
+      "description": "共享组件、主题 Token 或设计模式变更"
+    },
+    {
+      "id": "workflow-change",
+      "patterns": [".trellis/workflow.md", ".trellis/spec/**"],
+      "docs": [
+        { "path": ".trellis/workflow.md", "updateMode": "inject" }
+      ],
+      "description": "开发流程或规范文档变更"
+    },
+    {
+      "id": "plugin-impl",
+      "patterns": ["lib/src/plugins/*/**"],
+      "docs": [
+        { "path": "lib/src/plugins/{match_1}/AGENTS.md", "updateMode": "append" }
+      ],
+      "description": "插件内部功能变更"
+    },
+    {
+      "id": "shared-layer",
+      "patterns": ["lib/src/shared/**"],
+      "docs": [
+        { "path": "lib/src/AGENTS.md", "updateMode": "append" }
+      ],
+      "description": "共享层组件或架构变更"
+    },
+    {
+      "id": "test-infra",
+      "patterns": ["test/**"],
+      "docs": [
+        { "path": "test/AGENTS.md", "updateMode": "append" }
+      ],
+      "description": "测试框架、策略或约定变更"
+    },
+    {
+      "id": "bugfix",
+      "patterns": ["lib/src/**"],
+      "condition": "agent_judges_fix",
+      "docs": [
+        { "path": ".trellis/workspace/alan/learnings/errors.md", "updateMode": "append" }
+      ],
+      "description": "任何 Bug 修复（errors.md 采用静默写入模式）"
+    },
+    {
+      "id": "spec-frontend-empty",
+      "patterns": ["lib/src/**"],
+      "condition": "agent_judges_new_pattern",
+      "docs": [
+        { "path": ".trellis/spec/frontend/component-guidelines.md", "updateMode": "inject" },
+        { "path": ".trellis/spec/frontend/quality-guidelines.md", "updateMode": "inject" }
+      ],
+      "description": "发现新的前端模式或约定时填充 spec 模板"
+    },
+    {
+      "id": "spec-backend-empty",
+      "patterns": ["lib/src/core/database/**", "lib/src/core/plugin/**"],
+      "condition": "agent_judges_new_pattern",
+      "docs": [
+        { "path": ".trellis/spec/backend/quality-guidelines.md", "updateMode": "inject" }
+      ],
+      "description": "发现新的后端模式或约定时填充 spec 模板"
+    }
+  ],
+  "defaultBehavior": {
+    "unknownPattern": "ask_and_learn",
+    "missingDoc": "auto_create_with_template"
+  },
+  "templates": {
+    "AGENTS.md": ".trellis/templates/AGENTS.md.template"
+  }
+}

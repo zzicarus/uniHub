@@ -88,7 +88,7 @@ flutter test --name "test case name"
 
 ## 完整验证顺序
 
-提交前按以下顺序验证（参考 `.omo/guidelines/workflow.md`）：
+提交前按以下顺序验证（参考 `.trellis/workflow.md` 的验证流程）：
 
 ```sh
 # Step 1: 静态分析

@@ -75,7 +75,7 @@ Flutter 中没有 "props" 概念——构造器参数即 Props：
 | 规则 | 示例 |
 |------|------|
 | 必传数据用 `required` | `required this.thought` |
-| 可选数据用默认值 | `this.color = AppColors.primary` |
+| 可选数据用默认值 | `this.color` 可为 nullable，在 `build` 中 fallback 到 `colorScheme.primary` |
 | 回调用命名参数 | `this.onTap`、`this.onDelete` |
 | key 始终使用 `super.key` | `const ThoughtCard({super.key})` |
 
@@ -83,31 +83,52 @@ Flutter 中没有 "props" 概念——构造器参数即 Props：
 
 ## 设计 Token
 
-**始终使用 Token，禁止硬编码值**：
+**始终使用 Token，禁止硬编码值**。但不同类型的值用不同的 Token：
+
+### 颜色 → Widget 层优先用 `colorScheme`
+Widget 层颜色必须优先通过 `Theme.of(context).colorScheme` 获取，**不应直接使用 `AppColors`**。`AppColors.primary` 仅用于 `app_theme.dart` 的 `ColorScheme.fromSeed(seedColor: ...)`；`AppColors.*Soft` 等无 M3 直接对应的颜色仅可用于非关键装饰。
 
 ```dart
 // ✅ 正确
-const SizedBox(height: AppSpacing.md)
+color: colorScheme.primary
+color: colorScheme.onSurface
+color: colorScheme.surfaceContainerLow
+
+// ❌ 错误
 color: AppColors.primary
+color: Color(0xFF4F6BFF)
+Colors.white
+```
+
+例外：`AppColors.*Soft` 装饰色（没有 M3 colorScheme 直接对应）可继续使用，但仅限装饰性场景。
+
+### 间距/圆角/尺寸 → 用 `AppToken`
+```dart
+// ✅ 正确
+const SizedBox(height: AppSpacing.md)
 BorderRadius.circular(AppRadius.sm)
 
 // ❌ 错误
 const SizedBox(height: 16)
-color: Color(0xFF2563EB)
 BorderRadius.circular(8)
 ```
 
+### 所有 Token 对照表
+
 Token 定义在 `lib/src/core/theme/app_tokens.dart`：
 
-| Token 类 | 内容 |
-|-----------|------|
-| `AppColors` | 颜色 palette（primary、text、background、border、soft 装饰色等） |
-| `AppSpacing` | 间距（xxs=4 → section=40） |
-| `AppRadius` | 圆角（xs=6 → full=999） |
-| `AppSizes` | 尺寸（buttonHeight、inputHeight、listItem 等） |
-| `AppDesktopSizes` | 桌面端尺寸（sidebarWidth=240 等） |
-| `AppFonts` | 字体族（decorative、fallback 列表） |
-| `AppShadows` | 共享阴影常量（`card`, `cardSoft`, `cardElevated`, `elevated`） |
+| Token 类 | 用途 | Widget 中使用 |
+|-----------|------|-------------|
+| `colorScheme.*` | 颜色（primary/surface/onSurface/outline 等） | **优先使用** |
+| `AppColors.primary` | 仅 `ColorScheme.fromSeed(seedColor:)` 参数 | 主题初始化 |
+| `AppColors.*Soft` | M3 无直接对应的装饰色 | 仅非关键装饰可用 |
+| `AppSpacing` | 间距（xxs=4 → section=40） | ✅ 必须用 |
+| `AppRadius` | 圆角（xs=6 → full=999） | ✅ 必须用 |
+| `AppSizes` | 组件尺寸（buttonHeight、listItem 等） | ✅ 优先用 |
+| `AppDesktopSizes` | 桌面端布局尺寸（sidebarWidth 等） | ✅ 必须用 |
+| `AppMobileSizes` | 移动端布局尺寸 | ✅ 必须用 |
+| `AppFonts` | 字体族 | ✅ 必须用 |
+| `AppShadows` | 阴影常量 | ✅ 优先用 |
 
 ---
 
@@ -133,14 +154,16 @@ if (isDesktop) {
 
 ```dart
 // ✅ 正确：Shell 自身负责铺底色，子页面是否 Scaffold 都不会黑底
+final colorScheme = Theme.of(context).colorScheme;
+
 return Scaffold(
-  backgroundColor: AppColors.background,
+  backgroundColor: colorScheme.surface,
   body: Row(
     children: [
       const Sidebar(),
       Expanded(
         child: ColoredBox(
-          color: AppColors.background,
+          color: colorScheme.surface,
           child: child,
         ),
       ),
@@ -172,13 +195,54 @@ return Row(
 
 ---
 
+## 占位页面规范
+
+对于路由中存在但功能尚未实现的占位页面，遵循以下原则：
+
+| 规则 | 说明 | 示例 |
+|------|------|------|
+| 保持极简 | 只显示图标 + 标题 + 说明文字，不含任何 mock 数据 | `Icon` + `Text('即将推出')` |
+| 保留路由结构 | 注册必要的路由路径，避免路由缺失导致导航断裂 | 5 个占位页面约 120 行 |
+| 禁止硬编码 mock 内容 | 不写入假列表、假统计、假图表 | 1500 行 mock 数据 ❌ |
+| 占位数据放在独立文件 | 如果确实需要展示 mock 预览，放在单独的数据文件 | 不与路由/页面定义混合 |
+
+```dart
+// ✅ 正确：极简占位页面
+class ComingSoonPage extends StatelessWidget {
+  final IconData icon;
+  final String title;
+
+  const ComingSoonPage({required this.icon, required this.title, super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 48, color: colorScheme.onSurfaceVariant),
+          const SizedBox(height: 16),
+          Text(title, style: Theme.of(context).textTheme.headlineSmall),
+          const SizedBox(height: 8),
+          Text('即将推出，敬请期待',
+              style: TextStyle(color: colorScheme.onSurfaceVariant)),
+        ],
+      ),
+    );
+  }
+}
+```
+
+---
+
 ## 避免模式
 
 | 禁止 | 原因 | 正确做法 |
 |------|------|----------|
 | 在 `build` 中执行异步操作 | build 应该是纯函数 | 使用 Riverpod Provider 提前加载数据 |
 | `MediaQuery.of(context)` 在深层 Widget 中 | 可能导致不必要的 rebuild | 在布局层判断，通过参数向下传递 |
-| 硬编码颜色/间距/字号 | Token 变更时遗漏 | 始终使用 `AppColors`、`AppSpacing` 等 |
+| 硬编码颜色/间距/字号 | Token 变更时遗漏 | 颜色用 `colorScheme`，间距/圆角/尺寸用 `AppSpacing`、`AppRadius`、`AppSizes` 等 |
 | `Colors.white` / `Colors.black54` 在 widget 文件中 | 暗色模式下不可读，破坏 M3 主题一致性 | 使用 `colorScheme.onPrimary`、`colorScheme.onSurfaceVariant` |
 | `Container` 无意义使用 | 性能浪费 | 有明确需求时才用 Container（装饰、约束等） |
 | 深层嵌套超过 4 层 | 可读性差 | 提取子 Widget |
@@ -198,7 +262,7 @@ return Row(
 
 ## UI Pattern: Material 3 Tonal Cards (Google Style)
 
-**What**: When implementing Material 3 style cards using tonal background colors (e.g. \AppColors.surfaceSubtle\), avoid using \Container(color: ...)\ inside an \InkWell\ if the background is opaque. Instead, wrap the \InkWell\ inside a \Material(color: ...)\ widget.
+**What**: When implementing Material 3 style cards using tonal background colors (e.g. `colorScheme.surfaceContainerLow`), avoid using `Container(color: ...)` inside an `InkWell` if the background is opaque. Instead, wrap the `InkWell` inside a `Material(color: ...)` widget.
 
 **Why**: Using an opaque \Container\ inside an \InkWell\ will block the native Material 3 interaction feedback (hover darkening and ripple/splash effects). Applying the color to the ancestor \Material\ widget ensures proper flat visual feedback via color-darkening without any shadows or scaling.
 
@@ -206,7 +270,7 @@ return Row(
 \\dart
 // ✅ 正确: 颜色应用在 Material 上，交互反馈正常
 Material(
-  color: AppColors.surfaceSubtle,
+  color: colorScheme.surfaceContainerLow,
   borderRadius: BorderRadius.circular(AppRadius.lg),
   child: InkWell(
     onTap: () {},
@@ -224,12 +288,54 @@ Material(
   child: InkWell(
     onTap: () {},
     child: Container(
-      color: AppColors.surfaceSubtle,
+      color: colorScheme.surfaceContainerLow,
       child: child,
     ),
   ),
 );
 \
+
+---
+
+## 配色系统
+
+### 种子色机制
+
+整个配色由单一种子色驱动。Current: `Color(0xFF64B5F6)`（小清新蓝）。
+
+```
+app_tokens.dart: AppColors.primary = 0xFF64B5F6
+  └─ app_theme.dart: ColorScheme.fromSeed(seedColor: AppColors.primary)
+       └─ 自动生成: primary / secondary / tertiary / error / surface / outline 等
+            └─ 各组件通过 colorScheme.xxx 引用
+```
+
+**改动种子色即可全局换色**。修改 `app_tokens.dart:4` 的 hex 值后 `flutter run` 热重载即时生效。
+
+### AppColors 边界
+
+`app_tokens.dart` 保留以下颜色常量，但它们不是 Widget 层的默认取色 API：主题初始化使用 `AppColors.primary` 作为 seedColor；无 M3 直接对应的柔和/装饰色可在非关键装饰中少量使用；其余语义、表面、文字、边框颜色在 Widget 中应改用 `colorScheme`。
+
+| 类别 | 示例 | 数量 |
+|------|------|------|
+| 语义色 | `primary`, `secondary`, `error`, `success`, `warning` | 7 |
+| 表面色 | `background`, `surface`, `surfaceElevated`, `surfaceMuted`, `surfaceSubtle` | 5 |
+| 柔和变体 | `primarySoft`, `secondarySoft`, `blueSoft`, `greenSoft` 等 | 10+ |
+| 文字色 | `textPrimary`, `textSecondary`, `textTertiary` | 3 |
+| 边框色 | `border`, `borderSoft` | 2 |
+| 装饰色 | `purple`, `purpleSoft` | 2 |
+
+### 卡片与边框色值速查
+
+| 元素 | 边框值 | 阴影 |
+|------|--------|------|
+| 首页卡片 (Panel/Metric/Shortcut/Thought) | `outlineVariant` alpha 0.25 | `AppShadows.cardSoft` |
+| 移动端卡片 | `outlineVariant` alpha 0.25 | `AppShadows.cardSoft` |
+| 搜索框 / 通知按钮 | `outlineVariant` alpha 0.25 | `AppShadows.cardSoft` |
+| CardTheme 全局默认 | `outlineVariant` alpha 0.25 | shadow 0.06 |
+| 侧栏分隔线 / 右栏分隔线 | `outlineVariant` alpha 0.5 | — |
+| 全局 CardTheme 背景 | `surfaceContainerLow` | — |
+| 桌面框架背景 | `surfaceContainerLowest` | — |
 
 ---
 
@@ -347,3 +453,256 @@ MaterialApp.router(
 ### Elevation Surface Tint
 
 不要禁用 `surfaceTintColor`（`Colors.transparent`），M3 的 surface tint 层为 AppBar、Card、NavigationBar 等带 elevation 的组件提供了微妙的色调叠加，是 M3 视觉语言的重要组成。
+
+---
+
+## UI Pattern: Soft Shadow Cards with Subtle Border
+
+**What**: 卡片采用「弥散阴影 + 极淡边框」组合来实现漂浮感和区域界定。默认边框为 `outlineVariant.withValues(alpha: 0.25)`（极淡灰色），视觉上几乎无感但能确保卡片在浅色背景上边界清晰。框架分隔线（侧栏右边缘、右栏左边缘）使用 `outlineVariant.withValues(alpha: 0.5)`。
+
+**Why**: 弥散阴影提供深度层次，极淡边框在阴影不足的场景（密排列、移动端小屏）下保持区域辨识。设计意图是「漂浮但不模糊」——卡片之间靠边框轻微界定，靠阴影区分层级。
+
+### 标准卡片模板
+
+```dart
+Material(
+  color: colorScheme.surface,
+  borderRadius: BorderRadius.circular(AppRadius.xl),  // 20px
+  elevation: 0,
+  child: DecoratedBox(
+    decoration: BoxDecoration(
+      color: colorScheme.surface,
+      borderRadius: BorderRadius.circular(AppRadius.xl),
+      boxShadow: const [AppShadows.cardSoft],
+    ),
+    child: Padding(
+      padding: const EdgeInsets.all(AppSpacing.lg),
+      child: /* 内容 */,
+    ),
+  ),
+);
+```
+
+### 可交互卡片（InkWell + 阴影）
+
+```dart
+Material(
+  color: colorScheme.surface,
+  borderRadius: BorderRadius.circular(AppRadius.xl),
+  elevation: 0,
+  child: DecoratedBox(
+    decoration: BoxDecoration(
+      borderRadius: BorderRadius.circular(AppRadius.xl),
+      boxShadow: const [AppShadows.cardSoft],
+    ),
+    child: InkWell(
+      borderRadius: BorderRadius.circular(AppRadius.xl),
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.all(AppSpacing.md),
+        child: /* 内容 */,
+      ),
+    ),
+  ),
+);
+```
+
+### 统计卡片（Metric Card）
+
+统计卡片使用纵向（`Column`）布局，图标在上，数值/副标题依次排列：
+
+```dart
+Material(
+  color: colorScheme.surface,
+  borderRadius: BorderRadius.circular(AppRadius.xl),
+  elevation: 0,
+  child: DecoratedBox(
+    decoration: BoxDecoration(
+      color: colorScheme.surface,
+      borderRadius: BorderRadius.circular(AppRadius.xl),
+      boxShadow: const [AppShadows.cardSoft],
+    ),
+    child: Padding(
+      padding: const EdgeInsets.all(AppSpacing.lg),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          // 大图标在上（52×52）
+          Container(
+            width: 52,
+            height: 52,
+            decoration: BoxDecoration(
+              color: background,
+              borderRadius: BorderRadius.circular(AppRadius.lg),
+            ),
+            child: Icon(icon, color: color, size: 26),
+          ),
+          const SizedBox(height: AppSpacing.md),
+          Text(title, style: theme.textTheme.labelLarge),
+          const SizedBox(height: AppSpacing.xxs),
+          Text(
+            value,
+            style: theme.textTheme.headlineMedium?.copyWith(
+              fontSize: 28,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          Text(note, style: theme.textTheme.bodySmall),
+        ],
+      ),
+    ),
+  ),
+);
+```
+
+### 阴影系统
+
+阴影定义在 `app_tokens.dart` 中，全表如下：
+
+| Token | blurRadius | offset | 透明度 | 用途 |
+|-------|-----------|--------|--------|------|
+| `AppShadows.cardSoft` | 16px | (0, 4) | 2%（浅色） | 默认卡片、面板 |
+| `AppShadows.cardElevated` | 24px | (0, 8) | 3%（浅色） | 悬停/交互态 |
+| `AppShadows.card` | 32px | (0, 16) | 3%（浅色） | 浮动元素、弹窗 |
+
+> 暗色模式下阴影透明度相应提高（`alpha: 0.15`），保持层次感。
+
+### 可接受的使用差异
+
+- 最小圆角变体：对于紧凑场景（侧栏选中态等）可使用 `AppRadius.lg`(16px)
+- 无阴影变体：非浮层表面（面板内部元素）可以不设 `boxShadow`
+- 边框使用规则：
+  - 独立卡片（首页各面板、统计卡、快捷入口）：使用 `outlineVariant.withValues(alpha: 0.25)`
+  - 框架分隔线（侧栏、右栏边缘）：使用 `outlineVariant.withValues(alpha: 0.5)`（更明显但不到 1.0）
+  - **禁止**：使用全不透明边框 `alpha: 1.0` 的 `outlineVariant`——这会破坏通透感
+
+---
+
+## Layout Overflow 预防
+
+禁止 GridView/ListView 卡片内容溢出（"RenderFlex overflowed"）。以下规则必须遵守：
+
+### 1. GridView childAspectRatio 内容验证公式
+
+每次使用 `childAspectRatio` 时，先做数学验证：
+
+```
+cellHeight = cellWidth / aspectRatio
+contentAvailable = cellHeight - 卡片垂直padding总和
+Assert: contentAvailable ≥ 所有固定尺寸子组件高度之和
+```
+
+**示例**：桌面端 `_ShortcutGrid` 中 `childAspectRatio: 1.6`，卡片 padding `vertical: 12`：
+- 网格宽度 132px → `cellHeight = 132 / 1.6 ≈ 82.5px`
+- 可用内容高度 = `82.5 - 24(padding) ≈ 58.5px`
+- 内容（icon 42 + spacing 8 + text ~20）≈ 70px ❌ → **调整 spacing 或 icon 尺寸，或降低 aspectRatio 使单元格变高**
+
+### 2. 固定尺寸组件必须缩放到适配
+
+卡片内的图标、头像、间距等固定尺寸组件必须能适应最小单元格。规则：
+
+| 场景 | 建议最大尺寸 | 替代方案 |
+|------|------------|---------|
+| GridView 卡片内的图标气泡 | 36px | 更紧凑时用 28-32px |
+| GridView 卡片内的间距 | `AppSpacing.xxs(4)` | 不用超过 `AppSpacing.xs(8)` |
+| Row/Column 中的文本 | `Flexible` 包裹 | 不使用固定 SizedBox 装文本 |
+
+### 3. 使用 Flexible 包裹文本做溢出保护
+
+任何出现在固定约束空间内的文本，必须用 `Flexible` 或 `Expanded` 包裹：
+
+```dart
+// ✅ 正确：Flexible 允许文本在空间不足时自动收缩
+Column(
+  children: [
+    Icon(...),
+    SizedBox(height: AppSpacing.xxs),
+    Flexible(
+      child: Text(
+        title,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,  // 必须有
+      ),
+    ),
+  ],
+)
+
+// ❌ 错误：文本被抛出约束，导致 RenderFlex overflow
+Column(
+  children: [
+    Icon(...),
+    Text(title),  // 无 Flexible，固定高度可能溢出
+  ],
+)
+```
+
+### 4. 固定尺寸内容用 FittedBox 安全缩放
+
+当图标/装饰需要保持比例但又必须匹配空间时，使用 `FittedBox` + `overflow: TextOverflow.ellipsis`：
+
+```dart
+// ✅ 安全：FittedBox 缩放内容到可用空间
+FittedBox(
+  fit: BoxFit.scaleDown,
+  child: Row(
+    mainAxisSize: MainAxisSize.min,
+    children: [
+      Icon(icon, size: 24),
+      SizedBox(width: 4),
+      Text(label),
+    ],
+  ),
+)
+```
+
+### 5. 每次修改卡片布局后的验证步骤
+
+| # | 检查项 | 方法 |
+|---|--------|------|
+| 1 | `flutter analyze` 通过 | 0 error 0 warning |
+| 2 | 在最小布局宽度下测试 UI | Desktop 卡片最小列宽 ≈ 108px |
+| 3 | 确认无黄色/黑色溢出条纹 | Debug mode 目视检查 |
+| 4 | `childAspectRatio` 重新验证 | 用上述公式重新计算内容是否仍适配 |
+
+### 6. 禁止的溢出修复方式
+
+| 禁止的做法 | 原因 | 正确做法 |
+|-----------|------|---------|
+| 给溢出 Column/Row 加 `overflow: ...` | 仅裁剪视觉，实际约束冲突仍在 | 缩小固定内容尺寸或用 Flexible |
+| 增加 `clipBehavior: Clip.hardEdge` | 隐藏问题而非解决 | 重新计算内容 vs 容器大小 |
+| 无依据地降低 `childAspectRatio` | 可能让其他卡片变得过高 | 先验证固定内容的必要尺寸，再做调整 |
+
+---
+
+## ColorScheme vs AppTokens 决策树
+
+```
+我要设置一个颜色值
+│
+├─ 是 Widget 中的颜色吗？
+│   ├─ ✅ → 用 colorScheme.*
+│   │   ├─ 卡片背景 → colorScheme.surface
+│   │   ├─ 页面背景 → colorScheme.surface
+│   │   ├─ 主按钮 → colorScheme.primary
+│   │   ├─ 文字 → colorScheme.onSurface / onSurfaceVariant
+│   │   ├─ 边框 → colorScheme.outline / outlineVariant
+│   │   ├─ 次级表面 → colorScheme.surfaceContainerLow/High
+│   │   ├─ 错误 → colorScheme.error
+│   │   └─ 装饰色且 M3 无对应 → AppColors.*Soft（例外）
+│   │
+│   └─ ❌ 是 Theme 初始化？
+│       └─ ✅ → AppColors.primary（seedColor）
+│
+├─ 我要设置间距
+│   └─ ✅ → AppSpacing.xxs/xs/sm/md/lg/xl/xxl/section
+│
+├─ 我要设置圆角
+│   └─ ✅ → AppRadius.xs/sm/md/lg/xl/full
+│
+├─ 我要设置尺寸
+│   └─ ✅ → AppSizes / AppDesktopSizes / AppMobileSizes
+│
+└─ 我要设置字体
+    └─ ✅ → AppFonts.decorative + fallback 或默认 textTheme
+```

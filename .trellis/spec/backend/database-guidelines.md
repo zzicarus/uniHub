@@ -52,12 +52,12 @@ class ThoughtsTable extends Table {
 数据库类在 `lib/src/core/database/app_database.dart`，是唯一的 drift Database 入口：
 
 ```dart
-@DriftDatabase(tables: [ThoughtsTable, TodoTable])  // 编译期声明所有表
+@DriftDatabase(tables: [ThoughtsTable, TodoTable])  // 编译期集中注册所有表
 class AppDatabase extends GeneratedDatabase {
-  AppDatabase(super.e);
+  AppDatabase(super.e, PluginRegistry registry);
 
   @override
-  int get schemaVersion => 1;
+  int get schemaVersion => /* 自动取所有插件 schemaVersion 的最大值 */;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -71,18 +71,24 @@ class AppDatabase extends GeneratedDatabase {
 }
 ```
 
+**重要**：`@DriftDatabase(tables: [...])` 是**编译期集中注册点**。由于 drift 代码生成器在编译时读取注解，表列表无法从运行时的 `PluginRegistry` 动态注入。因此：
+
+1. 所有表必须在本文件的 `tables: [...]` 中显式列出
+2. 插件的 `UniHubPlugin.tables` 返回对应 `Type` 用于运行时验证
+3. `AppDatabase` 构造时通过 `assert` 检查两者一致性（debug 模式）
+4. `schemaVersion` 自动从 `PluginRegistry` 计算（取所有插件版本的最大值）
+
 ---
 
 ## 迁移策略
 
 | 策略 | 说明 |
 |------|------|
-| schemaVersion 计算 | `AppDatabase.schemaVersion` = 所有插件 `schemaVersion` 之和 |
+| schemaVersion 计算 | `AppDatabase.schemaVersion` = 所有插件 `schemaVersion` 的最大值（运行时自动计算） |
 | onCreate | 合并执行所有插件的建表逻辑 |
 | onUpgrade | 按 `from` → `to` 版本差执行，必须幂等 |
 | 插件迁移 | 每个插件通过 `UniHubPlugin` 的 `tables` / `schemaVersion` 贡献自己的表和版本 |
-
-**Foundation 阶段约束**：当前 `AppDatabase` 为空骨架（`allTables => []`，`schemaVersion => 1`），不声明业务表。Thoughts Data Layer 任务接入真实表。
+| 集中注册 | `@DriftDatabase(tables: [...])` 是编译期唯一注册点，新增表必须同步更新 |
 
 ---
 
@@ -228,7 +234,8 @@ Text(ThoughtContentCodec.plainTextFromStored(thought.content));
 ```dart
 // lib/src/core/database/database_provider.dart
 final appDatabaseProvider = Provider<AppDatabase>((ref) {
-  final db = AppDatabase(_createExecutor());
+  final registry = ref.read(pluginRegistryProvider);
+  final db = AppDatabase(_createExecutor(), registry);
   ref.onDispose(() => db.close());
   return db;
 });
@@ -251,3 +258,32 @@ final appDatabaseProvider = Provider<AppDatabase>((ref) {
 | 数据库未关闭 | Provider dispose 未注册 | 始终在 Provider 中 `ref.onDispose(() => db.close())` |
 | 直接在 Widget 中查询数据库 | 绕过 Repository/Provider 层 | 遵循 `UI → Provider → Repository → DAO` 分层 |
 | 迁移漏写导致数据丢失 | schemaVersion 变了但 onUpgrade 未处理 | 每次改 schemaVersion 必须写对应的 onUpgrade 逻辑 |
+| 测试中 DB 未关闭（缺少 tearDown） | 测试函数异常退出时 close() 不执行 | 使用 `late AppDatabase` + `setUp`/`tearDown` 模式，确保即使失败也释放资源 |
+
+### 测试生命周期模式
+
+测试中管理数据库资源的正确模式：
+
+```dart
+late AppDatabase database;
+
+setUp(() async {
+  final registry = PluginRegistry();
+  // registry.register(YourPlugin());
+  database = AppDatabase(NativeDatabase.memory(), registry);
+});
+
+tearDown(() async {
+  await database.close();
+});
+
+test('query returns data', () async {
+  final result = await database.someQuery();
+  expect(result, isNotNull);
+});
+```
+
+使用 `late` + `setUp`/`tearDown` 模式可以确保：
+- 每个测试获得独立的数据库实例
+- 即使测试断言失败，`tearDown` 仍然执行
+- 不会在测试间泄漏连接或状态
