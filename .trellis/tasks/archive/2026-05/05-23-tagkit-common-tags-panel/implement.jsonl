@@ -1,0 +1,4 @@
+{"file":".trellis/spec/frontend/index.md","reason":"共享 Flutter Widget 开发入口规范"}
+{"file":".trellis/spec/frontend/component-guidelines.md","reason":"Widget 结构、Token、ColorScheme 与 Material 交互规范"}
+{"file":".trellis/spec/frontend/uiux-guidelines.md","reason":"标签面板的交互状态、空态与可访问性要求"}
+{"file":".trellis/spec/guides/agent-workflow.md","reason":"任务分类、边界控制和委派规范"}

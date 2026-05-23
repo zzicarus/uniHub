@@ -1,0 +1,4 @@
+{"file":".trellis/spec/frontend/index.md","reason":"前端质量检查入口"}
+{"file":".trellis/spec/frontend/component-guidelines.md","reason":"检查 Widget 是否符合 Token、ColorScheme 和组件结构规范"}
+{"file":".trellis/spec/frontend/uiux-guidelines.md","reason":"检查空态、交互状态和可访问性要求"}
+{"file":".trellis/spec/guides/agent-workflow.md","reason":"检查是否遵守本 leaf 边界和验证要求"}
