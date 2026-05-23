@@ -6,7 +6,7 @@ import '../../../shared/widgets/adaptive_layout.dart';
 import 'layouts/thoughts_desktop_layout.dart';
 import 'layouts/thoughts_mobile_layout.dart';
 import 'widgets/thought_composer_controller.dart';
-import 'widgets/thought_editor_drawer.dart';
+import 'widgets/thought_editor_workspace.dart';
 
 class ThoughtsPage extends ConsumerStatefulWidget {
   const ThoughtsPage({super.key});
@@ -16,12 +16,8 @@ class ThoughtsPage extends ConsumerStatefulWidget {
 }
 
 class _ThoughtsPageState extends ConsumerState<ThoughtsPage> {
-  final _scaffoldKey = GlobalKey<ScaffoldState>();
-  int? _selectedThoughtId;
-
   void _openEditor(int id) {
-    setState(() => _selectedThoughtId = id);
-    _scaffoldKey.currentState?.openEndDrawer();
+    ThoughtEditorWorkspace.show(context, thoughtId: id);
   }
 
   @override
@@ -39,22 +35,7 @@ class _ThoughtsPageState extends ConsumerState<ThoughtsPage> {
         return KeyEventResult.ignored;
       },
       child: Scaffold(
-        key: _scaffoldKey,
         backgroundColor: colorScheme.surface,
-        endDrawer: _selectedThoughtId != null
-            ? Drawer(
-                width: MediaQuery.of(context).size.width * 0.55,
-                child: ThoughtEditorDrawer(
-                  thoughtId: _selectedThoughtId!,
-                  onClose: () => _scaffoldKey.currentState?.closeEndDrawer(),
-                ),
-              )
-            : null,
-        onEndDrawerChanged: (opened) {
-          if (!opened && mounted) {
-            setState(() => _selectedThoughtId = null);
-          }
-        },
         body: SafeArea(
           child: AdaptiveLayout(
             mobile: (_) => ThoughtsMobileLayout(onThoughtTap: _openEditor),

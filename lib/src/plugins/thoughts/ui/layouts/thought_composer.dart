@@ -4,15 +4,23 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:uni_hub/src/core/theme/app_tokens.dart';
-import 'package:uni_hub/src/shared/ui/rich_text_editor/rich_text_editor.dart';
-import '../../providers/thoughts_providers.dart';
+import 'package:uni_hub/src/core/theme/app_theme_tokens.dart';
+import 'package:uni_hub/src/shared/widgets/tags/app_tag_input.dart';
+
 import '../widgets/thought_composer_controller.dart';
 import 'thoughts_shared_widgets.dart';
 
-/// Lightweight composer for quick thought entry.
+/// 轻量 Capture Composer — 首页快速捕捉。
 ///
-/// Uses [ThoughtComposerController] via [composerProvider].
-/// Constrained to max 1080px width with a 96-120px input area.
+/// 不使用完整富文本编辑器或 AppFlowy Editor。
+/// 纯文本输入后保存为 AppFlowy JSON 格式。
+///
+/// 布局：
+/// - 白色 ThoughtPanel 卡片
+/// - 输入区 TextField（多行，浅灰背景，圆角 16，高度 120–148）
+/// - AppTagInput（标签管理）
+/// - 图片缩略图 strip（如有）
+/// - 操作按钮行：图片 / 置顶 / 转待办 / 转笔记 / Ctrl+Enter 提示 / 记录想法
 class ThoughtComposer extends ConsumerWidget {
   const ThoughtComposer({super.key});
 
@@ -20,19 +28,7 @@ class ThoughtComposer extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final composer = ref.watch(composerProvider);
     final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-
-    final existingTags = ref.watch(commonTagsProvider);
-    final tagInput = composer.tagTextController.text.trim().toLowerCase();
-    final tagSuggestions = tagInput.isEmpty
-        ? const <String>[]
-        : existingTags
-            .map((e) => e.key)
-            .where((tag) =>
-                tag.toLowerCase().contains(tagInput) &&
-                !composer.tagChips.contains(tag))
-            .take(5)
-            .toList();
+    final colors = context.appColors;
 
     return ConstrainedBox(
       constraints: const BoxConstraints(maxWidth: 1080),
@@ -41,6 +37,9 @@ class ThoughtComposer extends ConsumerWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
+            // ================================================================
+            // Header
+            // ================================================================
             Row(
               children: [
                 Container(
@@ -65,47 +64,56 @@ class ThoughtComposer extends ConsumerWidget {
                 ),
               ],
             ),
+
             const SizedBox(height: AppSpacing.sm),
-            // Rich text input area (close to the reference 100px editor)
-            DecoratedBox(
+
+            // ================================================================
+            // 输入区 — 多行 TextField
+            // ================================================================
+            Container(
+              constraints: const BoxConstraints(minHeight: 120, maxHeight: 148),
               decoration: BoxDecoration(
-                color: colorScheme.surfaceContainerLow,
+                color: colors.surfaceMuted,
                 borderRadius: BorderRadius.circular(AppRadius.md),
-                border: Border.all(color: colorScheme.outlineVariant),
+                border: Border.all(color: colors.border),
               ),
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(AppRadius.md),
-                child: RichTextEditor(
-                  controller: composer.contentController,
-                  minHeight: 104,
-                  placeholder: '今天有什么新想法？',
-                  onChanged: (_) => composer.syncContentState(),
-                  onPickImage: composer.onPickEditorImage,
-                  onPasteImage: composer.onPasteImage,
-                  onImageAdded: composer.onEditorImageAdded,
+                child: TextField(
+                  controller: composer.textController,
+                  maxLines: null,
+                  expands: true,
+                  textAlignVertical: TextAlignVertical.top,
+                  decoration: InputDecoration(
+                    hintText: '今天有什么新想法？',
+                    hintStyle: theme.textTheme.bodyLarge?.copyWith(
+                      color: colors.textTertiary,
+                    ),
+                    border: InputBorder.none,
+                    contentPadding: const EdgeInsets.all(AppSpacing.md),
+                  ),
+                  style: theme.textTheme.bodyLarge?.copyWith(
+                    color: colors.textPrimary,
+                  ),
+                  textInputAction: TextInputAction.newline,
                 ),
               ),
             ),
 
-            // Tag chips
-            if (composer.tagChips.isNotEmpty) ...[
-              const SizedBox(height: AppSpacing.sm),
-              Wrap(
-                spacing: AppSpacing.xs,
-                runSpacing: AppSpacing.xs,
-                children: composer.tagChips.map((tag) {
-                  return Chip(
-                    label: Text(tag),
-                    deleteIcon: const Icon(Icons.close, size: 14),
-                    onDeleted: () => composer.removeChip(tag),
-                    materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                    visualDensity: VisualDensity.compact,
-                  );
-                }).toList(),
-              ),
-            ],
+            const SizedBox(height: AppSpacing.sm),
 
-            // Pending images strip
+            // ================================================================
+            // 标签 - AppTagInput
+            // ================================================================
+            AppTagInput(
+              tags: composer.tags,
+              onChanged: composer.setTags,
+              hintText: '添加标签',
+            ),
+
+            // ================================================================
+            // 图片缩略图 strip
+            // ================================================================
             if (composer.pendingImagePaths.isNotEmpty) ...[
               const SizedBox(height: AppSpacing.sm),
               SizedBox(
@@ -134,7 +142,7 @@ class ThoughtComposer extends ConsumerWidget {
                             onTap: () => composer.removePendingImage(i),
                             child: Container(
                               decoration: BoxDecoration(
-                                color: colorScheme.onSurfaceVariant.withValues(
+                                color: colors.textSecondary.withValues(
                                   alpha: 0.54,
                                 ),
                                 shape: BoxShape.circle,
@@ -143,7 +151,7 @@ class ThoughtComposer extends ConsumerWidget {
                               child: Icon(
                                 Icons.close,
                                 size: 12,
-                                color: colorScheme.onPrimary,
+                                color: colors.surface,
                               ),
                             ),
                           ),
@@ -157,6 +165,9 @@ class ThoughtComposer extends ConsumerWidget {
 
             const SizedBox(height: AppSpacing.sm),
 
+            // ================================================================
+            // 操作按钮行
+            // ================================================================
             Row(
               children: [
                 Expanded(
@@ -165,81 +176,6 @@ class ThoughtComposer extends ConsumerWidget {
                     runSpacing: AppSpacing.sm,
                     crossAxisAlignment: WrapCrossAlignment.center,
                     children: [
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          SizedBox(
-                            width: 128,
-                            height: 40,
-                            child: TextField(
-                              controller: composer.tagTextController,
-                              onChanged: composer.handleTagInput,
-                              decoration: InputDecoration(
-                                hintText: '添加标签',
-                                prefixIcon: const Icon(
-                                  Icons.sell_outlined,
-                                  size: 18,
-                                ),
-                                isDense: true,
-                                contentPadding: const EdgeInsets.symmetric(
-                                  horizontal: AppSpacing.sm,
-                                  vertical: AppSpacing.sm,
-                                ),
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(AppRadius.sm),
-                                ),
-                              ),
-                              style: theme.textTheme.bodySmall,
-                            ),
-                          ),
-                          if (composer.tagErrorMessage != null)
-                            Padding(
-                              padding: const EdgeInsets.only(top: 2),
-                              child: Text(
-                                composer.tagErrorMessage!,
-                                style: theme.textTheme.labelSmall?.copyWith(
-                                  color: colorScheme.error,
-                                  fontSize: 10,
-                                ),
-                              ),
-                            ),
-                          if (tagSuggestions.isNotEmpty && composer.tagErrorMessage == null)
-                            Padding(
-                              padding: const EdgeInsets.only(top: 4),
-                              child: Wrap(
-                                spacing: AppSpacing.xxs,
-                                runSpacing: AppSpacing.xxs,
-                                children: tagSuggestions.map((tag) {
-                                  return Material(
-                                    color: colorScheme.tertiaryContainer.withValues(alpha: 0.5),
-                                    borderRadius: BorderRadius.circular(AppRadius.full),
-                                    child: InkWell(
-                                      borderRadius: BorderRadius.circular(AppRadius.full),
-                                      onTap: () {
-                                        composer.tagTextController.clear();
-                                        composer.handleTagInput('$tag,');
-                                      },
-                                      child: Padding(
-                                        padding: const EdgeInsets.symmetric(
-                                          horizontal: AppSpacing.sm,
-                                          vertical: AppSpacing.xxs,
-                                        ),
-                                        child: Text(
-                                          '#$tag',
-                                          style: theme.textTheme.labelSmall?.copyWith(
-                                            color: colorScheme.onTertiaryContainer,
-                                            fontWeight: FontWeight.w700,
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                  );
-                                }).toList(),
-                              ),
-                            ),
-                        ],
-                      ),
                       ThoughtPillButton(
                         icon: Icons.image_outlined,
                         label: composer.pendingImagePaths.isNotEmpty
@@ -277,7 +213,7 @@ class ThoughtComposer extends ConsumerWidget {
                 Text(
                   'Ctrl + Enter 快速保存',
                   style: theme.textTheme.bodySmall?.copyWith(
-                    color: colorScheme.onSurfaceVariant,
+                    color: colors.textTertiary,
                   ),
                 ),
                 const SizedBox(width: AppSpacing.md),
@@ -292,7 +228,8 @@ class ThoughtComposer extends ConsumerWidget {
                       ? composer.submit
                       : null,
                   icon: const Icon(Icons.send_rounded, size: 18),
-                  label: Text(composer.isSubmitting ? '保存中' : '记录想法'),
+                  label: Text(
+                      composer.isSubmitting ? '保存中' : '记录想法'),
                 ),
               ],
             ),

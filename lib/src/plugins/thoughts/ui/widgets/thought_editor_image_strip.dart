@@ -6,7 +6,7 @@ import 'package:uni_hub/src/core/theme/app_tokens.dart';
 
 /// 水平可滚动的图片缩略图列表，用于想法编辑器。
 ///
-/// 供 [ThoughtsEditorPage] 与 [ThoughtEditorDrawer] 共用。
+/// 供 [ThoughtsEditorPage] 与 [ThoughtEditorWorkspace] 共用。
 class ThoughtEditorImageStrip extends StatelessWidget {
   final List<String> images;
   final Future<void> Function(int index) onRemove;

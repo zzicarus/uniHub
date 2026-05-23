@@ -60,7 +60,8 @@ thoughts/
 - `thoughts_editor_page.dart` — 编辑器页主体
 - `thoughts_editor_drawer.dart` — 编辑器附加面板
 
-> **2026-05-21**：编辑状态逻辑已重构。`ThoughtEditorController` 和 `ThoughtEditorImageStrip` 提取至 `thoughts/ui/widgets/`，`thoughts_editor_page.dart` 和 `thought_editor_drawer.dart` 现为纯布局容器。
+> **2026-05-21**：编辑状态逻辑已重构。`ThoughtEditorController` 和 `ThoughtEditorImageStrip` 提取至 `thoughts/ui/widgets/`。
+> **2026-05-24**：`thought_editor_drawer.dart` 已删除，替换为 `thought_editor_workspace.dart`。
 
 ### Inbox 模式 UI 结构（V2 Phase 1）
 
@@ -94,7 +95,7 @@ thoughts/ui/
 │   ├── thought_random_review_panel.dart — 随机回顾（session 级去重）
 │   └── thought_quick_actions_panel.dart — 快速操作（转为待办/笔记，disabled）
 │   ├── thought_editor_controller.dart — 编辑器状态管理（含 TagCodec 校验 + tagErrorMessage）
-│   ├── thought_editor_drawer.dart     — 编辑抽屉
+│   ├── thought_editor_workspace.dart  — 编辑工作台
 │   └── thought_editor_image_strip.dart — 编辑器中图片条
 ```
 
@@ -123,6 +124,21 @@ thoughts/ui/
 ## 近期变更
 
 > 本 section 由 sync-knowledge 自动管理，按时间倒序追加。
+
+### 2026-05-24: flutter_quill → AppFlowy Editor 迁移
+- 编辑器主线从 `flutter_quill` 切换为 `appflowy_editor`，详情编辑器改为 AppFlowy block editor
+- 新增 `lib/src/shared/editor/`：`AppFlowyDocumentTools`（文档创建/纯文本提取）、`AppFlowyThoughtEditor`（封装层）
+- 新增 `ThoughtEditorWorkspace`——居中大尺寸编辑工作台（1040–1180px，含 Header + Body + PropertyRail + Footer）
+- `ThoughtContentCodec` 数据格式改为 `unihub.appflowy_json.v1`（document + plainText）
+- `ThoughtEditorController` 停止使用 QuillController，管理 documentJson + plainText
+- ThoughtComposer 改为轻量 Capture Composer（多行 TextField + AppTagInput + AppFlowy JSON 保存）
+- 新增通用 `AppTagInput` 共享组件（`lib/src/shared/widgets/tags/app_tag_input.dart`）
+- 点击卡片编辑入口从窄 drawer 切换为 Workspace Modal（`ThoughtEditorWorkspace.show()`）
+- 删除 `thought_editor_drawer.dart`（已替换）
+- 清理死依赖 `markdown_quill`、`markdown`（直接依赖→传递依赖）
+- 通过 `dependency_overrides` + `vendor/appflowy_editor` 修复 `appflowy_editor` 与 Flutter 3.44.0 的 `TextInputClient.onFocusReceived` 兼容问题
+- 新增 27 个单元测试（content_codec 21 + workspace 6），修复 2 个发现 bug
+- 技术决策文档：`docs/thought-editor-appflowy-migration.md`
 
 ### 2026-05-23: 标签系统提取为共享模块
 - 新增 `lib/src/shared/tags/`：`tag_models.dart`（`AppTagStat`/`TagMatchMode`/`TagValidationResult`）、`tag_codec.dart`（`TagCodec` 归一化/解析/校验）、`tag_filter_logic.dart`（`TagFilterLogic` 切换/匹配/统计/排序）
