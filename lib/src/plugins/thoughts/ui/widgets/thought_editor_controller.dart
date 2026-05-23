@@ -1,20 +1,30 @@
+/// 集中管理想法编辑器的全部业务状态与操作。
+///
+/// 供 [ThoughtsEditorPage]、[ThoughtEditorWorkspace] 共用。
+///
+/// 状态模型已从 QuillController + Delta 迁移为 AppFlowy documentJson + plainText。
+///
+/// # 迁移说明
+///
+/// - `contentController`（QuillController）已废弃，保留仅用于兼容旧 widget。
+/// - 新的编辑器状态由 `documentJson` 和 `plainText` 字段管理。
+/// - `save()` 使用 `ThoughtContentCodec.encodeAppFlowy()` 持久化。
+/// - 标签、颜色、图片路径、置顶、归档等独立字段保持不变。
+library;
+
 import 'dart:async';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
-import 'package:flutter_quill/flutter_quill.dart';
+import 'package:flutter_quill/flutter_quill.dart' show Document, QuillController;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../data/thought_content_codec.dart';
 import '../../data/thought_image_service.dart';
 import '../../providers/thoughts_providers.dart';
+import 'package:uni_hub/src/shared/editor/appflowy_document_tools.dart';
 import 'package:uni_hub/src/shared/tags/tag_codec.dart';
-import 'package:uni_hub/src/shared/ui/rich_text_editor/rich_text_editor.dart';
 
-/// 集中管理想法编辑器的全部业务状态与操作。
-///
-/// 供 [ThoughtsEditorPage] 与 [ThoughtEditorDrawer] 共用，
-/// 避免 save / delete / archive / tag / color / image 逻辑分叉。
 class ThoughtEditorController {
   final WidgetRef ref;
   final int thoughtId;
@@ -25,16 +35,65 @@ class ThoughtEditorController {
   /// 状态变化时由 widget 注册的回调（用于触发 `setState`）。
   final VoidCallback? onStateChanged;
 
+  /// 已废弃 — 为兼容旧 widget 保留。
+  ///
+  /// 新代码不应依赖此字段。后续删除旧 widget 后清除。
+  @Deprecated('Use documentJson / plainText instead')
   late QuillController contentController;
+
+  // -----------------------------------------------------------------------
+  // AppFlowy document 状态（新）
+  // -----------------------------------------------------------------------
+
+  /// 当前 AppFlowy 文档 JSON。
+  ///
+  /// 由 [AppFlowyThoughtEditor] 或 [updateDocument] 更新。
+  /// 在 `save()` 中通过 [ThoughtContentCodec.encodeAppFlowy] 持久化。
+  Map<String, dynamic>? documentJson;
+
+  /// 当前文档的纯文本。
+  ///
+  /// 用于列表标题、摘要、搜索，避免每次从 document JSON 解析。
+  String plainText = '';
+
+  // -----------------------------------------------------------------------
+  // 标签状态（新：Set<String>，由 AppTagInput 管理）
+  // -----------------------------------------------------------------------
+
+  Set<String> _tags = {};
+
+  /// 当前标签集合（已 normalize）。
+  Set<String> get tags => _tags;
+
+  /// 由 [AppTagInput.onChanged] 回调调用。
+  void setTags(Set<String> tags) {
+    _tags = tags;
+    markDirty();
+  }
+
+  // -----------------------------------------------------------------------
+  // 标签状态（旧，已废弃 — 为旧 widget 兼容保留）
+  // -----------------------------------------------------------------------
+
+  @Deprecated('Use tags / setTags instead')
   final tagTextController = TextEditingController();
-  final tagChips = <String>[];
+
+  @Deprecated('Use tags / setTags instead')
+  List<String> get tagChips => _tags.toList();
+
+  @Deprecated('Use tags / setTags instead')
+  String? tagErrorMessage;
+
+  // -----------------------------------------------------------------------
+  // 图片、颜色、置顶、归档
+  // -----------------------------------------------------------------------
+
   final images = <String>[];
   String? selectedColor;
   bool isPinned = false;
   bool isArchived = false;
   bool isDirty = false;
   bool isLoaded = false;
-  String? tagErrorMessage;
 
   Timer? _autoSaveTimer;
 
@@ -45,9 +104,15 @@ class ThoughtEditorController {
     this.onStateChanged,
   });
 
-  /// 初始化 QuillController；应在 widget [initState] 中调用。
+  /// 初始化（兼容旧 widget 的 initState 用法）。
+  ///
+  /// 创建一个空的 QuillController 用于旧 widget 占位。
+  /// 新状态通过 [load] 从数据库填充。
   void initialize() {
-    contentController = _createController(Document());
+    contentController = QuillController(
+      document: Document(),
+      selection: const TextSelection.collapsed(offset: 0),
+    );
   }
 
   /// 释放资源；应在 widget [dispose] 中调用。
@@ -57,29 +122,12 @@ class ThoughtEditorController {
     tagTextController.dispose();
   }
 
-  QuillController _createController(Document document) {
-    return RichTextEditor.createController(
-      document: document,
-      onImagePaste: (bytes) async {
-        final path = await ref
-            .read(thoughtImageServiceProvider)
-            .saveImageBytes(bytes);
-        final source = ThoughtContentCodec.imageSourceForPath(path);
-        final parsedPath = ThoughtContentCodec.imagePathFromSource(source);
-        if (parsedPath != null && !images.contains(parsedPath)) {
-          images.add(parsedPath);
-          _notifyStateChanged();
-        }
-        markDirty();
-        return source;
-      },
-    );
-  }
-
+  /// 通知状态变化。
   void _notifyStateChanged() {
     onStateChanged?.call();
   }
 
+  /// 视配置触发 debounce 自动保存。
   void _scheduleAutoSave() {
     if (autoSaveInterval == null) return;
     _autoSaveTimer?.cancel();
@@ -95,30 +143,30 @@ class ThoughtEditorController {
     _scheduleAutoSave();
   }
 
+  // -----------------------------------------------------------------------
+  // load / save
+  // -----------------------------------------------------------------------
+
   /// 从数据库加载 thought 数据。
   Future<void> load() async {
     if (isLoaded) return;
     final thought = await ref.read(thoughtProvider(thoughtId).future);
     if (thought == null || isLoaded) return;
-    final controller = _createController(
-      ThoughtContentCodec.documentFromStored(thought.content),
-    );
-    contentController.dispose();
-    contentController = controller;
-    tagChips.addAll(
-      (thought.tags ?? '')
-          .split(',')
-          .map((s) => s.trim())
-          .where((s) => s.isNotEmpty),
-    );
-    final svc = ref.read(thoughtImageServiceProvider);
-    images.addAll(
-      ThoughtContentCodec.mergeImagePaths(
-        thought.imagePaths,
-        thought.content,
-        existsChecker: svc.existsSync,
-      ),
-    );
+
+    // 加载 AppFlowy document 状态。
+    documentJson =
+        ThoughtContentCodec.documentJsonFromStored(thought.content);
+    plainText = ThoughtContentCodec.plainTextFromStored(thought.content);
+    documentJson ??= AppFlowyDocumentTools.emptyDocumentJson();
+
+    // 加载标签。
+    _tags = TagCodec.parseCommaSeparated(thought.tags).toSet();
+
+    // 加载图片。
+    final storedImagePaths =
+        ThoughtImageService.decodeImagePaths(thought.imagePaths);
+    images.addAll(storedImagePaths);
+
     selectedColor = thought.color;
     isPinned = thought.isPinned;
     isArchived = thought.archivedAt != null;
@@ -131,21 +179,47 @@ class ThoughtEditorController {
   /// 保存当前编辑内容到数据库。
   Future<void> save() async {
     if (!isDirty || !isLoaded) return;
+
     final repo = ref.read(thoughtsRepositoryProvider);
-    final tags = tagChips.isNotEmpty ? tagChips.join(',') : null;
+    final tags = TagCodec.encodeCommaSeparated(_tags);
+
     await repo.updateThought(
       thoughtId,
-      content: ThoughtContentCodec.encodeDocument(contentController.document),
+      content: ThoughtContentCodec.encodeAppFlowy(
+        document: documentJson ?? AppFlowyDocumentTools.emptyDocumentJson(),
+        plainText: plainText,
+      ),
       tags: tags,
       color: selectedColor,
       isPinned: isPinned,
       imagePaths: ThoughtImageService.encodeImagePaths(images),
     );
+
     ref.invalidate(thoughtProvider(thoughtId));
     ref.invalidate(allThoughtsProvider);
     isDirty = false;
     _notifyStateChanged();
   }
+
+  // -----------------------------------------------------------------------
+  // 更新 document（由 AppFlowyThoughtEditor 的 onChanged 调用）
+  // -----------------------------------------------------------------------
+
+  /// 由 [AppFlowyThoughtEditor.onChanged] 回调调用。
+  ///
+  /// 更新 [documentJson] 和 [plainText] 后自动标记 dirty。
+  void updateDocument({
+    required Map<String, dynamic> documentJson,
+    required String plainText,
+  }) {
+    this.documentJson = documentJson;
+    this.plainText = plainText;
+    markDirty();
+  }
+
+  // -----------------------------------------------------------------------
+  // 删除 / 归档 / 恢复 / 置顶
+  // -----------------------------------------------------------------------
 
   /// 删除当前 thought（含确认弹窗）。
   Future<void> delete(BuildContext context) async {
@@ -197,13 +271,16 @@ class ThoughtEditorController {
   /// 切换置顶状态。
   void togglePin(bool value) {
     isPinned = value;
-    isDirty = true;
-    _notifyStateChanged();
-    _scheduleAutoSave();
+    markDirty();
   }
 
-  /// 处理标签输入（空格或逗号分隔）。
+  // -----------------------------------------------------------------------
+  // 标签操作
+  // -----------------------------------------------------------------------
+
+  @Deprecated('Use setTags instead')
   void handleTagInput(String value) {
+    // Delegate to TagCodec-based logic via tagTextController.
     if (value.isEmpty) {
       tagErrorMessage = null;
       _notifyStateChanged();
@@ -217,8 +294,8 @@ class ThoughtEditorController {
         if (!validation.isValid) {
           tagErrorMessage = validation.message;
           _notifyStateChanged();
-        } else if (!tagChips.contains(tag)) {
-          tagChips.add(tag);
+        } else if (!_tags.contains(tag)) {
+          _tags = {..._tags, tag};
           tagErrorMessage = null;
           isDirty = true;
           _notifyStateChanged();
@@ -229,83 +306,72 @@ class ThoughtEditorController {
     }
   }
 
-  /// 移除一个标签 chip。
+  @Deprecated('Use setTags instead')
   void removeChip(String tag) {
-    tagChips.remove(tag);
-    isDirty = true;
-    _notifyStateChanged();
-    _scheduleAutoSave();
+    _tags = {..._tags}..remove(tag);
+    markDirty();
   }
+
+  // -----------------------------------------------------------------------
+  // 颜色操作
+  // -----------------------------------------------------------------------
 
   /// 设置想法颜色。
   void setColor(String? color) {
     selectedColor = color;
-    isDirty = true;
-    _notifyStateChanged();
-    _scheduleAutoSave();
+    markDirty();
   }
 
-  /// 供 [RichTextEditor.onPickImage] 回调使用。
+  // -----------------------------------------------------------------------
+  // 图片操作（AppFlowy image block 暂不实现）
+  // -----------------------------------------------------------------------
+
+  /// 已废弃 — 供旧 [RichTextEditor] 回调使用。
+  ///
+  /// 新编辑器不依赖此方法。
+  @Deprecated('Use addImage instead')
   Future<String?> onPickImage() async {
     final path = await ref.read(thoughtImageServiceProvider).pickImage();
-    return path != null ? ThoughtContentCodec.imageSourceForPath(path) : null;
+    return path;
   }
 
-  /// 供 [RichTextEditor.onPasteImage] 回调使用。
+  /// 已废弃 — 供旧 [RichTextEditor] 回调使用。
+  @Deprecated('Use addImage instead')
   Future<String?> onPasteImage(Uint8List bytes) async {
     final path = await ref
         .read(thoughtImageServiceProvider)
         .saveImageBytes(bytes);
-    return ThoughtContentCodec.imageSourceForPath(path);
+    return path;
   }
 
-  /// 供 [RichTextEditor.onImageAdded] 回调使用。
+  /// 已废弃 — 供旧 [RichTextEditor] 回调使用。
+  @Deprecated('Use addImage instead')
   void onEditorImageAdded(String source) {
-    final path = ThoughtContentCodec.imagePathFromSource(source);
-    if (path != null && !images.contains(path)) {
-      images.add(path);
-      _notifyStateChanged();
-    }
+    // 不再处理 Quill image embed。
   }
 
-  /// 显式添加图片（供抽屉编辑器的 "添加" 按钮使用）。
+  /// 显式添加图片到 images 列表。
+  ///
+  /// 第一阶段只保存到 imagePaths 独立字段，不插入 AppFlowy image block。
   Future<void> addImage() async {
     final svc = ref.read(thoughtImageServiceProvider);
     final path = await svc.pickImage();
     if (path != null) {
       images.add(path);
-      _insertImage(path);
       markDirty();
     }
   }
 
-  void _insertImage(String path) {
-    final index = contentController.selection.baseOffset;
-    final length = contentController.selection.extentOffset - index;
-    final safeIndex = index < 0 ? contentController.document.length - 1 : index;
-    contentController
-      ..skipRequestKeyboard = true
-      ..replaceText(
-        safeIndex,
-        length < 0 ? 0 : length,
-        BlockEmbed.image(ThoughtContentCodec.imageSourceForPath(path)),
-        null,
-      )
-      ..moveCursorToPosition(safeIndex + 1);
-  }
-
-  /// 移除指定索引的图片。
+  /// 从 images 列表中移除指定索引的图片。
+  ///
+  /// 只删除图片文件和 images 列表，不操作 document block。
   Future<void> removeImage(int index) async {
+    if (index < 0 || index >= images.length) return;
     final path = images[index];
     await ref.read(thoughtImageServiceProvider).deleteImage(path);
-    final updatedDocument = ThoughtContentCodec.removeImage(
-      contentController.document,
-      path,
-    );
-    contentController.dispose();
-    contentController = _createController(updatedDocument);
     images.removeAt(index);
     isDirty = true;
     _notifyStateChanged();
+    _scheduleAutoSave();
   }
 }
