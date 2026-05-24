@@ -141,7 +141,26 @@ lib/src/shared/editor/appflowy_thought_editor.dart
 
 ---
 
-## 6. 质量验收标准
+## 6. 已知问题修复
+
+### 6.1 关闭工作台时 GoRouter 崩溃（2026-05-24）
+
+**症状**：在完整富文本编辑工作台中点击关闭/删除想法后，GoRouter 抛出断言错误：
+`You have popped the last page off of the stack, there are no pages left to show`
+
+**根因**：`ThoughtEditorWorkspace.show()` 的 `onClose` 回调使用 `Navigator.of(context).pop()`，
+该调用直接操作 GoRouter 的页面栈。当编辑器工作台是当前路径下唯一页面时，GoRouter 拒绝弹出最后一页。
+
+**修复**：在 `showDialog` 的 `onClose` 中改用 `Navigator.of(context, rootNavigator: true).pop()`，
+限定只弹出对话框的 OverlayRoute，不影响 GoRouter 路由栈。
+
+| 文件 | 修改 |
+|------|------|
+| `lib/src/plugins/thoughts/ui/widgets/thought_editor_workspace.dart` | `Navigator.of(context).pop()` → `Navigator.of(context, rootNavigator: true).pop()` |
+
+---
+
+## 7. 质量验收标准
 
 1. `flutter analyze` — 0 error, 0 warning
 2. 新增测试（如果写了）— 全部通过
