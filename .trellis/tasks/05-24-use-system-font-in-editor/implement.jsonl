@@ -1,0 +1,4 @@
+{"file": ".trellis/spec/frontend/component-guidelines.md", "reason": "Widget 编写规范（设计令牌、M3 ColorScheme、布局约定）"}
+{"file": ".trellis/spec/frontend/quality-guidelines.md", "reason": "代码质量要求，lint 规则"}
+{"file": "lib/src/shared/editor/appflowy_thought_editor.dart", "reason": "目标修改文件"}
+{"file": "lib/src/core/theme/app_tokens.dart", "reason": "AppFonts 常量定义（Inter、Noto Sans SC）"}
