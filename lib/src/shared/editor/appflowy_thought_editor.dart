@@ -21,6 +21,16 @@ import 'package:flutter/material.dart';
 
 import 'appflowy_document_tools.dart';
 
+/// Selection menu items for the slash menu with the image item removed.
+///
+/// Users must add images via the right-side property panel
+/// ([ThoughtEditorController.insertImageIntoDocument]) to ensure
+/// [ThoughtImageService] is always the entry point.
+final List<SelectionMenuItem> _thoughtsSelectionMenuItems =
+    standardSelectionMenuItems
+        .where((item) => !item.keywords.contains('image'))
+        .toList();
+
 /// Controller for programmatic image block operations on AppFlowyThoughtEditor.
 ///
 /// Pass an instance to [AppFlowyThoughtEditor.controller] to enable
@@ -224,6 +234,17 @@ class _AppFlowyThoughtEditorState extends State<AppFlowyThoughtEditor> {
       color: theme.colorScheme.onSurface.withValues(alpha: 0.87),
     ) ?? const TextStyle(fontSize: 15);
 
+    // Customise the slash menu so the built-in image item is removed.
+    // All image insertion must go through ThoughtImageService.
+    final characterShortcuts = standardCharacterShortcutEvents
+        .map((event) {
+          if (event.key == 'show the slash menu') {
+            return customSlashCommand(_thoughtsSelectionMenuItems);
+          }
+          return event;
+        })
+        .toList();
+
     return AppFlowyEditor(
       editorState: _editorState,
       autoFocus: widget.autofocus,
@@ -235,6 +256,7 @@ class _AppFlowyThoughtEditorState extends State<AppFlowyThoughtEditor> {
           text: editorTextStyle,
         ),
       ),
+      characterShortcutEvents: characterShortcuts,
     );
   }
 
