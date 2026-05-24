@@ -350,7 +350,35 @@ Material(
 );
 ```
 
-**例外**：静态布局（无 `AnimatedCrossFade`、`AnimatedSize`、`AnimatedContainer` 等动画改变子组件布局）中，`Material` + `InkWell` 标准模式安全可用。
+**例外**：纯静态布局（整个 widget 树不包含任何动画改变布局的组件）中，`Material` + `InkWell` 标准模式安全可用。但注意 `Material(color: Colors.transparent)` 不会创建本地 `_RenderInkFeatures`，其 `InkWell` 涟漪冒泡到最近的祖先 `_RenderInkFeatures`（通常是 Scaffold 的 Material）。如果该祖先与动画布局共享同一 render 树，仍有触发断言的风险。
+
+**安全模式**：项目中所有可点击的共享 Widget 优先使用 `Ink` + `InkWell` 模式：
+
+```dart
+// ✅ 推荐：Ink + InkWell（创建本地 _RenderInkFeatures）
+Ink(
+  child: InkWell(
+    borderRadius: BorderRadius.circular(AppRadius.md),
+    onTap: onTap,
+    child: /* 内容 */,
+  ),
+);
+
+// ❌ 避免：Material(color: Colors.transparent) + InkWell
+Material(
+  color: Colors.transparent,  // 不创建本地 _RenderInkFeatures
+  child: InkWell(
+    onTap: onTap,
+    child: /* 内容 */,
+  ),
+);
+
+// ❌ 避免：裸 InkWell（同样无本地 _RenderInkFeatures）
+InkWell(
+  onTap: onTap,
+  child: /* 内容 */,
+);
+```
 
 ---
 

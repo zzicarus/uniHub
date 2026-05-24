@@ -19,19 +19,19 @@ class AppSearchBox extends StatelessWidget {
     final colorScheme = theme.colorScheme;
     final borderRadius = BorderRadius.circular(AppRadius.xl);
 
-    final box = DecoratedBox(
-      decoration: BoxDecoration(
-        color: colorScheme.surface,
-        borderRadius: borderRadius,
-        border: Border.all(
-          color: colorScheme.outlineVariant.withValues(alpha: 0.35),
+    final box = Material(
+      color: Colors.transparent,
+      shape: RoundedRectangleBorder(borderRadius: borderRadius),
+      clipBehavior: Clip.antiAlias,
+      child: Ink(
+        decoration: BoxDecoration(
+          color: colorScheme.surface,
+          borderRadius: borderRadius,
+          border: Border.all(
+            color: colorScheme.outlineVariant.withValues(alpha: 0.35),
+          ),
+          boxShadow: const [AppShadows.cardSoft],
         ),
-        boxShadow: const [AppShadows.cardSoft],
-      ),
-      child: Material(
-        color: Colors.transparent,
-        borderRadius: borderRadius,
-        clipBehavior: Clip.antiAlias,
         child: InkWell(
           borderRadius: borderRadius,
           onTap: onTap,

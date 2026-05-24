@@ -45,17 +45,17 @@ class AppPanel extends StatelessWidget {
 
     final content = Padding(padding: resolvedPadding, child: child);
 
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: resolvedBackground,
-        borderRadius: borderRadius,
-        border: Border.all(color: resolvedBorder),
-        boxShadow: shadows ?? const [AppShadows.cardSoft],
-      ),
-      child: Material(
-        color: Colors.transparent,
-        borderRadius: borderRadius,
-        clipBehavior: Clip.antiAlias,
+    return Material(
+      color: Colors.transparent,
+      shape: RoundedRectangleBorder(borderRadius: borderRadius),
+      clipBehavior: Clip.antiAlias,
+      child: Ink(
+        decoration: BoxDecoration(
+          color: resolvedBackground,
+          borderRadius: borderRadius,
+          border: Border.all(color: resolvedBorder),
+          boxShadow: shadows ?? const [AppShadows.cardSoft],
+        ),
         child: onTap == null
             ? content
             : InkWell(borderRadius: borderRadius, onTap: onTap, child: content),

@@ -13,11 +13,26 @@
 2. `sidebar.dart _UserTile`：`Material` + `InkWell` → `GestureDetector`。
 3. `saved_item_card.dart`：`Material` + `InkWell` → `Ink` + `InkWell`。`Ink` widget 正确管理涟漪绘制边界在装饰范围内，避免绘制到未布局的子组件上。
 
+---
+
+## 2026-05-24 (第二波): InkWell 跨组件树 RenderBox layout 断言失败
+
+**场景**：修复侧栏 InkWell 后，相同断言仍发生在 `desktop_shell.dart:14` 的 Scaffold 上。此时侧栏 `_NavItem` 已改用 `GestureDetector`，但 `AppPanel`、`AppCompactListItem`、`AppSectionHeader` 等共享 Widget 仍使用 `Material(color: Colors.transparent)` + `InkWell` 模式。这些 Widget 部署在内容区（DesktopShell 的 `child` 插槽，由 GoRouter 管理页面路由），而侧栏的 `AnimatedCrossFade` 动画仍在父级 Scaffold 树中。
+
+**根因**：`Material(color: Colors.transparent)` 不创建自己的 `_RenderInkFeatures`。其内部的 `InkWell` 涟漪会向上冒泡到最近的拥有 `_RenderInkFeatures` 的祖先——即 `Scaffold` 内部的 Material。当涟漪在 `paint()` 阶段调用 `RenderBox.size` 时，目标 RenderBox 位于侧栏 `AnimatedCrossFade` 动画子树中，该子树仍然拥有 `NEEDS-LAYOUT` 标记。
+
+关键发现：**InkWell 不一定要在动画布局内部才会触发此断言**。只要 InkWell 的 `_RenderInkFeatures` 宿主（通常是 Scaffold 的 Material）与动画布局在同一个 render 树中，且涟漪绘制时动画子树仍有 NEEDS-LAYOUT，断言就会触发。
+
+**修复**：
+1. `app_panel.dart`：`DecoratedBox(child: Material(color: Colors.transparent, child: InkWell(...)))` → `Material(shape: RoundedRectangle, clipBehavior, child: Ink(decoration: ..., child: InkWell(...)))`。`Ink` 创建本地 `_RenderInkFeatures`，涟漪不会冒泡到 Scaffold。
+2. `app_compact_list_item.dart`：`Material(color: Colors.transparent, child: InkWell(...))` → `Ink(child: InkWell(...))`。
+3. `app_section_header.dart`：裸 `InkWell(...)` → `Ink(child: InkWell(...))`。
+
 **避免**（强制检查清单）：
-1. 在动画/变化布局中（AnimatedCrossFade, AnimatedSize, AnimatedContainer），优先使用 `GestureDetector` 而非 `InkWell` —— 除非 Material 涟漪是明确 UX 需求
-2. 如果 InkWell 在动画上下文中是必需的，使用 `Ink` + `InkWell` 模式（而非 `Material` + `InkWell`），将涟漪绘制绑定到装饰边界，避免依赖子组件布局
-3. 对于使用自定义颜色的导航/选择按钮（非 Material 涟漪），`GestureDetector` + 自定义 `Container` 装饰更安全、性能更好
-4. 这是 Flutter 渲染管线特有的问题 —— InkWell 涟漪绘制要求子组件布局完成，这在动画过渡中未必成立
+1. 项目中所有可点击的共享 Widget（AppPanel、AppCompactListItem、AppSectionHeader）优先使用 `Ink + InkWell` 模式，避免 `Material(color: Colors.transparent) + InkWell`
+2. 裸 `InkWell`（无 Ink/Material 包装）也会将涟漪冒泡到祖先 `_RenderInkFeatures`，同样存在风险
+3. 任何 Widget 若可能被部署在与动画布局共享 Scaffold 的子树中，都必须使用 `Ink + InkWell` 而非 `Material + InkWell`
+4. `Ink` 即使不设置 `decoration` 也会创建 `_RenderInkFeatures`，可作为透明可点击区域的稳定 Ink 宿主
 
 ---
 
