@@ -528,3 +528,47 @@ font: AppFlowy 编辑器使用 Inter 字体 + 主题色; image V2: ThoughtImageB
 ### 验证
 - `flutter analyze`: No issues found
 - `flutter test test/plugins/collections/`: 18/18 All tests passed
+
+
+## Session 16: Collections 工作台 UI 重构
+
+**Date**: 2026-05-24
+**Task**: Collections 工作台 UI 重构
+**Branch**: `main`
+
+### Summary
+
+按 PRD v1.4 完成收藏模块 UI 工作台重构：
+
+- 新增 selectedSavedItemIdProvider 选中状态管理
+- DesktopLayout 改为左列表 + 右详情面板（400px）工作台布局
+- SavedItemCard 紧凑设计（120-150px），支持 selected/onTap
+- 新增完整 SavedItemDetailPanel（Header→Link→Status→Box→Tags→Notes→Tabs→TechInfo）
+- 拆分筛选组件：CollectionViewChips、CollectionBoxBar、CollectionSearchFilterBar
+- 新增 CollectionBulkActionBar
+- 新增 CollectionTechnicalInfoSection
+- 删除旧 CollectionFilterBar
+- 更新 spec（Workbench 布局 + Selected-Item Provider 模式）
+- flutter analyze: 0 issues | flutter test: 46/46 通过
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `f522386` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
