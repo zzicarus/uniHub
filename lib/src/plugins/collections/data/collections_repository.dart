@@ -37,6 +37,7 @@ class CollectionsRepository {
     String? title,
     MediaType mediaType = MediaType.unknown,
     SourcePlatform sourcePlatform = SourcePlatform.unknown,
+    bool isInInbox = true,
   }) async {
     final existing = await findByNormalizedUrl(normalizedUrl);
     if (existing != null) return existing;
@@ -49,6 +50,7 @@ class CollectionsRepository {
         title: Value(title ?? normalizedUrl),
         mediaType: Value(mediaType.value),
         sourcePlatform: Value(sourcePlatform.value),
+        isInInbox: Value(isInInbox),
         status: Value(ConsumptionStatus.unread.value),
         enrichmentStatus: Value(EnrichmentStatus.pending.value),
         createdAt: Value(now),
@@ -124,6 +126,10 @@ class CollectionsRepository {
 
   Future<void> markOpened(int itemId) {
     return _savedItemsDao.updateLastOpenedAt(itemId, DateTime.now());
+  }
+
+  Future<List<int>> getBoxIdsForItem(int itemId) {
+    return _collectionBoxesDao.getBoxIdsForItem(itemId);
   }
 
   Future<void> setItemBoxes(int itemId, Set<int> boxIds) {

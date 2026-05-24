@@ -51,4 +51,36 @@ void main() {
     expect(item!.sourcePlatform, SourcePlatform.github.value);
     expect(item.mediaType, MediaType.repository.value);
   });
+
+  test('capture with boxId assigns item to box and sets isInInbox=false',
+      () async {
+    final box = await repository.createBox('待读');
+
+    final result = await service.captureUrl(
+      'https://example.com/boxed-article',
+      boxId: box.id,
+    );
+
+    expect(result.wasCreated, true);
+
+    final item = await repository.getSavedItem(result.itemId);
+    expect(item, isNotNull);
+    expect(item!.isInInbox, false);
+
+    final boxIds = await repository.getBoxIdsForItem(result.itemId);
+    expect(boxIds, [box.id]);
+  });
+
+  test('capture without boxId keeps isInInbox=true', () async {
+    final result = await service.captureUrl('https://example.com/inbox-item');
+
+    expect(result.wasCreated, true);
+
+    final item = await repository.getSavedItem(result.itemId);
+    expect(item, isNotNull);
+    expect(item!.isInInbox, true);
+
+    final boxIds = await repository.getBoxIdsForItem(result.itemId);
+    expect(boxIds, isEmpty);
+  });
 }

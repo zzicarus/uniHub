@@ -16,7 +16,7 @@ class CollectionCaptureService {
   final UrlNormalizer _urlNormalizer;
   final PlatformDetector _platformDetector;
 
-  Future<CaptureResult> captureUrl(String input) async {
+  Future<CaptureResult> captureUrl(String input, {int? boxId}) async {
     final normalizedUrl = _urlNormalizer.normalize(input);
     final existing = await _repository.findByNormalizedUrl(normalizedUrl);
     if (existing != null) {
@@ -30,7 +30,11 @@ class CollectionCaptureService {
       title: normalizedUrl,
       mediaType: detection.mediaType,
       sourcePlatform: detection.platform,
+      isInInbox: boxId == null,
     );
+    if (boxId != null) {
+      await _repository.setItemBoxes(item.id, {boxId});
+    }
     await _repository.enqueueEnrichmentJob(item.id);
     return CaptureResult(itemId: item.id, wasCreated: true);
   }

@@ -78,6 +78,8 @@ class SavedItemCard extends ConsumerWidget {
                   ),
                 ),
                 const SizedBox(width: AppSpacing.sm),
+                _BoxAssignmentButton(itemId: item.id),
+                const SizedBox(width: AppSpacing.xs),
                 PopupMenuButton<ConsumptionStatus>(
                   tooltip: '切换状态',
                   initialValue: status,
@@ -205,5 +207,91 @@ class _MetaChip extends StatelessWidget {
       label: Text(label),
       labelStyle: theme.textTheme.labelMedium,
     );
+  }
+}
+
+class _BoxAssignmentButton extends ConsumerWidget {
+  const _BoxAssignmentButton({required this.itemId});
+
+  static const _inboxValue = -1;
+
+  final int itemId;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return IconButton(
+      tooltip: '分配到 Box',
+      icon: const Icon(Icons.folder_outlined, size: 20),
+      onPressed: () => _showBoxMenu(context, ref),
+    );
+  }
+
+  Future<void> _showBoxMenu(BuildContext context, WidgetRef ref) async {
+    final repository = ref.read(collectionsRepositoryProvider);
+    final boxes = await repository.getBoxes();
+    final currentBoxIds = await repository.getBoxIdsForItem(itemId);
+    final currentSet = currentBoxIds.toSet();
+
+    if (!context.mounted) return;
+
+    final selection = await showMenu<int>(
+      context: context,
+      position: RelativeRect.fromLTRB(1000, 80, 1000, 80),
+      items: [
+        PopupMenuItem<int>(
+          value: _inboxValue,
+          child: Row(
+            children: [
+              Icon(
+                currentSet.isEmpty ? Icons.check : null,
+                size: 18,
+              ),
+              const SizedBox(width: 8),
+              const Text('Inbox（不分配到 Box）'),
+            ],
+          ),
+        ),
+        if (boxes.isNotEmpty) const PopupMenuDivider(),
+        for (final box in boxes)
+          PopupMenuItem<int>(
+            value: box.id,
+            child: Row(
+              children: [
+                Icon(
+                  currentSet.contains(box.id)
+                      ? Icons.check_box_rounded
+                      : Icons.check_box_outline_blank_rounded,
+                  size: 18,
+                ),
+                const SizedBox(width: 8),
+                Text(box.name),
+              ],
+            ),
+          ),
+      ],
+    );
+
+    if (selection == null || !context.mounted) return;
+
+    if (selection == _inboxValue) {
+      // 移除所有 Box，回到 Inbox
+      await repository.setItemBoxes(itemId, const {});
+      await repository.updateInboxState(itemId, true);
+    } else if (currentSet.contains(selection)) {
+      // 移出此 Box
+      final next = {...currentSet}..remove(selection);
+      await repository.setItemBoxes(itemId, next);
+      if (next.isEmpty) {
+        await repository.updateInboxState(itemId, true);
+      }
+    } else {
+      // 分配到 Box
+      final next = {...currentSet, selection};
+      await repository.setItemBoxes(itemId, next);
+      await repository.updateInboxState(itemId, false);
+    }
+
+    if (!context.mounted) return;
+    ref.invalidate(savedItemsListProvider);
   }
 }
