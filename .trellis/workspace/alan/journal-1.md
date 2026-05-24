@@ -469,3 +469,38 @@ font: AppFlowy 编辑器使用 Inter 字体 + 主题色; image V2: ThoughtImageB
 ### Next Steps
 
 - None - task complete
+
+
+## Session 15: Collections MVP 闭环完成
+
+**Date**: 2026-05-24
+**Task**: Collections MVP 闭环完成
+**Branch**: `main`
+
+### Summary
+
+实现 Collections MVP 基础闭环：插件注册、Drift schema/DAO/Repository、URL 收藏与去重、metadata provider 抽象、本地 metadata 抓取、enrichment 服务、Riverpod providers、完整 UI（URL 输入/筛选/卡片/状态切换/Box/打开链接记录）、domain 测试与数据层测试；20 tests passed through focused verification。根据 trellis-update-spec 判断无需新增 spec 更新。最终复核（trellis-check）通过后完成 Phase 3.4 提交并归档任务。
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `8305954` | (see git log) |
+| `c059aae` | (see git log) |
+| `59f29a1` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
