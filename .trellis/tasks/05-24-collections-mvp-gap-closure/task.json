@@ -3,7 +3,7 @@
   "name": "collections-mvp-gap-closure",
   "title": "collections-mvp-gap-closure",
   "description": "关闭 Collections MVP 的剩余缺口：后台 job 队列、缺失枚举值、Box-Inbox 联动、字段补充、测试",
-  "status": "planning",
+  "status": "in_progress",
   "dev_type": null,
   "scope": null,
   "package": null,

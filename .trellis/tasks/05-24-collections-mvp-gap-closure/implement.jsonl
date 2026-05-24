@@ -1,1 +1,5 @@
-{"_example": "Fill with {\"file\": \"<path>\", \"reason\": \"<why>\"}. Put spec/research files only — no code paths. Run `python3 .trellis/scripts/get_context.py --mode packages` to list available specs. Delete this line once real entries are added."}
+{"file": ".trellis/spec/backend/database-guidelines.md", "reason": "DAO/Repository 模式、Drift 查询、测试生命周期"}
+{"file": ".trellis/spec/backend/plugin-data-flow.md", "reason": "插件数据流、服务层、Provider 注册"}
+{"file": ".trellis/spec/frontend/component-guidelines.md", "reason": "Widget 规范、设计令牌、M3 配色、布局约定"}
+{"file": ".trellis/spec/frontend/state-management.md", "reason": "Riverpod Provider 模式、状态管理"}
+{"file": ".trellis/spec/frontend/uiux-guidelines.md", "reason": "UI/UX 设计规范、交互模式"}
