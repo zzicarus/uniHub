@@ -153,6 +153,78 @@ UI Widget → UseCase/Repository Provider → Repository → DAO → AppDatabase
 
 ---
 
+## Scenario: AppDatabase 集中注册与测试插件子集
+
+### 1. Scope / Trigger
+
+- Trigger：新增插件表后，`@DriftDatabase(tables: [...])` 必须集中注册所有表，但单元测试经常只注册当前被测插件（例如只注册 Thoughts 或只注册 Collections）。
+- 范围：`AppDatabase._validatePluginTables()`、`UniHubPlugin.tables`、`PluginRegistry` 测试夹具、所有使用 `NativeDatabase.memory()` 的数据层测试。
+
+### 2. Signatures
+
+| 位置 | 签名 / 字段 | 合同 |
+|------|-------------|------|
+| DB | `@DriftDatabase(tables: [...])` | 编译期注册全量表，不能按测试插件子集动态变化 |
+| Plugin | `List<Type> get tables` | 只声明该插件拥有的表 |
+| Runtime check | `_validatePluginTables(): bool` | 校验“插件声明的表已存在于集中注册表”，不要要求“集中注册表必须全部被当前 registry 声明” |
+| Test | `AppDatabase(NativeDatabase.memory(), registry)` | registry 可以只注册被测插件；不要求注册所有生产插件 |
+
+### 3. Contracts
+
+- 生产启动：`main.dart` 应注册所有生产插件，`schemaVersion` 取这些插件版本最大值。
+- 数据层测试：可以构造最小 `PluginRegistry`，只注册被测插件，避免测试被无关插件耦合。
+- 一致性断言：必须发现“插件声明了某张表，但 `@DriftDatabase` 漏注册”的错误。
+- 一致性断言：不应因为“`@DriftDatabase` 有其他插件表，而测试 registry 没注册其他插件”失败。
+
+### 4. Validation & Error Matrix
+
+| 条件 | 处理 |
+|------|------|
+| 插件 `tables` 包含未集中注册的表 | debug assert 失败，提示同步 `@DriftDatabase(tables: [...])` |
+| `@DriftDatabase` 包含其他插件表，但当前测试 registry 未注册对应插件 | 允许；测试可继续运行 |
+| 生产入口漏注册某个插件 | 对应插件功能/路由/版本不生效，应由插件注册/路由测试覆盖 |
+| 新增表但未递增插件 `schemaVersion` | migration 可能不执行；review 时必须按 checklist 拦截 |
+
+### 5. Good/Base/Bad Cases
+
+- Good：Collections 数据层测试只注册 `CollectionsPlugin()`，AppDatabase 仍包含 Thoughts 表，但断言通过。
+- Base：生产入口同时注册 Thoughts 与 Collections，所有声明表都能在 `allSchemaEntities` 中找到。
+- Bad：校验 DB 中每张表都必须被当前 registry 声明，会导致“只注册被测插件”的隔离测试无故失败。
+
+### 6. Tests Required
+
+- Unit：新增插件表时，`database_test.dart` 覆盖 `schemaVersion` 最大值和 migration strategy。
+- Unit：保留“插件声明不存在表时 assert 失败”的负例。
+- Data：新插件 DAO/Repository 使用 `NativeDatabase.memory()` + 最小 registry 覆盖 CRUD/过滤。
+- Router/Plugin：新增 route name 和插件路由时补齐 route 测试。
+
+### 7. Wrong vs Correct
+
+#### Wrong
+
+```dart
+for (final dbTable in dbTables) {
+  final declared = pluginTableTypes.any(
+    (type) => dbTable.runtimeType.toString().contains(type.toString()),
+  );
+  if (!declared) return false; // 会破坏只注册被测插件的测试
+}
+```
+
+#### Correct
+
+```dart
+for (final tableType in pluginTableTypes) {
+  final typeName = tableType.toString();
+  final hasMatch = dbTables.any(
+    (table) => table.runtimeType.toString().contains(typeName),
+  );
+  if (!hasMatch) return false;
+}
+```
+
+---
+
 ## 新增插件数据层 Checklist
 
 - [ ] Table 位于 `core/database/tables/`，字段命名和默认值符合规范。
