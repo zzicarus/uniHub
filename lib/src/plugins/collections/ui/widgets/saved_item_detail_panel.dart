@@ -61,7 +61,9 @@ class _SavedItemDetailPanelState extends ConsumerState<SavedItemDetailPanel>
       decoration: BoxDecoration(
         color: colorScheme.surface,
         borderRadius: BorderRadius.circular(AppRadius.xl),
-        border: Border.all(color: colorScheme.outlineVariant.withValues(alpha: 0.6)),
+        border: Border.all(
+          color: colorScheme.outlineVariant.withValues(alpha: 0.6),
+        ),
       ),
       child: Center(
         child: ConstrainedBox(
@@ -111,33 +113,38 @@ class _SavedItemDetailPanelState extends ConsumerState<SavedItemDetailPanel>
       decoration: BoxDecoration(
         color: colorScheme.surface,
         borderRadius: BorderRadius.circular(AppRadius.xl),
-        border: Border.all(color: colorScheme.outlineVariant.withValues(alpha: 0.6)),
+        border: Border.all(
+          color: colorScheme.outlineVariant.withValues(alpha: 0.6),
+        ),
         boxShadow: const [AppShadows.cardSoft],
       ),
       clipBehavior: Clip.antiAlias,
-      child: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // ========== A. Content Identity ==========
-            _buildContentIdentity(theme, colorScheme, item, mediaType, platform),
-
-            _plainDivider(colorScheme),
-
-            // ========== B. Organize Section ==========
-            _buildOrganizeSection(theme, colorScheme, item),
-
-            _plainDivider(colorScheme),
-
-            // ========== C. Content Section ==========
-            _buildContentTabs(theme, colorScheme, item),
-
-            _plainDivider(colorScheme),
-
-            // Technical info (collapsed at bottom)
-            CollectionTechnicalInfoSection(item: item),
-          ],
-        ),
+      child: Column(
+        children: [
+          Expanded(
+            child: SingleChildScrollView(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildContentIdentity(
+                    theme,
+                    colorScheme,
+                    item,
+                    mediaType,
+                    platform,
+                  ),
+                  _plainDivider(colorScheme),
+                  _buildOrganizeSection(theme, colorScheme, item),
+                  _plainDivider(colorScheme),
+                  _buildContentTabs(theme, colorScheme, item),
+                  _plainDivider(colorScheme),
+                  CollectionTechnicalInfoSection(item: item),
+                ],
+              ),
+            ),
+          ),
+          _buildBottomActionBar(theme, colorScheme, item),
+        ],
       ),
     );
   }
@@ -194,7 +201,14 @@ class _SavedItemDetailPanelState extends ConsumerState<SavedItemDetailPanel>
                 ),
                 const SizedBox(height: AppSpacing.xxs),
                 Text(
-                  '${platform.label} · ${_relativeTime(item.createdAt)}',
+                  '${platform.label} · ${mediaType.label}',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: colorScheme.onSurfaceVariant,
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.xxs),
+                Text(
+                  _relativeTime(item.createdAt),
                   style: theme.textTheme.bodySmall?.copyWith(
                     color: colorScheme.onSurfaceVariant,
                   ),
@@ -203,19 +217,30 @@ class _SavedItemDetailPanelState extends ConsumerState<SavedItemDetailPanel>
             ),
           ),
           const SizedBox(width: AppSpacing.xs),
-          // Open URL button
           IconButton(
-            tooltip: '打开链接',
-            icon: const Icon(Icons.open_in_new_rounded, size: 20),
+            tooltip: '星标功能稍后接入',
+            icon: const Icon(Icons.star_border_rounded, size: 20),
             visualDensity: VisualDensity.compact,
             style: IconButton.styleFrom(
-              foregroundColor: colorScheme.primary,
+              foregroundColor: colorScheme.onSurfaceVariant,
             ),
             onPressed: () {
+              ScaffoldMessenger.of(
+                context,
+              ).showSnackBar(const SnackBar(content: Text('星标功能稍后接入')));
+            },
+          ),
+          // Open URL button
+          IconButton(
+            tooltip: '打开内容',
+            icon: const Icon(Icons.open_in_new_rounded, size: 20),
+            visualDensity: VisualDensity.compact,
+            style: IconButton.styleFrom(foregroundColor: colorScheme.primary),
+            onPressed: () {
               Clipboard.setData(ClipboardData(text: item.originalUrl));
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('链接已复制到剪贴板')),
-              );
+              ScaffoldMessenger.of(
+                context,
+              ).showSnackBar(const SnackBar(content: Text('链接已复制到剪贴板')));
             },
           ),
         ],
@@ -251,10 +276,11 @@ class _SavedItemDetailPanelState extends ConsumerState<SavedItemDetailPanel>
           _sectionDivider(colorScheme),
 
           // -- Tags --
-          _buildPlaceholderLine(theme, colorScheme, '标签', '标签功能稍后接入'),
+          _TagsSection(item: item),
+          _sectionDivider(colorScheme),
 
           // -- Notes --
-          _buildPlaceholderLine(theme, colorScheme, '备注', '备注功能稍后接入'),
+          _buildNotesSection(theme, colorScheme),
         ],
       ),
     );
@@ -270,7 +296,12 @@ class _SavedItemDetailPanelState extends ConsumerState<SavedItemDetailPanel>
     SavedItemsTableData item,
   ) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(AppSpacing.lg, AppSpacing.sm, AppSpacing.sm, AppSpacing.sm),
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.lg,
+        AppSpacing.sm,
+        AppSpacing.sm,
+        AppSpacing.sm,
+      ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -279,7 +310,7 @@ class _SavedItemDetailPanelState extends ConsumerState<SavedItemDetailPanel>
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  '链接',
+                  '来源',
                   style: theme.textTheme.labelMedium?.copyWith(
                     color: colorScheme.onSurfaceVariant,
                     fontWeight: FontWeight.w500,
@@ -315,9 +346,9 @@ class _SavedItemDetailPanelState extends ConsumerState<SavedItemDetailPanel>
               ),
               onPressed: () {
                 Clipboard.setData(ClipboardData(text: item.originalUrl));
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('已复制链接')),
-                );
+                ScaffoldMessenger.of(
+                  context,
+                ).showSnackBar(const SnackBar(content: Text('已复制链接')));
               },
             ),
           ),
@@ -336,7 +367,12 @@ class _SavedItemDetailPanelState extends ConsumerState<SavedItemDetailPanel>
     SavedItemsTableData item,
   ) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(AppSpacing.lg, AppSpacing.sm, AppSpacing.lg, AppSpacing.sm),
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.lg,
+        AppSpacing.sm,
+        AppSpacing.lg,
+        AppSpacing.sm,
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -355,13 +391,12 @@ class _SavedItemDetailPanelState extends ConsumerState<SavedItemDetailPanel>
               final isSelected =
                   ConsumptionStatus.fromValue(item.status) == status;
               return ChoiceChip(
-                label: Text(status.label),
+                label: Text(_statusLabel(status)),
                 selected: isSelected,
-                onSelected: (selected) {
+                onSelected: (selected) async {
                   if (!selected) return;
-                  final repository =
-                      ref.read(collectionsRepositoryProvider);
-                  repository.updateStatus(item.id, status);
+                  final repository = ref.read(collectionsRepositoryProvider);
+                  await repository.updateStatus(item.id, status);
                   ref.invalidate(savedItemsListProvider);
                 },
                 selectedColor: colorScheme.primary,
@@ -381,33 +416,34 @@ class _SavedItemDetailPanelState extends ConsumerState<SavedItemDetailPanel>
     );
   }
 
-  // ---------------------------------------------------------------
-  // B.3 Box — uses _BoxSection below
-  // B.4/B.5 Tags & Notes — simple placeholder lines
-  // ---------------------------------------------------------------
-
-  Widget _buildPlaceholderLine(
-    ThemeData theme,
-    ColorScheme colorScheme,
-    String label,
-    String message,
-  ) {
+  Widget _buildNotesSection(ThemeData theme, ColorScheme colorScheme) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(AppSpacing.lg, AppSpacing.sm, AppSpacing.lg, AppSpacing.sm),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.lg,
+        AppSpacing.sm,
+        AppSpacing.lg,
+        AppSpacing.md,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            label,
+            '备注',
             style: theme.textTheme.labelMedium?.copyWith(
               color: colorScheme.onSurfaceVariant,
               fontWeight: FontWeight.w500,
             ),
           ),
-          Text(
-            message,
-            style: theme.textTheme.bodySmall?.copyWith(
-              color: colorScheme.onSurfaceVariant.withValues(alpha: 0.6),
+          const SizedBox(height: AppSpacing.sm),
+          TextField(
+            enabled: false,
+            maxLines: 4,
+            decoration: InputDecoration(
+              hintText: '写下你收藏这条内容的想法或要点...',
+              helperText: '0/500',
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(AppRadius.md),
+              ),
             ),
           ),
         ],
@@ -474,11 +510,16 @@ class _SavedItemDetailPanelState extends ConsumerState<SavedItemDetailPanel>
     ColorScheme colorScheme,
     SavedItemsTableData item,
   ) {
-    final hasDescription = item.description != null &&
-        item.description!.trim().isNotEmpty;
+    final hasDescription =
+        item.description != null && item.description!.trim().isNotEmpty;
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(AppSpacing.lg, AppSpacing.md, AppSpacing.lg, AppSpacing.md),
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.lg,
+        AppSpacing.md,
+        AppSpacing.lg,
+        AppSpacing.md,
+      ),
       child: hasDescription
           ? Text(
               item.description!,
@@ -502,7 +543,12 @@ class _SavedItemDetailPanelState extends ConsumerState<SavedItemDetailPanel>
     SavedItemsTableData item,
   ) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(AppSpacing.lg, AppSpacing.md, AppSpacing.lg, AppSpacing.md),
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.lg,
+        AppSpacing.md,
+        AppSpacing.lg,
+        AppSpacing.md,
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -526,7 +572,12 @@ class _SavedItemDetailPanelState extends ConsumerState<SavedItemDetailPanel>
     String message,
   ) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(AppSpacing.lg, AppSpacing.md, AppSpacing.lg, AppSpacing.md),
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.lg,
+        AppSpacing.md,
+        AppSpacing.lg,
+        AppSpacing.md,
+      ),
       child: Text(
         message,
         style: theme.textTheme.bodySmall?.copyWith(
@@ -575,18 +626,18 @@ class _SavedItemDetailPanelState extends ConsumerState<SavedItemDetailPanel>
   }
 
   Widget _plainDivider(ColorScheme colorScheme) => Divider(
-        height: 1,
-        thickness: 1,
-        color: colorScheme.outlineVariant.withValues(alpha: 0.5),
-      );
+    height: 1,
+    thickness: 1,
+    color: colorScheme.outlineVariant.withValues(alpha: 0.5),
+  );
 
   Widget _sectionDivider(ColorScheme colorScheme) => Divider(
-        height: 1,
-        thickness: 1,
-        indent: AppSpacing.lg,
-        endIndent: AppSpacing.lg,
-        color: colorScheme.outlineVariant.withValues(alpha: 0.3),
-      );
+    height: 1,
+    thickness: 1,
+    indent: AppSpacing.lg,
+    endIndent: AppSpacing.lg,
+    color: colorScheme.outlineVariant.withValues(alpha: 0.3),
+  );
 
   String _relativeTime(DateTime dt) {
     final now = DateTime.now();
@@ -615,6 +666,161 @@ class _SavedItemDetailPanelState extends ConsumerState<SavedItemDetailPanel>
       MediaType.unknown => Icons.link_rounded,
     };
   }
+
+  String _statusLabel(ConsumptionStatus status) {
+    return switch (status) {
+      ConsumptionStatus.unread => '待看',
+      ConsumptionStatus.inProgress => '阅读中',
+      ConsumptionStatus.done => '已看',
+      ConsumptionStatus.archived => '归档',
+    };
+  }
+
+  Widget _buildBottomActionBar(
+    ThemeData theme,
+    ColorScheme colorScheme,
+    SavedItemsTableData item,
+  ) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: colorScheme.surface,
+        border: Border(top: BorderSide(color: colorScheme.outlineVariant)),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(AppSpacing.sm),
+        child: Row(
+          children: [
+            Expanded(
+              child: FilledButton.icon(
+                onPressed: () async {
+                  await ref
+                      .read(collectionsRepositoryProvider)
+                      .markOpened(item.id);
+                  ref.invalidate(savedItemsListProvider);
+                  await Clipboard.setData(
+                    ClipboardData(text: item.originalUrl),
+                  );
+                  if (!mounted) return;
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('链接已复制，可在浏览器中打开')),
+                  );
+                },
+                icon: const Icon(Icons.open_in_new_rounded),
+                label: const Text('打开内容'),
+              ),
+            ),
+            const SizedBox(width: AppSpacing.sm),
+            Expanded(
+              child: OutlinedButton.icon(
+                onPressed: () {
+                  ScaffoldMessenger.of(
+                    context,
+                  ).showSnackBar(const SnackBar(content: Text('编辑功能稍后接入')));
+                },
+                icon: const Icon(Icons.edit_outlined),
+                label: const Text('编辑'),
+              ),
+            ),
+            const SizedBox(width: AppSpacing.xs),
+            IconButton(
+              tooltip: '更多操作',
+              onPressed: () {
+                ScaffoldMessenger.of(
+                  context,
+                ).showSnackBar(const SnackBar(content: Text('更多操作稍后接入')));
+              },
+              icon: const Icon(Icons.more_horiz_rounded),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ---------------------------------------------------------------
+// Tags Section
+// ---------------------------------------------------------------
+
+class _TagsSection extends ConsumerWidget {
+  const _TagsSection({required this.item});
+
+  final SavedItemsTableData item;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final boxesAsync = ref.watch(collectionBoxesProvider);
+    final mediaType = MediaType.fromValue(item.mediaType);
+    final platform = SourcePlatform.fromValue(item.sourcePlatform);
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.lg,
+        AppSpacing.sm,
+        AppSpacing.lg,
+        AppSpacing.sm,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            '标签',
+            style: theme.textTheme.labelMedium?.copyWith(
+              color: colorScheme.onSurfaceVariant,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          FutureBuilder<List<int>>(
+            future: ref
+                .read(collectionsRepositoryProvider)
+                .getBoxIdsForItem(item.id),
+            builder: (context, snapshot) {
+              final boxIds = snapshot.data?.toSet() ?? const <int>{};
+              return boxesAsync.when(
+                data: (boxes) {
+                  final labels = <String>[
+                    for (final box in boxes)
+                      if (boxIds.contains(box.id)) box.name,
+                    mediaType.label,
+                    platform.label,
+                  ].where((label) => label.trim().isNotEmpty).take(4).toList();
+
+                  return Wrap(
+                    spacing: AppSpacing.xs,
+                    runSpacing: AppSpacing.xs,
+                    children: [
+                      for (final label in labels)
+                        Chip(
+                          label: Text(label),
+                          visualDensity: VisualDensity.compact,
+                        ),
+                      ActionChip(
+                        label: const Text('+ 添加标签'),
+                        onPressed: () {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('标签功能稍后接入')),
+                          );
+                        },
+                        visualDensity: VisualDensity.compact,
+                      ),
+                    ],
+                  );
+                },
+                loading: () => const LinearProgressIndicator(minHeight: 2),
+                error: (error, stackTrace) => Text(
+                  '标签加载失败：$error',
+                  style: TextStyle(color: colorScheme.error),
+                ),
+              );
+            },
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 // ---------------------------------------------------------------
@@ -633,12 +839,17 @@ class _BoxSection extends ConsumerWidget {
     final boxesAsync = ref.watch(collectionBoxesProvider);
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(AppSpacing.lg, AppSpacing.sm, AppSpacing.lg, AppSpacing.sm),
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.lg,
+        AppSpacing.sm,
+        AppSpacing.lg,
+        AppSpacing.sm,
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            '所属 Box',
+            '收藏夹',
             style: theme.textTheme.labelMedium?.copyWith(
               color: colorScheme.onSurfaceVariant,
               fontWeight: FontWeight.w500,
@@ -668,7 +879,7 @@ class _BoxSection extends ConsumerWidget {
                     return Row(
                       children: [
                         Text(
-                          '暂无 Box',
+                          '暂无收藏夹',
                           style: theme.textTheme.bodySmall?.copyWith(
                             color: colorScheme.onSurfaceVariant,
                           ),
@@ -677,12 +888,14 @@ class _BoxSection extends ConsumerWidget {
                         TextButton.icon(
                           onPressed: () => _createBox(context, ref),
                           icon: const Icon(Icons.add_rounded, size: 14),
-                          label: const Text('新建 Box'),
+                          label: const Text('新建收藏夹'),
                           style: TextButton.styleFrom(
                             visualDensity: VisualDensity.compact,
                             foregroundColor: colorScheme.primary,
                             tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: AppSpacing.sm,
+                            ),
                           ),
                         ),
                       ],
@@ -698,8 +911,9 @@ class _BoxSection extends ConsumerWidget {
                           label: Text(box.name),
                           selected: currentSet.contains(box.id),
                           onSelected: (selected) {
-                            final repository =
-                                ref.read(collectionsRepositoryProvider);
+                            final repository = ref.read(
+                              collectionsRepositoryProvider,
+                            );
                             if (selected) {
                               final next = {...currentSet, box.id};
                               repository.setItemBoxes(item.id, next);
@@ -719,7 +933,7 @@ class _BoxSection extends ConsumerWidget {
                         ),
                       ],
                       ActionChip(
-                        label: const Text('+ 选择 Box'),
+                        label: const Text('+ 选择收藏夹'),
                         onPressed: () => _addBox(context, ref, boxes),
                         visualDensity: VisualDensity.compact,
                       ),
@@ -733,7 +947,7 @@ class _BoxSection extends ConsumerWidget {
                 },
                 loading: () => const LinearProgressIndicator(minHeight: 2),
                 error: (e, _) => Text(
-                  '加载 Box 失败：$e',
+                  '加载收藏夹失败：$e',
                   style: TextStyle(color: colorScheme.error),
                 ),
               );
@@ -749,11 +963,11 @@ class _BoxSection extends ConsumerWidget {
     final name = await showDialog<String>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('新建 Box'),
+        title: const Text('新建收藏夹'),
         content: TextField(
           controller: controller,
           autofocus: true,
-          decoration: const InputDecoration(hintText: '名称'),
+          decoration: const InputDecoration(hintText: '收藏夹名称'),
         ),
         actions: [
           TextButton(
@@ -807,10 +1021,7 @@ class _BoxSection extends ConsumerWidget {
 
     if (selected == null || !context.mounted) return;
 
-    await repository.setItemBoxes(
-      item.id,
-      {...currentSet, selected},
-    );
+    await repository.setItemBoxes(item.id, {...currentSet, selected});
     if (currentSet.isEmpty) {
       await repository.updateInboxState(item.id, false);
     }

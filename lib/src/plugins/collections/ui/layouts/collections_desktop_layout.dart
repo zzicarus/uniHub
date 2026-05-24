@@ -4,11 +4,12 @@ import 'package:uni_hub/src/core/database/app_database.dart';
 import 'package:uni_hub/src/core/theme/app_tokens.dart';
 import 'package:uni_hub/src/plugins/collections/providers/collections_providers.dart';
 
-import '../widgets/collection_box_bar.dart';
 import '../widgets/collection_bulk_action_bar.dart';
 import '../widgets/collection_capture_bar.dart';
-import '../widgets/collection_search_filter_bar.dart';
-import '../widgets/collection_view_chips.dart';
+import '../widgets/collection_content_type_chips.dart';
+import '../widgets/collection_folder_sidebar.dart';
+import '../widgets/collection_list_toolbar.dart';
+import '../widgets/collection_status_tabs.dart';
 import '../widgets/saved_item_card.dart';
 import '../widgets/saved_item_detail_panel.dart';
 
@@ -54,9 +55,7 @@ class _CollectionsDesktopLayoutState
     final items = itemsAsync.asData?.value ?? <SavedItemsTableData>[];
     SavedItemsTableData? displayItem;
     if (selectedId != null) {
-      displayItem = items.where(
-        (item) => item.id == selectedId,
-      ).firstOrNull;
+      displayItem = items.where((item) => item.id == selectedId).firstOrNull;
     }
     displayItem ??= items.isNotEmpty ? items.first : null;
 
@@ -66,17 +65,16 @@ class _CollectionsDesktopLayoutState
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Header
             Row(
               children: [
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('收藏', style: theme.textTheme.headlineMedium),
+                      Text('内容收藏', style: theme.textTheme.headlineMedium),
                       const SizedBox(height: AppSpacing.xs),
                       Text(
-                        '保存链接、稍后阅读，并按状态与来源快速筛选。',
+                        '收集网页、视频、公众号、文章与其他值得保存的内容。',
                         style: theme.textTheme.bodyMedium?.copyWith(
                           color: colorScheme.onSurfaceVariant,
                         ),
@@ -84,7 +82,26 @@ class _CollectionsDesktopLayoutState
                     ],
                   ),
                 ),
-                FilledButton.icon(
+                const SizedBox(width: AppSpacing.lg),
+                ConstrainedBox(
+                  constraints: const BoxConstraints(
+                    minWidth: 320,
+                    maxWidth: 460,
+                  ),
+                  child: const _HeaderSearchField(),
+                ),
+                const SizedBox(width: AppSpacing.sm),
+                OutlinedButton.icon(
+                  onPressed: () {
+                    ScaffoldMessenger.of(
+                      context,
+                    ).showSnackBar(const SnackBar(content: Text('导入功能稍后接入')));
+                  },
+                  icon: const Icon(Icons.file_download_outlined),
+                  label: const Text('导入'),
+                ),
+                const SizedBox(width: AppSpacing.xs),
+                OutlinedButton.icon(
                   onPressed: () => ref.invalidate(savedItemsListProvider),
                   icon: const Icon(Icons.refresh_rounded),
                   label: const Text('刷新'),
@@ -92,86 +109,150 @@ class _CollectionsDesktopLayoutState
               ],
             ),
             const SizedBox(height: AppSpacing.sm),
-            // Capture bar
             const CollectionCaptureBar(),
             const SizedBox(height: AppSpacing.sm),
-            // View chips
-            const CollectionViewChips(),
-            const SizedBox(height: AppSpacing.xs),
-            // Box bar
-            const CollectionBoxBar(),
-            const SizedBox(height: AppSpacing.xs),
-            // Search / filter bar
-            const CollectionSearchFilterBar(),
-            const SizedBox(height: AppSpacing.sm),
-            // Split pane: list + detail
             Expanded(
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  // Left panel - item list + bulk action bar
-                  Expanded(
-                    child: Column(
-                      children: [
-                        Expanded(
-                          child: itemsAsync.when(
-                            data: (items) {
-                              if (items.isEmpty) {
-                                return const _EmptyState();
-                              }
-                              return ListView.separated(
-                                itemCount: items.length,
-                                separatorBuilder: (context, index) =>
-                                    const SizedBox(height: AppSpacing.sm),
-                                itemBuilder: (context, index) {
-                                  final item = items[index];
-                                  final isSelected = item.id == selectedId;
-                                  return SavedItemCard(
-                                    item: item,
-                                    selected: isSelected,
-                                    onTap: () {
-                                      ref
-                                          .read(
-                                            selectedSavedItemIdProvider
-                                                .notifier,
-                                          )
-                                          .state = item.id;
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  final showDetail = constraints.maxWidth >= 960;
+                  final detailWidth = showDetail
+                      ? (constraints.maxWidth * 0.34).clamp(360.0, 460.0)
+                      : 0.0;
+
+                  return Row(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      const SizedBox(
+                        width: 220,
+                        child: CollectionFolderSidebar(),
+                      ),
+                      const SizedBox(width: AppSpacing.md),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const CollectionContentTypeChips(),
+                            const SizedBox(height: AppSpacing.xs),
+                            const CollectionStatusTabs(),
+                            const SizedBox(height: AppSpacing.xs),
+                            const CollectionListToolbar(),
+                            const SizedBox(height: AppSpacing.sm),
+                            Expanded(
+                              child: itemsAsync.when(
+                                data: (items) {
+                                  if (items.isEmpty) {
+                                    return const _EmptyState();
+                                  }
+                                  return ListView.separated(
+                                    itemCount: items.length,
+                                    separatorBuilder: (context, index) =>
+                                        const SizedBox(height: AppSpacing.sm),
+                                    itemBuilder: (context, index) {
+                                      final item = items[index];
+                                      final isSelected = item.id == selectedId;
+                                      return SavedItemCard(
+                                        item: item,
+                                        selected: isSelected,
+                                        onTap: () {
+                                          ref
+                                                  .read(
+                                                    selectedSavedItemIdProvider
+                                                        .notifier,
+                                                  )
+                                                  .state =
+                                              item.id;
+                                        },
+                                      );
                                     },
                                   );
                                 },
-                              );
-                            },
-                            loading: () => const Center(
-                              child: CircularProgressIndicator(),
+                                loading: () => const Center(
+                                  child: CircularProgressIndicator(),
+                                ),
+                                error: (error, stackTrace) => _ErrorState(
+                                  error: error,
+                                  onRetry: () =>
+                                      ref.invalidate(savedItemsListProvider),
+                                ),
+                              ),
                             ),
-                            error: (error, stackTrace) => _ErrorState(
-                              error: error,
-                              onRetry: () =>
-                                  ref.invalidate(savedItemsListProvider),
-                            ),
-                          ),
+                            const CollectionBulkActionBar(),
+                          ],
                         ),
-                        const CollectionBulkActionBar(),
+                      ),
+                      if (showDetail) ...[
+                        const SizedBox(width: AppSpacing.md),
+                        SizedBox(
+                          width: detailWidth,
+                          child: SavedItemDetailPanel(item: displayItem),
+                        ),
                       ],
-                    ),
-                  ),
-                  const SizedBox(width: AppSpacing.lg),
-                  // Right panel - detail
-                  LayoutBuilder(
-                    builder: (context, constraints) {
-                      final detailWidth = (constraints.maxWidth * 0.36)
-                          .clamp(420.0, 540.0);
-                      return SizedBox(
-                        width: detailWidth,
-                        child: SavedItemDetailPanel(item: displayItem),
-                      );
-                    },
-                  ),
-                ],
+                    ],
+                  );
+                },
               ),
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _HeaderSearchField extends ConsumerWidget {
+  const _HeaderSearchField();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final query = ref.watch(collectionSearchQueryProvider);
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: colorScheme.surface,
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        border: Border.all(color: colorScheme.outlineVariant),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: TextFormField(
+              key: ValueKey('collection-header-search-$query'),
+              initialValue: query,
+              decoration: const InputDecoration(
+                prefixIcon: Icon(Icons.search_rounded),
+                hintText: '搜索收藏内容（标题 / 来源 / 标签 / URL）',
+                border: InputBorder.none,
+                isDense: true,
+              ),
+              onChanged: (value) {
+                ref.read(collectionSearchQueryProvider.notifier).state = value;
+              },
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.only(right: AppSpacing.sm),
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                color: colorScheme.surfaceContainerLow,
+                borderRadius: BorderRadius.circular(AppRadius.xs),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppSpacing.xs,
+                  vertical: AppSpacing.xxs,
+                ),
+                child: Text(
+                  'Ctrl K',
+                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                    color: colorScheme.onSurfaceVariant,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
