@@ -1,0 +1,12 @@
+{"file":".trellis/spec/backend/index.md","reason":"Collections 需要新增 Drift 表、DAO、Repository 与本地任务数据流。"}
+{"file":".trellis/spec/backend/database-guidelines.md","reason":"遵循 Drift 表定义、DAO/Repository、迁移与测试规范。"}
+{"file":".trellis/spec/backend/plugin-data-flow.md","reason":"新增插件数据层需按 Table→Plugin→Database→Provider→Test 流程串接。"}
+{"file":".trellis/spec/backend/error-handling.md","reason":"URL 收藏、metadata 抓取与 repository 层需要统一错误处理边界。"}
+{"file":".trellis/spec/backend/quality-guidelines.md","reason":"实现阶段需要遵守后端质量与禁止模式。"}
+{"file":".trellis/spec/frontend/index.md","reason":"Collections 首页、列表卡片与筛选交互属于前端实现。"}
+{"file":".trellis/spec/frontend/component-guidelines.md","reason":"Widget 需要遵循 Material 3、设计令牌、布局与 overflow 规范。"}
+{"file":".trellis/spec/frontend/uiux-guidelines.md","reason":"需要处理空态、加载、错误、交互反馈与可访问性。"}
+{"file":".trellis/spec/frontend/state-management.md","reason":"Riverpod Provider 与 AsyncValue 三态需要符合项目模式。"}
+{"file":".trellis/spec/frontend/type-safety.md","reason":"新增 domain/model/provider 需保持类型安全，避免 dynamic 与抑制。"}
+{"file":".trellis/spec/guides/code-reuse-thinking-guide.md","reason":"实现前检查 thoughts/shared/core 中可复用模式，避免重复。"}
+{"file":".trellis/spec/guides/cross-layer-thinking-guide.md","reason":"变更横跨 plugin/data/service/provider/ui/core database，需要跨层一致性检查。"}
