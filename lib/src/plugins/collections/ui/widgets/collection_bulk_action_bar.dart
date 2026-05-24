@@ -4,12 +4,11 @@ import 'package:uni_hub/src/core/theme/app_tokens.dart';
 import 'package:uni_hub/src/plugins/collections/domain/consumption_status.dart';
 import 'package:uni_hub/src/plugins/collections/providers/collections_providers.dart';
 
-/// Minimal bulk action bar shown below the item list when an item is selected.
+/// A floating toolbar-style bulk action bar shown below the item list.
 ///
-/// UI skeleton — batch logic (multi-select, bulk archive/move) is out of scope
-/// for MVP. The "标记已看" button works on the currently selected item;
-/// "归档" works similarly. "移动" and "添加到 Box" are disabled until
-/// multi-select is implemented.
+/// Visual style: white background, thin border, light shadow, rounded corners.
+/// Active actions ("标记已看", "归档") look enabled.
+/// Placeholder actions ("移动", "添加到 Box") are visually disabled.
 class CollectionBulkActionBar extends ConsumerWidget {
   const CollectionBulkActionBar({super.key});
 
@@ -21,64 +20,112 @@ class CollectionBulkActionBar extends ConsumerWidget {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
-    return Container(
-      margin: const EdgeInsets.only(top: AppSpacing.sm),
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.md,
-        vertical: AppSpacing.sm,
-      ),
-      decoration: BoxDecoration(
-        color: colorScheme.surfaceContainerLow,
-        borderRadius: BorderRadius.circular(AppRadius.md),
-        border: Border.all(
-          color: colorScheme.outlineVariant.withValues(alpha: 0.5),
-        ),
-      ),
-      child: Row(
-        children: [
-          Text('已选择 1 项', style: theme.textTheme.bodySmall),
-          const Spacer(),
-          _ActionButton(
-            icon: Icons.check_circle_outline,
-            label: '标记已看',
-            onPressed: () async {
-              final repository = ref.read(collectionsRepositoryProvider);
-              await repository.updateStatus(selectedId, ConsumptionStatus.done);
-              ref.invalidate(savedItemsListProvider);
-            },
-            color: colorScheme.primary,
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isCompact = constraints.maxWidth < 520;
+
+        return Padding(
+          padding: const EdgeInsets.only(top: AppSpacing.sm),
+          child: Container(
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.md,
+              vertical: AppSpacing.sm,
+            ),
+            decoration: BoxDecoration(
+              color: colorScheme.surface,
+              borderRadius: BorderRadius.circular(AppRadius.md),
+              border: Border.all(
+                color: colorScheme.outlineVariant.withValues(alpha: 0.6),
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.04),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: Row(
+              children: [
+                // Selection count
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: colorScheme.primaryContainer.withValues(alpha: 0.3),
+                    borderRadius: BorderRadius.circular(AppRadius.xs),
+                  ),
+                  child: Text(
+                    '已选择 1 项',
+                    style: theme.textTheme.labelSmall?.copyWith(
+                      color: colorScheme.onPrimaryContainer,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: AppSpacing.sm),
+                // Buttons - scrollable when narrow
+                Expanded(
+                  child: SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: Row(
+                      children: [
+                        // Active: 标记已看
+                        _ActionButton(
+                          icon: Icons.check_circle_outline,
+                          label: isCompact ? '已看' : '标记已看',
+                          enabled: true,
+                          onPressed: () async {
+                            final repository = ref.read(collectionsRepositoryProvider);
+                            await repository.updateStatus(
+                              selectedId,
+                              ConsumptionStatus.done,
+                            );
+                            ref.invalidate(savedItemsListProvider);
+                          },
+                          colorScheme: colorScheme,
+                        ),
+                        const SizedBox(width: AppSpacing.xs),
+                        // Active: 归档
+                        _ActionButton(
+                          icon: Icons.archive_outlined,
+                          label: '归档',
+                          enabled: true,
+                          onPressed: () async {
+                            final repository = ref.read(collectionsRepositoryProvider);
+                            await repository.updateStatus(
+                              selectedId,
+                              ConsumptionStatus.archived,
+                            );
+                            ref.read(selectedSavedItemIdProvider.notifier).state = null;
+                            ref.invalidate(savedItemsListProvider);
+                          },
+                          colorScheme: colorScheme,
+                        ),
+                        const SizedBox(width: AppSpacing.xs),
+                        // Disabled: 移动
+                        _ActionButton(
+                          icon: Icons.drive_file_move_outlined,
+                          label: '移动',
+                          enabled: false,
+                          colorScheme: colorScheme,
+                        ),
+                        const SizedBox(width: AppSpacing.xs),
+                        // Disabled: 添加到 Box
+                        _ActionButton(
+                          icon: Icons.folder_outlined,
+                          label: isCompact ? 'Box' : '添加到 Box',
+                          enabled: false,
+                          colorScheme: colorScheme,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
-          const SizedBox(width: AppSpacing.xs),
-          _ActionButton(
-            icon: Icons.archive_outlined,
-            label: '归档',
-            onPressed: () async {
-              final repository = ref.read(collectionsRepositoryProvider);
-              await repository.updateStatus(
-                selectedId,
-                ConsumptionStatus.archived,
-              );
-              ref.read(selectedSavedItemIdProvider.notifier).state = null;
-              ref.invalidate(savedItemsListProvider);
-            },
-            color: colorScheme.primary,
-          ),
-          const SizedBox(width: AppSpacing.xs),
-          _ActionButton(
-            icon: Icons.drive_file_move_outlined,
-            label: '移动',
-            onPressed: null, // disabled until multi-select
-            color: colorScheme.onSurfaceVariant,
-          ),
-          const SizedBox(width: AppSpacing.xs),
-          _ActionButton(
-            icon: Icons.folder_outlined,
-            label: '添加到 Box',
-            onPressed: null, // disabled until multi-select
-            color: colorScheme.onSurfaceVariant,
-          ),
-        ],
-      ),
+        );
+      },
     );
   }
 }
@@ -87,23 +134,38 @@ class _ActionButton extends StatelessWidget {
   const _ActionButton({
     required this.icon,
     required this.label,
-    required this.onPressed,
-    required this.color,
+    required this.enabled,
+    required this.colorScheme,
+    this.onPressed,
   });
 
   final IconData icon;
   final String label;
+  final bool enabled;
+  final ColorScheme colorScheme;
   final VoidCallback? onPressed;
-  final Color color;
 
   @override
   Widget build(BuildContext context) {
+    final foregroundColor = enabled
+        ? colorScheme.primary
+        : colorScheme.onSurfaceVariant.withValues(alpha: 0.4);
+
     return TextButton.icon(
-      onPressed: onPressed,
-      icon: Icon(icon, size: 16, color: color),
+      onPressed: enabled ? onPressed : null,
+      icon: Icon(icon, size: 16, color: foregroundColor),
       label: Text(
         label,
-        style: TextStyle(color: color),
+        style: TextStyle(
+          color: foregroundColor,
+          fontWeight: enabled ? FontWeight.w500 : FontWeight.normal,
+        ),
+      ),
+      style: TextButton.styleFrom(
+        visualDensity: VisualDensity.compact,
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
+        foregroundColor: foregroundColor,
+        disabledForegroundColor: colorScheme.onSurfaceVariant.withValues(alpha: 0.3),
       ),
     );
   }

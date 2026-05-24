@@ -761,7 +761,72 @@ FittedBox(
 | 3 | 确认无黄色/黑色溢出条纹 | Debug mode 目视检查 |
 | 4 | `childAspectRatio` 重新验证 | 用上述公式重新计算内容是否仍适配 |
 
-### 6. 禁止的溢出修复方式
+### 6. 工具栏/操作条溢出：LayoutBuilder + 水平滚动 + compact 模式
+
+当 `Row` 内按钮数量过多导致固定宽度超出父容器时，使用 `LayoutBuilder` 检测容器宽度并启用 compact 模式或水平滚动：
+
+```dart
+LayoutBuilder(
+  builder: (context, constraints) {
+    final isCompact = constraints.maxWidth < 520;
+
+    return Row(
+      children: [
+        // 左侧固定内容
+        Text('已选择 1 项'),
+        const SizedBox(width: AppSpacing.sm),
+        // 右侧可滚动按钮区域
+        Expanded(
+          child: SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: [
+                _ActionButton(
+                  label: isCompact ? '已看' : '标记已看',
+                  ...
+                ),
+                _ActionButton(label: '归档', ...),
+                _ActionButton(label: isCompact ? 'Box' : '添加到 Box', ...),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  },
+)
+```
+
+**原则**：
+- 始终用 `LayoutBuilder` 检测可用宽度，而不是假设固定宽度
+- compact 模式下缩短按钮标签文字
+- `Expanded(SingleChildScrollView(horizontal))` 防止 Row 溢出
+- 不依赖 `Spacer` 在窄空间中撑开（Spacer 在固定宽度已满时会变为 0，导致后续元素溢出）
+
+### 7. 卡片右侧操作区紧缩
+
+当卡片内右侧操作按钮过多时（状态 pill + Box 按钮 + open 按钮等），应采用 Column 垂直排列：
+
+```dart
+// ✅ 右侧 Column + ConstrainedBox 限制最大宽度
+ConstrainedBox(
+  constraints: const BoxConstraints(maxWidth: 72),
+  child: StatusPill(
+    child: Text(status.label, maxLines: 1, overflow: TextOverflow.ellipsis),
+  ),
+),
+const SizedBox(height: 4),
+BoxIconButton(constraints: BoxConstraints.tightFor(width: 28, height: 28)),
+const SizedBox(height: 4),
+OpenIconButton(size: 28),
+```
+
+**原则**：
+- 状态 pill 用 `ConstrainedBox(maxWidth: 72)` + `TextOverflow.ellipsis` 防止宽标签溢出
+- 操作按钮用 `BoxConstraints.tightFor(width: 28, height: 28)` 缩小到最低可点击尺寸
+- `padding: EdgeInsets.zero` 移除按钮内部额外间距
+
+### 8. 禁止的溢出修复方式
 
 | 禁止的做法 | 原因 | 正确做法 |
 |-----------|------|---------|
@@ -1049,9 +1114,18 @@ Column(
               CollectionBulkActionBar(),
             ]),
           ),
-          SizedBox(width: AppSpacing.md),
-          // Right: detail panel, fixed width 400px
-          SizedBox(width: 400, child: SavedItemDetailPanel(item: displayItem)),
+          SizedBox(width: AppSpacing.lg),
+          // Right: detail panel, LayoutBuilder-based width (maxWidth*0.36, clamped 420-540)
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final detailWidth = (constraints.maxWidth * 0.36)
+                  .clamp(420.0, 540.0);
+              return SizedBox(
+                width: detailWidth,
+                child: SavedItemDetailPanel(item: displayItem),
+              );
+            },
+          ),
         ],
       ),
     ),
@@ -1063,8 +1137,8 @@ Column(
 
 | 规则 | 说明 |
 |------|------|
-| 左侧列表 + 右侧详情面板 | 置于 `Expanded > Row` 中，左右通过 `SizedBox(width: AppSpacing.md)` 分隔 |
-| 详情面板固定宽度 | `SizedBox(width: 400)` 或 `SizedBox(width: 360-420)`，不随窗口比例缩放 |
+| 左侧列表 + 右侧详情面板 | 置于 `Expanded > Row` 中，左右通过 `SizedBox(width: AppSpacing.lg)` 分隔 |
+| 详情面板宽度 | `LayoutBuilder` 动态计算：`constraints.maxWidth * 0.36`，clamp 至 `420-540`。使用 `LayoutBuilder` 包裹 `SizedBox`，不硬编码固定宽度 |
 | 选中项状态 | 由 `selectedSavedItemIdProvider`（`StateProvider<int?> `）管理，Widget 通过 `ref.watch/read` 访问 |
 | 自动选中首项 | `initState` 中通过 `addPostFrameCallback` 调用 `_autoSelectFirstItem()`；已有选中项时跳过 |
 | 列表点击驱动选中 | `SavedItemCard.onTap` 中将 `ref.read(selectedSavedItemIdProvider.notifier).state = item.id` |

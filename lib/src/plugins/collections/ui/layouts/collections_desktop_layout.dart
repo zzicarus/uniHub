@@ -91,19 +91,19 @@ class _CollectionsDesktopLayoutState
                 ),
               ],
             ),
-            const SizedBox(height: AppSpacing.lg),
+            const SizedBox(height: AppSpacing.sm),
             // Capture bar
             const CollectionCaptureBar(),
-            const SizedBox(height: AppSpacing.md),
+            const SizedBox(height: AppSpacing.sm),
             // View chips
             const CollectionViewChips(),
-            const SizedBox(height: AppSpacing.sm),
+            const SizedBox(height: AppSpacing.xs),
             // Box bar
             const CollectionBoxBar(),
-            const SizedBox(height: AppSpacing.sm),
+            const SizedBox(height: AppSpacing.xs),
             // Search / filter bar
             const CollectionSearchFilterBar(),
-            const SizedBox(height: AppSpacing.md),
+            const SizedBox(height: AppSpacing.sm),
             // Split pane: list + detail
             Expanded(
               child: Row(
@@ -155,11 +155,17 @@ class _CollectionsDesktopLayoutState
                       ],
                     ),
                   ),
-                  const SizedBox(width: AppSpacing.md),
+                  const SizedBox(width: AppSpacing.lg),
                   // Right panel - detail
-                  SizedBox(
-                    width: 400,
-                    child: SavedItemDetailPanel(item: displayItem),
+                  LayoutBuilder(
+                    builder: (context, constraints) {
+                      final detailWidth = (constraints.maxWidth * 0.36)
+                          .clamp(420.0, 540.0);
+                      return SizedBox(
+                        width: detailWidth,
+                        child: SavedItemDetailPanel(item: displayItem),
+                      );
+                    },
                   ),
                 ],
               ),

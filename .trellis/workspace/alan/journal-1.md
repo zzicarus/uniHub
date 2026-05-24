@@ -572,3 +572,29 @@ font: AppFlowy 编辑器使用 Inter 字体 + 主题色; image V2: ThoughtImageB
 ### Next Steps
 
 - None - task complete
+
+---
+
+## Session: 2026-05-25 T2 — 优化收藏页 UI + 修复 RenderFlex overflow
+
+### Files Changed
+
+| File | Summary |
+|------|---------|
+| `collections_desktop_layout.dart` | 顶部间距压缩 (lg→sm, md→sm, sm→xs)；详情面板改用 LayoutBuilder 动态宽度 (maxWidth*0.36, clamp 420-540)；左右分隔改为 AppSpacing.lg |
+| `collection_box_bar.dart` | 空态从 Column 改为单行 Row (图标 + 提示 + 新建按钮)；"+ 新建 Box" 始终可见 |
+| `saved_item_card.dart` | 卡片 ConstrainedBox(min:112, max:132)；标题 1 行 + 描述 2 行；右侧 Column (ConstrainedBox maxWidth:72 状态 pill + _CompactBoxButton 28×28 + open 按钮)；底部 chips 行精简；enrichment success 不显示；背景仅用 alpha 0.06 primaryContainer |
+| `saved_item_detail_panel.dart` | 三区结构：A 内容身份区 / B 整理操作区(浅色背景分组) / C 内容沉淀区(TabBar + 技术信息折叠)；链接压缩 + 可复制；Box 空态提供新建入口；摘要仅 Tab 内 |
+| `collection_bulk_action_bar.dart` | 白底浮窗风格 (shadow + border + rounded)；LayoutBuilder + compact 模式 (标记已看→已看, 添加到 Box→Box)；Expanded(SingleChildScrollView) 防止按钮 Row 溢出 |
+
+### Design Decisions
+
+- **Overflow 预防**：LayoutBuilder 检测 + compact 标签缩短 + SingleChildScrollView 水平滚动
+- **卡片右侧紧缩**：Column 排列 (3 items) + ConstrainedBox maxWidth:72 + BoxConstraints.tightFor 28×28 按钮
+- **详情面板宽度**：不再硬编码 400，改为比例计算 (maxWidth*0.36) 自适应窗口缩放
+- **视觉风格**：薄边框、轻阴影、低饱和度 chip、白色 surface 背景，接近现代生产力工具
+
+### Spec Updated
+
+- `component-guidelines.md`: Workbench layout spec 更新 (面板宽度动态化、间距调整)
+- `component-guidelines.md`: 新增 Overflow 预防第 6 条 (工具栏/操作条) 和第 7 条 (卡片右侧紧缩)
