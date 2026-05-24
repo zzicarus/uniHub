@@ -1,19 +1,64 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:uni_hub/src/core/database/app_database.dart';
 import 'package:uni_hub/src/core/theme/app_tokens.dart';
 import 'package:uni_hub/src/plugins/collections/providers/collections_providers.dart';
 
+import '../widgets/collection_box_bar.dart';
+import '../widgets/collection_bulk_action_bar.dart';
 import '../widgets/collection_capture_bar.dart';
-import '../widgets/collection_filter_bar.dart';
+import '../widgets/collection_search_filter_bar.dart';
+import '../widgets/collection_view_chips.dart';
 import '../widgets/saved_item_card.dart';
+import '../widgets/saved_item_detail_panel.dart';
 
-class CollectionsDesktopLayout extends ConsumerWidget {
+class CollectionsDesktopLayout extends ConsumerStatefulWidget {
   const CollectionsDesktopLayout({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<CollectionsDesktopLayout> createState() =>
+      _CollectionsDesktopLayoutState();
+}
+
+class _CollectionsDesktopLayoutState
+    extends ConsumerState<CollectionsDesktopLayout> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _autoSelectFirstItem();
+    });
+  }
+
+  void _autoSelectFirstItem() {
+    final itemsAsync = ref.read(savedItemsListProvider);
+    final currentSelectedId = ref.read(selectedSavedItemIdProvider);
+
+    if (currentSelectedId != null) return;
+
+    itemsAsync.whenData((items) {
+      if (items.isNotEmpty && mounted) {
+        ref.read(selectedSavedItemIdProvider.notifier).state = items.first.id;
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final itemsAsync = ref.watch(savedItemsListProvider);
+    final selectedId = ref.watch(selectedSavedItemIdProvider);
     final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
+    // Compute display item from async data synchronously
+    final items = itemsAsync.asData?.value ?? <SavedItemsTableData>[];
+    SavedItemsTableData? displayItem;
+    if (selectedId != null) {
+      displayItem = items.where(
+        (item) => item.id == selectedId,
+      ).firstOrNull;
+    }
+    displayItem ??= items.isNotEmpty ? items.first : null;
 
     return SafeArea(
       child: Padding(
@@ -21,6 +66,7 @@ class CollectionsDesktopLayout extends ConsumerWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // Header
             Row(
               children: [
                 Expanded(
@@ -32,7 +78,7 @@ class CollectionsDesktopLayout extends ConsumerWidget {
                       Text(
                         '保存链接、稍后阅读，并按状态与来源快速筛选。',
                         style: theme.textTheme.bodyMedium?.copyWith(
-                          color: theme.colorScheme.onSurfaceVariant,
+                          color: colorScheme.onSurfaceVariant,
                         ),
                       ),
                     ],
@@ -46,28 +92,76 @@ class CollectionsDesktopLayout extends ConsumerWidget {
               ],
             ),
             const SizedBox(height: AppSpacing.lg),
+            // Capture bar
             const CollectionCaptureBar(),
             const SizedBox(height: AppSpacing.md),
-            const CollectionFilterBar(),
+            // View chips
+            const CollectionViewChips(),
+            const SizedBox(height: AppSpacing.sm),
+            // Box bar
+            const CollectionBoxBar(),
+            const SizedBox(height: AppSpacing.sm),
+            // Search / filter bar
+            const CollectionSearchFilterBar(),
             const SizedBox(height: AppSpacing.md),
+            // Split pane: list + detail
             Expanded(
-              child: itemsAsync.when(
-                data: (items) {
-                  if (items.isEmpty) return const _EmptyState();
-                  return ListView.separated(
-                    itemCount: items.length,
-                    separatorBuilder: (context, index) =>
-                        const SizedBox(height: AppSpacing.sm),
-                    itemBuilder: (context, index) {
-                      return SavedItemCard(item: items[index]);
-                    },
-                  );
-                },
-                loading: () => const Center(child: CircularProgressIndicator()),
-                error: (error, stackTrace) => _ErrorState(
-                  error: error,
-                  onRetry: () => ref.invalidate(savedItemsListProvider),
-                ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Left panel - item list + bulk action bar
+                  Expanded(
+                    child: Column(
+                      children: [
+                        Expanded(
+                          child: itemsAsync.when(
+                            data: (items) {
+                              if (items.isEmpty) {
+                                return const _EmptyState();
+                              }
+                              return ListView.separated(
+                                itemCount: items.length,
+                                separatorBuilder: (context, index) =>
+                                    const SizedBox(height: AppSpacing.sm),
+                                itemBuilder: (context, index) {
+                                  final item = items[index];
+                                  final isSelected = item.id == selectedId;
+                                  return SavedItemCard(
+                                    item: item,
+                                    selected: isSelected,
+                                    onTap: () {
+                                      ref
+                                          .read(
+                                            selectedSavedItemIdProvider
+                                                .notifier,
+                                          )
+                                          .state = item.id;
+                                    },
+                                  );
+                                },
+                              );
+                            },
+                            loading: () => const Center(
+                              child: CircularProgressIndicator(),
+                            ),
+                            error: (error, stackTrace) => _ErrorState(
+                              error: error,
+                              onRetry: () =>
+                                  ref.invalidate(savedItemsListProvider),
+                            ),
+                          ),
+                        ),
+                        const CollectionBulkActionBar(),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: AppSpacing.md),
+                  // Right panel - detail
+                  SizedBox(
+                    width: 400,
+                    child: SavedItemDetailPanel(item: displayItem),
+                  ),
+                ],
               ),
             ),
           ],

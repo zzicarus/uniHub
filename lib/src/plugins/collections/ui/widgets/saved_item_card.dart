@@ -1,5 +1,3 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uni_hub/src/core/database/app_database.dart';
@@ -11,75 +9,146 @@ import 'package:uni_hub/src/plugins/collections/domain/source_platform.dart';
 import 'package:uni_hub/src/plugins/collections/providers/collections_providers.dart';
 
 class SavedItemCard extends ConsumerWidget {
-  const SavedItemCard({required this.item, super.key});
+  const SavedItemCard({
+    required this.item,
+    this.selected = false,
+    this.onTap,
+    super.key,
+  });
 
   final SavedItemsTableData item;
+  final bool selected;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
     final platform = SourcePlatform.fromValue(item.sourcePlatform);
     final mediaType = MediaType.fromValue(item.mediaType);
     final status = ConsumptionStatus.fromValue(item.status);
     final enrichmentStatus = EnrichmentStatus.fromValue(item.enrichmentStatus);
 
-    return Card(
-      elevation: 0,
-      color: theme.colorScheme.surface,
-      shape: RoundedRectangleBorder(
+    return Material(
+      color: selected
+          ? colorScheme.primaryContainer.withValues(alpha: 0.1)
+          : Colors.transparent,
+      borderRadius: BorderRadius.circular(AppRadius.lg),
+      child: InkWell(
+        onTap: onTap,
         borderRadius: BorderRadius.circular(AppRadius.lg),
-        side: BorderSide(color: theme.colorScheme.outlineVariant),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.md),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
+        child: Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(AppRadius.lg),
+            border: Border.all(
+              color: selected
+                  ? colorScheme.primary
+                  : colorScheme.outlineVariant,
+              width: selected ? 1.5 : 1.0,
+            ),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.sm,
+              vertical: AppSpacing.sm,
+            ),
+            child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Container(
-                  width: 44,
-                  height: 44,
-                  decoration: BoxDecoration(
-                    color: theme.colorScheme.primaryContainer,
-                    borderRadius: BorderRadius.circular(AppRadius.md),
-                  ),
-                  child: Icon(
-                    _iconFor(mediaType),
-                    color: theme.colorScheme.onPrimaryContainer,
-                  ),
+                // Icon column with failed indicator
+                Stack(
+                  clipBehavior: Clip.none,
+                  children: [
+                    Container(
+                      width: 36,
+                      height: 36,
+                      decoration: BoxDecoration(
+                        color: colorScheme.primaryContainer,
+                        borderRadius: BorderRadius.circular(AppRadius.sm),
+                      ),
+                      child: Icon(
+                        _iconFor(mediaType),
+                        size: 20,
+                        color: colorScheme.onPrimaryContainer,
+                      ),
+                    ),
+                    if (enrichmentStatus == EnrichmentStatus.failed)
+                      Positioned(
+                        right: -2,
+                        top: -2,
+                        child: Container(
+                          width: 8,
+                          height: 8,
+                          decoration: BoxDecoration(
+                            color: colorScheme.error,
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: colorScheme.surface,
+                              width: 1,
+                            ),
+                          ),
+                        ),
+                      ),
+                  ],
                 ),
-                const SizedBox(width: AppSpacing.md),
+                const SizedBox(width: AppSpacing.sm),
+                // Content column
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      // Title
                       Text(
-                        item.title.isEmpty ? item.normalizedUrl : item.title,
-                        maxLines: 2,
+                        item.title.isEmpty
+                            ? item.normalizedUrl
+                            : item.title,
+                        maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: theme.textTheme.titleMedium?.copyWith(
+                        style: theme.textTheme.titleSmall?.copyWith(
                           fontWeight: FontWeight.w700,
                         ),
                       ),
                       const SizedBox(height: AppSpacing.xxs),
+                      // Description / URL
                       Text(
                         item.description?.trim().isNotEmpty == true
                             ? item.description!
                             : item.normalizedUrl,
-                        maxLines: 2,
+                        maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: theme.textTheme.bodyMedium?.copyWith(
-                          color: theme.colorScheme.onSurfaceVariant,
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: colorScheme.onSurfaceVariant,
                         ),
+                      ),
+                      const SizedBox(height: AppSpacing.xxs),
+                      // Meta chips row
+                      Wrap(
+                        spacing: AppSpacing.xxs,
+                        runSpacing: AppSpacing.xxs,
+                        children: [
+                          _CompactMetaChip(
+                            icon: Icons.public_rounded,
+                            label: platform.label,
+                          ),
+                          _CompactMetaChip(
+                            icon: Icons.category_outlined,
+                            label: mediaType.label,
+                          ),
+                          if (item.lastOpenedAt != null)
+                            const _CompactMetaChip(
+                              icon: Icons.open_in_new_rounded,
+                              label: '已打开',
+                            ),
+                          _ItemBoxChips(itemId: item.id),
+                        ],
                       ),
                     ],
                   ),
                 ),
-                const SizedBox(width: AppSpacing.sm),
-                _BoxAssignmentButton(itemId: item.id),
                 const SizedBox(width: AppSpacing.xs),
+                _BoxAssignmentButton(itemId: item.id),
+                const SizedBox(width: AppSpacing.xxs),
+                // Status popup menu
                 PopupMenuButton<ConsumptionStatus>(
                   tooltip: '切换状态',
                   initialValue: status,
@@ -92,88 +161,21 @@ class SavedItemCard extends ConsumerWidget {
                     for (final value in ConsumptionStatus.values)
                       PopupMenuItem(value: value, child: Text(value.label)),
                   ],
-                  child: Chip(label: Text(status.label)),
-                ),
-              ],
-            ),
-            const SizedBox(height: AppSpacing.md),
-            Wrap(
-              spacing: AppSpacing.xs,
-              runSpacing: AppSpacing.xs,
-              children: [
-                _MetaChip(icon: Icons.public_rounded, label: platform.label),
-                _MetaChip(
-                  icon: Icons.category_outlined,
-                  label: mediaType.label,
-                ),
-                _MetaChip(
-                  icon: Icons.cloud_sync_outlined,
-                  label: enrichmentStatus.label,
-                ),
-                if (item.lastOpenedAt != null)
-                  const _MetaChip(
-                    icon: Icons.open_in_new_rounded,
-                    label: '已打开',
-                  ),
-              ],
-            ),
-            const SizedBox(height: AppSpacing.sm),
-            Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    item.originalUrl,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant,
+                  child: Chip(
+                    visualDensity: VisualDensity.compact,
+                    materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    label: Text(
+                      status.label,
+                      style: theme.textTheme.labelSmall,
                     ),
                   ),
                 ),
-                TextButton.icon(
-                  onPressed: () async {
-                    final messenger = ScaffoldMessenger.of(context);
-                    try {
-                      await _openOriginalUrl(item.originalUrl);
-                      final repository = ref.read(
-                        collectionsRepositoryProvider,
-                      );
-                      await repository.markOpened(item.id);
-                      ref.invalidate(savedItemsListProvider);
-                      messenger.showSnackBar(
-                        const SnackBar(content: Text('已打开原链接')),
-                      );
-                    } catch (error) {
-                      messenger.showSnackBar(
-                        SnackBar(content: Text('打开失败：$error')),
-                      );
-                    }
-                  },
-                  icon: const Icon(Icons.open_in_new_rounded),
-                  label: const Text('打开'),
-                ),
               ],
             ),
-          ],
+          ),
         ),
       ),
     );
-  }
-
-  Future<void> _openOriginalUrl(String url) async {
-    final uri = Uri.parse(url.contains('://') ? url : 'https://$url');
-    final command = Platform.isMacOS
-        ? 'open'
-        : Platform.isWindows
-        ? 'cmd'
-        : 'xdg-open';
-    final args = Platform.isWindows
-        ? ['/c', 'start', '', uri.toString()]
-        : [uri.toString()];
-    final result = await Process.run(command, args);
-    if (result.exitCode != 0) {
-      throw StateError('无法打开 ${uri.toString()}');
-    }
   }
 
   IconData _iconFor(MediaType mediaType) {
@@ -192,8 +194,8 @@ class SavedItemCard extends ConsumerWidget {
   }
 }
 
-class _MetaChip extends StatelessWidget {
-  const _MetaChip({required this.icon, required this.label});
+class _CompactMetaChip extends StatelessWidget {
+  const _CompactMetaChip({required this.icon, required this.label});
 
   final IconData icon;
   final String label;
@@ -203,9 +205,71 @@ class _MetaChip extends StatelessWidget {
     final theme = Theme.of(context);
     return Chip(
       visualDensity: VisualDensity.compact,
-      avatar: Icon(icon, size: 16),
-      label: Text(label),
-      labelStyle: theme.textTheme.labelMedium,
+      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+      avatar: Icon(icon, size: 12),
+      label: Text(
+        label,
+        style: theme.textTheme.labelSmall,
+      ),
+      labelPadding: EdgeInsets.zero,
+    );
+  }
+}
+
+class _ItemBoxChips extends ConsumerWidget {
+  const _ItemBoxChips({required this.itemId});
+
+  final int itemId;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final repository = ref.read(collectionsRepositoryProvider);
+    final boxesAsync = ref.watch(collectionBoxesProvider);
+
+    return FutureBuilder<List<int>>(
+      future: repository.getBoxIdsForItem(itemId),
+      builder: (context, snapshot) {
+        if (!snapshot.hasData || snapshot.data!.isEmpty) {
+          return const SizedBox.shrink();
+        }
+
+        final boxIds = snapshot.data!;
+
+        return boxesAsync.when(
+          data: (boxes) {
+            final namedBoxes = boxes
+                .where((b) => boxIds.contains(b.id))
+                .map((b) => b.name)
+                .toList();
+
+            if (namedBoxes.isEmpty) return const SizedBox.shrink();
+
+            final showCount = namedBoxes.length > 2 ? 2 : namedBoxes.length;
+            final extraCount = namedBoxes.length - showCount;
+
+            return Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                for (int i = 0; i < showCount; i++)
+                  Padding(
+                    padding: const EdgeInsets.only(right: AppSpacing.xxs),
+                    child: _CompactMetaChip(
+                      icon: Icons.folder_outlined,
+                      label: namedBoxes[i],
+                    ),
+                  ),
+                if (extraCount > 0)
+                  _CompactMetaChip(
+                    icon: Icons.more_horiz_rounded,
+                    label: '+$extraCount',
+                  ),
+              ],
+            );
+          },
+          loading: () => const SizedBox.shrink(),
+          error: (_, _) => const SizedBox.shrink(),
+        );
+      },
     );
   }
 }
@@ -221,7 +285,8 @@ class _BoxAssignmentButton extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     return IconButton(
       tooltip: '分配到 Box',
-      icon: const Icon(Icons.folder_outlined, size: 20),
+      icon: const Icon(Icons.folder_outlined, size: 18),
+      visualDensity: VisualDensity.compact,
       onPressed: () => _showBoxMenu(context, ref),
     );
   }
@@ -274,18 +339,15 @@ class _BoxAssignmentButton extends ConsumerWidget {
     if (selection == null || !context.mounted) return;
 
     if (selection == _inboxValue) {
-      // 移除所有 Box，回到 Inbox
       await repository.setItemBoxes(itemId, const {});
       await repository.updateInboxState(itemId, true);
     } else if (currentSet.contains(selection)) {
-      // 移出此 Box
       final next = {...currentSet}..remove(selection);
       await repository.setItemBoxes(itemId, next);
       if (next.isEmpty) {
         await repository.updateInboxState(itemId, true);
       }
     } else {
-      // 分配到 Box
       final next = {...currentSet, selection};
       await repository.setItemBoxes(itemId, next);
       await repository.updateInboxState(itemId, false);

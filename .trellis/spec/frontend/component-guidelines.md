@@ -915,3 +915,207 @@ Padding(
 | `AppTagFilterBar` | `test/shared/widgets/tags/app_tag_filter_bar_test.dart` | label、empty、onTagToggle、showCounts、maxVisibleTags、onMoreTap、horizontalScroll |
 | `AppSelectedTagsBar` | `test/shared/widgets/tags/app_selected_tags_bar_test.dart` | label、empty、onRemove、onClear、+N、clearLabel |
 | `AppCommonTagsPanel` | `test/shared/widgets/tags/app_common_tags_panel_test.dart` | title、helperText、empty、tag chips、count、selected、maxVisibleTags |
+
+---
+
+## Collections Workbench UI Layout
+
+> 参考实现：`lib/src/plugins/collections/ui/layouts/collections_desktop_layout.dart`
+
+Collections 插件使用「左侧列表 + 右侧详情面板」的桌面工作台布局。参考 `saved_item_detail_panel.dart`、`saved_item_card.dart`、`collection_capture_bar.dart`、`collection_box_bar.dart`、`collection_view_chips.dart`、`collection_search_filter_bar.dart`。
+
+### Workbench 主布局
+
+```dart
+// Desktop layout 模式：Column (header + controls) → Expanded (Row [list panel | detail panel])
+Column(
+  crossAxisAlignment: CrossAxisAlignment.start,
+  children: [
+    // ---- Header ----
+    Row(children: [title, refresh button]),
+    // ---- Capture bar ----
+    CollectionCaptureBar(),
+    // ---- View chips ----
+    CollectionViewChips(),
+    // ---- Box bar ----
+    CollectionBoxBar(),
+    // ---- Search / filter bar ----
+    CollectionSearchFilterBar(),
+    // ---- Split pane ----
+    Expanded(
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Left: scrollable item list
+          Expanded(
+            child: Column(children: [
+              Expanded(child: ListView.separated(...)),
+              CollectionBulkActionBar(),
+            ]),
+          ),
+          SizedBox(width: AppSpacing.md),
+          // Right: detail panel, fixed width 400px
+          SizedBox(width: 400, child: SavedItemDetailPanel(item: displayItem)),
+        ],
+      ),
+    ),
+  ],
+)
+```
+
+**约定**：
+
+| 规则 | 说明 |
+|------|------|
+| 左侧列表 + 右侧详情面板 | 置于 `Expanded > Row` 中，左右通过 `SizedBox(width: AppSpacing.md)` 分隔 |
+| 详情面板固定宽度 | `SizedBox(width: 400)` 或 `SizedBox(width: 360-420)`，不随窗口比例缩放 |
+| 选中项状态 | 由 `selectedSavedItemIdProvider`（`StateProvider<int?> `）管理，Widget 通过 `ref.watch/read` 访问 |
+| 自动选中首项 | `initState` 中通过 `addPostFrameCallback` 调用 `_autoSelectFirstItem()`；已有选中项时跳过 |
+| 列表点击驱动选中 | `SavedItemCard.onTap` 中将 `ref.read(selectedSavedItemIdProvider.notifier).state = item.id` |
+| 显示项计算 | `displayItem` 由 `selectedId` 在 `items` 列表中查找得到；`selectedId` 无效时 fallback 到 `items.first` |
+| 右侧为空态 | displayItem 为 null 时，`SavedItemDetailPanel` 显示 「选择一条收藏」占位（图标 + 标题 + 说明） |
+
+### Box 筛选 vs Box 编辑分离
+
+| 场景 | 使用的 Provider / Repository 方法 | 说明 |
+|------|----------------------------------|------|
+| **列表级筛选** | `selectedCollectionBoxIdsProvider`（`StateProvider<Set<int>>`） | 仅用于过滤列表显示哪些 item。空集合 = 不过滤（显示全部） |
+| **Item 级 Box 编辑** | `repository.setItemBoxes(id, Set)` + `repository.getBoxIdsForItem(id)` | 直接写数据库，不通过筛选 Provider。详见 `_BoxSection`（`saved_item_detail_panel.dart`） |
+| **Item 级 Inbox 联动** | `repository.updateInboxState(id, bool)` | 给 item 分配第一个 Box 时自动设 `isInInbox=false`；移出所有 Box 时设 `isInInbox=true` |
+
+```dart
+// 正確：Item 级 Box 编辑不写入筛选 Provider
+onSelected: (selected) {
+  if (selected) {
+    final next = {...currentSet, box.id};
+    repository.setItemBoxes(item.id, next);
+    if (currentSet.isEmpty) {
+      repository.updateInboxState(item.id, false);  // 移出 Inbox
+    }
+  } else {
+    final next = {...currentSet}..remove(box.id);
+    repository.setItemBoxes(item.id, next);
+    if (next.isEmpty) {
+      repository.updateInboxState(item.id, true);  // 回到 Inbox
+    }
+  }
+  ref.invalidate(savedItemsListProvider);  // 刷新列表
+}
+```
+
+### Detail Panel 结构
+
+结构自上而下（`saved_item_detail_panel.dart`）：
+
+| 区域 | Widget / 实现 | 说明 |
+|------|--------------|------|
+| `item == null` | `_buildEmpty()` | 居中图标 + 「选择一条收藏」+ 说明文字，用 `Container(border, borderRadius)` 包裹 |
+| Header | `_buildHeader()` | 媒体类型图标(40×40) + 标题(2行) + 副标题(平台·相对时间) + 打开按钮 |
+| Divider | `Divider(height: 1, thickness: 1)` | 各区域间水平分割线 |
+| Link | `_buildLinkSection()` | 标签「链接」+ URL(2行) + 复制按钮 |
+| Status | `_buildStatusSection()` | ChoiceChip 选择 `ConsumptionStatus`，选中后写数据库并 invalidate 列表 |
+| Box | `_BoxSection` (私有 `ConsumerWidget`) | 用 `FutureBuilder` 加载当前 item 的 Box IDs，FilterChip 多选 +「+ 选择 Box」ActionChip |
+| Tags | `_buildPlaceholderSection` | 占位：「标签功能稍后接入」 |
+| Notes | `_buildPlaceholderSection` | 占位：「备注功能稍后接入」 |
+| Content Tabs | `TabBar` + `TabBarView` | 4 tabs：摘要 / 内容预览 / 笔记 / 相关。`SingleTickerProviderStateMixin` |
+| Technical Info | `CollectionTechnicalInfoSection(item: item)` | 折叠的 `ExpansionTile`，不展开不显示内容 |
+
+**Content Tabs 内容规则**：
+
+| Tab | 内容 | 说明 |
+|-----|------|------|
+| 摘要 | `item.description`（纯文本） | Summary 仅在此 tab 展示，不放在 tab 上方 |
+| 内容预览 | `_buildPreviewTab()`：标题 / 站点 / 作者 / 封面 / 原始 URL / 标准化 URL | 已有元数据信息展示 |
+| 笔记 | 占位：「笔记功能稍后接入」 | 预留 |
+| 相关 | 占位：「相关想法/待办/笔记稍后接入」 | 预留 |
+
+**Key rule**：Summary 只在「摘要」tab 内显示，不放在 tabs 上方。防止 Summary 和 tab 内容同时展示造成重复。
+
+### Filter 组件模式
+
+Collections 插件的筛选组件各司其职，分别维护独立 provider（`collections_providers.dart`）：
+
+```dart
+// 6 个独立的 StateProvider，一个 FutureProvider 合成查询
+final collectionViewProvider = StateProvider<CollectionView>(
+  (ref) => CollectionView.inbox,
+);
+final collectionStatusFilterProvider = StateProvider<ConsumptionStatus?>(
+  (ref) => null,
+);
+final collectionPlatformFilterProvider = StateProvider<SourcePlatform?>(
+  (ref) => null,
+);
+final collectionMediaTypeFilterProvider = StateProvider<MediaType?>(
+  (ref) => null,
+);
+final selectedCollectionBoxIdsProvider = StateProvider<Set<int>>(
+  (ref) => const <int>{},
+);
+final collectionSearchQueryProvider = StateProvider<String>(
+  (ref) => '',
+);
+
+// 合成查询
+final savedItemsListProvider = FutureProvider<List<SavedItemsTableData>>((ref) {
+  final repository = ref.watch(collectionsRepositoryProvider);
+  return repository.queryItems(
+    view: ref.watch(collectionViewProvider),
+    status: ref.watch(collectionStatusFilterProvider),
+    platform: ref.watch(collectionPlatformFilterProvider),
+    mediaType: ref.watch(collectionMediaTypeFilterProvider),
+    boxIds: ref.watch(selectedCollectionBoxIdsProvider),
+    query: ref.watch(collectionSearchQueryProvider),
+  );
+});
+```
+
+| 组件 | Widget | Provider 和模式 |
+|------|--------|----------------|
+| View chips | `CollectionViewChips` | 单选的 `ChoiceChip` 行。读写 `collectionViewProvider`。clear filters 时**不**重置此 provider |
+| Box bar | `CollectionBoxBar` | 多选的 `FilterChip` 行 +「+ 新建 Box」ActionChip。读写 `selectedCollectionBoxIdsProvider`。空集合 = 不过滤 |
+| Search / filter bar | `CollectionSearchFilterBar` | `TextField(搜索)` + `DropdownButton(来源)` + `DropdownButton(媒介)` + 「清空筛选」按钮。clear 重置除 `collectionViewProvider` 外的所有 filter provider |
+
+**清空筛选规则**（`_clearFilters` in `CollectionSearchFilterBar`）：
+
+```dart
+void _clearFilters(WidgetRef ref) {
+  ref.read(collectionSearchQueryProvider.notifier).state = '';
+  ref.read(collectionPlatformFilterProvider.notifier).state = null;
+  ref.read(collectionMediaTypeFilterProvider.notifier).state = null;
+  ref.read(collectionStatusFilterProvider.notifier).state = null;
+  ref.read(selectedCollectionBoxIdsProvider.notifier).state = {};
+  // DO NOT reset collectionViewProvider — view selection is NOT a filter
+}
+```
+
+### Auto-select 首项模式
+
+```dart
+@override
+void initState() {
+  super.initState();
+  WidgetsBinding.instance.addPostFrameCallback((_) {
+    _autoSelectFirstItem();
+  });
+}
+
+void _autoSelectFirstItem() {
+  final itemsAsync = ref.read(savedItemsListProvider);
+  final currentSelectedId = ref.read(selectedSavedItemIdProvider);
+
+  if (currentSelectedId != null) return;  // 已有选中项，不覆盖
+
+  itemsAsync.whenData((items) {
+    if (items.isNotEmpty && mounted) {
+      ref.read(selectedSavedItemIdProvider.notifier).state = items.first.id;
+    }
+  });
+}
+```
+
+**约定**：
+- 使用 `addPostFrameCallback` 延迟执行，避免在 build 期间写 Provider
+- 已有选中项时跳过（`currentSelectedId != null`），防止刷新列表覆盖用户选择
+- 列表为空时不操作
+- 使用 `mounted` 检查防止异步回调在 dispose 后写 Provider

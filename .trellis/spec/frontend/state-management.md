@@ -117,6 +117,71 @@ onPressed: () {
 
 ---
 
+## Selected-Item Provider Pattern
+
+> 参考实现：`lib/src/plugins/collections/providers/collections_providers.dart`
+
+在列表 + 详情面板的工作台布局中，使用 `StateProvider<int?>` 持有当前选中项的 ID。
+
+### 声明
+
+```dart
+final selectedSavedItemIdProvider = StateProvider<int?>((ref) => null);
+```
+
+### 使用模式
+
+```dart
+// Widget build 中读取当前选中项
+final selectedId = ref.watch(selectedSavedItemIdProvider);
+
+// 从列表同步查找显示项
+final items = itemsAsync.asData?.value ?? <SavedItemsTableData>[];
+SavedItemsTableData? displayItem;
+if (selectedId != null) {
+  displayItem = items.where((item) => item.id == selectedId).firstOrNull;
+}
+displayItem ??= items.isNotEmpty ? items.first : null;  // fallback
+
+// 列表点击更新选中项
+SavedItemCard(
+  onTap: () {
+    ref.read(selectedSavedItemIdProvider.notifier).state = item.id;
+  },
+)
+```
+
+**约定**：
+
+| 规则 | 说明 |
+|------|------|
+| 选中的是 ID，不是对象 | 避免列表刷新时选中引用失效；从列表中按 ID 重新查找 |
+| ID 无效时 fallback 到 `items.first` | 如果选中 ID 在过滤/刷新后消失，不保留过期引用 |
+| null 初始值 | 启动时无选中项，由布局自动选择第一项 |
+| 不重置筛选时保留选中 | 筛选 Provider 变更不 reset `selectedSavedItemIdProvider`，由 `fallback` 处理无效选中 |
+| 只读模式 | UI 只通过 `ref.watch` 读取和 `ref.read(...notifier).state =` 写入，不做复杂操作 |
+
+### 自动选中首项
+
+```dart
+@override
+void initState() {
+  super.initState();
+  WidgetsBinding.instance.addPostFrameCallback((_) {
+    final itemsAsync = ref.read(savedItemsListProvider);
+    final currentSelectedId = ref.read(selectedSavedItemIdProvider);
+    if (currentSelectedId != null) return;
+    itemsAsync.whenData((items) {
+      if (items.isNotEmpty && mounted) {
+        ref.read(selectedSavedItemIdProvider.notifier).state = items.first.id;
+      }
+    });
+  });
+}
+```
+
+---
+
 ## 常见错误
 
 | 错误 | 正确做法 |

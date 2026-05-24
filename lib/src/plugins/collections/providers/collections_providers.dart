@@ -114,3 +114,5 @@ final savedItemsListProvider = FutureProvider<List<SavedItemsTableData>>((ref) {
     query: ref.watch(collectionSearchQueryProvider),
   );
 });
+
+final selectedSavedItemIdProvider = StateProvider<int?>((ref) => null);
