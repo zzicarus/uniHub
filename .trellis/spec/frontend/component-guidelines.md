@@ -308,7 +308,7 @@ Material(
 | 场景 | 推荐模式 | 原因 |
 |------|----------|------|
 | 动画布局中的导航/选择按钮 | `GestureDetector` + 自定义 `Container` 装饰 | 不需要 Material 涟漪，使用自定义颜色表示选中态 |
-| 动画布局中的卡片，需要涟漪 | `Ink` + `InkWell`（内部 `InkWell`） | `Ink` widget 将涟漪绘制边界绑定到装饰上，而非子组件 |
+| 动画布局中的卡片，需要涟漪 | 本地 `Material` + `Ink` + `InkWell` | `Ink` 会注册到最近的 `Material`；必须由组件自己提供本地宿主，不能依赖 Scaffold |
 | 静态布局中的卡片 | `Material` + `InkWell`（标准模式） | 子组件布局稳定，无竞争条件 |
 
 ```dart
@@ -324,19 +324,26 @@ GestureDetector(
   ),
 );
 
-// ✅ 正确（动画布局，需要涟漪）：Ink + InkWell
-Ink(
-  decoration: BoxDecoration(
-    borderRadius: BorderRadius.circular(AppRadius.lg),
-    color: selected
-        ? colorScheme.primaryContainer.withValues(alpha: 0.1)
-        : Colors.transparent,
-    border: Border.all(color: colorScheme.outlineVariant),
-  ),
-  child: InkWell(
-    onTap: onTap,
-    borderRadius: BorderRadius.circular(AppRadius.lg),
-    child: /* 内容 */,
+// ✅ 正确（动画布局，需要涟漪）：本地 Material + Ink + InkWell
+final borderRadius = BorderRadius.circular(AppRadius.lg);
+
+Material(
+  type: MaterialType.transparency,
+  shape: RoundedRectangleBorder(borderRadius: borderRadius),
+  clipBehavior: Clip.antiAlias,
+  child: Ink(
+    decoration: BoxDecoration(
+      borderRadius: borderRadius,
+      color: selected
+          ? colorScheme.primaryContainer.withValues(alpha: 0.1)
+          : Colors.transparent,
+      border: Border.all(color: colorScheme.outlineVariant),
+    ),
+    child: InkWell(
+      onTap: onTap,
+      borderRadius: borderRadius,
+      child: /* 内容 */,
+    ),
   ),
 );
 
@@ -350,35 +357,39 @@ Material(
 );
 ```
 
-**例外**：纯静态布局（整个 widget 树不包含任何动画改变布局的组件）中，`Material` + `InkWell` 标准模式安全可用。但注意 `Material(color: Colors.transparent)` 不会创建本地 `_RenderInkFeatures`，其 `InkWell` 涟漪冒泡到最近的祖先 `_RenderInkFeatures`（通常是 Scaffold 的 Material）。如果该祖先与动画布局共享同一 render 树，仍有触发断言的风险。
+**例外**：纯静态布局（整个 widget 树不包含任何动画改变布局的组件）中，`Material` + `InkWell` 标准模式安全可用。但注意 `Ink` 不是本地 ink 宿主：Flutter 源码中 `Ink` 会通过 `Material.of(context)` 把 `InkDecoration` 注册到最近的 `Material`。如果组件自己没有提供本地 `Material`，`InkDecoration` 仍可能挂到 `Scaffold` 的 `_RenderInkFeatures` 上；当该 Scaffold 同时包含动画布局时，仍有触发断言的风险。
 
-**安全模式**：项目中所有可点击的共享 Widget 优先使用 `Ink` + `InkWell` 模式：
+**安全模式**：项目中所有可点击的共享 Widget 优先使用“本地 `Material` 宿主 + `Ink`/`InkWell`”模式：
 
 ```dart
-// ✅ 推荐：Ink + InkWell（创建本地 _RenderInkFeatures）
+// ✅ 推荐：本地 Material + Ink + InkWell
+Material(
+  type: MaterialType.transparency,
+  child: Ink(
+    child: InkWell(
+      borderRadius: BorderRadius.circular(AppRadius.md),
+      onTap: onTap,
+      child: /* 内容 */,
+    ),
+  ),
+);
+
+// ❌ 避免：只有 Ink + InkWell（InkDecoration 仍注册到祖先 Material）
 Ink(
   child: InkWell(
-    borderRadius: BorderRadius.circular(AppRadius.md),
     onTap: onTap,
     child: /* 内容 */,
   ),
 );
 
-// ❌ 避免：Material(color: Colors.transparent) + InkWell
-Material(
-  color: Colors.transparent,  // 不创建本地 _RenderInkFeatures
-  child: InkWell(
-    onTap: onTap,
-    child: /* 内容 */,
-  ),
-);
-
-// ❌ 避免：裸 InkWell（同样无本地 _RenderInkFeatures）
+// ❌ 避免：裸 InkWell（无本地 Material 宿主）
 InkWell(
   onTap: onTap,
   child: /* 内容 */,
 );
 ```
+
+**测试要求**：修复或新增共享可点击 Widget 时，widget test 应覆盖目标 `Ink`/`InkWell` 在组件根节点以内存在 `Material` 祖先，避免只依赖 `Scaffold` 或页面级 `Material`。
 
 ---
 

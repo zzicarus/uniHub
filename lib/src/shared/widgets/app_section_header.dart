@@ -35,20 +35,23 @@ class AppSectionHeader extends StatelessWidget {
           ),
         ),
         if (trailingText != null)
-          Ink(
-            child: InkWell(
-              borderRadius: BorderRadius.circular(AppRadius.sm),
-              onTap: onTrailingTap,
-              child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: AppSpacing.xs,
-                  vertical: AppSpacing.xxs,
-                ),
-                child: Text(
-                  '$trailingText  →',
-                  style: theme.textTheme.labelLarge?.copyWith(
-                    color: colorScheme.primary,
-                    fontWeight: FontWeight.w700,
+          Material(
+            type: MaterialType.transparency,
+            child: Ink(
+              child: InkWell(
+                borderRadius: BorderRadius.circular(AppRadius.sm),
+                onTap: onTrailingTap,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.xs,
+                    vertical: AppSpacing.xxs,
+                  ),
+                  child: Text(
+                    '$trailingText  →',
+                    style: theme.textTheme.labelLarge?.copyWith(
+                      color: colorScheme.primary,
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
                 ),
               ),

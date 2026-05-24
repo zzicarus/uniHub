@@ -153,19 +153,20 @@ void main() {
     await pumpSidebar(tester, initialLocation: '/library');
 
     final theme = testTheme();
-    final selectedColor =
-        theme.extension<UniHubThemeColors>()!.navSelectedBackground;
+    final selectedColor = theme
+        .extension<UniHubThemeColors>()!
+        .navSelectedBackground;
 
-    // _NavItem wraps the selected label in a Material with navSelectedBackground.
-    final materials = tester.widgetList<Material>(
-      find.ancestor(
-        of: find.text('资料库'),
-        matching: find.byType(Material),
-      ),
+    // _NavItem uses a Container decoration for selected state.
+    final containers = tester.widgetList<Container>(
+      find.ancestor(of: find.text('资料库'), matching: find.byType(Container)),
     );
 
     expect(
-      materials.any((material) => material.color == selectedColor),
+      containers.any((container) {
+        final decoration = container.decoration;
+        return decoration is BoxDecoration && decoration.color == selectedColor;
+      }),
       isTrue,
     );
   });

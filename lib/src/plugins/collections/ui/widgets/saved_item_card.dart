@@ -29,23 +29,27 @@ class SavedItemCard extends ConsumerWidget {
     final status = ConsumptionStatus.fromValue(item.status);
     final enrichmentStatus = EnrichmentStatus.fromValue(item.enrichmentStatus);
 
-    return Ink(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(AppRadius.lg),
-        color: selected
-            ? colorScheme.primaryContainer.withValues(alpha: 0.1)
-            : Colors.transparent,
-        border: Border.all(
+    final borderRadius = BorderRadius.circular(AppRadius.lg);
+
+    return Material(
+      type: MaterialType.transparency,
+      shape: RoundedRectangleBorder(borderRadius: borderRadius),
+      clipBehavior: Clip.antiAlias,
+      child: Ink(
+        decoration: BoxDecoration(
+          borderRadius: borderRadius,
           color: selected
-              ? colorScheme.primary
-              : colorScheme.outlineVariant,
-          width: selected ? 1.5 : 1.0,
+              ? colorScheme.primaryContainer.withValues(alpha: 0.1)
+              : Colors.transparent,
+          border: Border.all(
+            color: selected ? colorScheme.primary : colorScheme.outlineVariant,
+            width: selected ? 1.5 : 1.0,
+          ),
         ),
-      ),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(AppRadius.lg),
-        child: Padding(
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: borderRadius,
+          child: Padding(
             padding: const EdgeInsets.symmetric(
               horizontal: AppSpacing.sm,
               vertical: AppSpacing.sm,
@@ -97,9 +101,7 @@ class SavedItemCard extends ConsumerWidget {
                     children: [
                       // Title
                       Text(
-                        item.title.isEmpty
-                            ? item.normalizedUrl
-                            : item.title,
+                        item.title.isEmpty ? item.normalizedUrl : item.title,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: theme.textTheme.titleSmall?.copyWith(
@@ -172,6 +174,7 @@ class SavedItemCard extends ConsumerWidget {
             ),
           ),
         ),
+      ),
     );
   }
 
@@ -204,10 +207,7 @@ class _CompactMetaChip extends StatelessWidget {
       visualDensity: VisualDensity.compact,
       materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
       avatar: Icon(icon, size: 12),
-      label: Text(
-        label,
-        style: theme.textTheme.labelSmall,
-      ),
+      label: Text(label, style: theme.textTheme.labelSmall),
       labelPadding: EdgeInsets.zero,
     );
   }
@@ -304,10 +304,7 @@ class _BoxAssignmentButton extends ConsumerWidget {
           value: _inboxValue,
           child: Row(
             children: [
-              Icon(
-                currentSet.isEmpty ? Icons.check : null,
-                size: 18,
-              ),
+              Icon(currentSet.isEmpty ? Icons.check : null, size: 18),
               const SizedBox(width: 8),
               const Text('Inbox（不分配到 Box）'),
             ],

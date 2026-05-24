@@ -32,7 +32,25 @@
 1. 项目中所有可点击的共享 Widget（AppPanel、AppCompactListItem、AppSectionHeader）优先使用 `Ink + InkWell` 模式，避免 `Material(color: Colors.transparent) + InkWell`
 2. 裸 `InkWell`（无 Ink/Material 包装）也会将涟漪冒泡到祖先 `_RenderInkFeatures`，同样存在风险
 3. 任何 Widget 若可能被部署在与动画布局共享 Scaffold 的子树中，都必须使用 `Ink + InkWell` 而非 `Material + InkWell`
-4. `Ink` 即使不设置 `decoration` 也会创建 `_RenderInkFeatures`，可作为透明可点击区域的稳定 Ink 宿主
+4. 已修正：`Ink` 不能单独作为稳定宿主；必须配套本地 `Material`，详见第三波记录
+
+## 2026-05-24 (第三波): `Ink` without local `Material` 仍会注册到 Scaffold
+
+**场景**：第二波修复后，用户仍能复现 `desktop_shell.dart:14` 的 `Scaffold` paint 阶段断言。堆栈顶部是 `InkDecoration.paintFeature`，不是 `InkSplash`。残留问题集中在 `AppCompactListItem`、`AppSectionHeader`、`SavedItemCard` 这类“只包了 `Ink` / `InkWell`，但组件本地没有 `Material`”的 widget。
+
+**根因**：前一轮修复的 mental model 错了：`Ink` 不是本地 `_RenderInkFeatures` 宿主。Flutter 源码中 `Ink._build` 创建 `InkDecoration` 时使用 `controller: Material.of(context)`，并把当前 `Padding` 的 RenderBox 作为 `referenceBox` 注册到最近的 `Material`。如果组件本地没有 `Material`，`InkDecoration` 仍然会挂到 `DesktopShell` / `Scaffold` 的 Material 上；当 paint 阶段读取未完成布局的 `referenceBox.size` 时，仍会触发 `RenderBox was not laid out`。
+
+**修复**：
+1. `app_compact_list_item.dart`：`Ink + InkWell` 外层增加 `Material(type: MaterialType.transparency)`。
+2. `app_section_header.dart`：trailing action 的 `Ink + InkWell` 外层增加 `Material(type: MaterialType.transparency)`。
+3. `saved_item_card.dart`：顶层 `Ink(decoration)` 外层增加本地透明 `Material`，并用 `shape + clipBehavior` 保持圆角裁剪。
+4. 新增回归测试，断言目标 `Ink` 在组件根节点以内存在 `Material` 祖先，同时保留点击回调验证。
+
+**避免**（强制检查清单）：
+1. 不再说“`Ink` 创建本地 `_RenderInkFeatures`”；正确说法是“`Ink` 注册到最近的 `Material`”。
+2. 所有共享可点击 Widget 如果使用 `Ink`/`InkWell`，必须在组件本地提供 `Material` 宿主。
+3. 修复 ink 类问题时，测试不能只检查渲染和点击；还要检查目标 `Ink`/`InkWell` 到组件根节点之间存在 `Material` 祖先。
+4. 遇到 `InkDecoration.paintFeature` 堆栈时，优先查 `Ink` 注册到了哪个 `Material`，不要只查 `InkWell` 涟漪。
 
 ---
 
