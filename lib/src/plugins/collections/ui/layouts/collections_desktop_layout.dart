@@ -116,7 +116,7 @@ class _CollectionsDesktopLayoutState
                 builder: (context, constraints) {
                   final showDetail = constraints.maxWidth >= 960;
                   final detailWidth = showDetail
-                      ? (constraints.maxWidth * 0.34).clamp(360.0, 460.0)
+                      ? (constraints.maxWidth * 0.30).clamp(380.0, 440.0)
                       : 0.0;
 
                   return Row(

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:uni_hub/src/core/database/app_database.dart';
 import 'package:uni_hub/src/core/theme/app_tokens.dart';
 import 'package:uni_hub/src/plugins/collections/domain/consumption_status.dart';
@@ -232,16 +233,11 @@ class _SavedItemDetailPanelState extends ConsumerState<SavedItemDetailPanel>
           ),
           // Open URL button
           IconButton(
-            tooltip: '打开内容',
+            tooltip: '在浏览器中打开',
             icon: const Icon(Icons.open_in_new_rounded, size: 20),
             visualDensity: VisualDensity.compact,
             style: IconButton.styleFrom(foregroundColor: colorScheme.primary),
-            onPressed: () {
-              Clipboard.setData(ClipboardData(text: item.originalUrl));
-              ScaffoldMessenger.of(
-                context,
-              ).showSnackBar(const SnackBar(content: Text('链接已复制到剪贴板')));
-            },
+            onPressed: () => _openUrl(item.originalUrl),
           ),
         ],
       ),
@@ -437,10 +433,10 @@ class _SavedItemDetailPanelState extends ConsumerState<SavedItemDetailPanel>
           const SizedBox(height: AppSpacing.sm),
           TextField(
             enabled: false,
-            maxLines: 4,
+            maxLines: 3,
             decoration: InputDecoration(
               hintText: '写下你收藏这条内容的想法或要点...',
-              helperText: '0/500',
+              helperText: '备注功能稍后接入',
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(AppRadius.md),
               ),
@@ -676,6 +672,25 @@ class _SavedItemDetailPanelState extends ConsumerState<SavedItemDetailPanel>
     };
   }
 
+  Future<void> _openUrl(String url) async {
+    final uri = Uri.tryParse(url);
+    if (uri == null || !uri.hasScheme || !uri.hasAuthority) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('无效的链接')),
+      );
+      return;
+    }
+    try {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('打开链接失败：$e')),
+      );
+    }
+  }
+
   Widget _buildBottomActionBar(
     ThemeData theme,
     ColorScheme colorScheme,
@@ -697,13 +712,8 @@ class _SavedItemDetailPanelState extends ConsumerState<SavedItemDetailPanel>
                       .read(collectionsRepositoryProvider)
                       .markOpened(item.id);
                   ref.invalidate(savedItemsListProvider);
-                  await Clipboard.setData(
-                    ClipboardData(text: item.originalUrl),
-                  );
                   if (!mounted) return;
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('链接已复制，可在浏览器中打开')),
-                  );
+                  await _openUrl(item.originalUrl);
                 },
                 icon: const Icon(Icons.open_in_new_rounded),
                 label: const Text('打开内容'),

@@ -135,6 +135,19 @@ class CollectionFolderSidebar extends ConsumerWidget {
             const SizedBox(height: AppSpacing.xs),
             SizedBox(
               width: double.infinity,
+              child: FilledButton.icon(
+                onPressed: () {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('请在顶部输入链接快速收藏')),
+                  );
+                },
+                icon: const Icon(Icons.add_rounded),
+                label: const Text('快速捕捉'),
+              ),
+            ),
+            const SizedBox(height: AppSpacing.xs),
+            SizedBox(
+              width: double.infinity,
               child: TextButton.icon(
                 onPressed: () => _showCreateFolderDialog(context, ref),
                 icon: const Icon(Icons.add_rounded),

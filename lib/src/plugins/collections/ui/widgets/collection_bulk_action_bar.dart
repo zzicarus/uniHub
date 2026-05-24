@@ -113,7 +113,7 @@ class CollectionBulkActionBar extends ConsumerWidget {
                         // Disabled: 添加到 Box
                         _ActionButton(
                           icon: Icons.folder_outlined,
-                          label: isCompact ? 'Box' : '添加到 Box',
+                          label: isCompact ? '收藏夹' : '添加到收藏夹',
                           enabled: false,
                           colorScheme: colorScheme,
                         ),

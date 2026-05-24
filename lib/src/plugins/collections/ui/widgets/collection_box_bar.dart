@@ -26,7 +26,7 @@ class CollectionBoxBar extends ConsumerWidget {
               Icon(Icons.folder_outlined, size: 16, color: colorScheme.onSurfaceVariant),
               const SizedBox(width: AppSpacing.xxs),
               Text(
-                'Box：暂无 Box，点击新建开始整理收藏。',
+                '收藏夹：暂无收藏夹，点击新建开始整理收藏。',
                 style: theme.textTheme.bodySmall?.copyWith(
                   color: colorScheme.onSurfaceVariant,
                 ),
@@ -35,7 +35,7 @@ class CollectionBoxBar extends ConsumerWidget {
               TextButton.icon(
                 onPressed: () => _showCreateBoxDialog(context, ref),
                 icon: const Icon(Icons.add_rounded, size: 16),
-                label: const Text('新建 Box'),
+                label: const Text('新建收藏夹'),
                 style: TextButton.styleFrom(
                   visualDensity: VisualDensity.compact,
                   foregroundColor: colorScheme.primary,
@@ -66,7 +66,7 @@ class CollectionBoxBar extends ConsumerWidget {
                 visualDensity: VisualDensity.compact,
               ),
             ActionChip(
-              label: const Text('+ 新建 Box'),
+              label: const Text('+ 新建收藏夹'),
               onPressed: () => _showCreateBoxDialog(context, ref),
               visualDensity: VisualDensity.compact,
             ),
@@ -89,11 +89,11 @@ class CollectionBoxBar extends ConsumerWidget {
     final name = await showDialog<String>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('新建 Box'),
+        title: const Text('新建收藏夹'),
         content: TextField(
           controller: controller,
           autofocus: true,
-          decoration: const InputDecoration(hintText: '名称'),
+          decoration: const InputDecoration(hintText: '收藏夹名称'),
         ),
         actions: [
           TextButton(
