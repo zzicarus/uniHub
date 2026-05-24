@@ -429,3 +429,43 @@ Refactored Thoughts and HomePage UI to strictly follow Material 3 Tonal styling.
 ### Next Steps
 
 - None - task complete
+
+
+## Session 14: 图片系统 V2 Phase 1-4 + 字体任务
+
+**Date**: 2026-05-24
+**Task**: 图片系统 V2 Phase 1-4 + 字体任务
+**Branch**: `main`
+
+### Summary
+
+font: AppFlowy 编辑器使用 Inter 字体 + 主题色; image V2: ThoughtImageBlockCodec, editor image insert/remove, imagePaths 派生缓存, ThoughtCard 只读缓存, 禁用 Slash Image 入口, 右侧缩略图, 点击定位正文
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `3ca86e7` | (see git log) |
+| `35cfa74` | (see git log) |
+| `2a1e9ef` | (see git log) |
+| `977c2b3` | (see git log) |
+| `71ed83a` | (see git log) |
+| `7a0d903` | (see git log) |
+| `06b99aa` | (see git log) |
+| `b42b17a` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
