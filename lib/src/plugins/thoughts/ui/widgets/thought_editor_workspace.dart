@@ -14,6 +14,7 @@
 library;
 
 import 'dart:async';
+import 'dart:io' show File;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -21,6 +22,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uni_hub/src/core/theme/app_tokens.dart';
 import 'package:uni_hub/src/core/theme/app_theme_tokens.dart';
 import 'package:uni_hub/src/shared/editor/appflowy_thought_editor.dart';
+
+import 'package:uni_hub/src/plugins/thoughts/data/thought_image_block_codec.dart';
 
 import 'package:uni_hub/src/shared/widgets/tags/app_tag_input.dart';
 
@@ -533,24 +536,17 @@ class _ImagesCard extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.only(bottom: 6),
               child: SizedBox(
-                height: 48,
+                height: 56,
                 child: ListView.separated(
                   scrollDirection: Axis.horizontal,
                   itemCount: refs.length,
                   separatorBuilder: (_, _) =>
-                      const SizedBox(width: AppSpacing.xxs),
+                      const SizedBox(width: AppSpacing.xs),
                   itemBuilder: (context, index) {
                     final ref = refs[index];
-                    return Chip(
-                      label: Text(
-                        '图片 ${index + 1}',
-                        style: const TextStyle(fontSize: 11),
-                      ),
-                      deleteIcon: const Icon(Icons.close, size: 14),
-                      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                      visualDensity: VisualDensity.compact,
-                      padding: const EdgeInsets.symmetric(horizontal: 4),
-                      onDeleted: () => ctrl.removeImageFromDocument(ref.id),
+                    return _ImageThumbnail(
+                      ref: ref,
+                      onDelete: () => ctrl.removeImageFromDocument(ref.id),
                     );
                   },
                 ),
@@ -576,6 +572,90 @@ class _ImagesCard extends StatelessWidget {
       ),
     );
   }
+}
+
+// ---------------------------------------------------------------------------
+// _ImageThumbnail
+// ---------------------------------------------------------------------------
+
+/// A small thumbnail card for a single image in the right rail.
+///
+/// Shows the actual image preview if the file exists, otherwise a
+/// placeholder icon. The delete button removes the image from the
+/// document via [onDelete].
+class _ImageThumbnail extends StatelessWidget {
+  const _ImageThumbnail({
+    required this.ref,
+    required this.onDelete,
+  });
+
+  final ThoughtImageRef ref;
+  final VoidCallback onDelete;
+
+  @override
+  Widget build(BuildContext context) {
+    final file = File(ref.path);
+    final exists = file.existsSync();
+
+    return SizedBox(
+      width: 56,
+      height: 56,
+      child: Stack(
+        children: [
+          // Image or placeholder
+          Positioned.fill(
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(AppRadius.sm),
+              child: exists
+                  ? Image.file(
+                      file,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, _, _) => _placeholder,
+                    )
+                  : _placeholder,
+            ),
+          ),
+          // Delete button
+          Positioned(
+            top: 2,
+            right: 2,
+            child: Material(
+              color: Colors.black.withValues(alpha: 0.5),
+              borderRadius: BorderRadius.circular(AppRadius.full),
+              child: InkWell(
+                borderRadius: BorderRadius.circular(AppRadius.full),
+                onTap: onDelete,
+                child: const Padding(
+                  padding: EdgeInsets.all(2),
+                  child: Icon(
+                    Icons.close,
+                    size: 12,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  static const _placeholderColor = Color(0xFFE8ECF4);
+  static const _placeholderIconColor = Color(0xFF98A2B3);
+
+  Widget get _placeholder => Container(
+        decoration: BoxDecoration(
+          color: _placeholderColor,
+          borderRadius: BorderRadius.circular(AppRadius.sm),
+        ),
+        alignment: Alignment.center,
+        child: const Icon(
+          Icons.broken_image_outlined,
+          size: 20,
+          color: _placeholderIconColor,
+        ),
+      );
 }
 
 // ---------------------------------------------------------------------------
