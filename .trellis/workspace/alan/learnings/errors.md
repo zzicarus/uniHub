@@ -2,6 +2,25 @@
 
 > agent 在运行过程中遇到的错误记录于此，避免重复犯错。
 
+## 2026-05-24: InkWell 在动画布局中触发的 RenderBox layout 断言失败
+
+**场景**：侧栏 `_NavItem` 和 `_UserTile` 使用 `Material` + `InkWell` 模式。`_ExpandableNavItem` 使用 `AnimatedCrossFade` + `AnimatedRotation` 实现展开/折叠动画。当用户在动画期间点击 `_NavItem`，InkWell 创建涟漪效果（`InkDecoration.paintFeature` → `RenderPhysicalModel.paint`），尝试绘制到子 `RenderPadding` 上，但子组件尚未完成布局 → `RenderBox was not laid out: RenderPadding#9a240 NEEDS-LAYOUT NEEDS-PAINT`。
+
+**根因**：InkWell 的涟漪绘制需要子组件的布局已就绪。在动画进行中（`AnimatedCrossFade` 改变布局），布局逐帧变化，子组件可能处于未完成布局状态。`Material` + `InkWell` 组合将涟漪的绘制区域绑定到 Material 的子节点，而非明确的装饰边界，导致在布局未完成时尝试绘制。
+
+**修复**：
+1. `sidebar.dart _NavItem`：`Material` + `InkWell` → `GestureDetector`。导航项使用自定义颜色表示选中态，不需要 Material 涟漪效果。
+2. `sidebar.dart _UserTile`：`Material` + `InkWell` → `GestureDetector`。
+3. `saved_item_card.dart`：`Material` + `InkWell` → `Ink` + `InkWell`。`Ink` widget 正确管理涟漪绘制边界在装饰范围内，避免绘制到未布局的子组件上。
+
+**避免**（强制检查清单）：
+1. 在动画/变化布局中（AnimatedCrossFade, AnimatedSize, AnimatedContainer），优先使用 `GestureDetector` 而非 `InkWell` —— 除非 Material 涟漪是明确 UX 需求
+2. 如果 InkWell 在动画上下文中是必需的，使用 `Ink` + `InkWell` 模式（而非 `Material` + `InkWell`），将涟漪绘制绑定到装饰边界，避免依赖子组件布局
+3. 对于使用自定义颜色的导航/选择按钮（非 Material 涟漪），`GestureDetector` + 自定义 `Container` 装饰更安全、性能更好
+4. 这是 Flutter 渲染管线特有的问题 —— InkWell 涟漪绘制要求子组件布局完成，这在动画过渡中未必成立
+
+---
+
 ## 2026-05-22: GridView childAspectRatio 导致卡片内容溢出
 
 **场景**：Desktop 首页 `_ShortcutCard` 在 GridView 中产生 `A RenderFlex overflowed by 11 pixels on the bottom`。Column 约束为 w=108.6, h=58.8（由 `childAspectRatio: 1.6` 推导），而内容高度约 70px（icon 42px + spacing 8px + text ~20px）。

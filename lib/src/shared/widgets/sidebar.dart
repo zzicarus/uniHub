@@ -183,53 +183,49 @@ class _UserTile extends StatelessWidget {
     final theme = Theme.of(context);
     final appColors = context.appColors;
 
-    return Material(
-      color: appColors.panelBackground,
-      borderRadius: BorderRadius.circular(AppRadius.lg),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(AppRadius.lg),
-        onTap: () {},
-        child: Container(
-          padding: const EdgeInsets.all(AppSpacing.sm),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(AppRadius.lg),
-            border: Border.all(color: appColors.border),
-          ),
-          child: Row(
-            children: [
-              CircleAvatar(
-                radius: 18,
-                backgroundColor: appColors.primarySoft,
-                child: Text(
-                  'A',
-                  style: theme.textTheme.titleSmall?.copyWith(
-                    color: appColors.primary,
-                    fontSize: 16,
-                    fontWeight: FontWeight.w800,
+    return GestureDetector(
+      onTap: () {},
+      child: Container(
+        padding: const EdgeInsets.all(AppSpacing.sm),
+        decoration: BoxDecoration(
+          color: appColors.panelBackground,
+          borderRadius: BorderRadius.circular(AppRadius.lg),
+          border: Border.all(color: appColors.border),
+        ),
+        child: Row(
+          children: [
+            CircleAvatar(
+              radius: 18,
+              backgroundColor: appColors.primarySoft,
+              child: Text(
+                'A',
+                style: theme.textTheme.titleSmall?.copyWith(
+                  color: appColors.primary,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ),
+            const SizedBox(width: AppSpacing.sm),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Alex', style: theme.textTheme.titleSmall),
+                  Text(
+                    '专注记录 · 持续进步',
+                    style: theme.textTheme.bodySmall,
+                    overflow: TextOverflow.ellipsis,
                   ),
-                ),
+                ],
               ),
-              const SizedBox(width: AppSpacing.sm),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('Alex', style: theme.textTheme.titleSmall),
-                    Text(
-                      '专注记录 · 持续进步',
-                      style: theme.textTheme.bodySmall,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ],
-                ),
-              ),
-              Icon(
-                Icons.more_horiz_rounded,
-                size: 18,
-                color: appColors.textTertiary,
-              ),
-            ],
-          ),
+            ),
+            Icon(
+              Icons.more_horiz_rounded,
+              size: 18,
+              color: appColors.textTertiary,
+            ),
+          ],
         ),
       ),
     );
@@ -394,39 +390,36 @@ class _NavItem extends StatelessWidget {
         horizontal: compact ? AppSpacing.lg : AppSpacing.xl,
         vertical: AppSpacing.xxs / 2,
       ),
-      child: Material(
-        color: bgColor,
-        borderRadius: BorderRadius.circular(AppRadius.md),
-        child: InkWell(
-          borderRadius: BorderRadius.circular(AppRadius.md),
-          onTap: onTap,
-          child: SizedBox(
-            height: compact
-                ? AppDesktopSizes.compactButtonHeight
-                : AppDesktopSizes.navItemHeight,
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
-              child: Row(
-                children: [
-                  Icon(icon, color: foreground, size: compact ? 19 : 22),
-                  const SizedBox(width: AppSpacing.md),
-                  Expanded(
-                    child: Text(
-                      label,
-                      style: theme.textTheme.titleSmall?.copyWith(
-                        color: foreground,
-                        fontSize: compact ? 13 : 15,
-                        fontWeight: isSelected
-                            ? FontWeight.w800
-                            : FontWeight.w500,
-                      ),
-                      overflow: TextOverflow.ellipsis,
-                    ),
+      child: GestureDetector(
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+          decoration: BoxDecoration(
+            color: bgColor,
+            borderRadius: BorderRadius.circular(AppRadius.md),
+          ),
+          height: compact
+              ? AppDesktopSizes.compactButtonHeight
+              : AppDesktopSizes.navItemHeight,
+          child: Row(
+            children: [
+              Icon(icon, color: foreground, size: compact ? 19 : 22),
+              const SizedBox(width: AppSpacing.md),
+              Expanded(
+                child: Text(
+                  label,
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    color: foreground,
+                    fontSize: compact ? 13 : 15,
+                    fontWeight: isSelected
+                        ? FontWeight.w800
+                        : FontWeight.w500,
                   ),
-                  ?trailing,
-                ],
+                  overflow: TextOverflow.ellipsis,
+                ),
               ),
-            ),
+              ?trailing,
+            ],
           ),
         ),
       ),

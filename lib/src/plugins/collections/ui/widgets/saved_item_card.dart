@@ -29,25 +29,23 @@ class SavedItemCard extends ConsumerWidget {
     final status = ConsumptionStatus.fromValue(item.status);
     final enrichmentStatus = EnrichmentStatus.fromValue(item.enrichmentStatus);
 
-    return Material(
-      color: selected
-          ? colorScheme.primaryContainer.withValues(alpha: 0.1)
-          : Colors.transparent,
-      borderRadius: BorderRadius.circular(AppRadius.lg),
+    return Ink(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(AppRadius.lg),
+        color: selected
+            ? colorScheme.primaryContainer.withValues(alpha: 0.1)
+            : Colors.transparent,
+        border: Border.all(
+          color: selected
+              ? colorScheme.primary
+              : colorScheme.outlineVariant,
+          width: selected ? 1.5 : 1.0,
+        ),
+      ),
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(AppRadius.lg),
-        child: Container(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(AppRadius.lg),
-            border: Border.all(
-              color: selected
-                  ? colorScheme.primary
-                  : colorScheme.outlineVariant,
-              width: selected ? 1.5 : 1.0,
-            ),
-          ),
-          child: Padding(
+        child: Padding(
             padding: const EdgeInsets.symmetric(
               horizontal: AppSpacing.sm,
               vertical: AppSpacing.sm,
@@ -174,7 +172,6 @@ class SavedItemCard extends ConsumerWidget {
             ),
           ),
         ),
-      ),
     );
   }
 

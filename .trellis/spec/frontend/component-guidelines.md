@@ -297,6 +297,63 @@ Material(
 
 ---
 
+## UI Pattern: InkWell 在动画布局中的安全使用
+
+**What**: 在包含 `AnimatedCrossFade`、`AnimatedSize`、`AnimatedContainer` 等动画 widget 的布局中，避免使用 `Material` + `InkWell` 组合。InkWell 的涟漪绘制在渲染管线中需要子组件的布局已就绪（`NEEDS-LAYOUT` 状态未完成时会触发断言失败）。
+
+**Why**: Material + InkWell 将涟漪的绘制区域绑定到 Material 的子节点。当动画正在改变布局时（如 `AnimatedCrossFade` 切换展开/折叠），子组件可能处于未完成布局的状态。InkWell 尝试创建涟漪效果时 → `RenderBox was not laid out` 断言失败。
+
+**规则**：
+
+| 场景 | 推荐模式 | 原因 |
+|------|----------|------|
+| 动画布局中的导航/选择按钮 | `GestureDetector` + 自定义 `Container` 装饰 | 不需要 Material 涟漪，使用自定义颜色表示选中态 |
+| 动画布局中的卡片，需要涟漪 | `Ink` + `InkWell`（内部 `InkWell`） | `Ink` widget 将涟漪绘制边界绑定到装饰上，而非子组件 |
+| 静态布局中的卡片 | `Material` + `InkWell`（标准模式） | 子组件布局稳定，无竞争条件 |
+
+```dart
+// ✅ 正确（动画布局）：GestureDetector
+GestureDetector(
+  onTap: onTap,
+  child: Container(
+    decoration: BoxDecoration(
+      color: isSelected ? colorScheme.primaryContainer : Colors.transparent,
+      borderRadius: BorderRadius.circular(AppRadius.md),
+    ),
+    child: /* 内容 */,
+  ),
+);
+
+// ✅ 正确（动画布局，需要涟漪）：Ink + InkWell
+Ink(
+  decoration: BoxDecoration(
+    borderRadius: BorderRadius.circular(AppRadius.lg),
+    color: selected
+        ? colorScheme.primaryContainer.withValues(alpha: 0.1)
+        : Colors.transparent,
+    border: Border.all(color: colorScheme.outlineVariant),
+  ),
+  child: InkWell(
+    onTap: onTap,
+    borderRadius: BorderRadius.circular(AppRadius.lg),
+    child: /* 内容 */,
+  ),
+);
+
+// ❌ 在动画布局中禁止：Material + InkWell
+Material(
+  // color: ...,
+  child: InkWell(
+    onTap: onTap,
+    child: /* 内容 */,
+  ),
+);
+```
+
+**例外**：静态布局（无 `AnimatedCrossFade`、`AnimatedSize`、`AnimatedContainer` 等动画改变子组件布局）中，`Material` + `InkWell` 标准模式安全可用。
+
+---
+
 ## 配色系统
 
 ### 种子色机制
