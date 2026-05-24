@@ -71,14 +71,17 @@ class ThoughtEditorWorkspace extends ConsumerStatefulWidget {
 class _ThoughtEditorWorkspaceState
     extends ConsumerState<ThoughtEditorWorkspace> {
   late final ThoughtEditorController _ctrl;
+  late final AppFlowyThoughtEditorController _editorController;
 
   @override
   void initState() {
     super.initState();
+    _editorController = AppFlowyThoughtEditorController();
     _ctrl = ThoughtEditorController(
       ref: ref,
       thoughtId: widget.thoughtId,
       autoSaveInterval: const Duration(seconds: 2),
+      editorController: _editorController,
       onStateChanged: () {
         if (mounted) setState(() {});
       },
@@ -88,6 +91,7 @@ class _ThoughtEditorWorkspaceState
 
   @override
   void dispose() {
+    _editorController.dispose();
     _ctrl.dispose();
     super.dispose();
   }
@@ -415,6 +419,7 @@ class _MainEditorColumnState extends State<_MainEditorColumn> {
                     initialText: widget.ctrl.plainText,
                     placeholder: '开始书写你的想法...',
                     autofocus: false,
+                    controller: widget.ctrl.editorController,
                     onChanged: (value) {
                       widget.ctrl.updateDocument(
                         documentJson: value.documentJson,
@@ -515,24 +520,27 @@ class _ImagesCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.appColors;
+    final refs = ctrl.imageRefs;
 
     return _PropertyCard(
       title: '图片',
+      subtitle: '正文图片',
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
-          if (ctrl.images.isNotEmpty)
+          if (refs.isNotEmpty)
             Padding(
               padding: const EdgeInsets.only(bottom: 6),
               child: SizedBox(
                 height: 48,
                 child: ListView.separated(
                   scrollDirection: Axis.horizontal,
-                  itemCount: ctrl.images.length,
+                  itemCount: refs.length,
                   separatorBuilder: (_, _) =>
                       const SizedBox(width: AppSpacing.xxs),
                   itemBuilder: (context, index) {
+                    final ref = refs[index];
                     return Chip(
                       label: Text(
                         '图片 ${index + 1}',
@@ -542,7 +550,7 @@ class _ImagesCard extends StatelessWidget {
                       materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                       visualDensity: VisualDensity.compact,
                       padding: const EdgeInsets.symmetric(horizontal: 4),
-                      onDeleted: () => ctrl.removeImage(index),
+                      onDeleted: () => ctrl.removeImageFromDocument(ref.id),
                     );
                   },
                 ),
@@ -550,10 +558,10 @@ class _ImagesCard extends StatelessWidget {
             ),
 
           TextButton.icon(
-            onPressed: () => ctrl.addImage(),
+            onPressed: () => ctrl.insertImageIntoDocument(),
             icon: const Icon(Icons.add_photo_alternate_outlined, size: 16),
             label: Text(
-              ctrl.images.isEmpty ? '添加图片' : '继续添加',
+              refs.isEmpty ? '添加图片' : '继续添加',
               style: const TextStyle(fontSize: 13),
             ),
             style: TextButton.styleFrom(
@@ -665,10 +673,12 @@ class _StatusCard extends StatelessWidget {
 class _PropertyCard extends StatelessWidget {
   const _PropertyCard({
     required this.title,
+    this.subtitle,
     required this.child,
   });
 
   final String title;
+  final String? subtitle;
   final Widget child;
 
   @override
@@ -694,13 +704,27 @@ class _PropertyCard extends StatelessWidget {
         children: [
           Padding(
             padding: const EdgeInsets.only(bottom: AppSpacing.xs),
-            child: Text(
-              title,
-              style: TextStyle(
-                color: colors.textSecondary,
-                fontWeight: FontWeight.w600,
-                fontSize: 12,
-              ),
+            child: Row(
+              children: [
+                Text(
+                  title,
+                  style: TextStyle(
+                    color: colors.textSecondary,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 12,
+                  ),
+                ),
+                if (subtitle != null) ...[
+                  const SizedBox(width: AppSpacing.xxs),
+                  Text(
+                    '· $subtitle',
+                    style: TextStyle(
+                      color: colors.textTertiary,
+                      fontSize: 11,
+                    ),
+                  ),
+                ],
+              ],
             ),
           ),
           DefaultTextStyle(

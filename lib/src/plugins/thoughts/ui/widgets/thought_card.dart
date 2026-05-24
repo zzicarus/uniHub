@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uni_hub/src/core/theme/app_tokens.dart';
 import '../../data/thought_content_codec.dart';
+import '../../data/thought_image_service.dart';
 
 class ThoughtCard extends ConsumerStatefulWidget {
   final int id;
@@ -46,10 +47,7 @@ class _ThoughtCardState extends ConsumerState<ThoughtCard> {
     final accent = widget.color != null
         ? _hexToColor(widget.color!)
         : _cardAccent(widget.id, colorScheme);
-    final images = ThoughtContentCodec.mergeImagePaths(
-      widget.imagePaths,
-      widget.content,
-    );
+    final images = ThoughtImageService.decodeImagePaths(widget.imagePaths);
     final title = ThoughtContentCodec.titleFromStored(widget.content);
     final body = ThoughtContentCodec.plainTextFromStored(widget.content);
 

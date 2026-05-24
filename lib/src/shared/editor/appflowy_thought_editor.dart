@@ -21,6 +21,86 @@ import 'package:flutter/material.dart';
 
 import 'appflowy_document_tools.dart';
 
+/// Controller for programmatic image block operations on AppFlowyThoughtEditor.
+///
+/// Pass an instance to [AppFlowyThoughtEditor.controller] to enable
+/// inserting and removing image blocks from outside the editor.
+///
+/// The controller binds to the editor's [EditorState] internally when
+/// the widget mounts. Call [insertImageBlock] / [removeImageBlock] to
+/// manipulate the document. Every operation triggers the widget's
+/// [onChanged] callback automatically.
+class AppFlowyThoughtEditorController extends ChangeNotifier {
+  /// Custom attribute key for storing an image block's business ID.
+  ///
+  /// Must match the key used by [ThoughtImageBlockCodec.imageIdKey]
+  /// in the data layer.
+  static const String imageIdKey = 'image_id';
+
+  EditorState? _editorState;
+
+  /// Bind this controller to an [EditorState].
+  ///
+  /// Called by [AppFlowyThoughtEditor] during [State.initState].
+  /// Do not call directly.
+  void bind(EditorState editorState) {
+    _editorState = editorState;
+  }
+
+  /// Inserts an image block at the end of the document.
+  ///
+  /// Uses AppFlowy's built-in [imageNode] with [path] as the `url`.
+  /// The [id] is stored as a custom attribute ([imageIdKey]) for later
+  /// identification during removal.
+  ///
+  /// After insertion the editor emits [onChanged] automatically.
+  Future<void> insertImageBlock({
+    required String id,
+    required String path,
+    String? alt,
+    String? caption,
+  }) async {
+    final editorState = _editorState;
+    if (editorState == null) return;
+
+    final node = imageNode(url: path);
+    node.attributes[imageIdKey] = id;
+
+    // Insert at the end of the document root's children.
+    final path_ = [editorState.document.root.children.length];
+    final transaction = editorState.transaction
+      ..insertNode(path_, node);
+    await editorState.apply(transaction);
+  }
+
+  /// Removes the image block identified by [imageId].
+  ///
+  /// Searches the document tree for a node whose [imageIdKey] attribute
+  /// matches [imageId]. If found, it is deleted via [EditorState.transaction].
+  Future<void> removeImageBlock(String imageId) async {
+    final editorState = _editorState;
+    if (editorState == null) return;
+
+    final root = editorState.document.root;
+    for (int i = 0; i < root.children.length; i++) {
+      final child = root.children[i];
+      if (child.type == 'image' &&
+          child.attributes[imageIdKey] == imageId) {
+        final transaction = editorState.transaction
+          ..deleteNode(child);
+        await editorState.apply(transaction);
+        return;
+      }
+    }
+  }
+
+  @override
+  void dispose() {
+    _editorState = null;
+    super.dispose();
+  }
+}
+
 /// The value emitted by [AppFlowyThoughtEditor] on every content change.
 class AppFlowyThoughtEditorValue {
   const AppFlowyThoughtEditorValue({
@@ -65,6 +145,7 @@ class AppFlowyThoughtEditor extends StatefulWidget {
     this.initialText,
     this.placeholder = '开始书写你的想法...',
     this.autofocus = false,
+    this.controller,
     required this.onChanged,
   });
 
@@ -84,6 +165,12 @@ class AppFlowyThoughtEditor extends StatefulWidget {
   /// Whether to auto-focus the editor on mount.
   final bool autofocus;
 
+  /// Optional controller for programmatic document manipulation.
+  ///
+  /// When provided, the controller binds to the internal [EditorState]
+  /// and can be used to insert / remove image blocks.
+  final AppFlowyThoughtEditorController? controller;
+
   /// Called on every document content change.
   ///
   /// Fires synchronously within the transaction callback, so the parent
@@ -102,6 +189,7 @@ class _AppFlowyThoughtEditorState extends State<AppFlowyThoughtEditor> {
   void initState() {
     super.initState();
     _editorState = _createEditorState();
+    widget.controller?.bind(_editorState);
     // Defer the initial value emission so that the parent widget has
     // finished building before any onChanged → setState chain fires.
     WidgetsBinding.instance.addPostFrameCallback((_) {

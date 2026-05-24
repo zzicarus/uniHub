@@ -20,9 +20,11 @@ import 'package:flutter_quill/flutter_quill.dart' show Document, QuillController
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../data/thought_content_codec.dart';
+import '../../data/thought_image_block_codec.dart';
 import '../../data/thought_image_service.dart';
 import '../../providers/thoughts_providers.dart';
 import 'package:uni_hub/src/shared/editor/appflowy_document_tools.dart';
+import 'package:uni_hub/src/shared/editor/appflowy_thought_editor.dart';
 import 'package:uni_hub/src/shared/tags/tag_codec.dart';
 
 class ThoughtEditorController {
@@ -34,6 +36,12 @@ class ThoughtEditorController {
 
   /// 状态变化时由 widget 注册的回调（用于触发 `setState`）。
   final VoidCallback? onStateChanged;
+
+  /// AppFlowy editor controller for programmatic document manipulation.
+  ///
+  /// Used by [insertImageIntoDocument] and [removeImageFromDocument]
+  /// to insert/remove image blocks.
+  final AppFlowyThoughtEditorController? editorController;
 
   /// 已废弃 — 为兼容旧 widget 保留。
   ///
@@ -88,6 +96,18 @@ class ThoughtEditorController {
   // 图片、颜色、置顶、归档
   // -----------------------------------------------------------------------
 
+  /// 当前文档中的图片引用列表（从 AppFlowy document image block 派生）。
+  ///
+  /// 这是图片的唯一真相源。直接读取此字段获取当前文档中的图片。
+  ///
+  /// See also: [images]（旧版路径列表，为向后兼容保留）。
+  List<ThoughtImageRef> imageRefs = [];
+
+  /// 已废弃 — 旧版图片路径列表。
+  ///
+  /// 新代码应使用 [imageRefs]。此字段保留为 [ThoughtsEditorPage]
+  /// 等旧 widget 提供兼容。
+  @Deprecated('Use imageRefs instead')
   final images = <String>[];
   String? selectedColor;
   bool isPinned = false;
@@ -101,6 +121,7 @@ class ThoughtEditorController {
     required this.ref,
     required this.thoughtId,
     this.autoSaveInterval,
+    this.editorController,
     this.onStateChanged,
   });
 
@@ -162,7 +183,10 @@ class ThoughtEditorController {
     // 加载标签。
     _tags = TagCodec.parseCommaSeparated(thought.tags).toSet();
 
-    // 加载图片。
+    // 图片：从 document JSON 提取 imageRefs（唯一真相源）。
+    imageRefs = ThoughtImageBlockCodec.extractImageRefs(documentJson!);
+
+    // 已废弃 — 为旧 widget 兼容保留 images 列表。
     final storedImagePaths =
         ThoughtImageService.decodeImagePaths(thought.imagePaths);
     images.addAll(storedImagePaths);
@@ -183,6 +207,10 @@ class ThoughtEditorController {
     final repo = ref.read(thoughtsRepositoryProvider);
     final tags = TagCodec.encodeCommaSeparated(_tags);
 
+    // imagePaths 从 imageRefs（文档中的 image block）派生。
+    final paths =
+        imageRefs.map((e) => e.path).toList();
+
     await repo.updateThought(
       thoughtId,
       content: ThoughtContentCodec.encodeAppFlowy(
@@ -192,7 +220,7 @@ class ThoughtEditorController {
       tags: tags,
       color: selectedColor,
       isPinned: isPinned,
-      imagePaths: ThoughtImageService.encodeImagePaths(images),
+      imagePaths: ThoughtImageService.encodeImagePaths(paths),
     );
 
     ref.invalidate(thoughtProvider(thoughtId));
@@ -207,13 +235,15 @@ class ThoughtEditorController {
 
   /// 由 [AppFlowyThoughtEditor.onChanged] 回调调用。
   ///
-  /// 更新 [documentJson] 和 [plainText] 后自动标记 dirty。
+  /// 更新 [documentJson] 和 [plainText]，重新提取 imageRefs，
+  /// 然后自动标记 dirty。
   void updateDocument({
     required Map<String, dynamic> documentJson,
     required String plainText,
   }) {
     this.documentJson = documentJson;
     this.plainText = plainText;
+    imageRefs = ThoughtImageBlockCodec.extractImageRefs(documentJson);
     markDirty();
   }
 
@@ -323,20 +353,20 @@ class ThoughtEditorController {
   }
 
   // -----------------------------------------------------------------------
-  // 图片操作（AppFlowy image block 暂不实现）
+  // 图片操作（AppFlowy image block 统一方案）
   // -----------------------------------------------------------------------
 
   /// 已废弃 — 供旧 [RichTextEditor] 回调使用。
   ///
   /// 新编辑器不依赖此方法。
-  @Deprecated('Use addImage instead')
+  @Deprecated('Use insertImageIntoDocument instead')
   Future<String?> onPickImage() async {
     final path = await ref.read(thoughtImageServiceProvider).pickImage();
     return path;
   }
 
   /// 已废弃 — 供旧 [RichTextEditor] 回调使用。
-  @Deprecated('Use addImage instead')
+  @Deprecated('Use insertImageIntoDocument instead')
   Future<String?> onPasteImage(Uint8List bytes) async {
     final path = await ref
         .read(thoughtImageServiceProvider)
@@ -345,14 +375,15 @@ class ThoughtEditorController {
   }
 
   /// 已废弃 — 供旧 [RichTextEditor] 回调使用。
-  @Deprecated('Use addImage instead')
+  @Deprecated('Use insertImageIntoDocument instead')
   void onEditorImageAdded(String source) {
     // 不再处理 Quill image embed。
   }
 
-  /// 显式添加图片到 images 列表。
+  /// 已废弃 — 旧版图片添加方法。
   ///
-  /// 第一阶段只保存到 imagePaths 独立字段，不插入 AppFlowy image block。
+  /// 新代码应使用 [insertImageIntoDocument] 将图片插入到正文中。
+  @Deprecated('Use insertImageIntoDocument instead')
   Future<void> addImage() async {
     final svc = ref.read(thoughtImageServiceProvider);
     final path = await svc.pickImage();
@@ -362,9 +393,10 @@ class ThoughtEditorController {
     }
   }
 
-  /// 从 images 列表中移除指定索引的图片。
+  /// 已废弃 — 旧版图片删除方法。
   ///
-  /// 只删除图片文件和 images 列表，不操作 document block。
+  /// 新代码应使用 [removeImageFromDocument]。
+  @Deprecated('Use removeImageFromDocument instead')
   Future<void> removeImage(int index) async {
     if (index < 0 || index >= images.length) return;
     final path = images[index];
@@ -373,5 +405,65 @@ class ThoughtEditorController {
     isDirty = true;
     _notifyStateChanged();
     _scheduleAutoSave();
+  }
+
+  // -----------------------------------------------------------------------
+  // V2 统一图片操作
+  // -----------------------------------------------------------------------
+
+  /// 选择图片、保存到本地、插入 AppFlowy 正文 image block。
+  ///
+  /// 流程：
+  /// 1. 通过 [ThoughtImageService.pickImage] 选择图片
+  /// 2. 生成唯一 imageId
+  /// 3. 通过 [editorController] 插入 AppFlowy image block
+  /// 4. 编辑器的 onChanged 会自动触发 [updateDocument]，重新提取 imageRefs
+  ///
+  /// 如果插入失败，删除已保存的本地文件以避免孤儿文件。
+  Future<void> insertImageIntoDocument() async {
+    final svc = ref.read(thoughtImageServiceProvider);
+    final path = await svc.pickImage();
+    if (path == null) return;
+
+    final imageId = ThoughtImageBlockCodec.generateImageId();
+
+    try {
+      await editorController?.insertImageBlock(
+        id: imageId,
+        path: path,
+      );
+      // After this, onChanged fires → updateDocument → imageRefs updated.
+    } catch (e) {
+      // Insert failed — clean up the orphan file.
+      await svc.deleteImage(path);
+      debugPrint('Failed to insert image block: $e');
+      rethrow;
+    }
+  }
+
+  /// 从文档中删除指定 imageId 的图片块。
+  ///
+  /// 流程：
+  /// 1. 通过 [editorController.removeImageBlock] 删除 AppFlowy image block
+  /// 2. 编辑器的 onChanged 会触发 [updateDocument]，更新 imageRefs
+  /// 3. 如果本地文件不再被任何 block 引用，删除文件
+  Future<void> removeImageFromDocument(String imageId) async {
+    // 查找对应的图片引用。
+    final ref_ = imageRefs.where((r) => r.id == imageId).firstOrNull;
+    if (ref_ == null) return;
+    final path = ref_.path;
+
+    // 删除 document image block。
+    await editorController?.removeImageBlock(imageId);
+
+    // After deletion, onChanged fires → updateDocument → imageRefs updated.
+    // Check if the path is still referenced.
+    final stillReferenced =
+        imageRefs.any((r) => r.path == path);
+
+    if (!stillReferenced) {
+      // No remaining references — safe to delete the local file.
+      await ref.read(thoughtImageServiceProvider).deleteImage(path);
+    }
   }
 }
