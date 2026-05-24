@@ -104,6 +104,29 @@ class AppFlowyThoughtEditorController extends ChangeNotifier {
     }
   }
 
+  /// Focuses the editor on the image block identified by [imageId].
+  ///
+  /// Sets the current selection to the image block's position, which
+  /// causes the editor to scroll it into view.
+  Future<void> focusImageBlock(String imageId) async {
+    final editorState = _editorState;
+    if (editorState == null) return;
+
+    final root = editorState.document.root;
+    for (int i = 0; i < root.children.length; i++) {
+      final child = root.children[i];
+      if (child.type == 'image' &&
+          child.attributes[imageIdKey] == imageId) {
+        editorState.selection = Selection.single(
+          path: child.path,
+          startOffset: 0,
+          endOffset: 1,
+        );
+        return;
+      }
+    }
+  }
+
   @override
   void dispose() {
     _editorState = null;

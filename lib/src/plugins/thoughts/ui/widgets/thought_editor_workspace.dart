@@ -546,6 +546,8 @@ class _ImagesCard extends StatelessWidget {
                     final ref = refs[index];
                     return _ImageThumbnail(
                       ref: ref,
+                      onTap: () =>
+                          ctrl.editorController?.focusImageBlock(ref.id),
                       onDelete: () => ctrl.removeImageFromDocument(ref.id),
                     );
                   },
@@ -587,10 +589,12 @@ class _ImageThumbnail extends StatelessWidget {
   const _ImageThumbnail({
     required this.ref,
     required this.onDelete,
+    this.onTap,
   });
 
   final ThoughtImageRef ref;
   final VoidCallback onDelete;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -604,15 +608,23 @@ class _ImageThumbnail extends StatelessWidget {
         children: [
           // Image or placeholder
           Positioned.fill(
-            child: ClipRRect(
+            child: Material(
+              color: Colors.transparent,
               borderRadius: BorderRadius.circular(AppRadius.sm),
-              child: exists
-                  ? Image.file(
-                      file,
-                      fit: BoxFit.cover,
-                      errorBuilder: (_, _, _) => _placeholder,
-                    )
-                  : _placeholder,
+              child: InkWell(
+                borderRadius: BorderRadius.circular(AppRadius.sm),
+                onTap: onTap,
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(AppRadius.sm),
+                  child: exists
+                      ? Image.file(
+                          file,
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, _, _) => _placeholder,
+                        )
+                      : _placeholder,
+                ),
+              ),
             ),
           ),
           // Delete button
