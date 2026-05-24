@@ -173,3 +173,11 @@
 - **根因**：两个开发者分别实现了颜色选择器，各自起名习惯不同，后期未统一
 - **修复**：提取为 `thought_color_picker.dart` 的 `ThoughtColorDot` 公共 widget，删除两份私有实现
 - **避免**：DRY 原则——当同一模式出现两次（尤其是 UI 组件），立即提取为共享组件
+
+### 13. TabBarView 不能置于 SingleChildScrollView 的无界高度中
+
+- **场景**：`SavedItemDetailPanel` 使用 `SingleChildScrollView` + `Column` + `SizedBox(child: TabBarView(...))`，TabBarView 没有固定高度，运行时报 `RenderBox was not laid out`
+- **根因**：`TabBarView` 底层是 `PageView`，必须在有界高度中 layout。外层 `SingleChildScrollView` 在滚动方向给 child 无界高度，`Column` 不会给普通 child 固定高度 → TabBarView 无法计算 size → paint 阶段触发断言
+- **修复**：移除 `TabBarView`，改用 `TabBar + _tabIndex` 状态 + `switch(_tabIndex)` 方法直接渲染当前 Tab 内容，外层 `SingleChildScrollView` 统一负责滚动
+- **避免**：不要在 `SingleChildScrollView`/`Column` 的无界高度环境中使用 `TabBarView` 或 `PageView`。如需 Tab 切换且外层已有滚动容器，使用 `TabBar + _tabIndex + switch/IndexedStack` 模式
+- **相关文件**：`lib/src/plugins/collections/ui/widgets/saved_item_detail_panel.dart`

@@ -34,6 +34,7 @@ class SavedItemDetailPanel extends ConsumerStatefulWidget {
 class _SavedItemDetailPanelState extends ConsumerState<SavedItemDetailPanel>
     with SingleTickerProviderStateMixin {
   late final TabController _tabController;
+  int _tabIndex = 0;
 
   @override
   void initState() {
@@ -386,6 +387,11 @@ class _SavedItemDetailPanelState extends ConsumerState<SavedItemDetailPanel>
             labelColor: colorScheme.primary,
             unselectedLabelColor: colorScheme.onSurfaceVariant,
             indicatorColor: colorScheme.primary,
+            onTap: (index) {
+              setState(() {
+                _tabIndex = index;
+              });
+            },
             tabs: const [
               Tab(text: '摘要'),
               Tab(text: '内容预览'),
@@ -394,24 +400,23 @@ class _SavedItemDetailPanelState extends ConsumerState<SavedItemDetailPanel>
             ],
           ),
         ),
-        SizedBox(
-          // Approximate height for content area — let it use intrinsic height
-          child: TabBarView(
-            controller: _tabController,
-            children: [
-              // 摘要 tab — Summary ONLY here (Section 20.6)
-              _buildSummaryTab(theme, colorScheme, item),
-              // 内容预览 tab
-              _buildPreviewTab(theme, colorScheme, item),
-              // 笔记 tab
-              _buildNotesPlaceholderTab(theme, colorScheme),
-              // 相关 tab
-              _buildRelatedPlaceholderTab(theme, colorScheme),
-            ],
-          ),
-        ),
+        _buildCurrentTabContent(theme, colorScheme, item),
       ],
     );
+  }
+
+  Widget _buildCurrentTabContent(
+    ThemeData theme,
+    ColorScheme colorScheme,
+    SavedItemsTableData item,
+  ) {
+    return switch (_tabIndex) {
+      0 => _buildSummaryTab(theme, colorScheme, item),
+      1 => _buildPreviewTab(theme, colorScheme, item),
+      2 => _buildNotesPlaceholderTab(theme, colorScheme),
+      3 => _buildRelatedPlaceholderTab(theme, colorScheme),
+      _ => const SizedBox.shrink(),
+    };
   }
 
   /// Summary — appears ONLY in the "摘要" tab, NOT above tabs (Section 20.6).

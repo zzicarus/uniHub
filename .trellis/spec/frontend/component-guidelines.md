@@ -1113,7 +1113,7 @@ onSelected: (selected) {
 | Box | `_BoxSection` (私有 `ConsumerWidget`) | 用 `FutureBuilder` 加载当前 item 的 Box IDs，FilterChip 多选 +「+ 选择 Box」ActionChip |
 | Tags | `_buildPlaceholderSection` | 占位：「标签功能稍后接入」 |
 | Notes | `_buildPlaceholderSection` | 占位：「备注功能稍后接入」 |
-| Content Tabs | `TabBar` + `TabBarView` | 4 tabs：摘要 / 内容预览 / 笔记 / 相关。`SingleTickerProviderStateMixin` |
+| Content Tabs | `TabBar` + `_tabIndex` + switch | 4 tabs：摘要 / 内容预览 / 笔记 / 相关。`TabBarView` 已移除（不能置于 `SingleChildScrollView` 的无界高度中，会导致 `RenderBox was not laid out`）。改用 `_tabIndex` 状态 + `_buildCurrentTabContent()` 按 `switch(_tabIndex)` 渲染，外层统一滚动。 |
 | Technical Info | `CollectionTechnicalInfoSection(item: item)` | 折叠的 `ExpansionTile`，不展开不显示内容 |
 
 **Content Tabs 内容规则**：

@@ -107,7 +107,7 @@ class _CollectionsDesktopLayoutState
             // Split pane: list + detail
             Expanded(
               child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   // Left panel - item list + bulk action bar
                   Expanded(
