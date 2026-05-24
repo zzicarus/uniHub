@@ -1,1 +1,8 @@
-{"_example": "Fill with {\"file\": \"<path>\", \"reason\": \"<why>\"}. Put spec/research files only — no code paths. Run `python3 .trellis/scripts/get_context.py --mode packages` to list available specs. Delete this line once real entries are added."}
+{"file": ".trellis/spec/frontend/component-guidelines.md", "reason": "Widget 编写规范，设计令牌使用，布局约定"}
+{"file": ".trellis/spec/frontend/directory-structure.md", "reason": "代码文件组织方式，了解 thoughts 插件文件结构"}
+{"file": ".trellis/spec/frontend/state-management.md", "reason": "Riverpod 状态管理模式，了解 Provider 层级和访问规则"}
+{"file": ".trellis/spec/frontend/quality-guidelines.md", "reason": "代码质量要求，lint 规则"}
+{"file": ".trellis/spec/backend/quality-guidelines.md", "reason": "后端质量要求"}
+{"file": ".trellis/spec/backend/error-handling.md", "reason": "错误处理模式，指导 ThoughtImageService 异常处理"}
+{"file": ".trellis/spec/backend/database-guidelines.md", "reason": "数据库规范，理解 thought 保存流程和 imagePaths 字段"}
+{"file": ".trellis/tasks/05-24-thoughts-image-system-v2/research/appflowy-image-block-api.md", "reason": "AppFlowy Editor image block 内置 API 研究，包含 ImageBlockKeys、imageNode()、插入方式"}
