@@ -127,15 +127,24 @@ class _AppFlowyThoughtEditorState extends State<AppFlowyThoughtEditor> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    // Use the app theme's body style as the base so the editor inherits
+    // the project's configured font family (e.g. Inter) instead of
+    // falling back to Flutter's default font.
+    final editorTextStyle = theme.textTheme.bodyMedium?.copyWith(
+      fontSize: 15,
+      color: theme.colorScheme.onSurface.withValues(alpha: 0.87),
+    ) ?? const TextStyle(fontSize: 15);
+
     return AppFlowyEditor(
       editorState: _editorState,
       autoFocus: widget.autofocus,
       shrinkWrap: false,
       editorStyle: EditorStyle.desktop(
-        cursorColor: Theme.of(context).colorScheme.primary,
+        cursorColor: theme.colorScheme.primary,
         padding: const EdgeInsets.symmetric(horizontal: 24),
-        textStyleConfiguration: const TextStyleConfiguration(
-          text: TextStyle(fontSize: 15, color: Colors.black87),
+        textStyleConfiguration: TextStyleConfiguration(
+          text: editorTextStyle,
         ),
       ),
     );
