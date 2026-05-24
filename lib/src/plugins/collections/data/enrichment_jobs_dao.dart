@@ -8,44 +8,79 @@ class EnrichmentJobsDao {
 
   Future<int> enqueue(int itemId) {
     final now = DateTime.now();
-    return _db
-        .into(_db.enrichmentJobsTable)
-        .insert(
-          EnrichmentJobsTableCompanion(
-            itemId: Value(itemId),
-            createdAt: Value(now),
-            updatedAt: Value(now),
-          ),
-        );
+    return _db.into(_db.enrichmentJobsTable).insert(
+      EnrichmentJobsTableCompanion(
+        itemId: Value(itemId),
+        createdAt: Value(now),
+        updatedAt: Value(now),
+      ),
+    );
   }
 
-  Future<EnrichmentJobsTableData?> nextPending() {
+  Future<List<EnrichmentJobsTableData>> getPending({int limit = 3}) {
     final query = _db.select(_db.enrichmentJobsTable)
       ..where((t) => t.status.equals('pending'))
       ..orderBy([(t) => OrderingTerm.asc(t.createdAt)])
-      ..limit(1);
-    return query.getSingleOrNull();
+      ..limit(limit);
+    return query.get();
   }
 
-  Future<int> updateStatus(
-    int id, {
-    required String status,
-    String? errorMessage,
-    DateTime? startedAt,
-    DateTime? finishedAt,
-  }) {
+  Future<EnrichmentJobsTableData?> getById(int id) {
+    return (_db.select(_db.enrichmentJobsTable)
+      ..where((t) => t.id.equals(id))).getSingleOrNull();
+  }
+
+  Future<void> markRunning(int id) async {
     final now = DateTime.now();
-    return (_db.update(
-      _db.enrichmentJobsTable,
-    )..where((t) => t.id.equals(id))).write(
+    await (_db.update(_db.enrichmentJobsTable)
+      ..where((t) => t.id.equals(id))).write(
       EnrichmentJobsTableCompanion(
-        status: Value(status),
-        errorMessage: Value(errorMessage),
+        status: const Value('running'),
+        startedAt: Value(now),
         updatedAt: Value(now),
-        startedAt: startedAt != null ? Value(startedAt) : const Value.absent(),
-        finishedAt: finishedAt != null
-            ? Value(finishedAt)
-            : const Value.absent(),
+      ),
+    );
+  }
+
+  Future<void> markSuccess(int id) async {
+    final now = DateTime.now();
+    await (_db.update(_db.enrichmentJobsTable)
+      ..where((t) => t.id.equals(id))).write(
+      EnrichmentJobsTableCompanion(
+        status: const Value('success'),
+        finishedAt: Value(now),
+        updatedAt: Value(now),
+      ),
+    );
+  }
+
+  Future<void> markFailed(int id, String errorMessage) async {
+    final job = await getById(id);
+    if (job == null) return;
+    final now = DateTime.now();
+    await (_db.update(_db.enrichmentJobsTable)
+      ..where((t) => t.id.equals(id))).write(
+      EnrichmentJobsTableCompanion(
+        status: const Value('failed'),
+        errorMessage: Value(errorMessage),
+        attempts: Value(job.attempts + 1),
+        finishedAt: Value(now),
+        updatedAt: Value(now),
+      ),
+    );
+  }
+
+  Future<void> requeue(int id, String errorMessage) async {
+    final job = await getById(id);
+    if (job == null) return;
+    final now = DateTime.now();
+    await (_db.update(_db.enrichmentJobsTable)
+      ..where((t) => t.id.equals(id))).write(
+      EnrichmentJobsTableCompanion(
+        status: const Value('pending'),
+        errorMessage: Value(errorMessage),
+        attempts: Value(job.attempts + 1),
+        updatedAt: Value(now),
       ),
     );
   }

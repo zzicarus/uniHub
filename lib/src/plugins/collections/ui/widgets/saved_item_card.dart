@@ -179,7 +179,12 @@ class SavedItemCard extends ConsumerWidget {
       MediaType.article => Icons.article_outlined,
       MediaType.video => Icons.play_circle_outline_rounded,
       MediaType.repository => Icons.code_rounded,
+      MediaType.webpage => Icons.language_rounded,
       MediaType.image => Icons.image_outlined,
+      MediaType.pdf => Icons.picture_as_pdf_rounded,
+      MediaType.audio => Icons.headphones_rounded,
+      MediaType.post => Icons.forum_outlined,
+      MediaType.document => Icons.description_outlined,
       MediaType.unknown => Icons.link_rounded,
     };
   }

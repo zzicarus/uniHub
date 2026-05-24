@@ -111,5 +111,50 @@ void main() {
       expect(updated.archivedAt, isNotNull);
       expect(updated.status, ConsumptionStatus.archived.value);
     });
+
+    test('updateStatus does not modify isInInbox', () async {
+      final item = await repository.createSavedItem(
+        originalUrl: 'https://example.com/test-inbox',
+        normalizedUrl: 'https://example.com/test-inbox',
+      );
+
+      await repository.updateInboxState(item.id, false);
+      await repository.updateStatus(item.id, ConsumptionStatus.done);
+
+      final updated = await repository.getSavedItem(item.id);
+      expect(updated!.isInInbox, false);
+      expect(updated.status, ConsumptionStatus.done.value);
+      expect(updated.completedAt, isNotNull);
+    });
+
+    test('filters by Box ids using OR semantics', () async {
+      final box1 = await repository.createBox('Box OR 1');
+      final box2 = await repository.createBox('Box OR 2');
+
+      final itemA = await repository.createSavedItem(
+        originalUrl: 'https://example.com/a',
+        normalizedUrl: 'https://example.com/a',
+      );
+      final itemB = await repository.createSavedItem(
+        originalUrl: 'https://example.com/b',
+        normalizedUrl: 'https://example.com/b',
+      );
+      final itemC = await repository.createSavedItem(
+        originalUrl: 'https://example.com/c',
+        normalizedUrl: 'https://example.com/c',
+      );
+
+      await repository.setItemBoxes(itemA.id, {box1.id});
+      await repository.setItemBoxes(itemB.id, {box2.id});
+
+      final result = await repository.queryItems(
+        view: CollectionView.all,
+        boxIds: {box1.id, box2.id},
+      );
+
+      expect(result.any((e) => e.id == itemA.id), isTrue);
+      expect(result.any((e) => e.id == itemB.id), isTrue);
+      expect(result.any((e) => e.id == itemC.id), isFalse);
+    });
   });
 }

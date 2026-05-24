@@ -101,7 +101,6 @@ class CollectionsRepository {
       itemId,
       SavedItemsTableCompanion(
         status: Value(status.value),
-        isInInbox: Value(status != ConsumptionStatus.archived),
         completedAt: status == ConsumptionStatus.done
             ? Value(now)
             : const Value.absent(),
@@ -176,7 +175,7 @@ class CollectionsRepository {
       if (mediaType != null && item.mediaType != mediaType.value) return false;
       if (boxIds.isNotEmpty) {
         final ids = itemBoxIds[item.id]?.toSet() ?? const <int>{};
-        if (!boxIds.every(ids.contains)) return false;
+        if (!boxIds.any(ids.contains)) return false;
       }
       if (normalizedQuery.isEmpty) return true;
       final haystack = [

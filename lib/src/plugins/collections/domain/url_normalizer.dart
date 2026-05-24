@@ -1,6 +1,17 @@
 class UrlNormalizer {
   const UrlNormalizer();
 
+  static const _trackingParams = {
+    'utm_source',
+    'utm_medium',
+    'utm_campaign',
+    'utm_term',
+    'utm_content',
+    'spm',
+    'from',
+    'share_source',
+  };
+
   String normalize(String input) {
     final trimmed = input.trim();
     if (trimmed.isEmpty) {
@@ -17,7 +28,9 @@ class UrlNormalizer {
     final host = uri.host.toLowerCase();
     final normalizedPath = _normalizePath(uri.path);
     final queryParameters = Map.fromEntries(
-      uri.queryParameters.entries.toList()
+      uri.queryParameters.entries
+        .where((e) => !_trackingParams.contains(e.key.toLowerCase()))
+        .toList()
         ..sort((a, b) => a.key.compareTo(b.key)),
     );
 

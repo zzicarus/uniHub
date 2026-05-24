@@ -36,7 +36,7 @@ class _CollectionCaptureBarState extends ConsumerState<CollectionCaptureBar> {
       _controller.clear();
       ref.invalidate(savedItemsListProvider);
       if (result.wasCreated) {
-        unawaited(_enrich(result.itemId));
+        unawaited(_triggerEnrichmentQueue());
       }
       ref.invalidate(collectionBoxesProvider);
       final message = result.wasCreated ? '已添加到收藏' : '已存在，已跳转到该收藏';
@@ -53,11 +53,11 @@ class _CollectionCaptureBarState extends ConsumerState<CollectionCaptureBar> {
     }
   }
 
-  Future<void> _enrich(int itemId) async {
+  Future<void> _triggerEnrichmentQueue() async {
     try {
-      await ref.read(enrichmentJobServiceProvider).enrichItem(itemId);
+      await ref.read(enrichmentJobServiceProvider).runPendingJobs();
     } catch (error) {
-      debugPrint('Collections metadata enrichment failed: $error');
+      debugPrint('Collections enrichment job queue failed: $error');
     } finally {
       if (mounted) {
         ref.invalidate(savedItemsListProvider);

@@ -59,6 +59,7 @@ final metadataProviderProvider = Provider<MetadataProvider>((ref) {
 final enrichmentJobServiceProvider = Provider<EnrichmentJobService>((ref) {
   return EnrichmentJobService(
     repository: ref.watch(collectionsRepositoryProvider),
+    jobsDao: ref.watch(enrichmentJobsDaoProvider),
     metadataProvider: ref.watch(metadataProviderProvider),
   );
 });

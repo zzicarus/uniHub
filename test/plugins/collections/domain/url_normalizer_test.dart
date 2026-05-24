@@ -25,6 +25,24 @@ void main() {
     test('rejects empty URL', () {
       expect(() => normalizer.normalize('  '), throwsArgumentError);
     });
+
+    test('removes tracking parameters but keeps business params', () {
+      expect(
+        normalizer.normalize(
+          'https://example.com/a?utm_source=x&utm_medium=y&id=1#section',
+        ),
+        'https://example.com/a?id=1',
+      );
+    });
+
+    test('removes spm, from, share_source tracking params', () {
+      expect(
+        normalizer.normalize(
+          'https://example.com/a?spm=abc&from=share&page=2',
+        ),
+        'https://example.com/a?page=2',
+      );
+    });
   });
 
   group('PlatformDetector', () {

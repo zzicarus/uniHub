@@ -495,7 +495,7 @@ font: AppFlowy 编辑器使用 Inter 字体 + 主题色; image V2: ThoughtImageB
 
 ### Testing
 
-- [OK] (Add test results)
+- [OK] flutter analyze + 18 tests passed
 
 ### Status
 
@@ -504,3 +504,27 @@ font: AppFlowy 编辑器使用 Inter 字体 + 主题色; image V2: ThoughtImageB
 ### Next Steps
 
 - None - task complete
+
+---
+
+## 2026-05-24 17:00 — Collections MVP 缺口关闭
+
+本次完成 3 类修复：
+
+### 1. 语义修复
+- `updateStatus` 不再修改 `isInInbox`，状态切换不影响 Inbox 归属
+- Box 多选筛选从 AND 修复为 OR
+- `UrlNormalizer` 移除 8 类 tracking 参数（utm_*, spm, from, share_source）
+
+### 2. 本地 enrichment job queue
+- `EnrichmentJobsDao` 重写：enqueue / getPending / markRunning / markSuccess / markFailed / requeue / getById
+- `EnrichmentJobService` 重写：`runPendingJobs(limit: 3)` 从队列消费，失败最多重试 3 次
+- `CollectionCaptureBar` 移除直接 `enrichItem()`，改为触发队列
+
+### 3. PlatformDetector 补全
+- 新增 PDF 检测规则
+- 创建独立测试文件，15 个用例覆盖全部规则
+
+### 验证
+- `flutter analyze`: No issues found
+- `flutter test test/plugins/collections/`: 18/18 All tests passed

@@ -33,10 +33,42 @@ class PlatformDetector {
         mediaType: MediaType.article,
       );
     }
+    if (host.contains('zhihu.com')) {
+      return const PlatformDetection(
+        platform: SourcePlatform.zhihu,
+        mediaType: MediaType.article,
+      );
+    }
+    if (host.contains('xiaohongshu.com')) {
+      return const PlatformDetection(
+        platform: SourcePlatform.xiaohongshu,
+        mediaType: MediaType.post,
+      );
+    }
+    if (host.contains('twitter.com') || host.contains('x.com')) {
+      return const PlatformDetection(
+        platform: SourcePlatform.twitter,
+        mediaType: MediaType.post,
+      );
+    }
+    if (host.contains('douban.com')) {
+      return const PlatformDetection(
+        platform: SourcePlatform.douban,
+        mediaType: MediaType.post,
+      );
+    }
+
+    // PDF 文件 — 基于路径后缀，放在平台规则之后避免覆盖平台识别
+    if (uri.path.endsWith('.pdf')) {
+      return const PlatformDetection(
+        platform: SourcePlatform.pdf,
+        mediaType: MediaType.pdf,
+      );
+    }
 
     return const PlatformDetection(
       platform: SourcePlatform.web,
-      mediaType: MediaType.article,
+      mediaType: MediaType.webpage,
     );
   }
 }
