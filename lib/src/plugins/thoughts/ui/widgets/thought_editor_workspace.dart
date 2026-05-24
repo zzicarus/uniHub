@@ -58,7 +58,7 @@ class ThoughtEditorWorkspace extends ConsumerStatefulWidget {
       barrierColor: Colors.black.withAlpha(100),
       builder: (_) => ThoughtEditorWorkspace(
         thoughtId: thoughtId,
-        onClose: () => Navigator.of(context).pop(),
+        onClose: () => Navigator.of(context, rootNavigator: true).pop(),
       ),
     );
   }
