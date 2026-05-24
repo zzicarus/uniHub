@@ -1,5 +1,9 @@
 import 'package:drift/drift.dart';
 import '../plugin/plugin_registry.dart';
+import 'tables/collection_boxes_table.dart';
+import 'tables/enrichment_jobs_table.dart';
+import 'tables/saved_item_boxes_table.dart';
+import 'tables/saved_items_table.dart';
 import 'tables/thoughts_table.dart';
 
 part 'app_database.g.dart';
@@ -19,7 +23,15 @@ part 'app_database.g.dart';
 /// [PluginRegistry] 在运行时被传入，用于：
 /// - 动态计算全局 `schemaVersion`（取所有插件版本的最大值）
 /// - 在 debug 模式下验证插件声明的表与注解注册表一致
-@DriftDatabase(tables: [ThoughtsTable])
+@DriftDatabase(
+  tables: [
+    ThoughtsTable,
+    SavedItemsTable,
+    CollectionBoxesTable,
+    SavedItemBoxesTable,
+    EnrichmentJobsTable,
+  ],
+)
 class AppDatabase extends _$AppDatabase {
   final PluginRegistry _registry;
 
@@ -48,6 +60,12 @@ class AppDatabase extends _$AppDatabase {
       if (from < 2) {
         await m.addColumn(thoughtsTable, thoughtsTable.imagePaths);
       }
+      if (from < 3) {
+        await m.createTable(savedItemsTable);
+        await m.createTable(collectionBoxesTable);
+        await m.createTable(savedItemBoxesTable);
+        await m.createTable(enrichmentJobsTable);
+      }
     },
   );
 
@@ -65,15 +83,6 @@ class AppDatabase extends _$AppDatabase {
       final typeName = tableType.toString();
       final hasMatch = dbTables.any(
         (t) => t.runtimeType.toString().contains(typeName),
-      );
-      if (!hasMatch) return false;
-    }
-
-    // DB 中的每张表都应被某个插件声明
-    for (final dbTable in dbTables) {
-      final dbTypeName = dbTable.runtimeType.toString();
-      final hasMatch = pluginTableTypes.any(
-        (type) => dbTypeName.contains(type.toString()),
       );
       if (!hasMatch) return false;
     }

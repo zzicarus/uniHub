@@ -13,6 +13,9 @@ void main() {
       expect(RouteNames.thoughtEditor, isA<String>());
       expect(RouteNames.thoughtEditor, isNotEmpty);
 
+      expect(RouteNames.collections, isA<String>());
+      expect(RouteNames.collections, isNotEmpty);
+
       expect(RouteNames.todos, isA<String>());
       expect(RouteNames.todos, isNotEmpty);
 
@@ -39,6 +42,7 @@ void main() {
       expect(RouteNames.home, 'home');
       expect(RouteNames.thoughts, 'thoughts');
       expect(RouteNames.thoughtEditor, 'thought-editor');
+      expect(RouteNames.collections, 'collections');
       expect(RouteNames.todos, 'todos');
       expect(RouteNames.notes, 'notes');
       expect(RouteNames.calendar, 'calendar');
@@ -53,6 +57,7 @@ void main() {
         RouteNames.home,
         RouteNames.thoughts,
         RouteNames.thoughtEditor,
+        RouteNames.collections,
         RouteNames.todos,
         RouteNames.notes,
         RouteNames.calendar,
@@ -61,7 +66,7 @@ void main() {
         RouteNames.settings,
         RouteNames.styleGuide,
       };
-      expect(values, hasLength(10));
+      expect(values, hasLength(11));
     });
   });
 }

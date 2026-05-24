@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'src/core/app/app.dart';
 import 'src/core/plugin/plugin_registry.dart';
+import 'src/plugins/collections/collections_plugin.dart';
 import 'src/plugins/thoughts/thoughts_plugin.dart';
 
 void main() async {
@@ -9,6 +10,7 @@ void main() async {
 
   final registry = PluginRegistry();
   registry.register(ThoughtsPlugin());
+  registry.register(CollectionsPlugin());
   await registry.initAll();
 
   runApp(
