@@ -196,7 +196,11 @@ class CollectionFolderSidebar extends ConsumerWidget {
 
     try {
       await ref.read(collectionsRepositoryProvider).createBox(name);
-      ref.invalidate(collectionBoxesProvider);
+      // Defer invalidation to next frame so the dialog's elements
+      // are fully deactivated before the parent rebuilds.
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        ref.invalidate(collectionBoxesProvider);
+      });
       if (!context.mounted) return;
       ScaffoldMessenger.of(
         context,

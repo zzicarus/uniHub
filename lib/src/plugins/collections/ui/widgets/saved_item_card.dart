@@ -582,7 +582,11 @@ class _CompactBoxButton extends ConsumerWidget {
     }
 
     if (!context.mounted) return;
-    ref.invalidate(savedItemsListProvider);
+    // Defer invalidation to next frame so showMenu's popup elements
+    // are fully deactivated before the parent rebuilds.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.invalidate(savedItemsListProvider);
+    });
   }
 }
 

@@ -111,6 +111,10 @@ class CollectionBoxBar extends ConsumerWidget {
     );
     if (name == null || name.isEmpty) return;
     await ref.read(collectionsRepositoryProvider).createBox(name);
-    ref.invalidate(collectionBoxesProvider);
+    // Defer invalidation to next frame so the dialog's elements
+    // (e.g. InputDecorator with active tickers) are fully deactivated.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.invalidate(collectionBoxesProvider);
+    });
   }
 }

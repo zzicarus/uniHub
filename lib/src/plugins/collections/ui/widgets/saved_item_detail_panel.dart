@@ -1078,7 +1078,13 @@ class _BoxSection extends ConsumerWidget {
     );
     if (name == null || name.isEmpty) return;
     await ref.read(collectionsRepositoryProvider).createBox(name);
-    ref.invalidate(collectionBoxesProvider);
+    // Defer invalidation to next frame so the dialog's elements
+    // (e.g. InputDecorator with active tickers) are fully deactivated
+    // before the parent rebuilds. Without this, Flutter asserts
+    // "Tried to build dirty widget in the wrong build scope".
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.invalidate(collectionBoxesProvider);
+    });
   }
 
   Future<void> _addBox(
@@ -1119,7 +1125,11 @@ class _BoxSection extends ConsumerWidget {
       await repository.updateInboxState(item.id, false);
     }
     if (context.mounted) {
-      ref.invalidate(savedItemsListProvider);
+      // Defer invalidation to next frame so showMenu's popup elements
+      // are fully deactivated before the parent rebuilds.
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        ref.invalidate(savedItemsListProvider);
+      });
     }
   }
 }
