@@ -145,9 +145,10 @@ git status
 
 > 本 section 由 sync-knowledge 自动管理，按时间倒序追加。
 
-### 2026-05-26: SVG favicon 缓存修复
-- `website_logo_cache_service.dart`：`_isEntryValid` 拒绝 `.svg` 路径和 `image/svg+xml` 的 MIME 类型；`_tryFetchCandidate` 新增响应 `Content-Type` 校验，`image/svg+xml` 跳过该候选
-- `website_logo_cache_dao.dart`：`markFailed` 同时清除 `localLogoPath` 和 `mimeType`，避免 UI 层继续加载已标记失败的 SVG
+### 2026-05-26: SVG favicon 缓存修复 + failed 缓存重试修复
+- `website_logo_cache_service.dart`：`_isEntryValid` 拆分为 `_isSuccessEntryUsable` + `_shouldSkipFailedRetry`；failed entry 不再无条件下拦截重试 — 有 `remoteFaviconUrl` 或 debug 模式时跳过冷却；`_failedTtl` debug 10 分钟 / 生产 24 小时
+- 日志文案修正：success 命中 → `logo cache hit success`；failed 冷却跳过 → `logo cache skip retry failed cooldown`；失效重试 → `logo cache retry stale-or-failed`
+- `website_logo_cache_dao.dart`：`markFailed` 同时清除 `localLogoPath` 和 `mimeType`
 - `website_logo.dart`：新增 SVG 路径跳过检查；`_reportedDecodeFailures` 静态 Set 去重错误日志，同路径只打印一次
 
 ### 2026-05-25: 收藏删除确认弹窗 UI 改造

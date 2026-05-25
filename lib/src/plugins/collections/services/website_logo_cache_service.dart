@@ -133,18 +133,33 @@ class WebsiteLogoCacheService {
     final row = await _dao.getBySiteKey(siteKey);
     if (row != null) {
       CollectionDebugLogger.log(
-        'logo cache row exists status=${row.status} localLogoPath=${row.localLogoPath} expiresAt=${row.expiresAt}',
+        'logo cache row exists status=${row.status} localLogoPath=${row.localLogoPath} expiresAt=${row.expiresAt} remoteFaviconUrl=$remoteFaviconUrl',
       );
-    }
 
-    if (row != null && _isEntryValid(row)) {
+      if (_isSuccessEntryUsable(row)) {
+        CollectionDebugLogger.log(
+          'logo cache hit success siteKey=$siteKey path=${row.localLogoPath}',
+        );
+        return WebsiteLogoCacheEntry(
+          siteKey: row.siteKey,
+          localLogoPath: row.localLogoPath,
+          status: row.status,
+        );
+      }
+
+      if (_shouldSkipFailedRetry(row, remoteFaviconUrl: remoteFaviconUrl)) {
+        CollectionDebugLogger.warn(
+          'logo cache skip retry failed cooldown siteKey=$siteKey expiresAt=${row.expiresAt}',
+        );
+        return WebsiteLogoCacheEntry(
+          siteKey: row.siteKey,
+          localLogoPath: null,
+          status: row.status,
+        );
+      }
+
       CollectionDebugLogger.log(
-        'logo cache hit (valid) siteKey=$siteKey',
-      );
-      return WebsiteLogoCacheEntry(
-        siteKey: row.siteKey,
-        localLogoPath: row.localLogoPath,
-        status: row.status,
+        'logo cache retry stale-or-failed siteKey=$siteKey status=${row.status}',
       );
     }
 
@@ -159,7 +174,7 @@ class WebsiteLogoCacheService {
     } catch (e) {
       // If we had a previous failed row, update it; otherwise create one
       if (row != null) {
-        await _dao.markFailed(row.id, e.toString());
+        await _dao.markFailed(row.id, e.toString(), retryDelay: _failedTtl);
       } else {
         final now = DateTime.now();
         await _dao.upsert(
@@ -171,7 +186,7 @@ class WebsiteLogoCacheService {
                 : const Value.absent(),
             status: const Value('failed'),
             lastError: Value(e.toString()),
-            expiresAt: Value(now.add(const Duration(minutes: 10))),
+            expiresAt: Value(now.add(_failedTtl)),
             createdAt: Value(now),
             updatedAt: Value(now),
           ),
@@ -224,37 +239,81 @@ class WebsiteLogoCacheService {
   // Internal helpers
   // ------------------------------------------------------------------
 
-  /// Whether an existing cache entry is still valid.
-  bool _isEntryValid(WebsiteLogoCacheTableData row) {
-    if (row.status == 'success' && row.expiresAt != null) {
-      // SVG cached entries are invalid — Image.file cannot decode SVG.
-      if (row.localLogoPath != null && row.localLogoPath!.toLowerCase().endsWith('.svg')) {
-        CollectionDebugLogger.warn(
-          'logo cache entry is SVG (invalid for Image.file) siteKey=${row.siteKey}',
-        );
-        return false;
-      }
-      if (row.mimeType != null && row.mimeType!.toLowerCase().contains('image/svg+xml')) {
-        CollectionDebugLogger.warn(
-          'logo cache entry mimeType is image/svg+xml (invalid) siteKey=${row.siteKey}',
-        );
-        return false;
-      }
-      // Verify the local file actually exists.
-      if (row.localLogoPath == null || row.localLogoPath!.isEmpty) {
-        return false;
-      }
-      if (!File(row.localLogoPath!).existsSync()) {
-        return false;
-      }
-      return DateTime.now().isBefore(row.expiresAt!);
+  /// Whether a success cache entry is usable by the UI.
+  ///
+  /// Returns true only when:
+  /// - status is 'success'
+  /// - Not expired
+  /// - Local file exists and is not SVG (Image.file can't decode SVG)
+  bool _isSuccessEntryUsable(WebsiteLogoCacheTableData row) {
+    if (row.status != 'success') return false;
+    if (row.expiresAt == null) return false;
+    if (!DateTime.now().isBefore(row.expiresAt!)) return false;
+
+    final path = row.localLogoPath;
+    if (path == null || path.isEmpty) return false;
+
+    final lowerPath = path.toLowerCase();
+    if (lowerPath.endsWith('.svg')) {
+      CollectionDebugLogger.warn(
+        'logo success entry is SVG (invalid for Image.file) siteKey=${row.siteKey}',
+      );
+      return false;
     }
-    if (row.status == 'failed' && row.expiresAt != null) {
-      // Failed entries also have a retry delay
-      return DateTime.now().isBefore(row.expiresAt!);
+    if ((row.mimeType ?? '').toLowerCase().contains('svg')) {
+      CollectionDebugLogger.warn(
+        'logo success entry mimeType is SVG (invalid for Image.file) siteKey=${row.siteKey}',
+      );
+      return false;
     }
-    return false;
+
+    if (!File(path).existsSync()) {
+      CollectionDebugLogger.warn(
+        'logo success entry file missing siteKey=${row.siteKey} path=$path',
+      );
+      return false;
+    }
+
+    return true;
   }
+
+  /// Whether to skip retrying a failed entry.
+  ///
+  /// Returns true (skip retry) only when:
+  /// - status is 'failed'
+  /// - Not yet expired (cooling down)
+  /// - No new [remoteFaviconUrl] is available (otherwise we must retry)
+  /// - Debug logging is DISABLED (during development always retry)
+  bool _shouldSkipFailedRetry(
+    WebsiteLogoCacheTableData row, {
+    required String? remoteFaviconUrl,
+  }) {
+    if (row.status != 'failed') return false;
+    if (row.expiresAt == null) return false;
+    if (!DateTime.now().isBefore(row.expiresAt!)) return false;
+
+    // If we've obtained a specific favicon URL from metadata, don't let
+    // the old failed entry block the re-fetch.
+    if (remoteFaviconUrl != null && remoteFaviconUrl.trim().isNotEmpty) {
+      return false;
+    }
+
+    // During development with debug logging enabled, always retry failed
+    // entries instead of waiting for the cooldown to expire.
+    if (CollectionDebugLogger.enabled) {
+      return false;
+    }
+
+    return true;
+  }
+
+  /// In debug mode, failed entries cool down for 10 minutes so developers
+  /// can quickly re-test. In production, cool down for 24 hours to avoid
+  /// hammering sites that don't serve favicons.
+  Duration get _failedTtl =>
+      CollectionDebugLogger.enabled
+          ? const Duration(minutes: 10)
+          : const Duration(hours: 24);
 
   /// Download and cache a favicon using multi-candidate fallback.
   ///

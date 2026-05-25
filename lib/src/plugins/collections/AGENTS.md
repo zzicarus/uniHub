@@ -122,7 +122,9 @@ CollectionCaptureService.captureUrl                    → 输入/归一化/创�
 EnrichmentJobService._processJob()
   └─ ensureLogoCached()
        ├─ in-flight 去重（同 siteKey 并发仅一次网络请求）
-       ├─ 缓存校验：_isEntryValid(success + 未过期 + 文件存在)
+       ├─ 缓存校验：_isSuccessEntryUsable(success + 未过期 + 文件存在 + 非 SVG) → 复用
+       ├─                 _shouldSkipFailedRetry(failed + 冷却中 + 无新 URL + debug 关闭) → 跳过
+       ├─                 否则 → 重试
        ├─ _fetchAndCache()
        │    ├─ 4 候选 URL 依次尝试
        │    │    (1) metadata 解析的 favicon URL
@@ -162,6 +164,8 @@ UI 层
 
 **Bilibili 特殊处理**：如果解析到的 favicon 不是 `.ico` 或 `.png`（如 SVG），自动降级到根 `/favicon.ico`。
 
+**强制重试**：即使有未过期 failed entry，只要 metadata 解析出新的 `remoteFaviconUrl`（如 `i0.hdslb.com/.../512.png`），`_shouldSkipFailedRetry` 返回 false，立即执行重抓。
+
 ### 多候选 favicon fallback（WebsiteLogoCacheService._fetchAndCache）
 
 按顺序尝试 4 个候选 URL，第一个成功即返回；全部失败抛出异常：
@@ -178,10 +182,12 @@ UI 层
 | 规则 | 说明 |
 |------|------|
 | 并发去重 | `_inFlight` 映射表，同 `siteKey` 并发只触发一次请求 |
-| success 缓存复用 | 未过期 + `localLogoPath` 文件存在 → 直接返回 |
+| success 缓存复用 | `_isSuccessEntryUsable`：未过期 + 文件存在 + 非 SVG → 直接返回 |
 | success 文件缺失 | 视为无效，重新抓取 |
-| failed 缓存 | **10 分钟**（开发期）过期时间内不重试；过期后重新抓取 |
-| SVG 缓存淘汰 | 已有 `.svg` 后缀或 `image/svg+xml` 的 success 条目 → `_isEntryValid` 返回 false，触发重抓 |
+| failed 冷却跳过 | `_shouldSkipFailedRetry`：仅当**无新 `remoteFaviconUrl`** + **debug 禁用**时才跳过 |
+| 新 URL 强制重试 | 即使有未过期 failed entry，只要 metadata 解析出新的 `remoteFaviconUrl` → 立即重试 |
+| failed TTL | debug **10 分钟**，生产 **24 小时**（`_failedTtl`） |
+| SVG 缓存淘汰 | 已有 `.svg` 后缀或 `image/svg+xml` 的 success 条目 → `_isSuccessEntryUsable` 返回 false，触发重抓 |
 | failed 清理 | `markFailed` 清除 `localLogoPath` 和 `mimeType` 字段，UI 不会继续加载无效文件 |
 | MIME 兼容 | `_extensionForMimeType` 先 `split(';').first` 剥离 charset，再匹配类型 |
 | URL 协议 | 只允许 `http`/`https` |
