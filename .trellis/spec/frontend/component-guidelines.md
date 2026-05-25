@@ -391,6 +391,71 @@ InkWell(
 
 **测试要求**：修复或新增共享可点击 Widget 时，widget test 应覆盖目标 `Ink`/`InkWell` 在组件根节点以内存在 `Material` 祖先，避免只依赖 `Scaffold` 或页面级 `Material`。
 
+### 测试模式：hasLocalMaterialAncestor 辅助函数
+
+使用以下可复用 helper 进行断言。测试应在 `Scaffold`（或其他外层 `Material`）中包裹被测组件，然后从被测组件内部找 `Ink`/`InkWell` 的祖先中是否包含 `Material`。
+
+```dart
+/// 检测 target widget 组件树内是否存在 Material 祖先（且不在 component 之上）
+bool hasLocalMaterialAncestor({
+  required WidgetTester tester,
+  required Finder component,
+  required Finder target,
+}) {
+  final componentElement = tester.element(component);
+  final targetElement = tester.element(target);
+  var found = false;
+
+  targetElement.visitAncestorElements((ancestor) {
+    if (ancestor == componentElement) return false;
+    if (ancestor.widget is Material) {
+      found = true;
+      return false;
+    }
+    return true;
+  });
+
+  return found;
+}
+```
+
+### 使用方式
+
+```dart
+await tester.pumpWidget(
+  MaterialApp(
+    home: Scaffold(
+      body: Center(
+        child: MyComponent(onTap: () {}),
+      ),
+    ),
+  ),
+);
+
+// 断言：MyComponent 内部的 Ink 有本地 Material 宿主
+expect(
+  hasLocalMaterialAncestor(
+    tester: tester,
+    component: find.byType(MyComponent),
+    target: find.descendant(
+      of: find.byType(MyComponent),
+      matching: find.byType(Ink),
+    ),
+  ),
+  isTrue,
+);
+
+// 断言：点击回调仍正常工作
+await tester.tap(find.text('...'));
+await tester.pump();
+expect(tapped, isTrue);
+```
+
+**注意**：
+- `hasLocalMaterialAncestor` 中 `visitAncestorElements` 在找到 `componentElement` 时返回 `false` 停止遍历，防止越过组件边界找到 `Scaffold` 的 `Material`。
+- 如果组件内没有 `Ink`（例如仅用 `Material` + `InkWell`），可将 `target` 改为查找 `InkWell`。
+- 组件必须通过 `const` 构造器使 `find.byType` 可以准确定位，避免 Finder 匹配到过多实例。
+
 ---
 
 ## 配色系统

@@ -87,6 +87,7 @@ ProviderScope(
 - [ ] 所有间距/圆角来自 `AppSpacing`/`AppRadius`
 - [ ] 跨层引用使用 `package:` 路径
 - [ ] 无 `// ignore` 不加原因
+- [ ] 可点击的 `Ink`/`InkWell` 组件拥有本地 `Material` 宿主，不依赖 `Scaffold` 或页面级祖先 Material
 - [ ] 测试覆盖新增的关键路径
 - [ ] 响应式布局测试通过（桌面端 720px+ 正常）
 - [ ] 暗色模式无颜色冲突
