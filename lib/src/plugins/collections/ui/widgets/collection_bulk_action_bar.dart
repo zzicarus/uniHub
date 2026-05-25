@@ -58,7 +58,7 @@ class CollectionBulkActionBar extends ConsumerWidget {
                     '已选择 1 项',
                     style: theme.textTheme.labelSmall?.copyWith(
                       color: colorScheme.onPrimaryContainer,
-                      fontWeight: FontWeight.w500,
+                      fontWeight: AppFontTokens.medium,
                     ),
                   ),
                 ),
@@ -158,7 +158,7 @@ class _ActionButton extends StatelessWidget {
         label,
         style: TextStyle(
           color: foregroundColor,
-          fontWeight: enabled ? FontWeight.w500 : FontWeight.normal,
+          fontWeight: enabled ? AppFontTokens.medium : AppFontTokens.normal,
         ),
       ),
       style: TextButton.styleFrom(

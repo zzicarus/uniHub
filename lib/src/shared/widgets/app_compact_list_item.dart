@@ -56,7 +56,7 @@ class AppCompactListItem extends StatelessWidget {
                       Text(
                         title,
                         style: theme.textTheme.titleSmall?.copyWith(
-                          fontWeight: FontWeight.w700,
+                          fontWeight: AppFontTokens.bold,
                         ),
                         overflow: TextOverflow.ellipsis,
                       ),

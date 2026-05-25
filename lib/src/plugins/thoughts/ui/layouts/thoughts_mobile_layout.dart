@@ -108,7 +108,7 @@ class _MobileTopBar extends ConsumerWidget {
             child: Text(
               isArchived ? '归档想法' : '想法',
               style: theme.textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.w800,
+                fontWeight: AppFontTokens.extraBold,
               ),
             ),
           ),
@@ -304,7 +304,7 @@ class _MobileComposer extends ConsumerWidget {
               errorText: composer.tagErrorMessage,
               errorStyle: theme.textTheme.labelSmall?.copyWith(
                 color: colorScheme.error,
-                fontSize: 10,
+                fontSize: AppFontTokens.mini,
               ),
             ),
             style: theme.textTheme.bodySmall,
@@ -334,7 +334,7 @@ class _MobileComposer extends ConsumerWidget {
                           '#$tag',
                           style: theme.textTheme.labelSmall?.copyWith(
                             color: colorScheme.onTertiaryContainer,
-                            fontWeight: FontWeight.w700,
+                            fontWeight: AppFontTokens.bold,
                           ),
                         ),
                       ),

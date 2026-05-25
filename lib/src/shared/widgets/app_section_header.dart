@@ -30,7 +30,7 @@ class AppSectionHeader extends StatelessWidget {
           child: Text(
             title,
             style: theme.textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.w700,
+              fontWeight: AppFontTokens.bold,
             ),
           ),
         ),
@@ -50,7 +50,7 @@ class AppSectionHeader extends StatelessWidget {
                     '$trailingText  →',
                     style: theme.textTheme.labelLarge?.copyWith(
                       color: colorScheme.primary,
-                      fontWeight: FontWeight.w700,
+                      fontWeight: AppFontTokens.bold,
                     ),
                   ),
                 ),

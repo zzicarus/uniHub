@@ -86,7 +86,7 @@ class AppTagChip extends StatelessWidget {
                   showHash ? '#$label' : label,
                   style: theme.textTheme.labelMedium?.copyWith(
                     color: foregroundColor,
-                    fontWeight: FontWeight.w800,
+                    fontWeight: AppFontTokens.extraBold,
                   ),
                 ),
                 if (count != null) ...[
@@ -97,7 +97,7 @@ class AppTagChip extends StatelessWidget {
                       color: selected
                           ? Colors.white.withValues(alpha: 0.78)
                           : colors.textTertiary,
-                      fontWeight: FontWeight.w700,
+                      fontWeight: AppFontTokens.bold,
                     ),
                   ),
                 ],
@@ -146,7 +146,7 @@ class AppSelectedTagChip extends StatelessWidget {
       ),
       labelStyle: theme.textTheme.labelMedium?.copyWith(
         color: colors.primary,
-        fontWeight: FontWeight.w800,
+        fontWeight: AppFontTokens.extraBold,
       ),
     );
   }

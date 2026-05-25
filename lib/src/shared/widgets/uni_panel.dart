@@ -62,7 +62,7 @@ Widget uniPanelColumnPreview() => UniPanel(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: const [
-          Text('标题', style: TextStyle(fontWeight: FontWeight.bold)),
+          Text('标题', style: TextStyle(fontWeight: AppFontTokens.bold)),
           SizedBox(height: 8),
           Text('这里是面板内容，支持任意子组件。'),
         ],

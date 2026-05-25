@@ -67,7 +67,7 @@ class _HomeHeader extends StatelessWidget {
       greeting,
       style: theme.textTheme.headlineSmall?.copyWith(
         color: colorScheme.onSurface,
-        fontWeight: FontWeight.w800,
+        fontWeight: AppFontTokens.extraBold,
       ),
       overflow: TextOverflow.ellipsis,
     );

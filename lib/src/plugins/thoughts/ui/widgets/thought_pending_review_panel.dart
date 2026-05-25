@@ -55,7 +55,7 @@ class ThoughtPendingReviewPanel extends ConsumerWidget {
                           TextSpan(
                             text: '${pending.length} 条未整理\n',
                             style: theme.textTheme.titleSmall?.copyWith(
-                              fontWeight: FontWeight.w800,
+                              fontWeight: AppFontTokens.extraBold,
                             ),
                           ),
                           const TextSpan(text: '想法值得被好好整理'),

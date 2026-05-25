@@ -19,6 +19,7 @@ import 'dart:async';
 import 'package:appflowy_editor/appflowy_editor.dart';
 import 'package:flutter/material.dart';
 
+import '../../core/theme/app_tokens.dart';
 import 'appflowy_document_tools.dart';
 
 /// Selection menu items for the slash menu with the image item removed.
@@ -253,9 +254,9 @@ class _AppFlowyThoughtEditorState extends State<AppFlowyThoughtEditor> {
     // the project's configured font family (e.g. Inter) instead of
     // falling back to Flutter's default font.
     final editorTextStyle = theme.textTheme.bodyMedium?.copyWith(
-      fontSize: 15,
+      fontSize: AppFontTokens.subtitle,
       color: theme.colorScheme.onSurface.withValues(alpha: 0.87),
-    ) ?? const TextStyle(fontSize: 15);
+    ) ?? TextStyle(fontSize: AppFontTokens.subtitle);
 
     // Customise the slash menu so the built-in image item is removed.
     // All image insertion must go through ThoughtImageService.

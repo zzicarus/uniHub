@@ -96,7 +96,7 @@ class _StatusChip extends StatelessWidget {
                     : enabled
                     ? colorScheme.onSurfaceVariant
                     : colorScheme.outline,
-                fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
+                fontWeight: selected ? AppFontTokens.extraBold : AppFontTokens.semiBold,
               ),
             ),
           ),

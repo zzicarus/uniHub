@@ -141,7 +141,7 @@ class _AppMoreTagsPopoverContentState
             child: Text(
               '更多标签',
               style: theme.textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.w700,
+                fontWeight: AppFontTokens.bold,
               ),
             ),
           ),

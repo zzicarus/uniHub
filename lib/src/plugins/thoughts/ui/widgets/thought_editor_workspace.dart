@@ -211,7 +211,7 @@ class _WorkspaceHeader extends StatelessWidget {
           Text(
             '编辑想法',
             style: theme.textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.w700,
+              fontWeight: AppFontTokens.bold,
               color: colors.textPrimary,
             ),
           ),
@@ -232,7 +232,7 @@ class _WorkspaceHeader extends StatelessWidget {
               statusText,
               style: theme.textTheme.labelSmall?.copyWith(
                 color: statusFg,
-                fontSize: 11,
+                fontSize: AppFontTokens.caption,
               ),
             ),
           ),
@@ -361,14 +361,14 @@ class _MainEditorColumnState extends State<_MainEditorColumn> {
                 hintText: '输入标题...',
                 hintStyle: theme.textTheme.headlineSmall?.copyWith(
                   color: colors.textTertiary,
-                  fontWeight: FontWeight.w700,
+                  fontWeight: AppFontTokens.bold,
                 ),
                 border: InputBorder.none,
                 isCollapsed: true,
                 contentPadding: EdgeInsets.zero,
               ),
               style: theme.textTheme.headlineSmall?.copyWith(
-                fontWeight: FontWeight.w700,
+                fontWeight: AppFontTokens.bold,
                 color: colors.textPrimary,
               ),
             ),
@@ -404,7 +404,7 @@ class _MainEditorColumnState extends State<_MainEditorColumn> {
                       '/ 命令',
                       style: theme.textTheme.bodySmall?.copyWith(
                         color: colors.textTertiary,
-                        fontSize: 11,
+                        fontSize: AppFontTokens.caption,
                       ),
                     ),
                   ),
@@ -560,7 +560,7 @@ class _ImagesCard extends StatelessWidget {
             icon: const Icon(Icons.add_photo_alternate_outlined, size: 16),
             label: Text(
               refs.isEmpty ? '添加图片' : '继续添加',
-              style: const TextStyle(fontSize: 13),
+              style: TextStyle(fontSize: AppFontTokens.bodyMd),
             ),
             style: TextButton.styleFrom(
               foregroundColor: colors.primary,
@@ -742,7 +742,7 @@ class _StatusCard extends StatelessWidget {
           Text(
             '置顶',
             style: TextStyle(
-              fontSize: 13,
+              fontSize: AppFontTokens.bodyMd,
               color: colors.textSecondary,
             ),
           ),
@@ -802,8 +802,8 @@ class _PropertyCard extends StatelessWidget {
                   title,
                   style: TextStyle(
                     color: colors.textSecondary,
-                    fontWeight: FontWeight.w600,
-                    fontSize: 12,
+                    fontWeight: AppFontTokens.semiBold,
+                    fontSize: AppFontTokens.labelMd,
                   ),
                 ),
                 if (subtitle != null) ...[
@@ -812,7 +812,7 @@ class _PropertyCard extends StatelessWidget {
                     '· $subtitle',
                     style: TextStyle(
                       color: colors.textTertiary,
-                      fontSize: 11,
+                      fontSize: AppFontTokens.caption,
                     ),
                   ),
                 ],
@@ -822,7 +822,7 @@ class _PropertyCard extends StatelessWidget {
           DefaultTextStyle(
             style: TextStyle(
               color: colors.textTertiary,
-              fontSize: 13,
+              fontSize: AppFontTokens.bodyMd,
             ),
             child: child,
           ),
@@ -893,7 +893,7 @@ class _WorkspaceFooter extends StatelessWidget {
               'Ctrl+Enter 快速保存',
               style: theme.textTheme.labelSmall?.copyWith(
                 color: colors.textTertiary,
-                fontSize: 11,
+                fontSize: AppFontTokens.caption,
               ),
             ),
           ),

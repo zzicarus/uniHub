@@ -183,8 +183,8 @@ class _ThoughtCardState extends ConsumerState<ThoughtCard> {
             '#$tag',
             style: theme.textTheme.labelMedium?.copyWith(
               color: accent,
-              fontWeight: FontWeight.w800,
-              fontSize: 11,
+              fontWeight: AppFontTokens.extraBold,
+              fontSize: AppFontTokens.caption,
             ),
           ),
           onPressed: () => widget.onTagTap(tag),
@@ -209,8 +209,8 @@ class _ThoughtCardState extends ConsumerState<ThoughtCard> {
             '+$overflow',
             style: theme.textTheme.labelMedium?.copyWith(
               color: theme.colorScheme.onSurfaceVariant,
-              fontWeight: FontWeight.w600,
-              fontSize: 11,
+              fontWeight: AppFontTokens.semiBold,
+              fontSize: AppFontTokens.caption,
             ),
           ),
         ),

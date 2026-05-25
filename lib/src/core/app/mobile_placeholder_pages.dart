@@ -99,7 +99,7 @@ class _PlaceholderPage extends StatelessWidget {
                   Text(
                     title,
                     style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                      fontWeight: FontWeight.w700,
+                      fontWeight: AppFontTokens.bold,
                     ),
                   ),
                   const SizedBox(height: AppSpacing.md),

@@ -54,7 +54,7 @@ class ThoughtRandomReviewPanel extends ConsumerWidget {
                             maxLines: 2,
                             overflow: TextOverflow.ellipsis,
                             style: Theme.of(context).textTheme.bodyMedium
-                                ?.copyWith(fontWeight: FontWeight.w600),
+                                ?.copyWith(fontWeight: AppFontTokens.semiBold),
                           ),
                           const SizedBox(height: 4),
                           Text(

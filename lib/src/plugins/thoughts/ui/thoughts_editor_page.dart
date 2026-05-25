@@ -182,7 +182,7 @@ class _ThoughtsEditorPageState extends ConsumerState<ThoughtsEditorPage> {
                   ...ctrl.tagChips.map((tag) {
                     return Chip(
                       label: Text(tag),
-                      labelStyle: const TextStyle(fontSize: 12),
+                      labelStyle: TextStyle(fontSize: AppFontTokens.labelMd),
                       deleteIcon: const Icon(Icons.close, size: 14),
                       onDeleted: () => ctrl.removeChip(tag),
                       materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
@@ -202,7 +202,7 @@ class _ThoughtsEditorPageState extends ConsumerState<ThoughtsEditorPage> {
                   errorText: ctrl.tagErrorMessage,
                   errorStyle: theme.textTheme.labelSmall?.copyWith(
                     color: colorScheme.error,
-                    fontSize: 10,
+                    fontSize: AppFontTokens.mini,
                   ),
                 ),
                 style: theme.textTheme.bodySmall,
@@ -232,7 +232,7 @@ class _ThoughtsEditorPageState extends ConsumerState<ThoughtsEditorPage> {
                               '#$tag',
                               style: theme.textTheme.labelSmall?.copyWith(
                                 color: colorScheme.onTertiaryContainer,
-                                fontWeight: FontWeight.w700,
+                                fontWeight: AppFontTokens.bold,
                               ),
                             ),
                           ),

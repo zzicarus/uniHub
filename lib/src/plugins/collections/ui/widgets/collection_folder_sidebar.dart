@@ -33,7 +33,7 @@ class CollectionFolderSidebar extends ConsumerWidget {
                   child: Text(
                     '收藏夹',
                     style: theme.textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w700,
+                      fontWeight: AppFontTokens.bold,
                     ),
                   ),
                 ),
@@ -267,7 +267,7 @@ class _FolderRow extends StatelessWidget {
                     color: selected
                         ? colorScheme.primary
                         : colorScheme.onSurface,
-                    fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+                    fontWeight: selected ? AppFontTokens.bold : AppFontTokens.medium,
                   ),
                 ),
               ),

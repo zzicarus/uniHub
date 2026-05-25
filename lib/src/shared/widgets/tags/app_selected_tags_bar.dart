@@ -76,7 +76,7 @@ class AppSelectedTagsBar extends StatelessWidget {
             label,
             style: theme.textTheme.labelMedium?.copyWith(
               color: colors.textSecondary,
-              fontWeight: FontWeight.w700,
+              fontWeight: AppFontTokens.bold,
             ),
           ),
           const SizedBox(width: AppSpacing.sm),
@@ -120,7 +120,7 @@ class AppSelectedTagsBar extends StatelessWidget {
           '+$count',
           style: theme.textTheme.labelMedium?.copyWith(
             color: colors.textSecondary,
-            fontWeight: FontWeight.w700,
+            fontWeight: AppFontTokens.bold,
           ),
         ),
       ),

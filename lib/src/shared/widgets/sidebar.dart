@@ -38,8 +38,7 @@ class Sidebar extends ConsumerWidget {
                 Text(
                   'uniHub',
                   style: theme.textTheme.titleLarge?.copyWith(
-                    fontSize: 22,
-                    fontWeight: FontWeight.w800,
+                    fontWeight: AppFontTokens.extraBold,
                   ),
                 ),
               ],
@@ -165,9 +164,9 @@ class _LogoMark extends StatelessWidget {
           'U',
           style: TextStyle(
             color: Colors.white,
-            fontSize: 24,
+            fontSize: AppFontTokens.brand,
             height: 1,
-            fontWeight: FontWeight.w900,
+            fontWeight: AppFontTokens.black,
           ),
         ),
       ),
@@ -201,8 +200,8 @@ class _UserTile extends StatelessWidget {
                 'A',
                 style: theme.textTheme.titleSmall?.copyWith(
                   color: appColors.primary,
-                  fontSize: 16,
-                  fontWeight: FontWeight.w800,
+                  fontSize: AppFontTokens.titleLg,
+                  fontWeight: AppFontTokens.extraBold,
                 ),
               ),
             ),
@@ -410,10 +409,10 @@ class _NavItem extends StatelessWidget {
                   label,
                   style: theme.textTheme.titleSmall?.copyWith(
                     color: foreground,
-                    fontSize: compact ? 13 : 15,
+                    fontSize: compact ? AppFontTokens.titleMd : AppFontTokens.subtitle,
                     fontWeight: isSelected
-                        ? FontWeight.w800
-                        : FontWeight.w500,
+                        ? AppFontTokens.extraBold
+                        : AppFontTokens.medium,
                   ),
                   overflow: TextOverflow.ellipsis,
                 ),

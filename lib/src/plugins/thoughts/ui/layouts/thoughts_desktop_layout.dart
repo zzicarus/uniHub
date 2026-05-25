@@ -131,7 +131,7 @@ class _ThoughtsHeader extends StatelessWidget {
                   Text(
                     isArchived ? '归档想法' : '想法',
                     style: theme.textTheme.headlineSmall?.copyWith(
-                      fontWeight: FontWeight.w800,
+                      fontWeight: AppFontTokens.extraBold,
                     ),
                   ),
                   const SizedBox(width: AppSpacing.sm),
@@ -373,7 +373,7 @@ class _ThoughtsRightRail extends StatelessWidget {
                 const SizedBox(width: AppSpacing.xxs),
                 Text(
                   '你的数据，仅你可见',
-                  style: TextStyle(color: colorScheme.outline, fontSize: 12),
+                  style: TextStyle(color: colorScheme.outline, fontSize: AppFontTokens.bodySm),
                 ),
               ],
             ),

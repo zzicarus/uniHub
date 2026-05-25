@@ -246,7 +246,7 @@ class _HeaderSearchField extends ConsumerWidget {
                   'Ctrl K',
                   style: Theme.of(context).textTheme.labelSmall?.copyWith(
                     color: colorScheme.onSurfaceVariant,
-                    fontWeight: FontWeight.w700,
+                    fontWeight: AppFontTokens.bold,
                   ),
                 ),
               ),

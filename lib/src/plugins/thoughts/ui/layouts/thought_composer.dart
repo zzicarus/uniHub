@@ -59,7 +59,7 @@ class ThoughtComposer extends ConsumerWidget {
                 Text(
                   '快速记录想法',
                   style: theme.textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w800,
+                    fontWeight: AppFontTokens.extraBold,
                   ),
                 ),
               ],

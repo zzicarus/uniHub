@@ -44,8 +44,8 @@ class CollectionStatusTabs extends ConsumerWidget {
                     ? colorScheme.onPrimary
                     : colorScheme.onSurface,
                 fontWeight: selected == tab.status
-                    ? FontWeight.w700
-                    : FontWeight.w500,
+                    ? AppFontTokens.bold
+                    : AppFontTokens.medium,
               ),
               visualDensity: VisualDensity.compact,
             ),

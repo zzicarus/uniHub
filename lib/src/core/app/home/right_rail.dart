@@ -41,7 +41,7 @@ class _HomeRightRail extends StatelessWidget {
                 const SizedBox(width: AppSpacing.xxs),
                 Text(
                   '你的数据，仅你可见',
-                  style: TextStyle(color: colorScheme.outline, fontSize: 12),
+                  style: TextStyle(color: colorScheme.outline, fontSize: AppFontTokens.bodySm),
                 ),
               ],
             ),
@@ -132,7 +132,7 @@ class _OverviewLine extends StatelessWidget {
               value,
               style: theme.textTheme.titleSmall?.copyWith(
                 color: colorScheme.onSurface,
-                fontWeight: FontWeight.w800,
+                fontWeight: AppFontTokens.extraBold,
               ),
             ),
           ],
@@ -236,7 +236,7 @@ class _StreakPanel extends StatelessWidget {
                 '12',
                 style: theme.textTheme.displaySmall?.copyWith(
                   color: colorScheme.onSurface,
-                  fontWeight: FontWeight.w900,
+                  fontWeight: AppFontTokens.black,
                   height: 0.95,
                 ),
               ),
@@ -247,7 +247,7 @@ class _StreakPanel extends StatelessWidget {
                   '天',
                   style: theme.textTheme.titleMedium?.copyWith(
                     color: colorScheme.onSurfaceVariant,
-                    fontWeight: FontWeight.w700,
+                    fontWeight: AppFontTokens.bold,
                   ),
                 ),
               ),

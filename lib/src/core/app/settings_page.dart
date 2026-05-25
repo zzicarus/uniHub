@@ -35,8 +35,8 @@ class SettingsPage extends ConsumerWidget {
                         Text(
                           '设置',
                           style: theme.textTheme.headlineMedium?.copyWith(
-                            fontSize: 30,
-                            fontWeight: FontWeight.w800,
+                            fontSize: AppFontTokens.headline,
+                            fontWeight: AppFontTokens.extraBold,
                           ),
                         ),
                         Text('管理偏好、数据与应用体验', style: theme.textTheme.bodyLarge),

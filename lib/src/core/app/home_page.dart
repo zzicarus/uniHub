@@ -194,7 +194,7 @@ class _MetricCard extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                   style: theme.textTheme.labelLarge?.copyWith(
                     color: colorScheme.onSurfaceVariant,
-                    fontWeight: FontWeight.w600,
+                    fontWeight: AppFontTokens.semiBold,
                   ),
                 ),
                 const SizedBox(height: 2),
@@ -203,8 +203,8 @@ class _MetricCard extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: theme.textTheme.headlineMedium?.copyWith(
-                    fontSize: 27,
-                    fontWeight: FontWeight.w800,
+                    fontSize: AppFontTokens.display,
+                    fontWeight: AppFontTokens.extraBold,
                     color: colorScheme.onSurface,
                     height: 1.05,
                   ),
@@ -267,7 +267,7 @@ class _ThoughtPreviewCard extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: theme.textTheme.titleSmall?.copyWith(
-                    fontWeight: FontWeight.w800,
+                    fontWeight: AppFontTokens.extraBold,
                   ),
                 ),
               ),
@@ -310,7 +310,7 @@ class _ThoughtPreviewCard extends StatelessWidget {
                     tag,
                     style: theme.textTheme.labelSmall?.copyWith(
                       color: color,
-                      fontWeight: FontWeight.w700,
+                      fontWeight: AppFontTokens.bold,
                     ),
                   ),
                 ),
@@ -376,7 +376,7 @@ class _ShortcutCard extends StatelessWidget {
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: theme.textTheme.labelLarge?.copyWith(
-                fontWeight: FontWeight.w800,
+                fontWeight: AppFontTokens.extraBold,
               ),
             ),
           ),

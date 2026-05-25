@@ -121,9 +121,9 @@ class _MobileBrandHeader extends StatelessWidget {
               'U',
               style: TextStyle(
                 color: Theme.of(context).colorScheme.onPrimary,
-                fontSize: 28,
+                fontSize: AppFontTokens.display,
                 height: 1,
-                fontWeight: FontWeight.w900,
+                fontWeight: AppFontTokens.black,
               ),
             ),
           ),
@@ -132,8 +132,8 @@ class _MobileBrandHeader extends StatelessWidget {
         Text(
           'uniHub',
           style: Theme.of(context).textTheme.titleLarge?.copyWith(
-            fontSize: 24,
-            fontWeight: FontWeight.w800,
+            fontSize: AppFontTokens.brand,
+            fontWeight: AppFontTokens.extraBold,
           ),
         ),
         const Spacer(),
@@ -193,8 +193,8 @@ class _MobileGreeting extends StatelessWidget {
               child: Text(
                 greeting,
                 style: theme.textTheme.headlineMedium?.copyWith(
-                  fontSize: 34,
-                  fontWeight: FontWeight.w800,
+                  fontSize: AppFontTokens.hero,
+                  fontWeight: AppFontTokens.extraBold,
                 ),
                 overflow: TextOverflow.ellipsis,
               ),
@@ -474,8 +474,8 @@ class _MobileFocusCard extends StatelessWidget {
               Text(
                 value,
                 style: theme.textTheme.headlineMedium?.copyWith(
-                  fontSize: 28,
-                  fontWeight: FontWeight.w800,
+                  fontSize: AppFontTokens.display,
+                  fontWeight: AppFontTokens.extraBold,
                 ),
               ),
               Text(

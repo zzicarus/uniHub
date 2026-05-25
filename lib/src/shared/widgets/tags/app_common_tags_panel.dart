@@ -81,7 +81,7 @@ class AppCommonTagsPanel extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                   style: theme.textTheme.titleMedium?.copyWith(
                     color: appColors.textPrimary,
-                    fontWeight: FontWeight.w800,
+                    fontWeight: AppFontTokens.extraBold,
                   ),
                 ),
               ),
@@ -94,7 +94,7 @@ class AppCommonTagsPanel extends StatelessWidget {
                   textAlign: TextAlign.end,
                   style: theme.textTheme.labelMedium?.copyWith(
                     color: appColors.textTertiary,
-                    fontWeight: FontWeight.w700,
+                    fontWeight: AppFontTokens.bold,
                   ),
                 ),
               ),

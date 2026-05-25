@@ -215,7 +215,7 @@ class ThoughtFilterChip extends StatelessWidget {
                 child: Text(
                   value,
                   style: theme.textTheme.labelMedium?.copyWith(
-                    fontSize: 11,
+                    fontSize: AppFontTokens.caption,
                     color: selected
                         ? colorScheme.onPrimary.withValues(alpha: 0.85)
                         : colorScheme.outline,
@@ -376,7 +376,7 @@ class ThoughtStatRow extends StatelessWidget {
           Text(
             value,
             style: theme.textTheme.titleLarge?.copyWith(
-              fontWeight: FontWeight.w800,
+              fontWeight: AppFontTokens.extraBold,
             ),
           ),
         ],
@@ -456,7 +456,7 @@ class ThoughtTagChip extends StatelessWidget {
                 count.toString(),
                 style: theme.textTheme.labelMedium?.copyWith(
                   color: colorScheme.outline,
-                  fontSize: 11,
+                  fontSize: AppFontTokens.caption,
                 ),
               ),
             ],

@@ -77,7 +77,7 @@ class SavedItemCard extends ConsumerWidget {
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: theme.textTheme.bodyLarge?.copyWith(
-                            fontWeight: FontWeight.w600,
+                            fontWeight: AppFontTokens.semiBold,
                             height: 1.3,
                           ),
                         ),
@@ -241,7 +241,7 @@ class SavedItemCard extends ConsumerWidget {
           color: isError
               ? colorScheme.onErrorContainer
               : colorScheme.onSurfaceVariant,
-          fontSize: 10,
+          fontSize: AppFontTokens.mini,
           height: 1.4,
         ),
       ),
@@ -300,8 +300,8 @@ class SavedItemCard extends ConsumerWidget {
                 overflow: TextOverflow.ellipsis,
                 style: theme.textTheme.labelSmall?.copyWith(
                   color: _statusColor(status, colorScheme),
-                  fontWeight: FontWeight.w500,
-                  fontSize: 11,
+                  fontWeight: AppFontTokens.medium,
+                  fontSize: AppFontTokens.caption,
                 ),
               ),
             ),
@@ -419,7 +419,7 @@ class _ItemBoxChips extends ConsumerWidget {
                   Text(
                     '+$extra',
                     style: TextStyle(
-                      fontSize: 10,
+                      fontSize: AppFontTokens.mini,
                       color: Theme.of(context).colorScheme.onSurfaceVariant,
                     ),
                   ),
@@ -603,7 +603,7 @@ class _BoxMiniChip extends StatelessWidget {
       child: Text(
         label,
         style: TextStyle(
-          fontSize: 10,
+          fontSize: AppFontTokens.mini,
           color: colorScheme.onPrimaryContainer,
           height: 1.4,
         ),

@@ -67,7 +67,7 @@ class ThoughtPinnedPanel extends ConsumerWidget {
                                     style: Theme.of(context)
                                         .textTheme
                                         .bodyMedium
-                                        ?.copyWith(fontWeight: FontWeight.w600),
+                                        ?.copyWith(fontWeight: AppFontTokens.semiBold),
                                   ),
                                   const SizedBox(height: 2),
                                   Text(

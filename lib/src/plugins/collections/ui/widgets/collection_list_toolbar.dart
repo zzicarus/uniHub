@@ -175,7 +175,7 @@ class _SortChip extends StatelessWidget {
           '最新收藏',
           style: Theme.of(context).textTheme.bodySmall?.copyWith(
             color: colorScheme.onSurfaceVariant,
-            fontWeight: FontWeight.w600,
+            fontWeight: AppFontTokens.semiBold,
           ),
         ),
       ),

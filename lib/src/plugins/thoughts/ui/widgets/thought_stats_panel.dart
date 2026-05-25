@@ -79,7 +79,7 @@ class ThoughtHotTagsPanel extends ConsumerWidget {
                     '#${top.key} 在本页最活跃',
                     style: theme.textTheme.bodyMedium?.copyWith(
                       color: AppColors.primary,
-                      fontWeight: FontWeight.w800,
+                      fontWeight: AppFontTokens.extraBold,
                     ),
                   ),
                 ),

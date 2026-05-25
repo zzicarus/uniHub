@@ -196,7 +196,7 @@ class _SavedItemDetailPanelState extends ConsumerState<SavedItemDetailPanel>
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                   style: theme.textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w700,
+                    fontWeight: AppFontTokens.bold,
                     height: 1.3,
                   ),
                 ),
@@ -309,7 +309,7 @@ class _SavedItemDetailPanelState extends ConsumerState<SavedItemDetailPanel>
                   '来源',
                   style: theme.textTheme.labelMedium?.copyWith(
                     color: colorScheme.onSurfaceVariant,
-                    fontWeight: FontWeight.w500,
+                    fontWeight: AppFontTokens.medium,
                   ),
                 ),
                 const SizedBox(height: AppSpacing.xxs),
@@ -376,7 +376,7 @@ class _SavedItemDetailPanelState extends ConsumerState<SavedItemDetailPanel>
             '状态',
             style: theme.textTheme.labelMedium?.copyWith(
               color: colorScheme.onSurfaceVariant,
-              fontWeight: FontWeight.w500,
+              fontWeight: AppFontTokens.medium,
             ),
           ),
           const SizedBox(height: AppSpacing.sm),
@@ -401,7 +401,7 @@ class _SavedItemDetailPanelState extends ConsumerState<SavedItemDetailPanel>
                   color: isSelected
                       ? colorScheme.onPrimary
                       : colorScheme.onSurface,
-                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                  fontWeight: isSelected ? AppFontTokens.semiBold : AppFontTokens.normal,
                 ),
                 visualDensity: VisualDensity.compact,
               );
@@ -427,7 +427,7 @@ class _SavedItemDetailPanelState extends ConsumerState<SavedItemDetailPanel>
             '备注',
             style: theme.textTheme.labelMedium?.copyWith(
               color: colorScheme.onSurfaceVariant,
-              fontWeight: FontWeight.w500,
+              fontWeight: AppFontTokens.medium,
             ),
           ),
           const SizedBox(height: AppSpacing.sm),
@@ -779,7 +779,7 @@ class _TagsSection extends ConsumerWidget {
             '标签',
             style: theme.textTheme.labelMedium?.copyWith(
               color: colorScheme.onSurfaceVariant,
-              fontWeight: FontWeight.w500,
+              fontWeight: AppFontTokens.medium,
             ),
           ),
           const SizedBox(height: AppSpacing.sm),
@@ -862,7 +862,7 @@ class _BoxSection extends ConsumerWidget {
             '收藏夹',
             style: theme.textTheme.labelMedium?.copyWith(
               color: colorScheme.onSurfaceVariant,
-              fontWeight: FontWeight.w500,
+              fontWeight: AppFontTokens.medium,
             ),
           ),
           const SizedBox(height: AppSpacing.sm),

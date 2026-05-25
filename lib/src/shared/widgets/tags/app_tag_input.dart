@@ -212,8 +212,8 @@ class AppTagInputState extends State<AppTagInput> {
               widget.label!,
               style: TextStyle(
                 color: colors.textSecondary,
-                fontWeight: FontWeight.w600,
-                fontSize: 12,
+                fontWeight: AppFontTokens.semiBold,
+                fontSize: AppFontTokens.labelMd,
               ),
             ),
           ),
@@ -244,7 +244,7 @@ class AppTagInputState extends State<AppTagInput> {
             hintText: widget.hintText,
             hintStyle: TextStyle(
               color: colors.textTertiary,
-              fontSize: 13,
+              fontSize: AppFontTokens.bodyMd,
             ),
             isDense: true,
             border: OutlineInputBorder(
@@ -267,7 +267,7 @@ class AppTagInputState extends State<AppTagInput> {
               vertical: 6,
             ),
           ),
-          style: const TextStyle(fontSize: 13),
+          style: TextStyle(fontSize: AppFontTokens.bodyMd),
           onChanged: _textFieldValueChanged,
           onSubmitted: (value) => _commitInput(value),
         ),
@@ -280,7 +280,7 @@ class AppTagInputState extends State<AppTagInput> {
               _errorText!,
               style: TextStyle(
                 color: colors.danger,
-                fontSize: 11,
+                fontSize: AppFontTokens.caption,
               ),
             ),
           ),
@@ -293,7 +293,7 @@ class AppTagInputState extends State<AppTagInput> {
               '${widget.tags.length} / ${widget.maxTags}',
               style: TextStyle(
                 color: colors.textTertiary,
-                fontSize: 11,
+                fontSize: AppFontTokens.caption,
               ),
             ),
           ),

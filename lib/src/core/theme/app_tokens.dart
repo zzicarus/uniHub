@@ -34,6 +34,68 @@ abstract final class AppFonts {
   static const mono = 'JetBrains Mono';
 }
 
+/// 字体尺寸、字重、行高等完整排版令牌。
+///
+/// 所有硬编码的字体值都应替换为这里的常量引用。
+/// 中文/英文统一使用 [AppFonts.sansLatin]（回退 [AppFonts.sansCJK]），
+/// 代码显示使用 [AppFonts.mono]。
+abstract final class AppFontTokens {
+  // ── Font Sizes（与 Material TextTheme 对齐） ──
+
+  /// 大型展示文字 (28)，用于 headlineMedium
+  static const double display = 28.0;
+  /// 模块标题 (22)，用于 titleLarge
+  static const double headline = 22.0;
+  /// 列表主标题 (16)，用于 titleMedium
+  static const double titleLg = 16.0;
+  /// 列表副标题 / 标签文字 (14)，用于 titleSmall / labelLarge
+  static const double titleMd = 14.0;
+  /// 正文大 (16)，用于 bodyLarge
+  static const double bodyLg = 16.0;
+  /// 正文中 (14)，用于 bodyMedium
+  static const double bodyMd = 14.0;
+  /// 正文小 (12)，用于 bodySmall / labelMedium
+  static const double bodySm = 12.0;
+  /// 大标签 (14)，用于 labelLarge
+  static const double labelLg = 14.0;
+  /// 小标签 (12)，用于 labelMedium
+  static const double labelMd = 12.0;
+
+  // ── Font Sizes（特殊用途） ──
+
+  /// 巨幅标题 (34)，用于移动端欢迎语
+  static const double hero = 34.0;
+  /// 品牌文字 (24)，用于 Logo / 品牌标识
+  static const double brand = 24.0;
+  /// 次标题文字 (15)，用于编辑器正文、导航项文字
+  static const double subtitle = 15.0;
+  /// 说明文字 (11)，用于状态徽章、时间戳、小标签
+  static const double caption = 11.0;
+  /// 极简文字 (10)，用于紧凑型标签、数量角标
+  static const double mini = 10.0;
+
+  // ── Line Heights（与字号配对） ──
+
+  static const double displayHeight = 1.29;
+  static const double headlineHeight = 1.36;
+  static const double titleLgHeight = 1.5;
+  static const double titleMdHeight = 1.43;
+  static const double bodyLgHeight = 1.5;
+  static const double bodyMdHeight = 1.57;
+  static const double bodySmHeight = 1.5;
+  static const double labelLgHeight = 1.43;
+  static const double labelMdHeight = 1.33;
+
+  // ── Font Weights（语义化常量，替代 FontWeight.wXXX） ──
+
+  static const FontWeight black = FontWeight.w900;
+  static const FontWeight extraBold = FontWeight.w800;
+  static const FontWeight bold = FontWeight.w700;
+  static const FontWeight semiBold = FontWeight.w600;
+  static const FontWeight medium = FontWeight.w500;
+  static const FontWeight normal = FontWeight.w400;
+}
+
 abstract final class AppSpacing {
   static const xxs = 4.0;
   static const xs = 8.0;

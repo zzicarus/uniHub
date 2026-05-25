@@ -62,8 +62,8 @@ class CollectionContentTypeChips extends ConsumerWidget {
                     ? colorScheme.primary
                     : colorScheme.onSurface,
                 fontWeight: _isSelected(entry, mediaType, platform)
-                    ? FontWeight.w700
-                    : FontWeight.w500,
+                    ? AppFontTokens.bold
+                    : AppFontTokens.medium,
               ),
             ),
             const SizedBox(width: AppSpacing.xs),

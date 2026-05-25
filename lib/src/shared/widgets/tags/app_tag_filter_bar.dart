@@ -75,7 +75,7 @@ class AppTagFilterBar extends StatelessWidget {
         Text(
           label,
           style: theme.textTheme.labelMedium?.copyWith(
-            fontWeight: FontWeight.w700,
+            fontWeight: AppFontTokens.bold,
           ),
         ),
         const SizedBox(width: AppSpacing.sm),
