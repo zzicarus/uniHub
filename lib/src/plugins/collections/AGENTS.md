@@ -147,13 +147,26 @@ UI 层
   └─ websiteLogoForUrlProvider → WebsiteLogo(localPath: ...)
 ```
 
-### 增强的 favicon 抓取规则
+### 元数据解析架构（DOM-based）
 
-- `LocalMetadataProvider.fetchMetadata` 设置浏览器级请求头（User-Agent / Accept / Accept-Language），减少被反爬拦截。
-- 响应非 200 仍尝试解析（部分站点返回 304 等），但打印 warning。
-- `_favicon()` 现在使用 `HttpClient.getUrl` 并设置 `followRedirects: true`。
+Metadata 解析分为两层：
 
-### favicon 候选优先级（LocalMetadataProvider._favicon）
+```text
+LocalMetadataProvider.fetchMetadata(url)
+  ├─ 1. HTTP GET（8s timeout，设置浏览器级 User-Agent / Accept / Accept-Language）
+  ├─ 2. 非 2xx 响应 → 抛出 MetadataFetchException
+  ├─ 3. 非 HTML Content-Type → 抛出 MetadataFetchException
+  ├─ 4. 读取 Body（最多 1 MB）
+  ├─ 5. _detectCharset() — 编码探测：Content-Type header → BOM → meta charset → meta http-equiv → UTF-8
+  └─ 6. HtmlMetadataParser.parse(decodedHtml, baseUrl: url)
+       ├─ _parseTitle() / _parseDescription() / _parseCoverImage()
+       ├─ _parseSiteName() / _parseAuthor()
+       └─ _parseFavicon() → 评分排序 + URL resolve
+```
+
+不再使用正则解析——所有 HTML 解析通过 `package:html` 的 DOM API（querySelector）进行，对属性顺序不敏感。
+
+### favicon 候选优先级（HtmlMetadataParser._parseFavicon）
 
 | 类型 | 分数 | 说明 |
 |------|------|------|
@@ -166,8 +179,6 @@ UI 层
 | .svg URL | 30 | SVG（flutter_svg 渲染，参见 WebsiteLogo） |
 | 通用 icon link（无扩展名） | 70 | rel="icon" / "shortcut icon" 但无扩展名 |
 | 其他 | 10 | 兜底 |
-
-**Bilibili 特殊处理**：如果 metadata 解析的 favicon 不是标准像素格式（如 SVG），仍然尝试；现在 SVG 通过 flutter_svg 可正常渲染。
 
 **强制重试**：即使有未过期 failed entry，只要 metadata 解析出新的 `remoteFaviconUrl`（如 `i0.hdslb.com/.../512.png`），`_shouldSkipFailedRetry` 返回 false，立即执行重抓。
 
