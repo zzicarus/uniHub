@@ -122,7 +122,7 @@ CollectionCaptureService.captureUrl                    → 输入/归一化/创�
 EnrichmentJobService._processJob()
   └─ ensureLogoCached()
        ├─ in-flight 去重（同 siteKey 并发仅一次网络请求）
-       ├─ 缓存校验：_isSuccessEntryUsable(success + 未过期 + 文件存在 + 非 SVG) → 复用
+       ├─ 缓存校验：_isSuccessEntryUsable(success + 未过期 + 文件存在) → 复用
        ├─                 _shouldSkipFailedRetry(failed + 冷却中 + 无新 URL + debug 关闭) → 跳过
        ├─                 否则 → 重试
        ├─ _fetchAndCache()
@@ -131,12 +131,17 @@ EnrichmentJobService._processJob()
        │    │    (2) https://$host/favicon.ico
        │    │    (3) https://www.$host/favicon.ico
        │    │    (4) https://$host/favicon.png
-       │    ├─ SVG 预检拒绝（Image.file 不支持像素格式）
        │    ├─ HTML 响应检测（反爬 / 中间页面）
        │    ├─ 协议限制：仅 http/https
        │    ├─ MIME charset 剥离 → 正确后缀
+       │    ├─ SVG 可渲染（UI 侧通过 flutter_svg 的 SvgPicture.file 支持）
        │    └─ 写入 {appCacheDir}/website_logos/{base64(siteKey)}.{ext}
        └─ onLogoCached 回调 → websiteLogoRefreshProvider 递增
+
+UI 层
+  └─ websiteLogoForUrlProvider → WebsiteLogo(localPath: ...)
+       ├─ .svg → SvgPicture.file (flutter_svg)
+       └─ 其他 → Image.file
 
 UI 层
   └─ websiteLogoForUrlProvider → WebsiteLogo(localPath: ...)
@@ -158,11 +163,11 @@ UI 层
 | .jpg / .jpeg URL | 60 | JPEG 格式 |
 | .gif URL | 50 | GIF 格式 |
 | .ico URL | 40 | 传统 ICO |
-| .svg URL | 30 | SVG（Image.file 不支持，后续会被拒绝） |
+| .svg URL | 30 | SVG（flutter_svg 渲染，参见 WebsiteLogo） |
 | 通用 icon link（无扩展名） | 70 | rel="icon" / "shortcut icon" 但无扩展名 |
 | 其他 | 10 | 兜底 |
 
-**Bilibili 特殊处理**：如果解析到的 favicon 不是 `.ico` 或 `.png`（如 SVG），自动降级到根 `/favicon.ico`。
+**Bilibili 特殊处理**：如果 metadata 解析的 favicon 不是标准像素格式（如 SVG），仍然尝试；现在 SVG 通过 flutter_svg 可正常渲染。
 
 **强制重试**：即使有未过期 failed entry，只要 metadata 解析出新的 `remoteFaviconUrl`（如 `i0.hdslb.com/.../512.png`），`_shouldSkipFailedRetry` 返回 false，立即执行重抓。
 
@@ -182,17 +187,15 @@ UI 层
 | 规则 | 说明 |
 |------|------|
 | 并发去重 | `_inFlight` 映射表，同 `siteKey` 并发只触发一次请求 |
-| success 缓存复用 | `_isSuccessEntryUsable`：未过期 + 文件存在 + 非 SVG → 直接返回 |
+| success 缓存复用 | `_isSuccessEntryUsable`：未过期 + 文件存在 → 直接返回 |
 | success 文件缺失 | 视为无效，重新抓取 |
 | failed 冷却跳过 | `_shouldSkipFailedRetry`：仅当**无新 `remoteFaviconUrl`** + **debug 禁用**时才跳过 |
 | 新 URL 强制重试 | 即使有未过期 failed entry，只要 metadata 解析出新的 `remoteFaviconUrl` → 立即重试 |
 | failed TTL | debug **10 分钟**，生产 **24 小时**（`_failedTtl`） |
-| SVG 缓存淘汰 | 已有 `.svg` 后缀或 `image/svg+xml` 的 success 条目 → `_isSuccessEntryUsable` 返回 false，触发重抓 |
+| SVG 正常缓存 | `.svg` 后缀和 `image/svg+xml` 的响应正常保存为 success；UI 通过 flutter_svg 渲染 |
 | failed 清理 | `markFailed` 清除 `localLogoPath` 和 `mimeType` 字段，UI 不会继续加载无效文件 |
 | MIME 兼容 | `_extensionForMimeType` 先 `split(';').first` 剥离 charset，再匹配类型 |
 | URL 协议 | 只允许 `http`/`https` |
-| SVG 拒绝（URL） | URL 以 `.svg` 结尾 → 跳过该候选；不在 Image.file 中显示 |
-| SVG 拒绝（content-type） | 响应 `Content-Type` 为 `image/svg+xml` → 跳过该候选 |
 | HTML 检测 | 响应 content-type 含 `text/html` 或 body 开头为 `<!doctype html` → 拒绝 |
 | application/octet-stream | 仅当 URL 以 `.ico` 结尾时放行（部分服务器行为） |
 
@@ -200,9 +203,11 @@ UI 层
 
 位于 `lib/src/shared/widgets/website_logo.dart`：
 
-- 当 `localPath` 不为空且文件存在时：使用 `Image.file` 显示。
-- SVG 文件直接跳到 fallback，不给 `Image.file` 尝试的机会。
-- `Image.file.errorBuilder` 用 `_reportedDecodeFailures` 静态 Set 去重，同路径只打印一次错误日志。
+- 当 `localPath` 不为空且文件存在时：根据扩展名分派渲染器。
+  - `.svg` → `SvgPicture.file`（flutter_svg 包），支持本地 SVG favicon 渲染。
+  - 其他（`.ico`/`.png`/`.jpg`/`.webp`/`.gif`）→ `Image.file`。
+- `placeholderBuilder` / `errorBuilder` 均 fallback 到 `_fallbackContainer`。
+- 错误日志（decode 失败、文件缺失）通过 `_reportedDecodeFailures` 静态 Set 去重，同路径只打印一次。
 - 文件不存在时打印 warning 日志，可区分「无缓存」和「缓存缺失」两种场景。
 - 不允许 UI 层直接联网。
 

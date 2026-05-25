@@ -151,6 +151,11 @@ git status
 - `website_logo_cache_dao.dart`：`markFailed` 同时清除 `localLogoPath` 和 `mimeType`
 - `website_logo.dart`：新增 SVG 路径跳过检查；`_reportedDecodeFailures` 静态 Set 去重错误日志，同路径只打印一次
 
+### 2026-05-26: flutter_svg 引入 — WebsiteLogo 支持 SVG favicon
+- `pubspec.yaml` 添加 `flutter_svg: ^2.2.3`
+- `website_logo.dart`：`.svg` 后缀文件使用 `SvgPicture.file` 渲染；文件缺失 + decode 失败日志均通过 `_reportedDecodeFailures` 去重
+- `website_logo_cache_service.dart`：移除 SVG URL 预检拒绝和 content-type 拒绝；SVG success 缓存恢复正常使用；`_isSuccessEntryUsable` 不再拒绝 SVG 路径和 MIME 类型
+
 ### 2026-05-25: 收藏删除确认弹窗 UI 改造
 - 新增 `test/shared/widgets/delete_confirm_dialog_test.dart` — 9 条（单条弹窗渲染、取消按钮、删除按钮、不再提示跳过、批量弹窗、多收藏夹选择、警示图标、偏好持久化）
 - `shared/widgets/` 覆盖从 6→7 文件
