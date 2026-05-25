@@ -244,7 +244,7 @@ class WebsiteLogoCacheService {
   /// Returns true only when:
   /// - status is 'success'
   /// - Not expired
-  /// - Local file exists and is not SVG (Image.file can't decode SVG)
+  /// - Local file exists on disk
   bool _isSuccessEntryUsable(WebsiteLogoCacheTableData row) {
     if (row.status != 'success') return false;
     if (row.expiresAt == null) return false;
@@ -252,20 +252,6 @@ class WebsiteLogoCacheService {
 
     final path = row.localLogoPath;
     if (path == null || path.isEmpty) return false;
-
-    final lowerPath = path.toLowerCase();
-    if (lowerPath.endsWith('.svg')) {
-      CollectionDebugLogger.warn(
-        'logo success entry is SVG (invalid for Image.file) siteKey=${row.siteKey}',
-      );
-      return false;
-    }
-    if ((row.mimeType ?? '').toLowerCase().contains('svg')) {
-      CollectionDebugLogger.warn(
-        'logo success entry mimeType is SVG (invalid for Image.file) siteKey=${row.siteKey}',
-      );
-      return false;
-    }
 
     if (!File(path).existsSync()) {
       CollectionDebugLogger.warn(
@@ -386,17 +372,6 @@ class WebsiteLogoCacheService {
       throw ArgumentError('Unsupported favicon URL scheme: ${uri.scheme}');
     }
 
-    // Reject SVG before attempting fetch (not supported by Image.file)
-    if (url.toLowerCase().endsWith('.svg')) {
-      CollectionDebugLogger.warn(
-        'SVG favicon not supported, skip: $url',
-      );
-      throw HttpException(
-        'SVG favicon is not supported by WebsiteLogo Image.file yet',
-        uri: uri,
-      );
-    }
-
     // Fetch
     final request = await _client.getUrl(uri).timeout(const Duration(seconds: 8));
     request.followRedirects = true;
@@ -438,17 +413,6 @@ class WebsiteLogoCacheService {
           uri: uri,
         );
       }
-    }
-
-    // Reject SVG content-type (not supported by Image.file)
-    if (contentTypeLower.contains('image/svg+xml')) {
-      CollectionDebugLogger.warn(
-        'SVG favicon content-type not supported, skip: $url',
-      );
-      throw HttpException(
-        'SVG favicon content-type is not supported by WebsiteLogo Image.file',
-        uri: uri,
-      );
     }
 
     // Allow application/octet-stream for .ico URLs

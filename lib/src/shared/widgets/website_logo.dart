@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:uni_hub/src/core/theme/app_tokens.dart';
 import 'package:uni_hub/src/plugins/collections/services/collection_debug_logger.dart';
 
@@ -48,17 +49,35 @@ class WebsiteLogo extends StatelessWidget {
     if (localPath != null && localPath!.isNotEmpty) {
       final file = File(localPath!);
       if (!file.existsSync()) {
-        CollectionDebugLogger.warn(
-          'WebsiteLogo local file missing path=$localPath',
-        );
+        if (_reportedDecodeFailures.add(localPath!)) {
+          CollectionDebugLogger.warn(
+            'WebsiteLogo local file missing path=$localPath',
+          );
+        }
         return _fallbackContainer(colorScheme);
       }
-      // SVG files cannot be decoded by Image.file — skip to fallback.
+      // SVG files use SvgPicture.file (flutter_svg) for rendering.
       if (localPath!.toLowerCase().endsWith('.svg')) {
-        CollectionDebugLogger.warn(
-          'WebsiteLogo skips svg localPath because Image.file cannot decode svg: $localPath',
+        return ClipRRect(
+          borderRadius: BorderRadius.circular(AppRadius.sm),
+          child: SvgPicture.file(
+            file,
+            width: size,
+            height: size,
+            fit: BoxFit.cover,
+            placeholderBuilder: (_) => _fallbackContainer(colorScheme),
+            errorBuilder: (_, error, stackTrace) {
+              if (_reportedDecodeFailures.add(localPath!)) {
+                CollectionDebugLogger.error(
+                  'WebsiteLogo SvgPicture.file decode failed path=$localPath',
+                  error,
+                  stackTrace,
+                );
+              }
+              return _fallbackContainer(colorScheme);
+            },
+          ),
         );
-        return _fallbackContainer(colorScheme);
       }
       return ClipRRect(
         borderRadius: BorderRadius.circular(AppRadius.sm),
