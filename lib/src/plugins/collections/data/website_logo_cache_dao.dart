@@ -46,7 +46,7 @@ class WebsiteLogoCacheDao {
     );
   }
 
-  Future<void> markFailed(int id, String error, {Duration retryDelay = const Duration(hours: 24)}) async {
+  Future<void> markFailed(int id, String error, {Duration retryDelay = const Duration(minutes: 10)}) async {
     final now = DateTime.now();
     await (_db.update(_db.websiteLogoCacheTable)
       ..where((t) => t.id.equals(id))).write(

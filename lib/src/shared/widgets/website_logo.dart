@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:uni_hub/src/core/theme/app_tokens.dart';
+import 'package:uni_hub/src/plugins/collections/services/collection_debug_logger.dart';
 
 /// Displays a website logo (favicon) from a local file path.
 ///
@@ -43,18 +44,29 @@ class WebsiteLogo extends StatelessWidget {
 
     if (localPath != null && localPath!.isNotEmpty) {
       final file = File(localPath!);
-      if (file.existsSync()) {
-        return ClipRRect(
-          borderRadius: BorderRadius.circular(AppRadius.sm),
-          child: Image.file(
-            file,
-            width: size,
-            height: size,
-            fit: BoxFit.cover,
-            errorBuilder: (_, _, _) => _fallbackContainer(colorScheme),
-          ),
+      if (!file.existsSync()) {
+        CollectionDebugLogger.warn(
+          'WebsiteLogo local file missing path=$localPath',
         );
+        return _fallbackContainer(colorScheme);
       }
+      return ClipRRect(
+        borderRadius: BorderRadius.circular(AppRadius.sm),
+        child: Image.file(
+          file,
+          width: size,
+          height: size,
+          fit: BoxFit.cover,
+          errorBuilder: (_, error, stackTrace) {
+            CollectionDebugLogger.error(
+              'WebsiteLogo Image.file decode failed path=$localPath',
+              error,
+              stackTrace,
+            );
+            return _fallbackContainer(colorScheme);
+          },
+        ),
+      );
     }
 
     return _fallbackContainer(colorScheme);

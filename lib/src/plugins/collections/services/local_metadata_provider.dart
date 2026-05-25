@@ -4,6 +4,7 @@ import 'dart:io';
 
 import '../domain/collection_models.dart';
 import '../domain/enrichment_status.dart';
+import 'collection_debug_logger.dart';
 import 'metadata_provider.dart';
 
 class LocalMetadataProvider implements MetadataProvider {
@@ -19,11 +20,39 @@ class LocalMetadataProvider implements MetadataProvider {
         .getUrl(uri)
         .timeout(const Duration(seconds: 8));
     request.followRedirects = true;
-    final response = await request.close().timeout(const Duration(seconds: 8));
-    final body = await response.transform(utf8.decoder).join();
 
-    return MetadataResult(
-      title: _firstMatch(body, [
+    // 设置浏览器级 User-Agent 和请求头，避免被反爬虫拦截
+    request.headers.set(
+      HttpHeaders.userAgentHeader,
+      'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 '
+      '(KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+    );
+    request.headers.set(
+      HttpHeaders.acceptHeader,
+      'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+    );
+    request.headers.set(
+      HttpHeaders.acceptLanguageHeader,
+      'zh-CN,zh;q=0.9,en;q=0.8',
+    );
+
+    CollectionDebugLogger.log('metadata fetch start url=$url');
+    final response = await request.close().timeout(const Duration(seconds: 8));
+    final responseBody = await response.transform(utf8.decoder).join();
+    CollectionDebugLogger.log(
+      'metadata response status=${response.statusCode} '
+      'contentType=${response.headers.contentType?.value} '
+      'bodyLength=${responseBody.length}',
+    );
+
+    if (response.statusCode != 200) {
+      CollectionDebugLogger.warn(
+        'metadata response non-200 status=${response.statusCode} url=$url',
+      );
+    }
+
+    final metadata = MetadataResult(
+      title: _firstMatch(responseBody, [
         RegExp(
           r'''<meta[^>]+property=["']og:title["'][^>]+content=["']([^"']+)["']''',
           caseSensitive: false,
@@ -34,7 +63,7 @@ class LocalMetadataProvider implements MetadataProvider {
           dotAll: true,
         ),
       ])?.trim(),
-      description: _firstMatch(body, [
+      description: _firstMatch(responseBody, [
         RegExp(
           r'''<meta[^>]+name=["']description["'][^>]+content=["']([^"']+)["']''',
           caseSensitive: false,
@@ -44,16 +73,24 @@ class LocalMetadataProvider implements MetadataProvider {
           caseSensitive: false,
         ),
       ])?.trim(),
-      coverImage: _firstMatch(body, [
+      coverImage: _firstMatch(responseBody, [
         RegExp(
           r'''<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)["']''',
           caseSensitive: false,
         ),
       ])?.trim(),
-      favicon: _favicon(url, body),
+      favicon: _favicon(url, responseBody),
       metadataJson: jsonEncode({'source': 'local'}),
       status: EnrichmentStatus.success,
     );
+
+    CollectionDebugLogger.log(
+      'metadata parsed title=${metadata.title} '
+      'hasDescription=${metadata.description != null && metadata.description!.isNotEmpty} '
+      'coverImage=${metadata.coverImage} favicon=${metadata.favicon}',
+    );
+
+    return metadata;
   }
 
   String? _firstMatch(String body, List<RegExp> patterns) {
@@ -113,15 +150,47 @@ class LocalMetadataProvider implements MetadataProvider {
       }
     }
 
+    CollectionDebugLogger.log(
+      'metadata favicon candidates count=${candidates.length}',
+    );
+    for (final c in candidates) {
+      CollectionDebugLogger.log(
+        'metadata favicon candidate score=${c.score} href=${c.href}',
+      );
+    }
+
     if (candidates.isNotEmpty) {
       // Sort by score descending; stable sort preserves order for ties.
       candidates.sort((a, b) => b.score.compareTo(a.score));
+      final best = candidates.first;
+      if (best.href.toLowerCase().endsWith('.svg')) {
+        CollectionDebugLogger.log(
+          'metadata favicon selected SVG (low priority) href=${best.href}',
+        );
+      }
       final base = Uri.parse(url);
-      return base.resolve(candidates.first.href).toString();
+      final resolved = base.resolve(best.href).toString();
+
+      // Bilibili 特殊处理：如果解析到的 favicon 不是 .ico 或 .png，降级到标准 favicon.ico
+      if (_isBilibiliHost(base.host) &&
+          !resolved.toLowerCase().endsWith('.ico') &&
+          !resolved.toLowerCase().endsWith('.png')) {
+        CollectionDebugLogger.log(
+          'metadata favicon Bilibili fallback: using /favicon.ico instead of $resolved',
+        );
+        return base.resolve('/favicon.ico').toString();
+      }
+
+      return resolved;
     }
 
     // Fallback to /favicon.ico at the same origin
     return Uri.parse(url).resolve('/favicon.ico').toString();
+  }
+
+  /// 检测是否为 bilibili 域名。
+  bool _isBilibiliHost(String host) {
+    return host == 'bilibili.com' || host.endsWith('.bilibili.com');
   }
 
   /// Score a favicon candidate by its rel attribute and href extension.

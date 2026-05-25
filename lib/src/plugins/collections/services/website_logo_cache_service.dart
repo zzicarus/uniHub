@@ -7,6 +7,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:uni_hub/src/core/database/app_database.dart';
 
 import '../data/website_logo_cache_dao.dart';
+import 'collection_debug_logger.dart';
 
 /// Result returned by [WebsiteLogoCacheService] for UI consumption.
 class WebsiteLogoCacheEntry {
@@ -125,9 +126,21 @@ class WebsiteLogoCacheService {
     required String siteKey,
   }) async {
     final host = Uri.tryParse(pageUrl)?.host ?? siteKey;
+    CollectionDebugLogger.log(
+      'logo cache start pageUrl=$pageUrl siteKey=$siteKey remoteFaviconUrl=$remoteFaviconUrl',
+    );
+
     final row = await _dao.getBySiteKey(siteKey);
+    if (row != null) {
+      CollectionDebugLogger.log(
+        'logo cache row exists status=${row.status} localLogoPath=${row.localLogoPath} expiresAt=${row.expiresAt}',
+      );
+    }
 
     if (row != null && _isEntryValid(row)) {
+      CollectionDebugLogger.log(
+        'logo cache hit (valid) siteKey=$siteKey',
+      );
       return WebsiteLogoCacheEntry(
         siteKey: row.siteKey,
         localLogoPath: row.localLogoPath,
@@ -136,6 +149,7 @@ class WebsiteLogoCacheService {
     }
 
     // Need to fetch
+    CollectionDebugLogger.log('logo cache fetch start siteKey=$siteKey');
     try {
       return await _fetchAndCache(
         siteKey: siteKey,
@@ -157,13 +171,13 @@ class WebsiteLogoCacheService {
                 : const Value.absent(),
             status: const Value('failed'),
             lastError: Value(e.toString()),
-            expiresAt: Value(now.add(const Duration(hours: 24))),
+            expiresAt: Value(now.add(const Duration(minutes: 10))),
             createdAt: Value(now),
             updatedAt: Value(now),
           ),
         );
       }
-      debugPrint('WebsiteLogoCache: failed to cache logo for $siteKey: $e');
+      CollectionDebugLogger.warn('logo cache failed siteKey=$siteKey error=$e');
       return null;
     }
   }
@@ -229,24 +243,99 @@ class WebsiteLogoCacheService {
     return false;
   }
 
-  /// Download and cache a favicon.
+  /// Download and cache a favicon using multi-candidate fallback.
+  ///
+  /// Tries candidates in order: the metadata-parsed favicon URL,
+  /// /favicon.ico, www variant /favicon.ico, and /favicon.png.
+  /// Returns the first successful result; throws if all candidates fail.
   Future<WebsiteLogoCacheEntry> _fetchAndCache({
     required String siteKey,
     required String host,
     String? remoteFaviconUrl,
   }) async {
-    final url = remoteFaviconUrl ?? 'https://$host/favicon.ico';
+    final candidates = <String>[];
+
+    // 1. The parsed favicon URL from metadata
+    if (remoteFaviconUrl != null && remoteFaviconUrl.isNotEmpty) {
+      candidates.add(remoteFaviconUrl);
+    }
+
+    // 2. /favicon.ico at the root
+    candidates.add('https://$host/favicon.ico');
+
+    // 3. www variant if host doesn't start with www
+    if (!host.startsWith('www.')) {
+      candidates.add('https://www.$host/favicon.ico');
+    }
+
+    // 4. PNG fallback
+    candidates.add('https://$host/favicon.png');
+
+    // Deduplicate while preserving order
+    final unique = candidates.toSet().toList();
+
+    Object? lastError;
+    for (final candidateUrl in unique) {
+      try {
+        CollectionDebugLogger.log('logo candidate fetch url=$candidateUrl');
+        return await _tryFetchCandidate(
+          siteKey: siteKey,
+          host: host,
+          remoteFaviconUrl: remoteFaviconUrl,
+          faviconUrl: candidateUrl,
+        );
+      } catch (e) {
+        CollectionDebugLogger.warn(
+          'logo candidate failed url=$candidateUrl error=$e',
+        );
+        lastError = e;
+        continue;
+      }
+    }
+
+    throw lastError ?? Exception('All favicon candidates failed for $siteKey');
+  }
+
+  /// Fetch and cache a single favicon URL candidate.
+  Future<WebsiteLogoCacheEntry> _tryFetchCandidate({
+    required String siteKey,
+    required String host,
+    String? remoteFaviconUrl,
+    required String faviconUrl,
+  }) async {
+    final url = faviconUrl;
     final uri = Uri.parse(url);
 
     // Explicitly restrict favicon URLs to http/https only
     if (uri.scheme != 'http' && uri.scheme != 'https') {
+      CollectionDebugLogger.warn(
+        'logo fetch rejected scheme=${uri.scheme} url=$url',
+      );
       throw ArgumentError('Unsupported favicon URL scheme: ${uri.scheme}');
+    }
+
+    // Reject SVG before attempting fetch (not supported by Image.file)
+    if (url.toLowerCase().endsWith('.svg')) {
+      CollectionDebugLogger.warn(
+        'SVG favicon not supported, skip: $url',
+      );
+      throw HttpException(
+        'SVG favicon is not supported by WebsiteLogo Image.file yet',
+        uri: uri,
+      );
     }
 
     // Fetch
     final request = await _client.getUrl(uri).timeout(const Duration(seconds: 8));
     request.followRedirects = true;
     final response = await request.close().timeout(const Duration(seconds: 8));
+
+    final contentLength = response.headers.value(HttpHeaders.contentLengthHeader);
+    CollectionDebugLogger.log(
+      'logo fetch response status=${response.statusCode} '
+      'contentType=${response.headers.contentType?.value} '
+      'contentLength=$contentLength',
+    );
 
     if (response.statusCode != 200) {
       throw HttpException(
@@ -260,13 +349,41 @@ class WebsiteLogoCacheService {
 
     // Determine mime type and extension
     final mimeType = response.headers.value(HttpHeaders.contentTypeHeader);
+
+    // Check if response is HTML (blocked/redirected favicon)
+    final contentTypeLower = (mimeType ?? '').toLowerCase();
+    if (contentTypeLower.contains('text/html') ||
+        contentTypeLower.contains('text/plain')) {
+      final preview = utf8.decode(bytes.take(200).toList(), allowMalformed: true).toLowerCase();
+      if (preview.contains('<!doctype html') ||
+          preview.contains('<html') ||
+          contentTypeLower.contains('text/html')) {
+        CollectionDebugLogger.warn(
+          'Favicon response is HTML (blocked/invalid): $url',
+        );
+        throw HttpException(
+          'Favicon response is HTML, probably blocked or invalid: $url',
+          uri: uri,
+        );
+      }
+    }
+
+    // Allow application/octet-stream for .ico URLs
     final ext = _extensionForMimeType(mimeType, url);
+
+    CollectionDebugLogger.log(
+      'logo fetch bytesLength=${bytes.length} ext=$ext',
+    );
 
     // Save to local file
     final dir = await _getLogosDir();
     final fileName = '${_safeFileName(siteKey)}$ext';
     final file = File('${dir.path}/$fileName');
     await file.writeAsBytes(bytes);
+
+    CollectionDebugLogger.log(
+      'logo saved path=${file.path}',
+    );
 
     // Upsert database
     final now = DateTime.now();
@@ -284,6 +401,9 @@ class WebsiteLogoCacheService {
         createdAt: Value(now),
         updatedAt: Value(now),
       ),
+    );
+    CollectionDebugLogger.log(
+      'logo dao upsert success siteKey=$siteKey',
     );
 
     return WebsiteLogoCacheEntry(
@@ -314,8 +434,10 @@ class WebsiteLogoCacheService {
   ///
   /// Handles MIME types with parameters (e.g. "image/png; charset=utf-8")
   /// by stripping everything after the first semicolon.
+  /// Allows application/octet-stream for .ico URLs.
   String _extensionForMimeType(String? mimeType, String url) {
-    if (mimeType == null) return _extFromUrl(url);
+    final extFromUrl = _extFromUrl(url);
+    if (mimeType == null) return extFromUrl;
 
     // Strip charset or any MIME parameters
     final base = mimeType.split(';').first.trim().toLowerCase();
@@ -335,8 +457,12 @@ class WebsiteLogoCacheService {
         return '.webp';
       case 'image/gif':
         return '.gif';
+      case 'application/octet-stream':
+        // Allow octet-stream for .ico URLs (some servers serve .ico this way)
+        if (extFromUrl == '.ico') return '.ico';
+        return extFromUrl;
       default:
-        return _extFromUrl(url);
+        return extFromUrl;
     }
   }
 
