@@ -664,3 +664,25 @@ font: AppFlowy 编辑器使用 Inter 字体 + 主题色; image V2: ThoughtImageB
 ### Next Steps
 
 - None - task complete
+
+---
+
+## 2026-05-25 — 右侧详情栏 Scale 适配 + 底部操作栏删除
+
+**Branch**: `main`
+
+### Changes
+
+1. 删除右侧底部固定操作栏（打开内容/编辑/更多），主操作集中到顶部「打开原网页」
+2. 布局扁平化：去掉外层 Column + Expanded，直接 SingleChildScrollView
+3. 备注区 `height: 96` → `ConstrainedBox(minHeight: 88)` 防止缩放截断
+4. TabBar `isScrollable: false` → `true` + `tabAlignment: TabAlignment.start`
+5. 身份卡图标紧凑模式：LayoutBuilder 宽度 <400px 时 tile 60→56，icon 28→26
+6. 顶部按钮紧凑模式：宽度 <360px 时「打开原网页」→「打开网页」
+7. 修复 LayoutBuilder 插入后的缩进
+
+### Verification
+
+- `flutter analyze` — 0 issues
+- 所有业务行为（状态切换、收藏夹、复制链接、打开原网页）正常
+- 数据库 / Repository / 三栏布局 均无改动

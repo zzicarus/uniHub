@@ -20,7 +20,6 @@ import 'collection_technical_info_section.dart';
 /// C. 整理信息区 — source, status, box, tags, notes (light dividers)
 /// D. 内容补充区 — content tabs (weaker visual weight)
 /// E. 技术信息区 — collapsed at bottom
-/// F. 底部固定操作栏 — fixed bottom action bar
 class SavedItemDetailPanel extends ConsumerStatefulWidget {
   const SavedItemDetailPanel({required this.item, super.key});
 
@@ -124,38 +123,30 @@ class _SavedItemDetailPanelState extends ConsumerState<SavedItemDetailPanel>
         boxShadow: const [AppShadows.cardSoft],
       ),
       clipBehavior: Clip.antiAlias,
-      child: Column(
-        children: [
-          Expanded(
-            child: SingleChildScrollView(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // A. Content Identity Card
-                  _buildContentIdentity(
-                    theme,
-                    colorScheme,
-                    item,
-                    mediaType,
-                    platform,
-                  ),
-                  // B. Top Action Row
-                  _buildTopActionRow(theme, colorScheme, item),
-                  _plainDivider(colorScheme),
-                  // C. Organize Info Section
-                  _buildOrganizeSection(theme, colorScheme, item),
-                  _plainDivider(colorScheme),
-                  // D. Content Tabs
-                  _buildContentTabs(theme, colorScheme, item),
-                  // E. Technical Info (collapsed, bottom)
-                  CollectionTechnicalInfoSection(item: item),
-                ],
-              ),
+      child: SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // A. Content Identity Card
+            _buildContentIdentity(
+              theme,
+              colorScheme,
+              item,
+              mediaType,
+              platform,
             ),
-          ),
-          // F. Bottom Fixed Action Bar
-          _buildBottomActionBar(theme, colorScheme, item),
-        ],
+            // B. Top Action Row
+            _buildTopActionRow(theme, colorScheme, item),
+            _plainDivider(colorScheme),
+            // C. Organize Info Section
+            _buildOrganizeSection(theme, colorScheme, item),
+            _plainDivider(colorScheme),
+            // D. Content Tabs
+            _buildContentTabs(theme, colorScheme, item),
+            // E. Technical Info (collapsed, bottom)
+            CollectionTechnicalInfoSection(item: item),
+          ],
+        ),
       ),
     );
   }
@@ -195,78 +186,86 @@ class _SavedItemDetailPanelState extends ConsumerState<SavedItemDetailPanel>
           ),
         ),
         padding: const EdgeInsets.all(AppSpacing.md),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Large icon
-            Container(
-              width: 60,
-              height: 60,
-              decoration: BoxDecoration(
-                color: _identityIconBg(colorScheme, mediaType),
-                borderRadius: BorderRadius.circular(AppRadius.md),
-              ),
-              child: Icon(
-                _iconFor(mediaType),
-                size: 28,
-                color: colorScheme.onPrimaryContainer.withValues(alpha: 0.85),
-              ),
-            ),
-            const SizedBox(width: AppSpacing.sm),
-            // Title + source
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    item.title.isEmpty ? item.normalizedUrl : item.title,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      fontWeight: AppFontTokens.bold,
-                      height: 1.25,
-                    ),
-                  ),
-                  const SizedBox(height: AppSpacing.xxs),
-                  Text(
-                    '${platform.label} · ${mediaType.label} · ${_relativeTime(item.createdAt)}',
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: colorScheme.onSurfaceVariant.withValues(alpha: 0.8),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(width: AppSpacing.xs),
-            // Star + Open buttons
-            Column(
-              mainAxisSize: MainAxisSize.min,
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final compact = constraints.maxWidth < 400;
+            final tileSize = compact ? 56.0 : 60.0;
+            final iconSize = compact ? 26.0 : 28.0;
+
+            return Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                IconButton(
-                  tooltip: '星标功能稍后接入',
-                  icon: const Icon(Icons.star_border_rounded, size: 20),
-                  visualDensity: VisualDensity.compact,
-                  style: IconButton.styleFrom(
-                    foregroundColor: colorScheme.onSurfaceVariant,
+                // Large icon
+                Container(
+                  width: tileSize,
+                  height: tileSize,
+                  decoration: BoxDecoration(
+                    color: _identityIconBg(colorScheme, mediaType),
+                    borderRadius: BorderRadius.circular(AppRadius.md),
                   ),
-                  onPressed: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('星标功能稍后接入')),
-                    );
-                  },
+                  child: Icon(
+                    _iconFor(mediaType),
+                    size: iconSize,
+                    color: colorScheme.onPrimaryContainer.withValues(alpha: 0.85),
+                  ),
                 ),
-                IconButton(
-                  tooltip: '在浏览器中打开',
-                  icon: const Icon(Icons.open_in_new_rounded, size: 20),
-                  visualDensity: VisualDensity.compact,
-                  style: IconButton.styleFrom(
-                    foregroundColor: colorScheme.primary,
+                const SizedBox(width: AppSpacing.sm),
+                // Title + source
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        item.title.isEmpty ? item.normalizedUrl : item.title,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          fontWeight: AppFontTokens.bold,
+                          height: 1.25,
+                        ),
+                      ),
+                      const SizedBox(height: AppSpacing.xxs),
+                      Text(
+                        '${platform.label} · ${mediaType.label} · ${_relativeTime(item.createdAt)}',
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: colorScheme.onSurfaceVariant.withValues(alpha: 0.8),
+                        ),
+                      ),
+                    ],
                   ),
-                  onPressed: () => _openUrl(item.originalUrl),
+                ),
+                const SizedBox(width: AppSpacing.xs),
+                // Star + Open buttons
+                Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    IconButton(
+                      tooltip: '星标功能稍后接入',
+                      icon: const Icon(Icons.star_border_rounded, size: 20),
+                      visualDensity: VisualDensity.compact,
+                      style: IconButton.styleFrom(
+                        foregroundColor: colorScheme.onSurfaceVariant,
+                      ),
+                      onPressed: () {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('星标功能稍后接入')),
+                        );
+                      },
+                    ),
+                    IconButton(
+                      tooltip: '在浏览器中打开',
+                      icon: const Icon(Icons.open_in_new_rounded, size: 20),
+                      visualDensity: VisualDensity.compact,
+                      style: IconButton.styleFrom(
+                        foregroundColor: colorScheme.primary,
+                      ),
+                      onPressed: () => _openUrl(item.originalUrl),
+                    ),
+                  ],
                 ),
               ],
-            ),
-          ],
+            );
+          },
         ),
       ),
     );
@@ -297,46 +296,54 @@ class _SavedItemDetailPanelState extends ConsumerState<SavedItemDetailPanel>
         AppSpacing.lg,
         AppSpacing.sm,
       ),
-      child: Row(
-        children: [
-          Expanded(
-            child: OutlinedButton.icon(
-              onPressed: () async {
-                final repository = ref.read(collectionsRepositoryProvider);
-                await repository.markOpened(item.id);
-                ref.invalidate(savedItemsListProvider);
-                if (!mounted) return;
-                await _openUrl(item.originalUrl);
-              },
-              icon: const Icon(Icons.open_in_new_rounded, size: 16),
-              label: const Text('打开原网页', style: TextStyle(fontSize: 13)),
-              style: OutlinedButton.styleFrom(
-                visualDensity: VisualDensity.compact,
-                foregroundColor: colorScheme.primary,
-                side: BorderSide(
-                  color: colorScheme.primary.withValues(alpha: 0.4),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final compact = constraints.maxWidth < 360;
+          return Row(
+            children: [
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: () async {
+                    final repository = ref.read(collectionsRepositoryProvider);
+                    await repository.markOpened(item.id);
+                    ref.invalidate(savedItemsListProvider);
+                    if (!mounted) return;
+                    await _openUrl(item.originalUrl);
+                  },
+                  icon: const Icon(Icons.open_in_new_rounded, size: 16),
+                  label: Text(
+                    compact ? '打开网页' : '打开原网页',
+                    style: const TextStyle(fontSize: 13),
+                  ),
+                  style: OutlinedButton.styleFrom(
+                    visualDensity: VisualDensity.compact,
+                    foregroundColor: colorScheme.primary,
+                    side: BorderSide(
+                      color: colorScheme.primary.withValues(alpha: 0.4),
+                    ),
+                  ),
                 ),
               ),
-            ),
-          ),
-          const SizedBox(width: AppSpacing.sm),
-          IconButton(
-            tooltip: '星标功能稍后接入',
-            icon: const Icon(Icons.star_border_rounded, size: 20),
-            visualDensity: VisualDensity.compact,
-            style: IconButton.styleFrom(
-              foregroundColor: colorScheme.onSurfaceVariant,
-              side: BorderSide(
-                color: colorScheme.outlineVariant.withValues(alpha: 0.6),
+              const SizedBox(width: AppSpacing.sm),
+              IconButton(
+                tooltip: '星标功能稍后接入',
+                icon: const Icon(Icons.star_border_rounded, size: 20),
+                visualDensity: VisualDensity.compact,
+                style: IconButton.styleFrom(
+                  foregroundColor: colorScheme.onSurfaceVariant,
+                  side: BorderSide(
+                    color: colorScheme.outlineVariant.withValues(alpha: 0.6),
+                  ),
+                ),
+                onPressed: () {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('星标功能稍后接入')),
+                  );
+                },
               ),
-            ),
-            onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('星标功能稍后接入')),
-              );
-            },
-          ),
-        ],
+            ],
+          );
+        },
       ),
     );
   }
@@ -514,23 +521,25 @@ class _SavedItemDetailPanelState extends ConsumerState<SavedItemDetailPanel>
             ),
           ),
           const SizedBox(height: AppSpacing.sm),
-          Container(
-            width: double.infinity,
-            height: 96,
-            decoration: BoxDecoration(
-              color: colorScheme.surface,
-              borderRadius: BorderRadius.circular(AppRadius.md),
-              border: Border.all(
-                color: colorScheme.outlineVariant.withValues(alpha: 0.7),
+          ConstrainedBox(
+            constraints: const BoxConstraints(minHeight: 88),
+            child: Container(
+              width: double.infinity,
+              decoration: BoxDecoration(
+                color: colorScheme.surface,
+                borderRadius: BorderRadius.circular(AppRadius.md),
+                border: Border.all(
+                  color: colorScheme.outlineVariant.withValues(alpha: 0.7),
+                ),
               ),
-            ),
-            padding: const EdgeInsets.all(AppSpacing.md),
-            child: Align(
-              alignment: Alignment.topLeft,
-              child: Text(
-                '写下你收藏这条内容的想法或要点...',
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  color: colorScheme.onSurfaceVariant.withValues(alpha: 0.55),
+              padding: const EdgeInsets.all(AppSpacing.md),
+              child: Align(
+                alignment: Alignment.topLeft,
+                child: Text(
+                  '写下你收藏这条内容的想法或要点...',
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: colorScheme.onSurfaceVariant.withValues(alpha: 0.55),
+                  ),
                 ),
               ),
             ),
@@ -574,7 +583,8 @@ class _SavedItemDetailPanelState extends ConsumerState<SavedItemDetailPanel>
           width: double.infinity,
           child: TabBar(
             controller: _tabController,
-            isScrollable: false,
+            isScrollable: true,
+            tabAlignment: TabAlignment.start,
             labelColor: colorScheme.primary,
             unselectedLabelColor:
                 colorScheme.onSurfaceVariant.withValues(alpha: 0.6),
@@ -813,69 +823,7 @@ class _SavedItemDetailPanelState extends ConsumerState<SavedItemDetailPanel>
     }
   }
 
-  // ===============================================================
-  // F. Bottom Fixed Action Bar
-  // ===============================================================
 
-  Widget _buildBottomActionBar(
-    ThemeData theme,
-    ColorScheme colorScheme,
-    SavedItemsTableData item,
-  ) {
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: colorScheme.surface,
-        border: Border(
-          top: BorderSide(
-            color: colorScheme.outlineVariant.withValues(alpha: 0.5),
-          ),
-        ),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.sm),
-        child: Row(
-          children: [
-            Expanded(
-              child: FilledButton.icon(
-                onPressed: () async {
-                  await ref
-                      .read(collectionsRepositoryProvider)
-                      .markOpened(item.id);
-                  ref.invalidate(savedItemsListProvider);
-                  if (!mounted) return;
-                  await _openUrl(item.originalUrl);
-                },
-                icon: const Icon(Icons.open_in_new_rounded, size: 18),
-                label: const Text('打开内容'),
-              ),
-            ),
-            const SizedBox(width: AppSpacing.sm),
-            Expanded(
-              child: OutlinedButton.icon(
-                onPressed: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('编辑功能稍后接入')),
-                  );
-                },
-                icon: const Icon(Icons.edit_outlined, size: 18),
-                label: const Text('编辑'),
-              ),
-            ),
-            const SizedBox(width: AppSpacing.xs),
-            IconButton(
-              tooltip: '更多操作',
-              onPressed: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('更多操作稍后接入')),
-                );
-              },
-              icon: const Icon(Icons.more_horiz_rounded),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 }
 
 // ===============================================================
