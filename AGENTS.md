@@ -2,14 +2,16 @@
 
 ## 项目概述
 
-UniHub 是一个 **桌面端优先** 的 Flutter 笔记应用，基于插件架构构建。
+UniHub 是一个 **桌面端优先** 的 Flutter 个人工具箱，基于插件架构构建。
 
 | 维度 | 内容 |
 |------|------|
-| 技术栈 | Flutter + Riverpod + GoRouter + Drift(SQLite) + flutter_quill |
+| 定位 | 本地优先的个人知识管理工具，离线可用，数据完全归用户 |
+| 技术栈 | Flutter + Riverpod + GoRouter + Drift(SQLite) + AppFlowy Editor (主) / flutter_quill (迁移遗留) |
 | 架构 | 3 层：`core/`（基础设施）→ `shared/`（共享组件）→ `plugins/`（功能插件） |
 | 布局 | 响应式：桌面端侧栏 + 内容区（≥900px 三列，900-1279px 两列），移动端底部导航（<900px） |
-| 主题 | Material 3 + `ColorScheme.fromSeed`，设计令牌在 `app_tokens.dart` |
+| 主题 | Material 3 + 6 套主题预设，设计令牌在 `app_tokens.dart` |
+| 编辑器方向 | 已从 Quill 切到 AppFlowy Editor 为主线；旧 Quill 组件保留为迁移遗留代码，不再被用户主路径引用 |
 
 ## 输出要求
 
@@ -86,6 +88,7 @@ UniHub 是一个 **桌面端优先** 的 Flutter 笔记应用，基于插件架�
 | `lib/src/core/` | 基础设施总览（路由/启动/布局/生命周期） | 深度阅读 |
 | `lib/src/core/plugin/` | **插件系统关键约定 + 已知陷阱** | 新增/修改插件必读 |
 | `lib/src/plugins/thoughts/` | Thoughts 插件内部架构 + data/ui 分层 | 维护该插件必读 |
+| `.trellis/spec/architecture/` | 架构设计文档（编辑引擎迁移、3 层架构说明） | 理解架构演进必读 |
 | `test/` | 测试隔离模式 + ProviderScope override | 新增测试必读 |
 | `.trellis/spec/` | 项目规范（数据库/Widget/工作流等） | 任意任务前查阅 |
 | `.trellis/tasks/` | 任务目录与 PRD 文件 | 大型功能前查阅 |
@@ -105,4 +108,4 @@ UniHub 是一个 **桌面端优先** 的 Flutter 笔记应用，基于插件架�
 | `.trellis/spec/backend/database-guidelines.md` | 数据库规范（drift/SQLite、DAO/Repository 模式、迁移、测试生命周期） |
 | `.trellis/workflow.md` | 完整 Trellis 开发流程规范（Plan → Execute → Finish） |
 
-> 最后核对日期：2026-05-23 | 当前无阻塞级别的已知问题。
+> 最后核对日期：2026-05-25 | 当前无阻塞级别的已知问题。

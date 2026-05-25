@@ -10,7 +10,8 @@
 |------|------|------|
 | [Backend](./backend/index.md) | 数据层（Drift/SQLite）、插件数据流、错误处理、日志 | 6 篇 |
 | [Frontend](./frontend/index.md) | Widget 规范、状态管理、UI/UX、类型安全、测试 | 7 篇 |
-| [Guides](./guides/index.md) | 跨层思考、代码复用、任务分类、PRD 模板 | 4 篇 |
+| [Architecture](./architecture/app-architecture.md) | 三层架构、插件系统、编辑引擎迁移 | 2 篇 |
+| [Guides](./guides/index.md) | 跨层思考、代码复用、任务分类、PRD 模板、路线图 | 5 篇 |
 
 ---
 
@@ -33,4 +34,4 @@ flutter test        # 全部通过
 
 ---
 
-> 最后核对日期：2026-05-23
+> 最后核对日期：2026-05-25

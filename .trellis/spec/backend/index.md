@@ -22,7 +22,7 @@ Before implementing a database/data-layer task:
 | Guide | Description | Last Updated |
 |-------|-------------|--------------|
 | [Directory Structure](./directory-structure.md) | 数据层目录组织、文件命名 | 2026-05-23 |
-| [Database Guidelines](./database-guidelines.md) | Drift 表定义、DAO/Repository、迁移 | 2026-05-23 |
+| [Database Guidelines](./database-guidelines.md) | Drift 表定义、DAO/Repository、迁移、内容存储合同 | 2026-05-25 |
 | [Plugin Data Flow](./plugin-data-flow.md) | 插件数据层 Table→Provider→测试端到端流程 | 2026-05-23 |
 | [Error Handling](./error-handling.md) | 异常类型、分层处理、禁止模式 | 2026-05-23 |
 | [Quality Guidelines](./quality-guidelines.md) | 禁止/必需模式、测试要求、审查清单 | 2026-05-23 |

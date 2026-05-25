@@ -151,64 +151,77 @@ class ThoughtsRepository {
 
 ### 1. Scope / Trigger
 
-- Trigger：想法编辑器使用 WYSIWYG 富文本，`thoughts_table.content` 不再只表示纯 Markdown 文本。
+- Trigger：想法编辑器从 Quill 迁移到 AppFlowy Editor，`thoughts_table.content` 不再只表示纯 Markdown 文本。
 - 范围：`ThoughtsTable.content`、Repository 读写、UI 编辑器、卡片摘要、搜索/首页摘要、图片索引字段 `imagePaths`。
+- 历史：旧数据可能为 `unihub.quill_delta.v1` 格式（已下线），当前主格式为 `unihub.appflowy_json.v1`。
 
 ### 2. Signatures
 
 | 层 | 签名 / 字段 | 合同 |
 |----|-------------|------|
-| DB | `ThoughtsTable.content: TEXT NOT NULL` | 存储 Quill Delta envelope JSON；旧数据可能仍是 Markdown 文本 |
+| DB | `ThoughtsTable.content: TEXT NOT NULL` | 存储 AppFlowy JSON envelope（格式 `unihub.appflowy_json.v1`）；旧 Quill 数据可能仍存在 |
 | DB | `ThoughtsTable.imagePaths: TEXT NULL` | JSON string list，作为本地图片索引 |
-| Data helper | `ThoughtContentCodec.documentFromStored(String)` | 读取 envelope / legacy Delta list / legacy Markdown，统一输出 `Document` |
-| Data helper | `ThoughtContentCodec.encodeDocument(Document)` | 输出 envelope JSON |
-| Data helper | `ThoughtContentCodec.plainTextFromStored(String)` | 输出 UI/搜索可展示纯文本，不泄漏 Delta JSON |
+| Data helper | `ThoughtContentCodec.plainTextFromStored(String)` | 输出 UI/搜索可展示纯文本，优先使用 envelope 中 `plainText` 字段 |
+| Data helper | `ThoughtContentCodec.titleFromStored(String)` | 从 plainText 取第一行生成标题 |
+| Data helper | `ThoughtContentCodec.encodeAppFlowy({document:, plainText:})` | 生成 `unihub.appflowy_json.v1` envelope JSON |
+| Data helper | `ThoughtContentCodec.documentJsonFromStored(String)` | 从 envelope 提取 AppFlowy document JSON |
 
 ### 3. Contracts
 
-新正文必须保存为 envelope JSON：
+当前主格式为 AppFlowy JSON envelope：
 
 ```json
 {
-  "format": "unihub.quill_delta.v1",
-  "delta": [
-    {"insert": "标题\n", "attributes": {"header": 1}},
-    {"insert": "正文\n"}
-  ]
+  "format": "unihub.appflowy_json.v1",
+  "document": {
+    "type": "page",
+    "children": [
+      {
+        "type": "paragraph",
+        "data": {
+          "delta": [
+            {"insert": "标题"}
+          ]
+        }
+      }
+    ]
+  },
+  "plainText": "标题"
 }
 ```
 
-兼容读取规则：
+兼容读取规则（`plainTextFromStored`）：
 
 | 输入内容 | 处理 |
 |----------|------|
-| envelope JSON 且 `format == "unihub.quill_delta.v1"` | 从 `delta` 构造 Quill `Document` |
-| 裸 Delta JSON list | 作为历史/中间格式读取 |
-| 其他文本 | 按 legacy Markdown 转换为 Quill `Document` |
-| Markdown 图片 `![](file:///...)` | 即使转换库忽略图片，也必须通过正则提取路径加入图片索引 |
+| envelope JSON 且 `format == "unihub.appflowy_json.v1"` | 优先返回 `plainText` 字段；其次从 `document` 提取 |
+| 其他非 AppFlowy 格式 | 返回空字符串（旧 Quill 数据被丢弃） |
+
+> `titleFromStored` 取 plainText 的第一非空行，截断到 20 字符 + `...`，空时返回 `'无标题想法'`。
 
 ### 4. Validation & Error Matrix
 
 | 条件 | 处理 |
 |------|------|
-| `content` 为空字符串 | 返回空 `Document` |
-| JSON 解析失败 | 降级为 Markdown 文本导入 |
-| envelope 缺少 `delta` 或类型错误 | 降级为 Markdown 文本导入 |
-| 图片路径不存在 | UI 缩略图过滤不存在文件，避免展示坏路径 |
+| `content` 为空字符串 | `plainTextFromStored` 返回 `''`，`titleFromStored` 返回 `'无标题想法'` |
+| JSON 解析失败 | 返回空字符串（非 JSON 的旧数据视为无效） |
+| envelope 缺少 `plainText` 且 `document` 不完整 | 尝试从 `document` 提取，失败返回空字符串 |
+| `document` 中没有 paragraph text | 返回空字符串 |
 | `imagePaths` 不是合法 JSON list | 视为空列表 |
 
 ### 5. Good/Base/Bad Cases
 
-- Good：新建富文本想法，正文以 envelope JSON 写入；卡片/首页/搜索用 `plainTextFromStored` 展示摘要。
-- Base：旧 Markdown 想法能打开编辑，保存后升级为 envelope JSON。
-- Bad：直接把 `content` 原样显示到 UI，会把 Delta JSON 暴露给用户。
+- Good：新建想法，正文以 `unihub.appflowy_json.v1` envelope 写入；卡片/首页/搜索用 `plainTextFromStored` 展示摘要。
+- Base：调用 `quickCreate()` 直接生成纯文本段落 JSON，不经过富文本编辑器。
+- Bad：直接把 `content` 原样显示到 UI，会把 AppFlowy JSON 暴露给用户。
 
 ### 6. Tests Required
 
-- Unit：Delta envelope encode/decode 往返，断言纯文本不丢失。
-- Unit：legacy Markdown 转纯文本，断言标题/正文可读。
-- Unit：legacy Markdown 本地图片路径提取，断言 `file:///...` 能进入图片索引。
-- Widget/Smoke：首页和想法页面不能渲染 Delta JSON。
+- Unit：`encodeAppFlowy` + `plainTextFromStored` 往返，断言纯文本不丢失。
+- Unit：`titleFromStored` 截断和空内容行为。
+- Unit：非 AppFlowy 格式（旧 Quill delta、普通文本）返回空字符串。
+- Widget/Smoke：首页和想法页面不能渲染 AppFlowy JSON。
+- Integration：`quickCreate()` 写入的 content 格式验证为 `unihub.appflowy_json.v1`。
 - Regression：`flutter analyze` 和 `flutter test` 必须通过。
 
 ### 7. Wrong vs Correct
@@ -216,7 +229,7 @@ class ThoughtsRepository {
 #### Wrong
 
 ```dart
-Text(thought.content); // 可能显示 {"format":"unihub.quill_delta.v1",...}
+Text(thought.content); // 可能显示 {"format":"unihub.appflowy_json.v1",...}
 ```
 
 #### Correct
@@ -224,6 +237,17 @@ Text(thought.content); // 可能显示 {"format":"unihub.quill_delta.v1",...}
 ```dart
 Text(ThoughtContentCodec.plainTextFromStored(thought.content));
 ```
+
+### 8. 历史遗留数据
+
+- **`unihub.quill_delta.v1`** 格式（2026-05 及之前）：不再写入，读取时 `plainTextFromStored` 返回空字符串。
+- 旧 Quill 数据的批量迁移不在当前 scope 内。
+- 用户主路由 `/thoughts/:id` 已切到 AppFlowy，旧 Quill 编辑器不会再次打开旧数据。
+
+### 9. Related
+
+- 编辑引擎迁移说明见 `architecture/editor-migration.md`。
+- 当前格式常量：`ThoughtContentCodec.format == 'unihub.appflowy_json.v1'`（`lib/src/plugins/thoughts/data/thought_content_codec.dart`）。
 
 ---
 

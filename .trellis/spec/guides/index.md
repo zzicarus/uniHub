@@ -25,6 +25,7 @@ These guides help you **ask the right questions before coding**.
 | [Cross-Layer Thinking Guide](./cross-layer-thinking-guide.md) | Think through data flow across layers | Features spanning multiple layers |
 | [Agent Workflow (任务分类与委派)](./agent-workflow.md) | Task categorization, skill loading, delegation | Before implementing, to determine category and skills |
 | [Planning (PRD 模板)](./planning.md) | PRD template and naming conventions | Complex features requiring upfront planning |
+| [Roadmap (方向与路线图)](./roadmap.md) | Project direction, goals, known gaps | Context setting at session start |
 
 ---
 
