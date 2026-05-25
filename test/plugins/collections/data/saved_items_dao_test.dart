@@ -127,4 +127,21 @@ void main() {
     // drift stores with microsecond precision; compare by ignoring sub-second
     expect(item.lastOpenedAt!.difference(openedAt).inSeconds, 0);
   });
+
+  test('deleteById removes the item', () async {
+    final now = DateTime.now();
+    final id = await dao.insert(
+      SavedItemsTableCompanion(
+        originalUrl: Value('https://example.com/delete-me'),
+        normalizedUrl: Value('https://example.com/delete-me'),
+        createdAt: Value(now),
+        updatedAt: Value(now),
+      ),
+    );
+
+    await dao.deleteById(id);
+
+    final item = await dao.getById(id);
+    expect(item, isNull);
+  });
 }

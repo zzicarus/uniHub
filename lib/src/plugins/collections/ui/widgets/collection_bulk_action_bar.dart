@@ -124,6 +124,48 @@ class CollectionBulkActionBar extends ConsumerWidget {
                           enabled: false,
                           colorScheme: colorScheme,
                         ),
+                        const SizedBox(width: AppSpacing.xs),
+                        // Active: 删除 (destructive)
+                        _BulkActionPill(
+                          icon: Icons.delete_outline_rounded,
+                          label: '删除',
+                          enabled: true,
+                          destructive: true,
+                          colorScheme: colorScheme,
+                          onPressed: () async {
+                            final confirmed = await showDialog<bool>(
+                              context: context,
+                              builder: (ctx) => AlertDialog(
+                                title: const Text('确认删除'),
+                                content:
+                                    const Text('删除后无法恢复，确定要删除这条收藏吗？'),
+                                actions: [
+                                  TextButton(
+                                    onPressed: () => Navigator.pop(ctx, false),
+                                    child: const Text('取消'),
+                                  ),
+                                  FilledButton(
+                                    onPressed: () => Navigator.pop(ctx, true),
+                                    child: const Text('删除'),
+                                  ),
+                                ],
+                              ),
+                            );
+                            if (confirmed != true || !context.mounted) return;
+
+                            final repository =
+                                ref.read(collectionsRepositoryProvider);
+                            await repository.deleteSavedItem(selectedId);
+                            ref.read(selectedSavedItemIdProvider.notifier)
+                                .state = null;
+                            ref.invalidate(savedItemsListProvider);
+                            ref.invalidate(collectionFolderCountsProvider);
+                            if (!context.mounted) return;
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('已删除')),
+                            );
+                          },
+                        ),
                       ],
                     ),
                   ),
@@ -146,6 +188,7 @@ class _BulkActionPill extends StatelessWidget {
     required this.label,
     required this.enabled,
     required this.colorScheme,
+    this.destructive = false,
     this.onPressed,
   });
 
@@ -153,6 +196,7 @@ class _BulkActionPill extends StatelessWidget {
   final String label;
   final bool enabled;
   final ColorScheme colorScheme;
+  final bool destructive;
   final VoidCallback? onPressed;
 
   @override
@@ -162,9 +206,11 @@ class _BulkActionPill extends StatelessWidget {
     const double iconSize = 15.0;
     const double fontSize = 12.5;
 
-    final foregroundColor = enabled
-        ? colorScheme.primary
-        : colorScheme.onSurfaceVariant.withValues(alpha: 0.40);
+    final foregroundColor = !enabled
+        ? colorScheme.onSurfaceVariant.withValues(alpha: 0.40)
+        : destructive
+            ? colorScheme.error
+            : colorScheme.primary;
 
     final borderRadius = BorderRadius.circular(AppRadius.full);
 

@@ -77,4 +77,9 @@ class SavedItemsDao {
       ),
     );
   }
+
+  Future<int> deleteById(int id) {
+    return (_db.delete(_db.savedItemsTable)..where((t) => t.id.equals(id)))
+        .go();
+  }
 }

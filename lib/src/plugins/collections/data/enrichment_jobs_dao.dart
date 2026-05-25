@@ -84,4 +84,9 @@ class EnrichmentJobsDao {
       ),
     );
   }
+
+  Future<int> deleteByItemId(int itemId) {
+    return (_db.delete(_db.enrichmentJobsTable)
+      ..where((t) => t.itemId.equals(itemId))).go();
+  }
 }

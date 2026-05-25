@@ -478,20 +478,52 @@ class _CardMoreMenu extends ConsumerWidget {
                   .read(collectionsRepositoryProvider)
                   .updateStatus(item.id, ConsumptionStatus.archived);
               ref.invalidate(savedItemsListProvider);
+            case _CardAction.delete:
+              final confirmed = await showDialog<bool>(
+                context: context,
+                builder: (ctx) => AlertDialog(
+                  title: const Text('确认删除'),
+                  content: Text('确定要删除「${item.title.isEmpty ? item.normalizedUrl : item.title}」吗？\n删除后无法恢复。'),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(ctx, false),
+                      child: const Text('取消'),
+                    ),
+                    FilledButton(
+                      onPressed: () => Navigator.pop(ctx, true),
+                      child: const Text('删除'),
+                    ),
+                  ],
+                ),
+              );
+              if (confirmed != true || !context.mounted) return;
+              await ref.read(collectionsRepositoryProvider).deleteSavedItem(item.id);
+              ref.read(selectedSavedItemIdProvider.notifier).state = null;
+              ref.invalidate(savedItemsListProvider);
+              ref.invalidate(collectionFolderCountsProvider);
+              if (!context.mounted) return;
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('已删除')),
+              );
           }
         },
-        itemBuilder: (context) => const [
-          PopupMenuItem(value: _CardAction.open, child: Text('打开内容')),
-          PopupMenuItem(value: _CardAction.folder, child: Text('分配收藏夹')),
-          PopupMenuItem(value: _CardAction.copy, child: Text('复制链接')),
-          PopupMenuItem(value: _CardAction.archive, child: Text('归档')),
+        itemBuilder: (context) => [
+          const PopupMenuItem(value: _CardAction.open, child: Text('打开内容')),
+          const PopupMenuItem(value: _CardAction.folder, child: Text('分配收藏夹')),
+          const PopupMenuItem(value: _CardAction.copy, child: Text('复制链接')),
+          const PopupMenuItem(value: _CardAction.archive, child: Text('归档')),
+          const PopupMenuDivider(),
+          PopupMenuItem(
+            value: _CardAction.delete,
+            child: Text('删除', style: TextStyle(color: colorScheme.error)),
+          ),
         ],
       ),
     );
   }
 }
 
-enum _CardAction { open, folder, copy, archive }
+enum _CardAction { open, folder, copy, archive, delete }
 
 /// Compact box assignment icon button for the card right column.
 class _CompactBoxButton extends ConsumerWidget {

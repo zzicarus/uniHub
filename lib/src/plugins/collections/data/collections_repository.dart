@@ -162,6 +162,13 @@ class CollectionsRepository {
     );
   }
 
+  /// Delete a saved item and all related data (box assignments, enrichment jobs).
+  Future<void> deleteSavedItem(int itemId) async {
+    await _collectionBoxesDao.deleteAllItemBoxes(itemId);
+    await _enrichmentJobsDao.deleteByItemId(itemId);
+    await _savedItemsDao.deleteById(itemId);
+  }
+
   Future<CollectionBoxesTableData> createBox(String name) async {
     final now = DateTime.now();
     final id = await _collectionBoxesDao.insert(

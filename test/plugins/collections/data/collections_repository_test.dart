@@ -156,5 +156,27 @@ void main() {
       expect(result.any((e) => e.id == itemB.id), isTrue);
       expect(result.any((e) => e.id == itemC.id), isFalse);
     });
+
+    test('deletes saved item and related data', () async {
+      final box = await repository.createBox('Test Box');
+      final item = await repository.createSavedItem(
+        originalUrl: 'https://example.com/delete-all',
+        normalizedUrl: 'https://example.com/delete-all',
+        title: 'To be deleted',
+      );
+      await repository.setItemBoxes(item.id, {box.id});
+      await repository.enqueueEnrichmentJob(item.id);
+
+      // Confirm item exists
+      expect(await repository.getSavedItem(item.id), isNotNull);
+      expect(await repository.getBoxIdsForItem(item.id), isNotEmpty);
+
+      await repository.deleteSavedItem(item.id);
+
+      // Item should be gone
+      expect(await repository.getSavedItem(item.id), isNull);
+      // Box assignments should be cleaned up
+      expect(await repository.getBoxIdsForItem(item.id), isEmpty);
+    });
   });
 }

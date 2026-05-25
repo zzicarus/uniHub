@@ -69,6 +69,11 @@ class CollectionBoxesDao {
   // Counts
   // ---------------------------------------------------------
 
+  Future<int> deleteAllItemBoxes(int itemId) {
+    return (_db.delete(_db.savedItemBoxesTable)
+      ..where((t) => t.itemId.equals(itemId))).go();
+  }
+
   /// Number of items per collection box.
   Future<Map<int, int>> countItemsByBox() async {
     final boxId = _db.savedItemBoxesTable.boxId;

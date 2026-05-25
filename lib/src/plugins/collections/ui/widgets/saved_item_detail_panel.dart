@@ -600,7 +600,7 @@ class _SavedItemDetailPanelState extends ConsumerState<SavedItemDetailPanel> {
                   icon: Icons.delete_outline_rounded,
                   label: '删除',
                   destructive: true,
-                  onTap: () => _showSnackBar('删除功能稍后接入'),
+                  onTap: () => _deleteItem(item.id),
                 ),
               ),
             ],
@@ -684,6 +684,35 @@ class _SavedItemDetailPanelState extends ConsumerState<SavedItemDetailPanel> {
     await Clipboard.setData(ClipboardData(text: url));
     if (!mounted) return;
     _showSnackBar('已复制链接');
+  }
+
+  Future<void> _deleteItem(int itemId) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('确认删除'),
+        content: const Text('删除后无法恢复，确定要删除这条收藏吗？'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('取消'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('删除'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+
+    final repository = ref.read(collectionsRepositoryProvider);
+    await repository.deleteSavedItem(itemId);
+    ref.read(selectedSavedItemIdProvider.notifier).state = null;
+    ref.invalidate(savedItemsListProvider);
+    ref.invalidate(collectionFolderCountsProvider);
+    if (!mounted) return;
+    _showSnackBar('已删除');
   }
 
   Future<void> _archiveItem(int itemId) async {
