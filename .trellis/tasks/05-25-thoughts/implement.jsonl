@@ -1,0 +1,8 @@
+{"file":".trellis/spec/frontend/index.md","reason":"前端规范索引与实现前检查清单。"}
+{"file":".trellis/spec/frontend/component-guidelines.md","reason":"Widget、设计 token、响应式与 Ink/Material 宿主规范。"}
+{"file":".trellis/spec/frontend/uiux-guidelines.md","reason":"编辑体验、交互状态、可访问性与文案反馈规范。"}
+{"file":".trellis/spec/frontend/state-management.md","reason":"Riverpod Provider 访问、注入与 AsyncValue 三态规范。"}
+{"file":".trellis/spec/frontend/quality-guidelines.md","reason":"禁止模式、测试要求与质量门。"}
+{"file":".trellis/spec/frontend/type-safety.md","reason":"类型安全、避免 dynamic 与强制转换的约束。"}
+{"file":".trellis/spec/guides/cross-layer-thinking-guide.md","reason":"本任务跨路由、Provider、Repository、存储格式，需检查数据流边界。"}
+{"file":".trellis/spec/guides/code-reuse-thinking-guide.md","reason":"复用现有 AppFlowy Workspace，避免新增重复编辑器。"}

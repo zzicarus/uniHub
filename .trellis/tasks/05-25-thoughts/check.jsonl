@@ -1,0 +1,7 @@
+{"file":".trellis/spec/frontend/index.md","reason":"核对前端质量检查入口。"}
+{"file":".trellis/spec/frontend/component-guidelines.md","reason":"审查 Widget 结构、设计 token、Material/Ink 安全模式。"}
+{"file":".trellis/spec/frontend/uiux-guidelines.md","reason":"审查编辑入口、可访问性、交互反馈。"}
+{"file":".trellis/spec/frontend/state-management.md","reason":"审查 Riverpod 状态访问和测试 override 模式。"}
+{"file":".trellis/spec/frontend/quality-guidelines.md","reason":"执行质量门、测试覆盖、禁止模式检查。"}
+{"file":".trellis/spec/frontend/type-safety.md","reason":"审查类型安全和无无因 suppressions。"}
+{"file":".trellis/spec/guides/cross-layer-thinking-guide.md","reason":"审查路由→编辑器→存储格式链路一致性。"}

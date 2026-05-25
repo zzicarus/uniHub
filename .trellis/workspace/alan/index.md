@@ -8,7 +8,7 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-1.md`
-- **Total Sessions**: 17
+- **Total Sessions**: 18
 - **Last Active**: 2026-05-25
 <!-- @@@/auto:current-status -->
 
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-1.md` | ~633 | Active |
+| `journal-1.md` | ~666 | Active |
 <!-- @@@/auto:active-documents -->
 
 ---
@@ -29,6 +29,7 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 18 | 2026-05-25 | 内容收藏右侧详情边栏视觉增强 | `cef6f84` | `main` |
 | 17 | 2026-05-25 | 修复桌面 Shell 渲染断言失败 + spec 更新 | `d64ad51` | `feature/unified-font-tokens` |
 | 16 | 2026-05-24 | Collections 工作台 UI 重构 | `f522386` | `main` |
 | 15 | 2026-05-24 | Collections MVP 闭环完成 | `8305954`, `c059aae`, `59f29a1` | `main` |

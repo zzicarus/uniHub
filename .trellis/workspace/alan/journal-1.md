@@ -631,3 +631,36 @@ font: AppFlowy 编辑器使用 Inter 字体 + 主题色; image V2: ThoughtImageB
 ### Next Steps
 
 - None - task complete
+
+
+## Session 18: 内容收藏右侧详情边栏视觉增强
+
+**Date**: 2026-05-25
+**Task**: 内容收藏右侧详情边栏视觉增强
+**Branch**: `main`
+
+### Summary
+
+按 PRD 优化 SavedItemDetailPanel：内容身份卡（浅蓝渐变+60x60图标）、顶部主操作行（打开原网页+星标）、整理区去表单化（白底+轻分割线）、状态/收藏夹/标签改用 AppPillChip、备注区自绘 note box、Tabs 弱化、底部操作栏增强。flutter analyze 0 issues, 48/48 tests passed。
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `cef6f84` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
