@@ -1426,26 +1426,17 @@ onSelected: (selected) {
 | 区域 | Widget / 实现 | 说明 |
 |------|--------------|------|
 | `item == null` | `_buildEmpty()` | 居中图标 + 「选择一条收藏」+ 说明文字，用 `Container(border, borderRadius)` 包裹 |
-| Header | `_buildHeader()` | 媒体类型图标(40×40) + 标题(2行) + 副标题(平台·相对时间) + 打开按钮 |
-| Divider | `Divider(height: 1, thickness: 1)` | 各区域间水平分割线 |
-| Link | `_buildLinkSection()` | 标签「链接」+ URL(2行) + 复制按钮 |
-| Status | `_buildStatusSection()` | ChoiceChip 选择 `ConsumptionStatus`，选中后写数据库并 invalidate 列表 |
-| Box | `_BoxSection` (私有 `ConsumerWidget`) | 用 `FutureBuilder` 加载当前 item 的 Box IDs，FilterChip 多选 +「+ 选择 Box」ActionChip |
-| Tags | `_buildPlaceholderSection` | 占位：「标签功能稍后接入」 |
-| Notes | `_buildPlaceholderSection` | 占位：「备注功能稍后接入」 |
-| Content Tabs | `TabBar` + `_tabIndex` + switch | 4 tabs：摘要 / 内容预览 / 笔记 / 相关。`TabBarView` 已移除（不能置于 `SingleChildScrollView` 的无界高度中，会导致 `RenderBox was not laid out`）。改用 `_tabIndex` 状态 + `_buildCurrentTabContent()` 按 `switch(_tabIndex)` 渲染，外层统一滚动。 |
-| Technical Info | `CollectionTechnicalInfoSection(item: item)` | 折叠的 `ExpansionTile`，不展开不显示内容 |
+| Content Identity | `_buildContentIdentity()` | 窄宽优先的信息头：媒体类型图标、标题（最多 2 行）、平台/类型/相对时间、星标占位、打开图标按钮 |
+| Primary Action | `_buildTopActionRow()` | 高强调 `FilledButton.icon`「打开原网页」；点击后调用 `markOpened`、invalidate `savedItemsListProvider`，再用外部浏览器打开 |
+| Link | `_buildLinkSection()` | 左侧固定标签「来源」，右侧 URL（最多 2 行）+ 复制按钮 |
+| Status | `_buildStatusSection()` | `AppPillChip` 选择 `ConsumptionStatus`，选中后写数据库并 invalidate 列表 |
+| Box | `_BoxSection` (私有 `ConsumerWidget`) | 左侧固定标签「收藏夹」；用 `FutureBuilder` 加载当前 item 的 Box IDs，`AppPillChip` 多选 +「+ 选择收藏夹」+「+ 新建」 |
+| Tags | `_TagsSection` (私有 `ConsumerWidget`) | 左侧固定标签「标签」；展示当前 Box 名称、媒体类型、来源平台，以及「+ 添加标签」占位 |
+| Linkage Placeholder | `_buildNotesBridgeSection()` | 左侧固定标签「备注」；仅显示「暂未关联笔记、想法或 Todo。」预留文案，不写数据库、不新增备注字段 |
+| Timeline | `_buildTimelineSection()` | 两个等宽信息卡：`createdAt` 收藏时间、`lastOpenedAt` 最后访问；空值显示「尚未访问」 |
+| Quick Actions | `_buildQuickActionsSection()` | 5 个稳定等宽入口：复制链接、分享占位、移动（Box 菜单）、归档、删除占位 |
 
-**Content Tabs 内容规则**：
-
-| Tab | 内容 | 说明 |
-|-----|------|------|
-| 摘要 | `item.description`（纯文本） | Summary 仅在此 tab 展示，不放在 tab 上方 |
-| 内容预览 | `_buildPreviewTab()`：标题 / 站点 / 作者 / 封面 / 原始 URL / 标准化 URL | 已有元数据信息展示 |
-| 笔记 | 占位：「笔记功能稍后接入」 | 预留 |
-| 相关 | 占位：「相关想法/待办/笔记稍后接入」 | 预留 |
-
-**Key rule**：Summary 只在「摘要」tab 内显示，不放在 tabs 上方。防止 Summary 和 tab 内容同时展示造成重复。
+**Key rule**：备注/笔记/想法/Todo 属于后续跨插件联动，本面板只保留预留入口；不要为了详情页视觉改造新增 `saved_items` 备注字段或数据库迁移。
 
 ### Filter 组件模式
 
