@@ -107,6 +107,8 @@ class _MobileTopBar extends ConsumerWidget {
           Expanded(
             child: Text(
               isArchived ? '归档想法' : '想法',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
               style: theme.textTheme.titleLarge?.copyWith(
                 fontWeight: AppFontTokens.extraBold,
               ),

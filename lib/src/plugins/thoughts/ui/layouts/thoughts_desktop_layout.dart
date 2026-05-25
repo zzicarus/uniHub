@@ -128,10 +128,14 @@ class _ThoughtsHeader extends StatelessWidget {
             children: [
               Row(
                 children: [
-                  Text(
-                    isArchived ? '归档想法' : '想法',
-                    style: theme.textTheme.headlineSmall?.copyWith(
-                      fontWeight: AppFontTokens.extraBold,
+                  Flexible(
+                    child: Text(
+                      isArchived ? '归档想法' : '想法',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: theme.textTheme.headlineSmall?.copyWith(
+                        fontWeight: AppFontTokens.extraBold,
+                      ),
                     ),
                   ),
                   const SizedBox(width: AppSpacing.sm),
@@ -141,6 +145,8 @@ class _ThoughtsHeader extends StatelessWidget {
               const SizedBox(height: AppSpacing.xxs),
               Text(
                 isArchived ? '查看已经归档的记录，必要时可恢复。' : '捕捉灵感，整理想法，让每个念头都有价值。',
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
                 style: theme.textTheme.bodyMedium?.copyWith(
                   color: colorScheme.onSurfaceVariant,
                 ),
