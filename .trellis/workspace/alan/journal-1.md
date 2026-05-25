@@ -686,3 +686,62 @@ font: AppFlowy 编辑器使用 Inter 字体 + 主题色; image V2: ThoughtImageB
 - `flutter analyze` — 0 issues
 - 所有业务行为（状态切换、收藏夹、复制链接、打开原网页）正常
 - 数据库 / Repository / 三栏布局 均无改动
+
+---
+
+## 2026-05-25 — Bug fix: showDialog/showMenu 后 wrong build scope 异常
+
+### 问题
+
+新建收藏夹对话框关闭后触发 `ref.invalidate()` → 父节点重建 → 但对话框内 `InputDecorator` 的动画 ticker 在下一帧仍试图构建 → `Tried to build dirty widget in the wrong build scope` 断言失败。
+
+### 分析
+
+根因是 `Navigator.pop` 将对话框元素移出 widget 树后，`InputDecorator` 仍有未完成的 ticker，下一帧 `BuildOwner.buildScope` 尝试 flush dirty 元素时发现其不在作用域内。
+
+### 修复
+
+所有 showDialog/showMenu 后的 `ref.invalidate()` 用 `addPostFrameCallback` 延迟到下一帧执行，确保弹层元素完全释放。
+
+### 波及文件（4 个）
+
+| 文件 | 方法 |
+|------|------|
+| `saved_item_detail_panel.dart` | `_BoxSection._createBox()`、`_BoxSection._addBox()` |
+| `saved_item_card.dart` | `_SavedItemCardState._showBoxMenu()` |
+| `collection_box_bar.dart` | `_CollectionBoxBarState._showCreateBoxDialog()` |
+| `collection_folder_sidebar.dart` | `_CollectionFolderSidebarState._showCreateFolderDialog()` |
+
+
+## Session 19: 归档 Scale 任务 + 修复 showDialog wrong build scope 异常
+
+**Date**: 2026-05-25
+**Task**: 归档 Scale 任务 + 修复 showDialog wrong build scope 异常
+**Branch**: `main`
+
+### Summary
+
+归档 05-25-scale 任务（右侧详情栏 Scale 适配已在上次 session 实现）；修复 4 处 showDialog/showMenu 后 ref.invalidate 导致的 'Tried to build dirty widget in the wrong build scope' 断言失败——将 invalidation 延迟到下一帧（addPostFrameCallback）
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `dd49c6d` | (see git log) |
+| `5204094` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete

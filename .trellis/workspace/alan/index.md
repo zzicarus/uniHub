@@ -8,7 +8,7 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-1.md`
-- **Total Sessions**: 18
+- **Total Sessions**: 19
 - **Last Active**: 2026-05-25
 <!-- @@@/auto:current-status -->
 
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-1.md` | ~666 | Active |
+| `journal-1.md` | ~747 | Active |
 <!-- @@@/auto:active-documents -->
 
 ---
@@ -29,6 +29,7 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 19 | 2026-05-25 | 归档 Scale 任务 + 修复 showDialog wrong build scope 异常 | `dd49c6d`, `5204094` | `main` |
 | 18 | 2026-05-25 | 内容收藏右侧详情边栏视觉增强 | `cef6f84` | `main` |
 | 17 | 2026-05-25 | 修复桌面 Shell 渲染断言失败 + spec 更新 | `d64ad51` | `feature/unified-font-tokens` |
 | 16 | 2026-05-24 | Collections 工作台 UI 重构 | `f522386` | `main` |
