@@ -1429,8 +1429,8 @@ onSelected: (selected) {
 | Primary Action | `_buildTopActionRow()` | 高强调 `FilledButton.icon`「打开原网页」；点击后调用 `markOpened`、invalidate `savedItemsListProvider`，再用外部浏览器打开 |
 | Link | `_buildLinkSection()` | 左侧固定标签「来源」，右侧 URL（最多 2 行）+ 复制按钮 |
 | Status | `_buildStatusSection()` | `AppPillChip` 选择 `ConsumptionStatus`，选中后写数据库并 invalidate 列表 |
-| Box | `_BoxSection` (私有 `ConsumerWidget`) | 左侧固定标签「收藏夹」；用 `FutureBuilder` 加载当前 item 的 Box IDs，`AppPillChip` 多选 +「+ 选择收藏夹」+「+ 新建」 |
-| Tags | `_TagsSection` (私有 `ConsumerWidget`) | 左侧固定标签「标签」；展示当前 Box 名称、媒体类型、来源平台，以及「+ 添加标签」占位 |
+| Box | `_BoxSection` (私有 `ConsumerWidget`) | 左侧固定标签「收藏夹」；用 `FutureBuilder` 加载当前 item 的 Box IDs，只显示已归属的 `AppPillChip`（`selected: true`，点击可移除），`LayoutBuilder` + 数量截断实现最多两行；空态显示「待整理」chip；末尾固定 `[+ 新建]`（移除 `+ 选择收藏夹`） |
+| Tags | `_TagsSection` (私有 `ConsumerWidget`) | 左侧固定标签「标签」；从当前 Box 名称 + 媒体类型 + 来源平台构造标签列表，严格去重（跳过空字符串和「未知」），`LayoutBuilder` + 数量截断实现最多两行；末尾固定 `[+ 添加标签]` 占位 |
 | Linkage Placeholder | `_buildNotesBridgeSection()` | 左侧固定标签「备注」；仅显示「暂未关联笔记、想法或 Todo。」预留文案，不写数据库、不新增备注字段 |
 | Timeline | `_buildTimelineSection()` | 两个等宽信息卡：`createdAt` 收藏时间、`lastOpenedAt` 最后访问；空值显示「尚未访问」 |
 | Quick Actions | `_buildQuickActionsSection()` | 5 个稳定等宽入口：复制链接、分享占位、移动（Box 菜单）、归档、删除占位 |

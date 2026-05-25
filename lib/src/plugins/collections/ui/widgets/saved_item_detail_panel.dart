@@ -982,39 +982,56 @@ class _TagsSection extends ConsumerWidget {
                 final boxIds = snapshot.data?.toSet() ?? const <int>{};
                 return boxesAsync.when(
                   data: (boxes) {
-                    final labels =
-                        <String>[
-                              for (final box in boxes)
-                                if (boxIds.contains(box.id)) box.name,
-                              mediaType.label,
-                              platform.label,
-                            ]
-                            .where((label) => label.trim().isNotEmpty)
-                            .take(4)
-                            .toList();
+                    final rawLabels = <String>[
+                      for (final box in boxes)
+                        if (boxIds.contains(box.id)) box.name,
+                      mediaType.label,
+                      platform.label,
+                    ];
 
-                    return Wrap(
-                      spacing: AppSpacing.xs,
-                      runSpacing: AppSpacing.xs,
-                      children: [
-                        for (final label in labels)
-                          AppPillChip(
-                            label: label,
-                            selected: false,
-                            compact: true,
-                          ),
-                        AppPillChip(
-                          label: '+ 添加标签',
-                          selected: false,
-                          compact: true,
-                          icon: Icons.add_rounded,
-                          onTap: () {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('标签功能稍后接入')),
-                            );
-                          },
-                        ),
-                      ],
+                    final labels = <String>[];
+                    for (final label in rawLabels) {
+                      final normalized = label.trim();
+                      if (normalized.isEmpty) continue;
+                      if (normalized == '未知') continue;
+                      if (labels.contains(normalized)) continue;
+                      labels.add(normalized);
+                    }
+
+                    return LayoutBuilder(
+                      builder: (context, constraints) {
+                        final maxVisibleLabels = constraints.maxWidth < 260
+                            ? 3
+                            : 4;
+                        final visibleLabels =
+                            labels.take(maxVisibleLabels).toList();
+
+                        return Wrap(
+                          spacing: AppSpacing.xs,
+                          runSpacing: AppSpacing.xs,
+                          children: [
+                            for (final label in visibleLabels)
+                              AppPillChip(
+                                label: label,
+                                selected: false,
+                                compact: true,
+                              ),
+                            AppPillChip(
+                              label: '+ 添加标签',
+                              selected: false,
+                              compact: true,
+                              icon: Icons.add_rounded,
+                              onTap: () {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text('标签功能稍后接入'),
+                                  ),
+                                );
+                              },
+                            ),
+                          ],
+                        );
+                      },
                     );
                   },
                   loading: () => const LinearProgressIndicator(minHeight: 2),
@@ -1114,51 +1131,62 @@ class _BoxSection extends ConsumerWidget {
                       );
                     }
 
-                    return Wrap(
-                      spacing: AppSpacing.xs,
-                      runSpacing: AppSpacing.xs,
-                      children: [
-                        for (final box in boxes)
-                          AppPillChip(
-                            label: box.name,
-                            selected: currentSet.contains(box.id),
-                            compact: true,
-                            onTap: () {
-                              final repository = ref.read(
-                                collectionsRepositoryProvider,
-                              );
-                              if (currentSet.contains(box.id)) {
-                                final next = {...currentSet}..remove(box.id);
-                                repository.setItemBoxes(item.id, next);
-                                if (next.isEmpty) {
-                                  repository.updateInboxState(item.id, true);
-                                }
-                              } else {
-                                final next = {...currentSet, box.id};
-                                repository.setItemBoxes(item.id, next);
-                                if (currentSet.isEmpty) {
-                                  repository.updateInboxState(item.id, false);
-                                }
-                              }
-                              ref.invalidate(savedItemsListProvider);
-                              ref.invalidate(collectionFolderCountsProvider);
-                            },
-                          ),
-                        AppPillChip(
-                          label: '+ 选择收藏夹',
-                          selected: false,
-                          compact: true,
-                          icon: Icons.playlist_add_rounded,
-                          onTap: () => _addBox(context, ref, boxes),
-                        ),
-                        AppPillChip(
-                          label: '+ 新建',
-                          selected: false,
-                          compact: true,
-                          icon: Icons.add_rounded,
-                          onTap: () => _createBox(context, ref),
-                        ),
-                      ],
+                    return LayoutBuilder(
+                      builder: (context, constraints) {
+                        final selectedBoxes = boxes.where(
+                          (box) => currentSet.contains(box.id),
+                        ).toList();
+                        final maxVisibleItems = constraints.maxWidth < 260
+                            ? 3
+                            : 4;
+                        final visibleBoxes =
+                            selectedBoxes.take(maxVisibleItems).toList();
+
+                        return Wrap(
+                          spacing: AppSpacing.xs,
+                          runSpacing: AppSpacing.xs,
+                          children: [
+                            if (visibleBoxes.isEmpty)
+                              AppPillChip(
+                                label: '待整理',
+                                selected: true,
+                                compact: true,
+                              )
+                            else
+                              for (final box in visibleBoxes)
+                                AppPillChip(
+                                  label: box.name,
+                                  selected: true,
+                                  compact: true,
+                                  onTap: () {
+                                    final repository = ref.read(
+                                      collectionsRepositoryProvider,
+                                    );
+                                    final next =
+                                        {...currentSet}..remove(box.id);
+                                    repository.setItemBoxes(item.id, next);
+                                    if (next.isEmpty) {
+                                      repository.updateInboxState(
+                                        item.id,
+                                        true,
+                                      );
+                                    }
+                                    ref.invalidate(savedItemsListProvider);
+                                    ref.invalidate(
+                                      collectionFolderCountsProvider,
+                                    );
+                                  },
+                                ),
+                            AppPillChip(
+                              label: '+ 新建',
+                              selected: false,
+                              compact: true,
+                              icon: Icons.add_rounded,
+                              onTap: () => _createBox(context, ref),
+                            ),
+                          ],
+                        );
+                      },
                     );
                   },
                   loading: () => const LinearProgressIndicator(minHeight: 2),
@@ -1211,50 +1239,4 @@ class _BoxSection extends ConsumerWidget {
     });
   }
 
-  Future<void> _addBox(
-    BuildContext context,
-    WidgetRef ref,
-    List<CollectionBoxesTableData> boxes,
-  ) async {
-    final repository = ref.read(collectionsRepositoryProvider);
-    final currentBoxIds = await repository.getBoxIdsForItem(item.id);
-    final currentSet = currentBoxIds.toSet();
-
-    if (!context.mounted) return;
-
-    final selected = await showMenu<int>(
-      context: context,
-      position: RelativeRect.fromLTRB(1000, 80, 1000, 80),
-      items: boxes
-          .where((b) => !currentSet.contains(b.id))
-          .map(
-            (b) => PopupMenuItem<int>(
-              value: b.id,
-              child: Row(
-                children: [
-                  const Icon(Icons.folder_outlined, size: 18),
-                  const SizedBox(width: 8),
-                  Text(b.name),
-                ],
-              ),
-            ),
-          )
-          .toList(),
-    );
-
-    if (selected == null || !context.mounted) return;
-
-    await repository.setItemBoxes(item.id, {...currentSet, selected});
-    if (currentSet.isEmpty) {
-      await repository.updateInboxState(item.id, false);
-    }
-    if (context.mounted) {
-      // Defer invalidation to next frame so showMenu's popup elements
-      // are fully deactivated before the parent rebuilds.
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        ref.invalidate(savedItemsListProvider);
-        ref.invalidate(collectionFolderCountsProvider);
-      });
-    }
-  }
 }
