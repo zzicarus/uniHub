@@ -35,6 +35,7 @@ class _CollectionCaptureBarState extends ConsumerState<CollectionCaptureBar> {
       if (!mounted) return;
       _controller.clear();
       ref.invalidate(savedItemsListProvider);
+      ref.invalidate(collectionFolderCountsProvider);
       if (result.wasCreated) {
         unawaited(_triggerEnrichmentQueue());
       }

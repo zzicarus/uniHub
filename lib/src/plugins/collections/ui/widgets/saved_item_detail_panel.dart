@@ -451,6 +451,7 @@ class _SavedItemDetailPanelState extends ConsumerState<SavedItemDetailPanel> {
                     final repository = ref.read(collectionsRepositoryProvider);
                     await repository.updateStatus(item.id, status);
                     ref.invalidate(savedItemsListProvider);
+                    ref.invalidate(collectionFolderCountsProvider);
                   },
                   compact: true,
                 );
@@ -682,6 +683,7 @@ class _SavedItemDetailPanelState extends ConsumerState<SavedItemDetailPanel> {
     final repository = ref.read(collectionsRepositoryProvider);
     await repository.markOpened(item.id);
     ref.invalidate(savedItemsListProvider);
+    ref.invalidate(collectionFolderCountsProvider);
     if (!mounted) return;
     await _openUrl(item.originalUrl);
   }
@@ -696,6 +698,7 @@ class _SavedItemDetailPanelState extends ConsumerState<SavedItemDetailPanel> {
     final repository = ref.read(collectionsRepositoryProvider);
     await repository.updateStatus(itemId, ConsumptionStatus.archived);
     ref.invalidate(savedItemsListProvider);
+    ref.invalidate(collectionFolderCountsProvider);
     if (!mounted) return;
     _showSnackBar('已归档');
   }
@@ -762,6 +765,7 @@ class _SavedItemDetailPanelState extends ConsumerState<SavedItemDetailPanel> {
     if (!mounted) return;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.invalidate(savedItemsListProvider);
+      ref.invalidate(collectionFolderCountsProvider);
     });
   }
 
@@ -1117,6 +1121,7 @@ class _BoxSection extends ConsumerWidget {
                                 }
                               }
                               ref.invalidate(savedItemsListProvider);
+                              ref.invalidate(collectionFolderCountsProvider);
                             },
                           ),
                         AppPillChip(
@@ -1228,6 +1233,7 @@ class _BoxSection extends ConsumerWidget {
       // are fully deactivated before the parent rebuilds.
       WidgetsBinding.instance.addPostFrameCallback((_) {
         ref.invalidate(savedItemsListProvider);
+        ref.invalidate(collectionFolderCountsProvider);
       });
     }
   }

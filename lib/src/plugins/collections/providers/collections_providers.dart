@@ -8,6 +8,7 @@ import '../data/collection_boxes_dao.dart';
 import '../data/collections_repository.dart';
 import '../data/enrichment_jobs_dao.dart';
 import '../data/saved_items_dao.dart';
+import '../domain/collection_folder_counts.dart';
 import '../domain/collection_models.dart';
 import '../domain/consumption_status.dart';
 import '../domain/media_type.dart';
@@ -116,3 +117,13 @@ final savedItemsListProvider = FutureProvider<List<SavedItemsTableData>>((ref) {
 });
 
 final selectedSavedItemIdProvider = StateProvider<int?>((ref) => null);
+
+/// Global navigation counts for the sidebar.
+///
+/// NOT affected by search query, platform/media-type/status filters,
+/// or selected box IDs — these are data-layer counts.
+final collectionFolderCountsProvider =
+    FutureProvider<CollectionFolderCounts>((ref) {
+  final repository = ref.watch(collectionsRepositoryProvider);
+  return repository.getFolderCounts();
+});

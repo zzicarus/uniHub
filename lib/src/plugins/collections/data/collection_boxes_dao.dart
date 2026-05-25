@@ -64,4 +64,25 @@ class CollectionBoxesDao {
       }
     });
   }
+
+  // ---------------------------------------------------------
+  // Counts
+  // ---------------------------------------------------------
+
+  /// Number of items per collection box.
+  Future<Map<int, int>> countItemsByBox() async {
+    final boxId = _db.savedItemBoxesTable.boxId;
+    final countExp = boxId.count();
+
+    final query = _db.selectOnly(_db.savedItemBoxesTable)
+      ..addColumns([boxId, countExp])
+      ..groupBy([boxId]);
+
+    final rows = await query.get();
+
+    return {
+      for (final row in rows)
+        row.read(boxId)!: row.read(countExp)!,
+    };
+  }
 }

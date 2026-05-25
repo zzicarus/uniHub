@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uni_hub/src/core/theme/app_tokens.dart';
 import 'package:uni_hub/src/core/database/app_database.dart';
+import 'package:uni_hub/src/plugins/collections/domain/collection_folder_counts.dart';
 import 'package:uni_hub/src/plugins/collections/domain/collection_models.dart';
 import 'package:uni_hub/src/plugins/collections/providers/collections_providers.dart';
 import 'package:uni_hub/src/plugins/collections/ui/widgets/create_collection_folder_dialog.dart';
@@ -18,6 +19,8 @@ class CollectionFolderSidebar extends ConsumerWidget {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final boxesAsync = ref.watch(collectionBoxesProvider);
+    final countsAsync = ref.watch(collectionFolderCountsProvider);
+    final counts = countsAsync.asData?.value;
     final selectedBoxIds = ref.watch(selectedCollectionBoxIdsProvider);
     final selectedView = ref.watch(collectionViewProvider);
 
@@ -64,6 +67,7 @@ class CollectionFolderSidebar extends ConsumerWidget {
             _FolderRow(
               icon: Icons.bookmark_border_rounded,
               label: '全部收藏',
+              count: counts?.all,
               selected:
                   selectedBoxIds.isEmpty && selectedView == CollectionView.all,
               onTap: () {
@@ -76,6 +80,7 @@ class CollectionFolderSidebar extends ConsumerWidget {
             _FolderRow(
               icon: Icons.inbox_outlined,
               label: '待整理',
+              count: counts?.inbox,
               selected:
                   selectedBoxIds.isEmpty &&
                   selectedView == CollectionView.inbox,
@@ -89,6 +94,7 @@ class CollectionFolderSidebar extends ConsumerWidget {
             _FolderRow(
               icon: Icons.schedule_rounded,
               label: '稍后阅读',
+              count: counts?.unread,
               selected:
                   selectedBoxIds.isEmpty &&
                   selectedView == CollectionView.unread,
@@ -110,6 +116,7 @@ class CollectionFolderSidebar extends ConsumerWidget {
               boxesAsync,
               selectedBoxIds,
               colorScheme,
+              counts,
             ),
           ],
         ),
@@ -123,6 +130,7 @@ class CollectionFolderSidebar extends ConsumerWidget {
     AsyncValue<List<CollectionBoxesTableData>> boxesAsync,
     Set<int> selectedBoxIds,
     ColorScheme colorScheme,
+    CollectionFolderCounts? counts,
   ) {
     return boxesAsync.when(
       data: (boxes) {
@@ -138,6 +146,7 @@ class CollectionFolderSidebar extends ConsumerWidget {
             _FolderRow(
               icon: Icons.folder_outlined,
               label: box.name,
+              count: counts?.boxCount(box.id),
               selected:
                   selectedBoxIds.length == 1 && selectedBoxIds.contains(box.id),
               onTap: () {
@@ -183,6 +192,7 @@ class CollectionFolderSidebar extends ConsumerWidget {
     try {
       await ref.read(collectionsRepositoryProvider).createBox(name);
       ref.invalidate(collectionBoxesProvider);
+      ref.invalidate(collectionFolderCountsProvider);
       if (!context.mounted) return;
       ScaffoldMessenger.of(
         context,
@@ -208,10 +218,12 @@ class _FolderRow extends StatelessWidget {
     required this.label,
     required this.selected,
     required this.onTap,
+    this.count,
   });
 
   final IconData icon;
   final String label;
+  final int? count;
   final bool selected;
   final VoidCallback onTap;
 
@@ -257,6 +269,18 @@ class _FolderRow extends StatelessWidget {
                   ),
                 ),
               ),
+              if (count != null) ...[
+                const SizedBox(width: AppSpacing.xs),
+                Text(
+                  '$count',
+                  maxLines: 1,
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    color: selected
+                        ? colorScheme.primary
+                        : colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ],
             ],
           ),
         ),

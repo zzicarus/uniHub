@@ -1,6 +1,7 @@
 import 'package:drift/drift.dart';
 import 'package:uni_hub/src/core/database/app_database.dart';
 
+import '../domain/collection_folder_counts.dart';
 import '../domain/collection_models.dart';
 import '../domain/consumption_status.dart';
 import '../domain/enrichment_status.dart';
@@ -142,6 +143,23 @@ class CollectionsRepository {
 
   Future<List<CollectionBoxesTableData>> getBoxes() {
     return _collectionBoxesDao.getAll();
+  }
+
+  /// Global navigation counts (unaffected by UI filters).
+  Future<CollectionFolderCounts> getFolderCounts() async {
+    final results = await Future.wait([
+      _savedItemsDao.countAllItems(),
+      _savedItemsDao.countInboxItems(),
+      _savedItemsDao.countUnreadItems(),
+      _collectionBoxesDao.countItemsByBox(),
+    ]);
+
+    return CollectionFolderCounts(
+      all: results[0] as int,
+      inbox: results[1] as int,
+      unread: results[2] as int,
+      byBoxId: results[3] as Map<int, int>,
+    );
   }
 
   Future<CollectionBoxesTableData> createBox(String name) async {

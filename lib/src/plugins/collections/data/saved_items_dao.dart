@@ -15,6 +15,37 @@ class SavedItemsDao {
     return query.get();
   }
 
+  // ---------------------------------------------------------
+  // Global counts (unaffected by UI filters)
+  // ---------------------------------------------------------
+
+  /// Total saved items count (all statuses, including archived).
+  Future<int> countAllItems() async {
+    final query = _db.selectOnly(_db.savedItemsTable)
+      ..addColumns([_db.savedItemsTable.id.count()]);
+    final row = await query.getSingle();
+    return row.read(_db.savedItemsTable.id.count()) ?? 0;
+  }
+
+  /// Inbox count: isInInbox == true, status != 'archived'.
+  Future<int> countInboxItems() async {
+    final query = _db.selectOnly(_db.savedItemsTable)
+      ..addColumns([_db.savedItemsTable.id.count()])
+      ..where(_db.savedItemsTable.isInInbox.equals(true))
+      ..where(_db.savedItemsTable.status.equals('archived').not());
+    final row = await query.getSingle();
+    return row.read(_db.savedItemsTable.id.count()) ?? 0;
+  }
+
+  /// Unread count: status == 'unread'.
+  Future<int> countUnreadItems() async {
+    final query = _db.selectOnly(_db.savedItemsTable)
+      ..addColumns([_db.savedItemsTable.id.count()])
+      ..where(_db.savedItemsTable.status.equals('unread'));
+    final row = await query.getSingle();
+    return row.read(_db.savedItemsTable.id.count()) ?? 0;
+  }
+
   Future<SavedItemsTableData?> getById(int id) {
     return (_db.select(
       _db.savedItemsTable,
