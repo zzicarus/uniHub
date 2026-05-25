@@ -241,9 +241,14 @@ _triggerEnrichmentQueue()
        ├─ CollectionsRepository.updateMetadata()
        │    → 写回 saved_items
        ├─ WebsiteLogoCacheService.ensureLogoCached()
+       │    ├─ 同 siteKey 去重：in-flight 映射表，并发场景仅一次网络请求
+       │    ├─ 合法缓存判断：success + 未过期 + 本地文件存在 → 直接复用
        │    ├─ 下载 favicon（远程 URL 或 fallback /favicon.ico）
+       │    ├─ 协议限制：仅 http/https，data:/file: 等被拒绝
+       │    ├─ MIME charset 处理：先 split(';') 再识别类型
        │    ├─ 保存到本地文件 {appCacheDir}/website_logos/{base64(siteKey)}.{ext}
        │    └─ 写入 website_logo_cache 表
+       ├─ onLogoCached 回调触发 → websiteLogoRefreshProvider 递增
        └─ EnrichmentJobsDao.markSuccess()
   ↓
 UI 自动刷新
@@ -259,6 +264,10 @@ UI 自动刷新
 | 站点级复用 | 同一 siteKey（host 去 www.、小写）只缓存一份 logo 文件 |
 | 不阻塞收藏 | logo 在 enrichment 后台异步补全，收藏流程不受影响 |
 | 后台下载限制 | 最大 512KB、超时 8s、仅 http/https |
+| 并发去重 | 同 siteKey 并发调用命中同一 pending future |
+| 文件存在验证 | success 缓存的 `localLogoPath` 文件不存在时视为无效，触发重抓 |
+| MIME 兼容 | MIME 类型先 `split(';').first` 剥离 charset 等参数再匹配 |
+| favicon 优先级 | 解析全部 `<link>` 标签后按优先级选：apple-touch-icon > .png > .webp > .ico > .svg |
 | TTL 管理 | 成功 30 天、失败 24 小时重试间隔 |
 
 ---

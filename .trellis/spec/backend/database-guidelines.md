@@ -242,10 +242,11 @@ class WebsiteLogoCacheTable extends Table {
 
 | 状态 | 行为 |
 |------|------|
-| success 且未过期（默认 30 天） | 直接复用 |
-| success 但过期 | 先返回旧 logo，后台刷新 |
+| success 且未过期 + 文件存在 | 直接复用 |
+| success 但过期 | 后台重新抓取 |
+| success 但本地文件缺失 | 视为无效，后台重新抓取 |
 | pending | UI 显示 fallback |
-| failed 且未过重试时间（默认 24 小时） | UI 显示 fallback |
+| failed 且未过重试时间（默认 24 小时） | UI 显示 fallback，不重抓 |
 | failed 且可重试 | 后台重新抓取 |
 
 ### 注册与迁移
@@ -253,6 +254,15 @@ class WebsiteLogoCacheTable extends Table {
 - `collections_plugin.dart`：`tables` 加入 `WebsiteLogoCacheTable`，`schemaVersion` 升至 4
 - `app_database.dart`：`@DriftDatabase(tables: [...]` 加入 `WebsiteLogoCacheTable`，`onUpgrade` 新增 `from < 4 → createTable`
 - logo 文件存于 `{appCacheDir}/website_logos/{base64(siteKey)}.{ext}`
+
+### 服务层行为
+
+| 规则 | 说明 |
+|------|------|
+| 并发去重 | `WebsiteLogoCacheService.ensureLogoCached` 使用 `_inFlight` 映射表，同 `siteKey` 的并发调用只触发一次网络请求 |
+| 文件存在校验 | `_isEntryValid` 对 success 缓存额外检查 `File(localLogoPath).existsSync()`，文件被删除时自动重新下载 |
+| MIME charset 剥离 | `_extensionForMimeType` 先 `split(';').first.trim()` 再匹配类型，兼容 `"image/png; charset=utf-8"` |
+| URL 协议限制 | `_fetchAndCache` 只接受 `http/https` 协议，`data:`/`file:` 等其他协议被拒绝 |
 
 ### 5. Good/Base/Bad Cases
 

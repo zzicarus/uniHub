@@ -35,23 +35,31 @@ class WebsiteLogoCacheService {
   WebsiteLogoCacheService({
     required WebsiteLogoCacheDao dao,
     HttpClient? client,
+    Directory? logosDirectory,
   }) : _dao = dao,
-       _client = client ?? HttpClient();
+       _client = client ?? HttpClient(),
+       _logosDirectory = logosDirectory;
 
   final WebsiteLogoCacheDao _dao;
   final HttpClient _client;
+  final Directory? _logosDirectory;
 
-  /// Directory for cached website logos.
-  static Directory? _cacheDir;
+  /// Tracks in-flight downloads per siteKey to prevent concurrent duplicates.
+  final Map<String, Future<WebsiteLogoCacheEntry?>> _inFlight = {};
 
-  static Future<Directory> get _logosDir async {
-    if (_cacheDir != null) return _cacheDir!;
-    final appDir = await getApplicationCacheDirectory();
-    _cacheDir = Directory('${appDir.path}/website_logos');
-    if (!_cacheDir!.existsSync()) {
-      await _cacheDir!.create(recursive: true);
+  /// Default cache dir, lazily initialised and cached across instances.
+  static Directory? _defaultCacheDir;
+
+  Future<Directory> _getLogosDir() async {
+    if (_logosDirectory != null) return _logosDirectory;
+    final dir = _defaultCacheDir ?? Directory(
+      '${(await getApplicationCacheDirectory()).path}/website_logos',
+    );
+    if (!dir.existsSync()) {
+      await dir.create(recursive: true);
     }
-    return _cacheDir!;
+    _defaultCacheDir ??= dir;
+    return dir;
   }
 
   // ------------------------------------------------------------------
@@ -80,13 +88,44 @@ class WebsiteLogoCacheService {
   ///
   /// [remoteFaviconUrl] is the favicon URL parsed from the page metadata
   /// (optional — when null the service falls back to /favicon.ico).
+  /// Ensure a logo is cached for [pageUrl].
+  ///
+  /// If a valid (success, not expired) cache entry exists, returns it
+  /// immediately.  Otherwise triggers a background download.
+  ///
+  /// Guarantees that concurrent calls for the same [pageUrl] only trigger
+  /// one network request — subsequent calls share the in-flight future.
+  ///
+  /// [remoteFaviconUrl] is the favicon URL parsed from the page metadata
+  /// (optional — when null the service falls back to /favicon.ico).
   Future<WebsiteLogoCacheEntry?> ensureLogoCached({
     required String pageUrl,
     String? remoteFaviconUrl,
   }) async {
     final key = siteKey(pageUrl);
-    final host = Uri.tryParse(pageUrl)?.host ?? key;
-    final row = await _dao.getBySiteKey(key);
+
+    // In-flight dedup: return the existing future if one is already running.
+    final existing = _inFlight[key];
+    if (existing != null) return existing;
+
+    final future = _ensureLogoCachedInternal(
+      pageUrl: pageUrl,
+      remoteFaviconUrl: remoteFaviconUrl,
+      siteKey: key,
+    );
+
+    _inFlight[key] = future;
+    future.whenComplete(() => _inFlight.remove(key));
+    return future;
+  }
+
+  Future<WebsiteLogoCacheEntry?> _ensureLogoCachedInternal({
+    required String pageUrl,
+    String? remoteFaviconUrl,
+    required String siteKey,
+  }) async {
+    final host = Uri.tryParse(pageUrl)?.host ?? siteKey;
+    final row = await _dao.getBySiteKey(siteKey);
 
     if (row != null && _isEntryValid(row)) {
       return WebsiteLogoCacheEntry(
@@ -98,7 +137,11 @@ class WebsiteLogoCacheService {
 
     // Need to fetch
     try {
-      return await _fetchAndCache(siteKey: key, host: host, remoteFaviconUrl: remoteFaviconUrl);
+      return await _fetchAndCache(
+        siteKey: siteKey,
+        host: host,
+        remoteFaviconUrl: remoteFaviconUrl,
+      );
     } catch (e) {
       // If we had a previous failed row, update it; otherwise create one
       if (row != null) {
@@ -107,9 +150,11 @@ class WebsiteLogoCacheService {
         final now = DateTime.now();
         await _dao.upsert(
           WebsiteLogoCacheTableCompanion(
-            siteKey: Value(key),
+            siteKey: Value(siteKey),
             host: Value(host),
-            remoteLogoUrl: remoteFaviconUrl != null ? Value(remoteFaviconUrl) : const Value.absent(),
+            remoteLogoUrl: remoteFaviconUrl != null
+                ? Value(remoteFaviconUrl)
+                : const Value.absent(),
             status: const Value('failed'),
             lastError: Value(e.toString()),
             expiresAt: Value(now.add(const Duration(hours: 24))),
@@ -118,7 +163,7 @@ class WebsiteLogoCacheService {
           ),
         );
       }
-      debugPrint('WebsiteLogoCache: failed to cache logo for $key: $e');
+      debugPrint('WebsiteLogoCache: failed to cache logo for $siteKey: $e');
       return null;
     }
   }
@@ -168,6 +213,13 @@ class WebsiteLogoCacheService {
   /// Whether an existing cache entry is still valid.
   bool _isEntryValid(WebsiteLogoCacheTableData row) {
     if (row.status == 'success' && row.expiresAt != null) {
+      // Verify the local file actually exists.
+      if (row.localLogoPath == null || row.localLogoPath!.isEmpty) {
+        return false;
+      }
+      if (!File(row.localLogoPath!).existsSync()) {
+        return false;
+      }
       return DateTime.now().isBefore(row.expiresAt!);
     }
     if (row.status == 'failed' && row.expiresAt != null) {
@@ -185,6 +237,11 @@ class WebsiteLogoCacheService {
   }) async {
     final url = remoteFaviconUrl ?? 'https://$host/favicon.ico';
     final uri = Uri.parse(url);
+
+    // Explicitly restrict favicon URLs to http/https only
+    if (uri.scheme != 'http' && uri.scheme != 'https') {
+      throw ArgumentError('Unsupported favicon URL scheme: ${uri.scheme}');
+    }
 
     // Fetch
     final request = await _client.getUrl(uri).timeout(const Duration(seconds: 8));
@@ -206,7 +263,7 @@ class WebsiteLogoCacheService {
     final ext = _extensionForMimeType(mimeType, url);
 
     // Save to local file
-    final dir = await _logosDir;
+    final dir = await _getLogosDir();
     final fileName = '${_safeFileName(siteKey)}$ext';
     final file = File('${dir.path}/$fileName');
     await file.writeAsBytes(bytes);
@@ -254,8 +311,16 @@ class WebsiteLogoCacheService {
   }
 
   /// Map MIME type or URL to a file extension.
+  ///
+  /// Handles MIME types with parameters (e.g. "image/png; charset=utf-8")
+  /// by stripping everything after the first semicolon.
   String _extensionForMimeType(String? mimeType, String url) {
-    switch (mimeType) {
+    if (mimeType == null) return _extFromUrl(url);
+
+    // Strip charset or any MIME parameters
+    final base = mimeType.split(';').first.trim().toLowerCase();
+
+    switch (base) {
       case 'image/x-icon':
       case 'image/vnd.microsoft.icon':
         return '.ico';
@@ -271,20 +336,27 @@ class WebsiteLogoCacheService {
       case 'image/gif':
         return '.gif';
       default:
-        // Try to guess from URL
-        final uri = Uri.tryParse(url);
-        if (uri != null) {
-          final path = uri.path;
-          final dot = path.lastIndexOf('.');
-          if (dot > 0 && dot < path.length - 1) {
-            final candidate = path.substring(dot);
-            if (RegExp(r'\.(ico|png|jpg|jpeg|svg|webp|gif)$', caseSensitive: false).hasMatch(candidate)) {
-              return candidate.toLowerCase();
-            }
-          }
-        }
-        return '.png';
+        return _extFromUrl(url);
     }
+  }
+
+  /// Guess extension from the URL path.
+  String _extFromUrl(String url) {
+    final uri = Uri.tryParse(url);
+    if (uri != null) {
+      final path = uri.path;
+      final dot = path.lastIndexOf('.');
+      if (dot > 0 && dot < path.length - 1) {
+        final candidate = path.substring(dot);
+        if (RegExp(
+          r'\.(ico|png|jpg|jpeg|svg|webp|gif)$',
+          caseSensitive: false,
+        ).hasMatch(candidate)) {
+          return candidate.toLowerCase();
+        }
+      }
+    }
+    return '.png';
   }
 
   /// Create a filesystem-safe name from a site key.

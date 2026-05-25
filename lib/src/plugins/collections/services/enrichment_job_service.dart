@@ -15,6 +15,7 @@ class EnrichmentJobService {
     required EnrichmentJobsDao jobsDao,
     required MetadataProvider metadataProvider,
     WebsiteLogoCacheService? logoCacheService,
+    this.onLogoCached,
   }) : _repository = repository,
        _jobsDao = jobsDao,
        _metadataProvider = metadataProvider,
@@ -24,6 +25,10 @@ class EnrichmentJobService {
   final EnrichmentJobsDao _jobsDao;
   final MetadataProvider _metadataProvider;
   final WebsiteLogoCacheService? _logoCacheService;
+
+  /// Called after every successful logo cache write.
+  /// Used to trigger UI refresh of cached logo lookups.
+  final VoidCallback? onLogoCached;
 
   /// 消费 pending job 队列，每轮最多处理 [limit] 个。
   ///
@@ -75,10 +80,12 @@ class EnrichmentJobService {
       // Trigger logo caching in the background (non-blocking)
       if (_logoCacheService != null) {
         unawaited(
-          _logoCacheService.ensureLogoCached(
-            pageUrl: item.normalizedUrl,
-            remoteFaviconUrl: metadata.favicon,
-          ),
+          _logoCacheService
+              .ensureLogoCached(
+                pageUrl: item.normalizedUrl,
+                remoteFaviconUrl: metadata.favicon,
+              )
+              .then((_) => onLogoCached?.call()),
         );
       }
 

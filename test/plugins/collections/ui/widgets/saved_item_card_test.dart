@@ -1,13 +1,25 @@
+import 'package:drift/native.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:uni_hub/src/core/database/app_database.dart';
+import 'package:uni_hub/src/core/database/database_provider.dart';
+import 'package:uni_hub/src/core/plugin/plugin_registry.dart';
+import 'package:uni_hub/src/plugins/collections/collections_plugin.dart';
 import 'package:uni_hub/src/plugins/collections/ui/widgets/saved_item_card.dart';
 
 void main() {
   Future<void> pumpCard(WidgetTester tester, Widget child) {
+    final registry = PluginRegistry()..register(CollectionsPlugin());
+    final db = AppDatabase(NativeDatabase.memory(), registry);
+    addTearDown(() => db.close());
+
     return tester.pumpWidget(
       ProviderScope(
+        overrides: [
+          appDatabaseProvider.overrideWithValue(db),
+          pluginRegistryProvider.overrideWithValue(registry),
+        ],
         child: MaterialApp(
           home: Scaffold(body: Center(child: child)),
         ),

@@ -65,6 +65,11 @@ final enrichmentJobServiceProvider = Provider<EnrichmentJobService>((ref) {
     jobsDao: ref.watch(enrichmentJobsDaoProvider),
     metadataProvider: ref.watch(metadataProviderProvider),
     logoCacheService: ref.watch(websiteLogoCacheServiceProvider),
+    onLogoCached: () {
+      // Increment the refresh counter after logo cache write completes,
+      // so UI re-reads the cached logo from the database.
+      ref.read(websiteLogoRefreshProvider.notifier).state++;
+    },
   );
 });
 
