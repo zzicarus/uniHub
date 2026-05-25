@@ -6,10 +6,8 @@ import 'package:uni_hub/src/plugins/collections/providers/collections_providers.
 
 import '../widgets/collection_bulk_action_bar.dart';
 import '../widgets/collection_capture_bar.dart';
-import '../widgets/collection_content_type_chips.dart';
 import '../widgets/collection_folder_sidebar.dart';
 import '../widgets/collection_list_toolbar.dart';
-import '../widgets/collection_status_tabs.dart';
 import '../widgets/saved_item_card.dart';
 import '../widgets/saved_item_detail_panel.dart';
 
@@ -131,10 +129,6 @@ class _CollectionsDesktopLayoutState
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const CollectionContentTypeChips(),
-                            const SizedBox(height: AppSpacing.xs),
-                            const CollectionStatusTabs(),
-                            const SizedBox(height: AppSpacing.xs),
                             const CollectionListToolbar(),
                             const SizedBox(height: AppSpacing.sm),
                             Expanded(
