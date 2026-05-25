@@ -40,3 +40,59 @@ collections/
 - 严格去重，跳过空字符串和 `「未知」`。
 - 使用 `LayoutBuilder` + 数量截断限制最多两行。
 - 末尾固定 `[+ 添加标签]` 占位（功能稍后接入）。
+
+## Website Logo 缓存服务
+
+### 架构概览
+
+```text
+EnrichmentJobService._processJob()
+  └─ ensureLogoCached()
+       ├─ in-flight 去重（同 siteKey 并发仅一次网络请求）
+       ├─ 缓存校验：_isEntryValid(success + 未过期 + 文件存在)
+       ├─ _fetchAndCache()
+       │    ├─ 协议限制：仅 http/https
+       │    ├─ MIME charset 剥离 → 正确后缀
+       │    └─ 写入 {appCacheDir}/website_logos/{base64(siteKey)}.{ext}
+       └─ onLogoCached 回调 → websiteLogoRefreshProvider 递增
+
+UI 层
+  └─ websiteLogoForUrlProvider → WebsiteLogo(localPath: ...)
+```
+
+### 服务层行为
+
+| 规则 | 说明 |
+|------|------|
+| 并发去重 | `_inFlight` 映射表，同 `siteKey` 并发只触发一次 `_fetchAndCache` |
+| success 缓存复用 | 未过期 + `localLogoPath` 文件存在 → 直接返回，不请求网络 |
+| success 文件缺失 | 视为无效，重新抓取 |
+| failed 缓存 | 24 小时过期时间内不重试，直接返回 failed entry |
+| MIME 兼容 | `_extensionForMimeType` 先 `split(';').first` 剥离 charset，再匹配类型 |
+| URL 协议 | 只允许 `http`/`https`，其他协议被 `_fetchAndCache` 拒绝 |
+
+### 测试策略
+
+`website_logo_cache_service_test.dart` 使用以下模式：
+
+- **内存数据库**：`AppDatabase(NativeDatabase.memory(), registry)`
+- **Mock HTTP**：手动实现 `HttpClient` 接口的子类，通过构造函数注入
+- **临时目录**：`Directory.systemTemp.createTempSync()` 指定 `logosDirectory`
+- **协议覆盖**：注入不同 `remoteFaviconUrl` 测试 data:/file: 协议拒绝
+- **MIME 覆盖**：注入 `image/png; charset=utf-8` 验证后缀识别
+
+### favicon 候选优先级
+
+`LocalMetadataProvider._favicon` 解析全部 `<link>` 标签，按分数排序：
+
+| 类型 | 分数 |
+|------|------|
+| apple-touch-icon | 100 |
+| .png URL | 80 |
+| .webp URL | 75 |
+| .jpg / .jpeg URL | 60 |
+| .gif URL | 50 |
+| .ico URL | 40 |
+| .svg URL | 30 |
+| 通用 icon link（无扩展名） | 70 |
+| 其他 | 10 |

@@ -38,6 +38,12 @@ ProviderScope(
 - 数据库直接使用真实 Drift 查询（in-memory）
 - 手写 fake 实现抽象接口（如 `FakeImagePicker`、`FakeImageStorage`），覆盖平台依赖和文件系统操作
 
+**Service 测试的 Mock HTTP 模式**（`website_logo_cache_service_test.dart` 参考）：
+- `HttpClient` / `HttpClientRequest` / `HttpClientResponse` 三个接口分别实现手写 mock 子类
+- mock 的响应内容（body、statusCode、contentType）通过工厂函数注入，支持按 URL 返回不同配置
+- 服务注入模式：构造函数参数传入 mock client + 临时 `logosDirectory` + in-memory DAO
+- 记录 `fetchedUrls` 列表以断言 HTTP 调用次数（用于验证去重行为）
+
 ## 测试文件结构
 
 测试目录镜像 `lib/src/` 结构：
@@ -52,10 +58,17 @@ test/
 │   ├── search/
 │   └── theme/
 ├── plugins/
-│   └── thoughts/
+│   ├── thoughts/
+│   │   ├── data/
+│   │   ├── providers/
+│   │   └── ui/
+│   │       └── widgets/
+│   └── collections/
 │       ├── data/
-│       ├── providers/
+│       ├── domain/
+│       ├── services/
 │       └── ui/
+│           ├── layouts/
 │           └── widgets/
 ├── shared/
 │   ├── tags/
@@ -66,7 +79,7 @@ test/
 
 ## 当前覆盖情况（约 140 测试用例，33 个测试文件）
 
-> 最后核对日期：2026-05-23
+> 最后核对日期：2026-05-25
 
 | 目录 | 覆盖 | 说明 |
 |------|------|------|
@@ -82,6 +95,7 @@ test/
 | `shared/tags/` | 67% | (2/3 文件: tag_codec, tag_filter_logic; tag_models 待覆盖) |
 | `shared/widgets/tags/` | 80% | (4/5 文件: app_tag_chip, app_tag_filter_bar, app_selected_tags_bar, app_common_tags_panel; app_more_tags_popover 待覆盖) |
 | `shared/widgets/`（非 tags） | 86% | (6/7 其他通用组件) |
+| `collections/` | 覆盖新增 | logo cache 服务层 13 条、metadata 解析 7 条、enrichment 4 条、capture 3 条、Card widget 3 条、DetailPanel 2 条、desktop layout 1 条、Repository 7 条、DAO 8 条、domain 24 条 |
 
 **新增功能时建议至少为对应目录添加基本覆盖。**
 
