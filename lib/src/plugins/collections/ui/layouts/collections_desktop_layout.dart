@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uni_hub/src/core/database/app_database.dart';
 import 'package:uni_hub/src/core/theme/app_tokens.dart';
 import 'package:uni_hub/src/plugins/collections/providers/collections_providers.dart';
+import 'package:uni_hub/src/shared/widgets/responsive_page_header.dart';
 
 import '../widgets/collection_capture_bar.dart';
 import '../widgets/collection_folder_sidebar.dart';
@@ -45,8 +46,6 @@ class _CollectionsDesktopLayoutState
   Widget build(BuildContext context) {
     final itemsAsync = ref.watch(savedItemsListProvider);
     final selectedId = ref.watch(selectedSavedItemIdProvider);
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
 
     // Compute display item from async data synchronously
     final items = itemsAsync.asData?.value ?? <SavedItemsTableData>[];
@@ -62,48 +61,45 @@ class _CollectionsDesktopLayoutState
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text('内容收藏', style: theme.textTheme.headlineMedium),
-                      const SizedBox(height: AppSpacing.xs),
-                      Text(
-                        '收集网页、视频、公众号、文章与其他值得保存的内容。',
-                        style: theme.textTheme.bodyMedium?.copyWith(
-                          color: colorScheme.onSurfaceVariant,
-                        ),
+            // Responsive header — uses outer LayoutBuilder to determine
+            // narrow mode so that import/refresh buttons can be icon-only.
+            LayoutBuilder(
+              builder: (context, constraints) {
+                final isNarrow = constraints.maxWidth < 760;
+                return ResponsivePageHeader(
+                  title: '内容收藏',
+                  subtitle: '收集网页、视频、公众号、文章与其他值得保存的内容。',
+                  search: const _HeaderSearchField(),
+                  actions: [
+                    if (isNarrow)
+                      IconButton(
+                        icon: const Icon(Icons.file_download_outlined),
+                        tooltip: '导入',
+                        onPressed: () => _showImportSoon(context),
+                      )
+                    else
+                      OutlinedButton.icon(
+                        onPressed: () => _showImportSoon(context),
+                        icon: const Icon(Icons.file_download_outlined),
+                        label: const Text('导入'),
                       ),
-                    ],
-                  ),
-                ),
-                const SizedBox(width: AppSpacing.lg),
-                ConstrainedBox(
-                  constraints: const BoxConstraints(
-                    minWidth: 320,
-                    maxWidth: 460,
-                  ),
-                  child: const _HeaderSearchField(),
-                ),
-                const SizedBox(width: AppSpacing.sm),
-                OutlinedButton.icon(
-                  onPressed: () {
-                    ScaffoldMessenger.of(
-                      context,
-                    ).showSnackBar(const SnackBar(content: Text('导入功能稍后接入')));
-                  },
-                  icon: const Icon(Icons.file_download_outlined),
-                  label: const Text('导入'),
-                ),
-                const SizedBox(width: AppSpacing.xs),
-                OutlinedButton.icon(
-                  onPressed: () => ref.invalidate(savedItemsListProvider),
-                  icon: const Icon(Icons.refresh_rounded),
-                  label: const Text('刷新'),
-                ),
-              ],
+                    if (isNarrow)
+                      IconButton(
+                        icon: const Icon(Icons.refresh_rounded),
+                        tooltip: '刷新',
+                        onPressed: () =>
+                            ref.invalidate(savedItemsListProvider),
+                      )
+                    else
+                      OutlinedButton.icon(
+                        onPressed: () =>
+                            ref.invalidate(savedItemsListProvider),
+                        icon: const Icon(Icons.refresh_rounded),
+                        label: const Text('刷新'),
+                      ),
+                  ],
+                );
+              },
             ),
             const SizedBox(height: AppSpacing.sm),
             const CollectionCaptureBar(),
@@ -189,6 +185,12 @@ class _CollectionsDesktopLayoutState
       ),
     );
   }
+
+  void _showImportSoon(BuildContext context) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('导入功能稍后接入')),
+    );
+  }
 }
 
 class _HeaderSearchField extends ConsumerWidget {
@@ -268,10 +270,17 @@ class _EmptyState extends StatelessWidget {
               color: theme.colorScheme.primary,
             ),
             const SizedBox(height: AppSpacing.md),
-            Text('还没有收藏', style: theme.textTheme.titleLarge),
+            Text(
+              '还没有收藏',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: theme.textTheme.titleLarge,
+            ),
             const SizedBox(height: AppSpacing.xs),
             Text(
               '在上方输入 URL，创建第一条稍后阅读内容。',
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
               textAlign: TextAlign.center,
               style: theme.textTheme.bodyMedium?.copyWith(
                 color: theme.colorScheme.onSurfaceVariant,
@@ -301,6 +310,8 @@ class _ErrorState extends StatelessWidget {
           const SizedBox(height: AppSpacing.sm),
           Text(
             '暂时无法加载收藏',
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
             style: theme.textTheme.titleMedium?.copyWith(
               color: theme.colorScheme.error,
             ),
@@ -308,6 +319,8 @@ class _ErrorState extends StatelessWidget {
           const SizedBox(height: AppSpacing.xs),
           Text(
             '$error',
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
             textAlign: TextAlign.center,
             style: theme.textTheme.bodySmall?.copyWith(
               color: theme.colorScheme.onSurfaceVariant,

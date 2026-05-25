@@ -1,10 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uni_hub/src/core/theme/app_tokens.dart';
+import 'package:uni_hub/src/core/database/app_database.dart';
 import 'package:uni_hub/src/plugins/collections/domain/collection_models.dart';
 import 'package:uni_hub/src/plugins/collections/providers/collections_providers.dart';
 import 'package:uni_hub/src/plugins/collections/ui/widgets/create_collection_folder_dialog.dart';
 
+/// Sidebar listing default views and custom collection folders.
+///
+/// Fully scrollable (ListView) so it never overflows regardless of
+/// window height, text scale, or system zoom.
 class CollectionFolderSidebar extends ConsumerWidget {
   const CollectionFolderSidebar({super.key});
 
@@ -23,16 +28,19 @@ class CollectionFolderSidebar extends ConsumerWidget {
         border: Border.all(color: colorScheme.outlineVariant),
         boxShadow: const [AppShadows.cardSoft],
       ),
-      child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.sm),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(AppRadius.lg),
+        child: ListView(
+          padding: const EdgeInsets.all(AppSpacing.sm),
           children: [
+            // ---- Header row ----
             Row(
               children: [
                 Expanded(
                   child: Text(
                     '收藏夹',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                     style: theme.textTheme.titleMedium?.copyWith(
                       fontWeight: AppFontTokens.bold,
                     ),
@@ -51,6 +59,8 @@ class CollectionFolderSidebar extends ConsumerWidget {
               ],
             ),
             const SizedBox(height: AppSpacing.xs),
+
+            // ---- Default views ----
             _FolderRow(
               icon: Icons.bookmark_border_rounded,
               label: '全部收藏',
@@ -90,52 +100,68 @@ class CollectionFolderSidebar extends ConsumerWidget {
               },
             ),
             const SizedBox(height: AppSpacing.sm),
-            Divider(color: colorScheme.outlineVariant),
+            Divider(color: colorScheme.outlineVariant, height: 1),
             const SizedBox(height: AppSpacing.xs),
-            Expanded(
-              child: boxesAsync.when(
-                data: (boxes) => boxes.isEmpty
-                    ? _EmptyFolders(
-                        onCreate: () {
-                          _showCreateFolderDialog(context, ref);
-                        },
-                      )
-                    : ListView.separated(
-                        itemCount: boxes.length,
-                        separatorBuilder: (context, index) =>
-                            const SizedBox(height: AppSpacing.xxs),
-                        itemBuilder: (context, index) {
-                          final box = boxes[index];
-                          return _FolderRow(
-                            icon: Icons.folder_outlined,
-                            label: box.name,
-                            selected:
-                                selectedBoxIds.length == 1 &&
-                                selectedBoxIds.contains(box.id),
-                            onTap: () {
-                              ref
-                                  .read(
-                                    selectedCollectionBoxIdsProvider.notifier,
-                                  )
-                                  .state = {
-                                box.id,
-                              };
-                              ref.read(collectionViewProvider.notifier).state =
-                                  CollectionView.all;
-                            },
-                          );
-                        },
-                      ),
-                loading: () => const Center(child: CircularProgressIndicator()),
-                error: (error, stackTrace) => _FolderError(
-                  error: error,
-                  onRetry: () => ref.invalidate(collectionBoxesProvider),
-                ),
-              ),
+
+            // ---- Custom folders ----
+            ..._buildFolderContent(
+              context,
+              ref,
+              boxesAsync,
+              selectedBoxIds,
+              colorScheme,
             ),
           ],
         ),
       ),
+    );
+  }
+
+  List<Widget> _buildFolderContent(
+    BuildContext context,
+    WidgetRef ref,
+    AsyncValue<List<CollectionBoxesTableData>> boxesAsync,
+    Set<int> selectedBoxIds,
+    ColorScheme colorScheme,
+  ) {
+    return boxesAsync.when(
+      data: (boxes) {
+        if (boxes.isEmpty) {
+          return [
+            _EmptyFolders(
+              onCreate: () => _showCreateFolderDialog(context, ref),
+            ),
+          ];
+        }
+        return [
+          for (final box in boxes)
+            _FolderRow(
+              icon: Icons.folder_outlined,
+              label: box.name,
+              selected:
+                  selectedBoxIds.length == 1 && selectedBoxIds.contains(box.id),
+              onTap: () {
+                ref.read(selectedCollectionBoxIdsProvider.notifier).state = {
+                  box.id,
+                };
+                ref.read(collectionViewProvider.notifier).state =
+                    CollectionView.all;
+              },
+            ),
+        ];
+      },
+      loading: () => [
+        const Padding(
+          padding: EdgeInsets.symmetric(vertical: AppSpacing.md),
+          child: LinearProgressIndicator(minHeight: 2),
+        ),
+      ],
+      error: (error, stackTrace) => [
+        _FolderError(
+          error: error,
+          onRetry: () => ref.invalidate(collectionBoxesProvider),
+        ),
+      ],
     );
   }
 
@@ -249,28 +275,29 @@ class _EmptyFolders extends StatelessWidget {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.md),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              Icons.folder_open_rounded,
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: AppSpacing.lg),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            Icons.folder_open_rounded,
+            size: 32,
+            color: colorScheme.onSurfaceVariant,
+          ),
+          const SizedBox(height: AppSpacing.xs),
+          Text(
+            '暂无自定义收藏夹',
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            textAlign: TextAlign.center,
+            style: theme.textTheme.bodySmall?.copyWith(
               color: colorScheme.onSurfaceVariant,
             ),
-            const SizedBox(height: AppSpacing.xs),
-            Text(
-              '暂无自定义收藏夹',
-              textAlign: TextAlign.center,
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: colorScheme.onSurfaceVariant,
-              ),
-            ),
-            const SizedBox(height: AppSpacing.xs),
-            TextButton(onPressed: onCreate, child: const Text('创建一个')),
-          ],
-        ),
+          ),
+          const SizedBox(height: AppSpacing.xs),
+          TextButton(onPressed: onCreate, child: const Text('创建一个')),
+        ],
       ),
     );
   }
@@ -286,19 +313,29 @@ class _FolderError extends StatelessWidget {
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
 
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.md),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(Icons.error_outline_rounded, color: colorScheme.error),
-            const SizedBox(height: AppSpacing.xs),
-            Text('收藏夹加载失败', style: TextStyle(color: colorScheme.error)),
-            const SizedBox(height: AppSpacing.xs),
-            TextButton(onPressed: onRetry, child: const Text('重试')),
-          ],
-        ),
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.error_outline_rounded, size: 16, color: colorScheme.error),
+              const SizedBox(width: AppSpacing.xs),
+              Flexible(
+                child: Text(
+                  '收藏夹加载失败',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(color: colorScheme.error, fontSize: 13),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.xs),
+          TextButton(onPressed: onRetry, child: const Text('重试')),
+        ],
       ),
     );
   }
