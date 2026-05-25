@@ -122,7 +122,7 @@ class _ThoughtCardState extends ConsumerState<ThoughtCard> {
       title,
       maxLines: 1,
       overflow: TextOverflow.ellipsis,
-      style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
+      style: theme.textTheme.titleSmall?.copyWith(fontWeight: AppFontTokens.bold),
     );
   }
 

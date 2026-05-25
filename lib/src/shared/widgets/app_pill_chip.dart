@@ -35,7 +35,6 @@ class AppPillChip extends StatelessWidget {
   double get _height => compact ? 30.0 : 34.0;
   double get _hPadding => compact ? 10.0 : 12.0;
   double get _iconSize => compact ? 14.0 : 15.0;
-  double get _fontSize => compact ? 12.0 : 13.0;
 
   @override
   Widget build(BuildContext context) {
@@ -66,14 +65,16 @@ class AppPillChip extends StatelessWidget {
 
     final borderRadius = BorderRadius.circular(AppRadius.full);
 
-    final textStyle = Theme.of(context).textTheme.labelMedium?.copyWith(
-          fontSize: _fontSize,
-          height: 1.15,
-          letterSpacing: 0,
-          fontWeight:
-              selected ? AppFontTokens.semiBold : AppFontTokens.medium,
-          color: foregroundColor,
-        );
+    final baseTextStyle = compact
+        ? Theme.of(context).textTheme.labelSmall
+        : Theme.of(context).textTheme.labelMedium;
+
+    final textStyle = baseTextStyle?.copyWith(
+      letterSpacing: 0,
+      fontWeight:
+          selected ? AppFontTokens.semiBold : AppFontTokens.medium,
+      color: foregroundColor,
+    );
 
     final effectiveOnTap = enabled ? onTap : null;
 

@@ -24,21 +24,38 @@ abstract final class AppColors {
 }
 
 abstract final class AppFonts {
-  /// Primary Latin / UI font — used as the default for all text.
-  static const sansLatin = 'Inter';
+  /// 全局 UI 主字体：中文优先，保证 Windows / Android 一致。
+  static const ui = 'Noto Sans SC';
 
-  /// CJK fallback font — renders Chinese characters that Inter does not cover.
-  static const sansCJK = 'Noto Sans SC';
+  /// 英文品牌、英文标题可选字体。
+  static const latin = 'Inter';
 
-  /// Monospace font for code, commands, and paths.
+  /// 代码、命令、路径。
   static const mono = 'JetBrains Mono';
+
+  /// 系统兜底，不作为主视觉来源。
+  static const fallback = <String>[
+    'Inter',
+    'Microsoft YaHei UI',
+    'PingFang SC',
+    'Hiragino Sans GB',
+    'sans-serif',
+  ];
+
+  @Deprecated('Use AppFonts.ui instead.')
+  static const sansCJK = ui;
+
+  @Deprecated('Use AppFonts.latin instead.')
+  static const sansLatin = latin;
 }
 
 /// 字体尺寸、字重、行高等完整排版令牌。
 ///
 /// 所有硬编码的字体值都应替换为这里的常量引用。
-/// 中文/英文统一使用 [AppFonts.sansLatin]（回退 [AppFonts.sansCJK]），
+/// 中文 UI 使用 [AppFonts.ui]，英文品牌使用 [AppFonts.latin]，
 /// 代码显示使用 [AppFonts.mono]。
+/// 字体文件通过 pubspec.yaml flutter.fonts 本地打包。
+/// Widget 层禁止直接用 GoogleFonts.*、fontFamily、裸数字 fontSize。
 abstract final class AppFontTokens {
   // ── Font Sizes（与 Material TextTheme 对齐） ──
 

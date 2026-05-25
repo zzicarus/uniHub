@@ -248,7 +248,7 @@ AppFontTokens.normal     // FontWeight.w400
 #### 使用方式
 
 ```dart
-// ✅ 正确
+// ✅ 正确：基于 theme.textTheme.*.copyWith
 Text(
   title,
   style: theme.textTheme.titleMedium?.copyWith(
@@ -257,35 +257,34 @@ Text(
 )
 Text(
   subtitle,
-  style: TextStyle(
-    fontSize: AppFontTokens.caption,
-    height: AppFontTokens.bodySmHeight,
+  style: theme.textTheme.bodySmall?.copyWith(
+    color: colorScheme.onSurfaceVariant,
   ),
 )
 
+// ❌ 错误：bare TextStyle（不应出现）
+// TextStyle(
+//   fontSize: AppFontTokens.caption,
+//   height: AppFontTokens.bodySmHeight,
+// )
+
 // ❌ 错误：硬编码
-fontSize: 14
-height: 1.4
-FontWeight.w700
+// fontSize: 14
+// height: 1.4
+// FontWeight.w700
 ```
 
 ### 字体族
 
 | 常量 | 字体 | 用途 |
 |------|------|------|
-| `AppFonts.sansLatin` | Inter（Google Fonts） | 默认 UI 字体 |
-| `AppFonts.sansCJK` | Noto Sans SC | 中文回退字体 |
+| `AppFonts.ui` | Noto Sans SC | 全局 UI 主字体，本地打包 |
+| `AppFonts.latin` | Inter | 英文品牌、英文标题 |
 | `AppFonts.mono` | JetBrains Mono | 代码/路径等宽字体 |
 
-**约定**：所有文本样式必须设置 `fontFamilyFallback: [AppFonts.sansCJK]`，确保 Latin + CJK 混排时中文字符正确显示。回退配置在 `AppTheme._textTheme()` 中统一完成，自定义样式需手动设置。
-
-```dart
-textTheme.bodyLarge?.copyWith(
-  fontSize: AppFontTokens.bodyLg,
-  fontWeight: AppFontTokens.normal,
-  fontFamilyFallback: const [AppFonts.sansCJK],
-)
-```
+**约定**：全局默认字体通过 `ThemeData.fontFamily: AppFonts.ui` 设定，Widget 层不应直接指定 `fontFamily`。
+中文 UI 由 Noto Sans SC 主导，Inter 作为英文品牌备选，不依赖系统 fallback。
+字体文件通过 `pubspec.yaml > flutter.fonts` 本地打包，不运行时远程加载。
 
 ### 主题预设系统
 
@@ -1526,3 +1525,59 @@ void _autoSelectFirstItem() {
 - 已有选中项时跳过（`currentSelectedId != null`），防止刷新列表覆盖用户选择
 - 列表为空时不操作
 - 使用 `mounted` 检查防止异步回调在 dispose 后写 Provider
+
+---
+
+## Typography 字体规范
+
+### 全局字体策略
+
+- 普通 UI 文本统一使用 `Theme.of(context).textTheme.*`
+- 中文 UI 主字体为 `AppFonts.ui`（Noto Sans SC）
+- 英文品牌可使用 `AppFonts.latin`（Inter）
+- 代码、命令、路径使用 `AppFonts.mono`（JetBrains Mono）
+- 字体文件必须通过 `pubspec.yaml > flutter.fonts` 本地打包，不运行时远程加载
+- 不允许在 Widget 中调用 `GoogleFonts.*`
+- 不允许在 Widget 中直接写 `fontFamily`
+- 不允许在 Widget 中直接写裸数字 `fontSize: 12`
+- 不允许在 Widget 中直接写 `FontWeight.wXXX`（应使用 `AppFontTokens` 语义常量）
+- 局部样式只能基于 `theme.textTheme.xxx?.copyWith(...)` 修改颜色/字重
+
+### 正确写法
+
+```dart
+Text(
+  label,
+  style: theme.textTheme.labelSmall?.copyWith(
+    color: colorScheme.onSurfaceVariant,
+    fontWeight: AppFontTokens.medium,
+  ),
+)
+```
+
+### 错误写法
+
+```dart
+// ❌ 禁止：Widget 层直接调用 GoogleFonts
+GoogleFonts.inter(textStyle: ...)
+GoogleFonts.notoSansSc(...)
+
+// ❌ 禁止：直接指定 fontFamily
+style: TextStyle(fontFamily: 'Inter')
+
+// ❌ 禁止：裸数字 fontSize
+style: TextStyle(fontSize: 12)
+
+// ❌ 禁止：裸 FontWeight
+FontWeight.w600
+
+// ❌ 禁止：不基于 theme.textTheme 的 TextStyle
+TextStyle(color: Colors.blue, fontSize: 14)
+```
+
+### 例外文件
+
+以下文件作为字体基础设施允许使用 `fontFamily`、`GoogleFonts.*`、`fontSize` 裸值：
+
+- `lib/src/core/theme/app_theme.dart`
+- `lib/src/core/theme/app_tokens.dart`

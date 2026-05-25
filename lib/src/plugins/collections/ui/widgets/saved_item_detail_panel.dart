@@ -904,7 +904,6 @@ class _QuickActionTile extends StatelessWidget {
                         ? colorScheme.error
                         : colorScheme.onSurfaceVariant,
                     fontWeight: AppFontTokens.medium,
-                    fontSize: AppFontTokens.caption,
                   ),
                 ),
               ],

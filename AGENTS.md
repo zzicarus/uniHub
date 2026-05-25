@@ -76,6 +76,18 @@ UniHub 是一个 **桌面端优先** 的 Flutter 个人工具箱，基于插件�
 5. **审查** — 触发 `/review-work`（trellis 内置）
 6. **提交** — 按 Phase 3.4 流程提交，格式 `type: 中文描述`
 
+### Typography 强制约束
+
+所有新增或修改的 Flutter UI 必须遵守 `.trellis/spec/frontend/component-guidelines.md` 中的 Typography 字体规范：
+
+- 普通 UI 文本使用 `Theme.of(context).textTheme.*`
+- 不在 Widget 层使用 `GoogleFonts.*`
+- 不在 Widget 层直接写 `fontFamily`
+- 不使用裸数字 `fontSize`
+- 不直接使用 `FontWeight.wXXX`
+- 字重必须使用 `AppFontTokens`
+- 代码/路径/命令才允许使用 `AppFonts.mono`
+
 ---
 
 ## 代码库导航
@@ -104,7 +116,7 @@ UniHub 是一个 **桌面端优先** 的 Flutter 个人工具箱，基于插件�
 
 | 文件 | 内容 |
 |------|------|
-| `.trellis/spec/frontend/component-guidelines.md` | Widget 编写规范（设计令牌、M3 ColorScheme、布局约定、配色系统、Overflow 预防） |
+| `.trellis/spec/frontend/component-guidelines.md` | Widget 编写规范（设计令牌、M3 ColorScheme、布局约定、配色系统、Overflow 预防、Typography 字体规范） |
 | `.trellis/spec/backend/database-guidelines.md` | 数据库规范（drift/SQLite、DAO/Repository 模式、迁移、测试生命周期） |
 | `.trellis/workflow.md` | 完整 Trellis 开发流程规范（Plan → Execute → Finish） |
 

@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 import 'app_theme_preset.dart';
 import 'app_theme_registry.dart';
@@ -43,8 +42,8 @@ abstract final class AppTheme {
       colorScheme: colorScheme,
       scaffoldBackgroundColor: colors.background,
       canvasColor: colors.background,
-      fontFamily: AppFonts.sansLatin,
-      fontFamilyFallback: const [AppFonts.sansCJK],
+      fontFamily: AppFonts.ui,
+      fontFamilyFallback: AppFonts.fallback,
       extensions: <ThemeExtension<dynamic>>[
         colors,
       ],
@@ -191,73 +190,85 @@ abstract final class AppTheme {
       );
 
   static TextTheme _textTheme(TextTheme base, ColorScheme colorScheme) {
-    // Apply Inter as primary font via GoogleFonts, then customise colors/sizes.
-    // fontFamilyFallback is set per-style so CJK characters fall back to Noto Sans SC.
-    final interTheme = GoogleFonts.interTextTheme(base);
+    TextStyle style({
+      required double size,
+      required double height,
+      required FontWeight weight,
+      required Color color,
+      double letterSpacing = 0,
+      String fontFamily = AppFonts.ui,
+    }) {
+      return TextStyle(
+        fontFamily: fontFamily,
+        fontFamilyFallback: AppFonts.fallback,
+        fontSize: size,
+        height: height,
+        fontWeight: weight,
+        letterSpacing: letterSpacing,
+        color: color,
+      );
+    }
 
-    return interTheme.copyWith(
-      headlineMedium: interTheme.headlineMedium?.copyWith(
-        color: colorScheme.onSurface,
-        fontSize: AppFontTokens.display,
+    return TextTheme(
+      headlineMedium: style(
+        size: AppFontTokens.display,
         height: AppFontTokens.displayHeight,
-        fontWeight: AppFontTokens.bold,
-        fontFamilyFallback: const [AppFonts.sansCJK],
-      ),
-      titleLarge: interTheme.titleLarge?.copyWith(
+        weight: AppFontTokens.bold,
         color: colorScheme.onSurface,
-        fontSize: AppFontTokens.headline,
+      ),
+      titleLarge: style(
+        size: AppFontTokens.headline,
         height: AppFontTokens.headlineHeight,
-        fontWeight: AppFontTokens.bold,
-        fontFamilyFallback: const [AppFonts.sansCJK],
-      ),
-      titleMedium: interTheme.titleMedium?.copyWith(
+        weight: AppFontTokens.bold,
         color: colorScheme.onSurface,
-        fontSize: AppFontTokens.titleLg,
+      ),
+      titleMedium: style(
+        size: AppFontTokens.titleLg,
         height: AppFontTokens.titleLgHeight,
-        fontWeight: AppFontTokens.semiBold,
-        fontFamilyFallback: const [AppFonts.sansCJK],
-      ),
-      titleSmall: interTheme.titleSmall?.copyWith(
+        weight: AppFontTokens.semiBold,
         color: colorScheme.onSurface,
-        fontSize: AppFontTokens.titleMd,
+      ),
+      titleSmall: style(
+        size: AppFontTokens.titleMd,
         height: AppFontTokens.titleMdHeight,
-        fontWeight: AppFontTokens.semiBold,
-        fontFamilyFallback: const [AppFonts.sansCJK],
-      ),
-      bodyLarge: interTheme.bodyLarge?.copyWith(
+        weight: AppFontTokens.semiBold,
         color: colorScheme.onSurface,
-        fontSize: AppFontTokens.bodyLg,
+      ),
+      bodyLarge: style(
+        size: AppFontTokens.bodyLg,
         height: AppFontTokens.bodyLgHeight,
-        fontWeight: AppFontTokens.normal,
-        fontFamilyFallback: const [AppFonts.sansCJK],
-      ),
-      bodyMedium: interTheme.bodyMedium?.copyWith(
-        color: colorScheme.onSurfaceVariant,
-        fontSize: AppFontTokens.bodyMd,
-        height: AppFontTokens.bodyMdHeight,
-        fontWeight: AppFontTokens.normal,
-        fontFamilyFallback: const [AppFonts.sansCJK],
-      ),
-      bodySmall: interTheme.bodySmall?.copyWith(
-        color: colorScheme.outline,
-        fontSize: AppFontTokens.bodySm,
-        height: AppFontTokens.bodySmHeight,
-        fontWeight: AppFontTokens.normal,
-        fontFamilyFallback: const [AppFonts.sansCJK],
-      ),
-      labelLarge: interTheme.labelLarge?.copyWith(
+        weight: AppFontTokens.normal,
         color: colorScheme.onSurface,
-        fontSize: AppFontTokens.labelLg,
-        height: AppFontTokens.labelLgHeight,
-        fontWeight: AppFontTokens.semiBold,
-        fontFamilyFallback: const [AppFonts.sansCJK],
       ),
-      labelMedium: interTheme.labelMedium?.copyWith(
+      bodyMedium: style(
+        size: AppFontTokens.bodyMd,
+        height: AppFontTokens.bodyMdHeight,
+        weight: AppFontTokens.normal,
         color: colorScheme.onSurfaceVariant,
-        fontSize: AppFontTokens.labelMd,
+      ),
+      bodySmall: style(
+        size: AppFontTokens.bodySm,
+        height: AppFontTokens.bodySmHeight,
+        weight: AppFontTokens.normal,
+        color: colorScheme.onSurfaceVariant,
+      ),
+      labelLarge: style(
+        size: AppFontTokens.labelLg,
+        height: AppFontTokens.labelLgHeight,
+        weight: AppFontTokens.semiBold,
+        color: colorScheme.onSurface,
+      ),
+      labelMedium: style(
+        size: AppFontTokens.labelMd,
         height: AppFontTokens.labelMdHeight,
-        fontWeight: AppFontTokens.semiBold,
-        fontFamilyFallback: const [AppFonts.sansCJK],
+        weight: AppFontTokens.medium,
+        color: colorScheme.onSurfaceVariant,
+      ),
+      labelSmall: style(
+        size: AppFontTokens.caption,
+        height: 1.36,
+        weight: AppFontTokens.medium,
+        color: colorScheme.onSurfaceVariant,
       ),
     );
   }

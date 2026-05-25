@@ -1,131 +1,93 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 import 'package:uni_hub/src/core/theme/app_theme.dart';
 import 'package:uni_hub/src/core/theme/app_theme_preset.dart';
 import 'package:uni_hub/src/core/theme/app_theme_registry.dart';
 import 'package:uni_hub/src/core/theme/app_theme_tokens.dart';
 
-/// Verifies ThemeData structure without failing on google_fonts' async font
-/// loading attempts (which time out / fail in test environments).
-///
-/// Must be called at the start of every testWidgets that triggers
-/// [AppTheme.light] or [AppTheme.dark], which internally call
-/// [GoogleFonts.interTextTheme].
-Future<void> consumeFontLoadErrors(WidgetTester tester) async {
-  // Let any pending google_fonts HTTP load attempts settle.
-  await tester.pump(const Duration(seconds: 1));
-  // Consume any unhandled font-load errors — these are irrelevant for
-  // ThemeData-structure tests.
-  tester.takeException();
-  // Reset config so subsequent GoogleFonts calls are also silent.
-  GoogleFonts.config.allowRuntimeFetching = false;
-}
-
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
-  // Prevent google_fonts from making HTTP requests during tests.
-  GoogleFonts.config.allowRuntimeFetching = false;
 
   group('AppTheme', () {
     group('light', () {
-      testWidgets('returns a valid ThemeData with useMaterial3 == true',
-          (tester) async {
+      test('returns a valid ThemeData with useMaterial3 == true', () {
         final lightTheme = AppTheme.light;
-        await consumeFontLoadErrors(tester);
         expect(lightTheme.useMaterial3, isTrue);
       });
 
-      testWidgets('has Brightness.light', (tester) async {
+      test('has Brightness.light', () {
         final lightTheme = AppTheme.light;
-        await consumeFontLoadErrors(tester);
         expect(lightTheme.brightness, equals(Brightness.light));
       });
 
-      testWidgets('has a non-null colorScheme', (tester) async {
+      test('has a non-null colorScheme', () {
         final lightTheme = AppTheme.light;
-        await consumeFontLoadErrors(tester);
         expect(lightTheme.colorScheme, isNotNull);
       });
 
-      testWidgets('colorScheme.seed matches AppColors.primary', (tester) async {
+      test('colorScheme.seed matches AppColors.primary', () {
         final lightTheme = AppTheme.light;
-        await consumeFontLoadErrors(tester);
         expect(lightTheme.colorScheme.primary, isNotNull);
       });
 
-      testWidgets('has non-null appBarTheme', (tester) async {
+      test('has non-null appBarTheme', () {
         final lightTheme = AppTheme.light;
-        await consumeFontLoadErrors(tester);
         expect(lightTheme.appBarTheme, isNotNull);
       });
 
-      testWidgets('has non-null cardTheme', (tester) async {
+      test('has non-null cardTheme', () {
         final lightTheme = AppTheme.light;
-        await consumeFontLoadErrors(tester);
         expect(lightTheme.cardTheme, isNotNull);
       });
 
-      testWidgets('has non-null navigationBarTheme', (tester) async {
+      test('has non-null navigationBarTheme', () {
         final lightTheme = AppTheme.light;
-        await consumeFontLoadErrors(tester);
         expect(lightTheme.navigationBarTheme, isNotNull);
       });
     });
 
     group('dark', () {
-      testWidgets('returns a valid ThemeData with useMaterial3 == true',
-          (tester) async {
+      test('returns a valid ThemeData with useMaterial3 == true', () {
         final darkTheme = AppTheme.dark;
-        await consumeFontLoadErrors(tester);
         expect(darkTheme.useMaterial3, isTrue);
       });
 
-      testWidgets('has Brightness.dark', (tester) async {
+      test('has Brightness.dark', () {
         final darkTheme = AppTheme.dark;
-        await consumeFontLoadErrors(tester);
         expect(darkTheme.brightness, equals(Brightness.dark));
       });
 
-      testWidgets('has a non-null colorScheme', (tester) async {
+      test('has a non-null colorScheme', () {
         final darkTheme = AppTheme.dark;
-        await consumeFontLoadErrors(tester);
         expect(darkTheme.colorScheme, isNotNull);
       });
 
-      testWidgets('colorScheme.seed matches AppColors.primary', (tester) async {
+      test('colorScheme.seed matches AppColors.primary', () {
         final darkTheme = AppTheme.dark;
-        await consumeFontLoadErrors(tester);
         expect(darkTheme.colorScheme.primary, isNotNull);
       });
 
-      testWidgets('has non-null appBarTheme', (tester) async {
+      test('has non-null appBarTheme', () {
         final darkTheme = AppTheme.dark;
-        await consumeFontLoadErrors(tester);
         expect(darkTheme.appBarTheme, isNotNull);
       });
 
-      testWidgets('has non-null cardTheme', (tester) async {
+      test('has non-null cardTheme', () {
         final darkTheme = AppTheme.dark;
-        await consumeFontLoadErrors(tester);
         expect(darkTheme.cardTheme, isNotNull);
       });
 
-      testWidgets('has non-null navigationBarTheme', (tester) async {
+      test('has non-null navigationBarTheme', () {
         final darkTheme = AppTheme.dark;
-        await consumeFontLoadErrors(tester);
         expect(darkTheme.navigationBarTheme, isNotNull);
       });
     });
 
     group('brightness comparison', () {
-      testWidgets('light and dark themes have different brightness',
-          (tester) async {
-        GoogleFonts.config.allowRuntimeFetching = false;
+      test('light and dark themes have different brightness', () {
         final light = AppTheme.light;
         final dark = AppTheme.dark;
-        await consumeFontLoadErrors(tester);
         expect(light.brightness, isNot(equals(dark.brightness)));
       });
     });

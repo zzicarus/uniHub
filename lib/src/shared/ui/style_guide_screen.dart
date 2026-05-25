@@ -114,37 +114,34 @@ class _FontSection extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Inter + Noto Sans SC', style: textTheme.titleMedium),
+              Text('Noto Sans SC + Inter', style: textTheme.titleMedium),
               const SizedBox(height: AppSpacing.xs),
               Text(
-                '英文 / 数字 / UI 标签使用 Inter，中文自动回退到 Noto Sans SC。'
+                '中文 UI 使用 Noto Sans SC（本地打包），英文品牌使用 Inter。'
                 '代码与路径使用 JetBrains Mono。',
                 style: textTheme.bodyMedium,
               ),
               const SizedBox(height: AppSpacing.md),
+              // UI font demo (Noto Sans SC)
+              Text(
+                'Noto Sans SC — 用中文记录每一天的想法和灵感。',
+                style: textTheme.bodyLarge?.copyWith(
+                  fontFamily: AppFonts.ui,
+                ),
+              ),
+              const SizedBox(height: AppSpacing.xs),
               // Latin demo
               Text(
                 'Inter — The quick brown fox jumps over the lazy dog.',
                 style: textTheme.bodyLarge?.copyWith(
-                  fontFamily: AppFonts.sansLatin,
+                  fontFamily: AppFonts.latin,
                 ),
               ),
               const SizedBox(height: AppSpacing.xs),
-              // CJK demo
-              Text(
-                'Noto Sans SC — 用中文记录每一天的想法和灵感。',
-                style: textTheme.bodyLarge?.copyWith(
-                  fontFamily: AppFonts.sansCJK,
-                ),
-              ),
-              const SizedBox(height: AppSpacing.xs),
-              // Mixed demo (Inter with CJK fallback)
+              // Mixed demo (UI font with fallback)
               Text(
                 '今天是 Friday, 计划完成 3 个 tasks。',
-                style: textTheme.bodyLarge?.copyWith(
-                  fontFamily: AppFonts.sansLatin,
-                  fontFamilyFallback: const [AppFonts.sansCJK],
-                ),
+                style: textTheme.bodyLarge,
               ),
               const SizedBox(height: AppSpacing.md),
               // Mono demo

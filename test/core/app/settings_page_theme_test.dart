@@ -1,27 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 import 'package:uni_hub/src/core/app/settings_page.dart';
 import 'package:uni_hub/src/core/theme/app_theme.dart';
 import 'package:uni_hub/src/core/theme/app_theme_preset.dart';
 import 'package:uni_hub/src/core/theme/theme_settings_provider.dart';
 
-/// Consumes font-load errors from Google Fonts in test environment.
-///
-/// Must be called after every [pumpWidget] / [pump] when [AppTheme.light]
-/// or [AppTheme.dark] is used, since [GoogleFonts.interTextTheme] triggers
-/// async font fetching that may time out or fail in tests.
-Future<void> consumeFontLoadErrors(WidgetTester tester) async {
-  await tester.pump(const Duration(seconds: 1));
-  tester.takeException();
-}
-
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
-  // Prevent google_fonts from making HTTP requests during tests.
-  GoogleFonts.config.allowRuntimeFetching = false;
 
   group('SettingsPage theme switching', () {
     /// Renders [SettingsPage] inside a [ProviderScope] + [MaterialApp].
@@ -34,7 +21,7 @@ void main() {
           ),
         ),
       );
-      await consumeFontLoadErrors(tester);
+      await tester.pump();
     }
 
     testWidgets('displays "主题模式" and "主题预设"', (tester) async {
@@ -61,7 +48,6 @@ void main() {
 
       await tester.tap(find.text('Forest'));
       await tester.pump();
-      await consumeFontLoadErrors(tester);
 
       final element = tester.element(find.byType(SettingsPage));
       final container = ProviderScope.containerOf(element);
@@ -74,7 +60,6 @@ void main() {
 
       await tester.tap(find.text('深色'));
       await tester.pump();
-      await consumeFontLoadErrors(tester);
 
       final element = tester.element(find.byType(SettingsPage));
       final container = ProviderScope.containerOf(element);

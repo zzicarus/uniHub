@@ -352,7 +352,7 @@ class _FolderError extends StatelessWidget {
                   '收藏夹加载失败',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: TextStyle(color: colorScheme.error, fontSize: 13),
+                  style: TextStyle(color: colorScheme.error),
                 ),
               ),
             ],
