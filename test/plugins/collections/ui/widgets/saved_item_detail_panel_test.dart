@@ -80,4 +80,63 @@ void main() {
     expect(find.text('归档'), findsWidgets);
     expect(find.text('删除'), findsOneWidget);
   });
+
+  testWidgets('SavedItemDetailPanel renders with favicon without crashing', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const ui.Size(375, 900);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    final registry = PluginRegistry()..register(CollectionsPlugin());
+    final db = AppDatabase(NativeDatabase.memory(), registry);
+    addTearDown(() => db.close());
+
+    final createdAt = DateTime(2024, 5, 20, 14, 32);
+    final updatedAt = DateTime(2024, 5, 20, 15, 12);
+    final item = SavedItemsTableData(
+      id: 2,
+      originalUrl: 'https://example.com/article',
+      normalizedUrl: 'https://example.com/article',
+      title: 'Article With Favicon',
+      mediaType: 'article',
+      sourcePlatform: 'web',
+      status: 'unread',
+      isInInbox: true,
+      enrichmentStatus: 'pending',
+      favicon: 'https://example.com/favicon.ico',
+      createdAt: createdAt,
+      updatedAt: updatedAt,
+    );
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          appDatabaseProvider.overrideWithValue(db),
+          pluginRegistryProvider.overrideWithValue(registry),
+        ],
+        child: MaterialApp(
+          home: Scaffold(
+            body: Center(
+              child: SizedBox(
+                width: 375,
+                height: 900,
+                child: SavedItemDetailPanel(item: item),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    await tester.pumpAndSettle();
+
+    // Panel renders with basic sections
+    expect(find.text('Article With Favicon'), findsOneWidget);
+    expect(find.text('来源'), findsOneWidget);
+    expect(find.text('状态'), findsOneWidget);
+    expect(find.text('收藏夹'), findsOneWidget);
+    expect(find.text('快速操作'), findsOneWidget);
+  });
 }

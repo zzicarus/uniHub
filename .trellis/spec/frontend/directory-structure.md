@@ -88,6 +88,7 @@ lib/src/
 │       ├── uni_panel.dart            # Uni Panel 容器
 │       ├── uni_pill.dart             # 标签状徽章
 │       ├── uni_status_panel.dart     # 状态面板（加载/空/错误通用）
+│       ├── website_logo.dart         # 站点 Logo 展示（只读本地缓存文件）
 │       └── tags/             # TagKit UI 组件（无 Provider 依赖）
 │           ├── app_tag_chip.dart
 │           ├── app_tag_filter_bar.dart

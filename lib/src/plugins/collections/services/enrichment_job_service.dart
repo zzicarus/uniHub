@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:uni_hub/src/core/database/app_database.dart';
 
@@ -5,19 +7,23 @@ import '../data/collections_repository.dart';
 import '../data/enrichment_jobs_dao.dart';
 import '../domain/enrichment_status.dart';
 import 'metadata_provider.dart';
+import 'website_logo_cache_service.dart';
 
 class EnrichmentJobService {
   EnrichmentJobService({
     required CollectionsRepository repository,
     required EnrichmentJobsDao jobsDao,
     required MetadataProvider metadataProvider,
+    WebsiteLogoCacheService? logoCacheService,
   }) : _repository = repository,
        _jobsDao = jobsDao,
-       _metadataProvider = metadataProvider;
+       _metadataProvider = metadataProvider,
+       _logoCacheService = logoCacheService;
 
   final CollectionsRepository _repository;
   final EnrichmentJobsDao _jobsDao;
   final MetadataProvider _metadataProvider;
+  final WebsiteLogoCacheService? _logoCacheService;
 
   /// 消费 pending job 队列，每轮最多处理 [limit] 个。
   ///
@@ -65,6 +71,17 @@ class EnrichmentJobService {
         metadataJson: metadata.metadataJson,
         enrichmentStatus: EnrichmentStatus.success,
       );
+
+      // Trigger logo caching in the background (non-blocking)
+      if (_logoCacheService != null) {
+        unawaited(
+          _logoCacheService.ensureLogoCached(
+            pageUrl: item.normalizedUrl,
+            remoteFaviconUrl: metadata.favicon,
+          ),
+        );
+      }
+
       await _jobsDao.markSuccess(job.id);
     } catch (error) {
       // 失败

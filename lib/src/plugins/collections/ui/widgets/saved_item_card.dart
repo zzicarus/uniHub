@@ -8,6 +8,7 @@ import 'package:uni_hub/src/plugins/collections/domain/enrichment_status.dart';
 import 'package:uni_hub/src/plugins/collections/domain/media_type.dart';
 import 'package:uni_hub/src/plugins/collections/domain/source_platform.dart';
 import 'package:uni_hub/src/plugins/collections/providers/collections_providers.dart';
+import 'package:uni_hub/src/shared/widgets/website_logo.dart';
 
 /// Content-style saved-item card for the collection list.
 class SavedItemCard extends ConsumerWidget {
@@ -30,6 +31,12 @@ class SavedItemCard extends ConsumerWidget {
     final mediaType = MediaType.fromValue(item.mediaType);
     final status = ConsumptionStatus.fromValue(item.status);
     final enrichmentStatus = EnrichmentStatus.fromValue(item.enrichmentStatus);
+
+    // Read local logo path from cache (non-blocking, shows fallback when null)
+    final logoAsync = ref.watch(
+      websiteLogoForUrlProvider(item.normalizedUrl),
+    );
+    final localLogoPath = logoAsync.valueOrNull?.localLogoPath;
 
     final borderRadius = BorderRadius.circular(AppRadius.md);
 
@@ -65,7 +72,7 @@ class SavedItemCard extends ConsumerWidget {
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  _iconColumn(colorScheme, mediaType, enrichmentStatus),
+                  _iconColumn(colorScheme, mediaType, enrichmentStatus, localLogoPath),
                   const SizedBox(width: AppSpacing.sm),
                   Expanded(
                     child: Column(
@@ -122,22 +129,16 @@ class SavedItemCard extends ConsumerWidget {
     ColorScheme colorScheme,
     MediaType mediaType,
     EnrichmentStatus enrichmentStatus,
+    String? localLogoPath,
   ) {
     return Stack(
       clipBehavior: Clip.none,
       children: [
-        Container(
-          width: 48,
-          height: 48,
-          decoration: BoxDecoration(
-            color: colorScheme.primaryContainer.withValues(alpha: 0.5),
-            borderRadius: BorderRadius.circular(AppRadius.sm),
-          ),
-          child: Icon(
-            _iconFor(mediaType),
-            size: 24,
-            color: colorScheme.onPrimaryContainer.withValues(alpha: 0.8),
-          ),
+        WebsiteLogo(
+          localPath: localLogoPath,
+          fallbackIcon: _iconFor(mediaType),
+          size: 48,
+          iconSize: 24,
         ),
         if (enrichmentStatus == EnrichmentStatus.failed)
           Positioned(

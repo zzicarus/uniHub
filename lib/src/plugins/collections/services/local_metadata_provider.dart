@@ -68,14 +68,23 @@ class LocalMetadataProvider implements MetadataProvider {
 
   String? _favicon(String url, String body) {
     final href = _firstMatch(body, [
+      // rel before href (e.g. <link rel="icon" href="/favicon.ico">)
       RegExp(
         r'''<link[^>]+rel=["'][^"']*icon[^"']*["'][^>]+href=["']([^"']+)["']''',
         caseSensitive: false,
       ),
+      // href before rel (e.g. <link href="/favicon.ico" rel="icon">)
+      RegExp(
+        r'''<link[^>]+href=["']([^"']+)["'][^>]+rel=["'][^"']*icon[^"']*["']''',
+        caseSensitive: false,
+      ),
     ]);
-    if (href == null || href.isEmpty) return null;
     final base = Uri.parse(url);
-    return base.resolve(href).toString();
+    if (href != null && href.isNotEmpty) {
+      return base.resolve(href).toString();
+    }
+    // Fallback to /favicon.ico at the same origin when no link declaration
+    return base.resolve('/favicon.ico').toString();
   }
 
   String _decodeHtml(String value) {

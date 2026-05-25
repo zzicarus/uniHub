@@ -3073,6 +3073,740 @@ class EnrichmentJobsTableCompanion
   }
 }
 
+class $WebsiteLogoCacheTableTable extends WebsiteLogoCacheTable
+    with TableInfo<$WebsiteLogoCacheTableTable, WebsiteLogoCacheTableData> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $WebsiteLogoCacheTableTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+    'id',
+    aliasedName,
+    false,
+    hasAutoIncrement: true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'PRIMARY KEY AUTOINCREMENT',
+    ),
+  );
+  static const VerificationMeta _siteKeyMeta = const VerificationMeta(
+    'siteKey',
+  );
+  @override
+  late final GeneratedColumn<String> siteKey = GeneratedColumn<String>(
+    'site_key',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways('UNIQUE'),
+  );
+  static const VerificationMeta _hostMeta = const VerificationMeta('host');
+  @override
+  late final GeneratedColumn<String> host = GeneratedColumn<String>(
+    'host',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _remoteLogoUrlMeta = const VerificationMeta(
+    'remoteLogoUrl',
+  );
+  @override
+  late final GeneratedColumn<String> remoteLogoUrl = GeneratedColumn<String>(
+    'remote_logo_url',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _localLogoPathMeta = const VerificationMeta(
+    'localLogoPath',
+  );
+  @override
+  late final GeneratedColumn<String> localLogoPath = GeneratedColumn<String>(
+    'local_logo_path',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _mimeTypeMeta = const VerificationMeta(
+    'mimeType',
+  );
+  @override
+  late final GeneratedColumn<String> mimeType = GeneratedColumn<String>(
+    'mime_type',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _statusMeta = const VerificationMeta('status');
+  @override
+  late final GeneratedColumn<String> status = GeneratedColumn<String>(
+    'status',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('pending'),
+  );
+  static const VerificationMeta _lastErrorMeta = const VerificationMeta(
+    'lastError',
+  );
+  @override
+  late final GeneratedColumn<String> lastError = GeneratedColumn<String>(
+    'last_error',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _fetchedAtMeta = const VerificationMeta(
+    'fetchedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> fetchedAt = GeneratedColumn<DateTime>(
+    'fetched_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _expiresAtMeta = const VerificationMeta(
+    'expiresAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> expiresAt = GeneratedColumn<DateTime>(
+    'expires_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+    'created_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
+    'updatedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
+    'updated_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    siteKey,
+    host,
+    remoteLogoUrl,
+    localLogoPath,
+    mimeType,
+    status,
+    lastError,
+    fetchedAt,
+    expiresAt,
+    createdAt,
+    updatedAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'website_logo_cache';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<WebsiteLogoCacheTableData> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('site_key')) {
+      context.handle(
+        _siteKeyMeta,
+        siteKey.isAcceptableOrUnknown(data['site_key']!, _siteKeyMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_siteKeyMeta);
+    }
+    if (data.containsKey('host')) {
+      context.handle(
+        _hostMeta,
+        host.isAcceptableOrUnknown(data['host']!, _hostMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_hostMeta);
+    }
+    if (data.containsKey('remote_logo_url')) {
+      context.handle(
+        _remoteLogoUrlMeta,
+        remoteLogoUrl.isAcceptableOrUnknown(
+          data['remote_logo_url']!,
+          _remoteLogoUrlMeta,
+        ),
+      );
+    }
+    if (data.containsKey('local_logo_path')) {
+      context.handle(
+        _localLogoPathMeta,
+        localLogoPath.isAcceptableOrUnknown(
+          data['local_logo_path']!,
+          _localLogoPathMeta,
+        ),
+      );
+    }
+    if (data.containsKey('mime_type')) {
+      context.handle(
+        _mimeTypeMeta,
+        mimeType.isAcceptableOrUnknown(data['mime_type']!, _mimeTypeMeta),
+      );
+    }
+    if (data.containsKey('status')) {
+      context.handle(
+        _statusMeta,
+        status.isAcceptableOrUnknown(data['status']!, _statusMeta),
+      );
+    }
+    if (data.containsKey('last_error')) {
+      context.handle(
+        _lastErrorMeta,
+        lastError.isAcceptableOrUnknown(data['last_error']!, _lastErrorMeta),
+      );
+    }
+    if (data.containsKey('fetched_at')) {
+      context.handle(
+        _fetchedAtMeta,
+        fetchedAt.isAcceptableOrUnknown(data['fetched_at']!, _fetchedAtMeta),
+      );
+    }
+    if (data.containsKey('expires_at')) {
+      context.handle(
+        _expiresAtMeta,
+        expiresAt.isAcceptableOrUnknown(data['expires_at']!, _expiresAtMeta),
+      );
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_createdAtMeta);
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(
+        _updatedAtMeta,
+        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_updatedAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  WebsiteLogoCacheTableData map(
+    Map<String, dynamic> data, {
+    String? tablePrefix,
+  }) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return WebsiteLogoCacheTableData(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}id'],
+      )!,
+      siteKey: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}site_key'],
+      )!,
+      host: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}host'],
+      )!,
+      remoteLogoUrl: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}remote_logo_url'],
+      ),
+      localLogoPath: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}local_logo_path'],
+      ),
+      mimeType: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}mime_type'],
+      ),
+      status: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}status'],
+      )!,
+      lastError: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}last_error'],
+      ),
+      fetchedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}fetched_at'],
+      ),
+      expiresAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}expires_at'],
+      ),
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}created_at'],
+      )!,
+      updatedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}updated_at'],
+      )!,
+    );
+  }
+
+  @override
+  $WebsiteLogoCacheTableTable createAlias(String alias) {
+    return $WebsiteLogoCacheTableTable(attachedDatabase, alias);
+  }
+}
+
+class WebsiteLogoCacheTableData extends DataClass
+    implements Insertable<WebsiteLogoCacheTableData> {
+  final int id;
+
+  /// Normalised site key, e.g. "bilibili.com", "chatgpt.com".
+  final String siteKey;
+
+  /// Original host, e.g. "www.bilibili.com".
+  final String host;
+
+  /// Remote favicon URL declared by the page (may be null).
+  final String? remoteLogoUrl;
+
+  /// Local file path to the cached logo image.
+  final String? localLogoPath;
+
+  /// MIME type of the cached image, e.g. "image/png", "image/x-icon".
+  final String? mimeType;
+
+  /// success / pending / failed.
+  final String status;
+
+  /// Last error message when fetching failed.
+  final String? lastError;
+
+  /// Timestamp of the last successful fetch.
+  final DateTime? fetchedAt;
+
+  /// TTL: entries past this time should be refreshed.
+  final DateTime? expiresAt;
+  final DateTime createdAt;
+  final DateTime updatedAt;
+  const WebsiteLogoCacheTableData({
+    required this.id,
+    required this.siteKey,
+    required this.host,
+    this.remoteLogoUrl,
+    this.localLogoPath,
+    this.mimeType,
+    required this.status,
+    this.lastError,
+    this.fetchedAt,
+    this.expiresAt,
+    required this.createdAt,
+    required this.updatedAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['site_key'] = Variable<String>(siteKey);
+    map['host'] = Variable<String>(host);
+    if (!nullToAbsent || remoteLogoUrl != null) {
+      map['remote_logo_url'] = Variable<String>(remoteLogoUrl);
+    }
+    if (!nullToAbsent || localLogoPath != null) {
+      map['local_logo_path'] = Variable<String>(localLogoPath);
+    }
+    if (!nullToAbsent || mimeType != null) {
+      map['mime_type'] = Variable<String>(mimeType);
+    }
+    map['status'] = Variable<String>(status);
+    if (!nullToAbsent || lastError != null) {
+      map['last_error'] = Variable<String>(lastError);
+    }
+    if (!nullToAbsent || fetchedAt != null) {
+      map['fetched_at'] = Variable<DateTime>(fetchedAt);
+    }
+    if (!nullToAbsent || expiresAt != null) {
+      map['expires_at'] = Variable<DateTime>(expiresAt);
+    }
+    map['created_at'] = Variable<DateTime>(createdAt);
+    map['updated_at'] = Variable<DateTime>(updatedAt);
+    return map;
+  }
+
+  WebsiteLogoCacheTableCompanion toCompanion(bool nullToAbsent) {
+    return WebsiteLogoCacheTableCompanion(
+      id: Value(id),
+      siteKey: Value(siteKey),
+      host: Value(host),
+      remoteLogoUrl: remoteLogoUrl == null && nullToAbsent
+          ? const Value.absent()
+          : Value(remoteLogoUrl),
+      localLogoPath: localLogoPath == null && nullToAbsent
+          ? const Value.absent()
+          : Value(localLogoPath),
+      mimeType: mimeType == null && nullToAbsent
+          ? const Value.absent()
+          : Value(mimeType),
+      status: Value(status),
+      lastError: lastError == null && nullToAbsent
+          ? const Value.absent()
+          : Value(lastError),
+      fetchedAt: fetchedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(fetchedAt),
+      expiresAt: expiresAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(expiresAt),
+      createdAt: Value(createdAt),
+      updatedAt: Value(updatedAt),
+    );
+  }
+
+  factory WebsiteLogoCacheTableData.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return WebsiteLogoCacheTableData(
+      id: serializer.fromJson<int>(json['id']),
+      siteKey: serializer.fromJson<String>(json['siteKey']),
+      host: serializer.fromJson<String>(json['host']),
+      remoteLogoUrl: serializer.fromJson<String?>(json['remoteLogoUrl']),
+      localLogoPath: serializer.fromJson<String?>(json['localLogoPath']),
+      mimeType: serializer.fromJson<String?>(json['mimeType']),
+      status: serializer.fromJson<String>(json['status']),
+      lastError: serializer.fromJson<String?>(json['lastError']),
+      fetchedAt: serializer.fromJson<DateTime?>(json['fetchedAt']),
+      expiresAt: serializer.fromJson<DateTime?>(json['expiresAt']),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+      updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'siteKey': serializer.toJson<String>(siteKey),
+      'host': serializer.toJson<String>(host),
+      'remoteLogoUrl': serializer.toJson<String?>(remoteLogoUrl),
+      'localLogoPath': serializer.toJson<String?>(localLogoPath),
+      'mimeType': serializer.toJson<String?>(mimeType),
+      'status': serializer.toJson<String>(status),
+      'lastError': serializer.toJson<String?>(lastError),
+      'fetchedAt': serializer.toJson<DateTime?>(fetchedAt),
+      'expiresAt': serializer.toJson<DateTime?>(expiresAt),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+      'updatedAt': serializer.toJson<DateTime>(updatedAt),
+    };
+  }
+
+  WebsiteLogoCacheTableData copyWith({
+    int? id,
+    String? siteKey,
+    String? host,
+    Value<String?> remoteLogoUrl = const Value.absent(),
+    Value<String?> localLogoPath = const Value.absent(),
+    Value<String?> mimeType = const Value.absent(),
+    String? status,
+    Value<String?> lastError = const Value.absent(),
+    Value<DateTime?> fetchedAt = const Value.absent(),
+    Value<DateTime?> expiresAt = const Value.absent(),
+    DateTime? createdAt,
+    DateTime? updatedAt,
+  }) => WebsiteLogoCacheTableData(
+    id: id ?? this.id,
+    siteKey: siteKey ?? this.siteKey,
+    host: host ?? this.host,
+    remoteLogoUrl: remoteLogoUrl.present
+        ? remoteLogoUrl.value
+        : this.remoteLogoUrl,
+    localLogoPath: localLogoPath.present
+        ? localLogoPath.value
+        : this.localLogoPath,
+    mimeType: mimeType.present ? mimeType.value : this.mimeType,
+    status: status ?? this.status,
+    lastError: lastError.present ? lastError.value : this.lastError,
+    fetchedAt: fetchedAt.present ? fetchedAt.value : this.fetchedAt,
+    expiresAt: expiresAt.present ? expiresAt.value : this.expiresAt,
+    createdAt: createdAt ?? this.createdAt,
+    updatedAt: updatedAt ?? this.updatedAt,
+  );
+  WebsiteLogoCacheTableData copyWithCompanion(
+    WebsiteLogoCacheTableCompanion data,
+  ) {
+    return WebsiteLogoCacheTableData(
+      id: data.id.present ? data.id.value : this.id,
+      siteKey: data.siteKey.present ? data.siteKey.value : this.siteKey,
+      host: data.host.present ? data.host.value : this.host,
+      remoteLogoUrl: data.remoteLogoUrl.present
+          ? data.remoteLogoUrl.value
+          : this.remoteLogoUrl,
+      localLogoPath: data.localLogoPath.present
+          ? data.localLogoPath.value
+          : this.localLogoPath,
+      mimeType: data.mimeType.present ? data.mimeType.value : this.mimeType,
+      status: data.status.present ? data.status.value : this.status,
+      lastError: data.lastError.present ? data.lastError.value : this.lastError,
+      fetchedAt: data.fetchedAt.present ? data.fetchedAt.value : this.fetchedAt,
+      expiresAt: data.expiresAt.present ? data.expiresAt.value : this.expiresAt,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('WebsiteLogoCacheTableData(')
+          ..write('id: $id, ')
+          ..write('siteKey: $siteKey, ')
+          ..write('host: $host, ')
+          ..write('remoteLogoUrl: $remoteLogoUrl, ')
+          ..write('localLogoPath: $localLogoPath, ')
+          ..write('mimeType: $mimeType, ')
+          ..write('status: $status, ')
+          ..write('lastError: $lastError, ')
+          ..write('fetchedAt: $fetchedAt, ')
+          ..write('expiresAt: $expiresAt, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    siteKey,
+    host,
+    remoteLogoUrl,
+    localLogoPath,
+    mimeType,
+    status,
+    lastError,
+    fetchedAt,
+    expiresAt,
+    createdAt,
+    updatedAt,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is WebsiteLogoCacheTableData &&
+          other.id == this.id &&
+          other.siteKey == this.siteKey &&
+          other.host == this.host &&
+          other.remoteLogoUrl == this.remoteLogoUrl &&
+          other.localLogoPath == this.localLogoPath &&
+          other.mimeType == this.mimeType &&
+          other.status == this.status &&
+          other.lastError == this.lastError &&
+          other.fetchedAt == this.fetchedAt &&
+          other.expiresAt == this.expiresAt &&
+          other.createdAt == this.createdAt &&
+          other.updatedAt == this.updatedAt);
+}
+
+class WebsiteLogoCacheTableCompanion
+    extends UpdateCompanion<WebsiteLogoCacheTableData> {
+  final Value<int> id;
+  final Value<String> siteKey;
+  final Value<String> host;
+  final Value<String?> remoteLogoUrl;
+  final Value<String?> localLogoPath;
+  final Value<String?> mimeType;
+  final Value<String> status;
+  final Value<String?> lastError;
+  final Value<DateTime?> fetchedAt;
+  final Value<DateTime?> expiresAt;
+  final Value<DateTime> createdAt;
+  final Value<DateTime> updatedAt;
+  const WebsiteLogoCacheTableCompanion({
+    this.id = const Value.absent(),
+    this.siteKey = const Value.absent(),
+    this.host = const Value.absent(),
+    this.remoteLogoUrl = const Value.absent(),
+    this.localLogoPath = const Value.absent(),
+    this.mimeType = const Value.absent(),
+    this.status = const Value.absent(),
+    this.lastError = const Value.absent(),
+    this.fetchedAt = const Value.absent(),
+    this.expiresAt = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+  });
+  WebsiteLogoCacheTableCompanion.insert({
+    this.id = const Value.absent(),
+    required String siteKey,
+    required String host,
+    this.remoteLogoUrl = const Value.absent(),
+    this.localLogoPath = const Value.absent(),
+    this.mimeType = const Value.absent(),
+    this.status = const Value.absent(),
+    this.lastError = const Value.absent(),
+    this.fetchedAt = const Value.absent(),
+    this.expiresAt = const Value.absent(),
+    required DateTime createdAt,
+    required DateTime updatedAt,
+  }) : siteKey = Value(siteKey),
+       host = Value(host),
+       createdAt = Value(createdAt),
+       updatedAt = Value(updatedAt);
+  static Insertable<WebsiteLogoCacheTableData> custom({
+    Expression<int>? id,
+    Expression<String>? siteKey,
+    Expression<String>? host,
+    Expression<String>? remoteLogoUrl,
+    Expression<String>? localLogoPath,
+    Expression<String>? mimeType,
+    Expression<String>? status,
+    Expression<String>? lastError,
+    Expression<DateTime>? fetchedAt,
+    Expression<DateTime>? expiresAt,
+    Expression<DateTime>? createdAt,
+    Expression<DateTime>? updatedAt,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (siteKey != null) 'site_key': siteKey,
+      if (host != null) 'host': host,
+      if (remoteLogoUrl != null) 'remote_logo_url': remoteLogoUrl,
+      if (localLogoPath != null) 'local_logo_path': localLogoPath,
+      if (mimeType != null) 'mime_type': mimeType,
+      if (status != null) 'status': status,
+      if (lastError != null) 'last_error': lastError,
+      if (fetchedAt != null) 'fetched_at': fetchedAt,
+      if (expiresAt != null) 'expires_at': expiresAt,
+      if (createdAt != null) 'created_at': createdAt,
+      if (updatedAt != null) 'updated_at': updatedAt,
+    });
+  }
+
+  WebsiteLogoCacheTableCompanion copyWith({
+    Value<int>? id,
+    Value<String>? siteKey,
+    Value<String>? host,
+    Value<String?>? remoteLogoUrl,
+    Value<String?>? localLogoPath,
+    Value<String?>? mimeType,
+    Value<String>? status,
+    Value<String?>? lastError,
+    Value<DateTime?>? fetchedAt,
+    Value<DateTime?>? expiresAt,
+    Value<DateTime>? createdAt,
+    Value<DateTime>? updatedAt,
+  }) {
+    return WebsiteLogoCacheTableCompanion(
+      id: id ?? this.id,
+      siteKey: siteKey ?? this.siteKey,
+      host: host ?? this.host,
+      remoteLogoUrl: remoteLogoUrl ?? this.remoteLogoUrl,
+      localLogoPath: localLogoPath ?? this.localLogoPath,
+      mimeType: mimeType ?? this.mimeType,
+      status: status ?? this.status,
+      lastError: lastError ?? this.lastError,
+      fetchedAt: fetchedAt ?? this.fetchedAt,
+      expiresAt: expiresAt ?? this.expiresAt,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (siteKey.present) {
+      map['site_key'] = Variable<String>(siteKey.value);
+    }
+    if (host.present) {
+      map['host'] = Variable<String>(host.value);
+    }
+    if (remoteLogoUrl.present) {
+      map['remote_logo_url'] = Variable<String>(remoteLogoUrl.value);
+    }
+    if (localLogoPath.present) {
+      map['local_logo_path'] = Variable<String>(localLogoPath.value);
+    }
+    if (mimeType.present) {
+      map['mime_type'] = Variable<String>(mimeType.value);
+    }
+    if (status.present) {
+      map['status'] = Variable<String>(status.value);
+    }
+    if (lastError.present) {
+      map['last_error'] = Variable<String>(lastError.value);
+    }
+    if (fetchedAt.present) {
+      map['fetched_at'] = Variable<DateTime>(fetchedAt.value);
+    }
+    if (expiresAt.present) {
+      map['expires_at'] = Variable<DateTime>(expiresAt.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<DateTime>(updatedAt.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('WebsiteLogoCacheTableCompanion(')
+          ..write('id: $id, ')
+          ..write('siteKey: $siteKey, ')
+          ..write('host: $host, ')
+          ..write('remoteLogoUrl: $remoteLogoUrl, ')
+          ..write('localLogoPath: $localLogoPath, ')
+          ..write('mimeType: $mimeType, ')
+          ..write('status: $status, ')
+          ..write('lastError: $lastError, ')
+          ..write('fetchedAt: $fetchedAt, ')
+          ..write('expiresAt: $expiresAt, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -3086,6 +3820,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
       $SavedItemBoxesTableTable(this);
   late final $EnrichmentJobsTableTable enrichmentJobsTable =
       $EnrichmentJobsTableTable(this);
+  late final $WebsiteLogoCacheTableTable websiteLogoCacheTable =
+      $WebsiteLogoCacheTableTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -3096,6 +3832,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     collectionBoxesTable,
     savedItemBoxesTable,
     enrichmentJobsTable,
+    websiteLogoCacheTable,
   ];
 }
 
@@ -4644,6 +5381,356 @@ typedef $$EnrichmentJobsTableTableProcessedTableManager =
       EnrichmentJobsTableData,
       PrefetchHooks Function()
     >;
+typedef $$WebsiteLogoCacheTableTableCreateCompanionBuilder =
+    WebsiteLogoCacheTableCompanion Function({
+      Value<int> id,
+      required String siteKey,
+      required String host,
+      Value<String?> remoteLogoUrl,
+      Value<String?> localLogoPath,
+      Value<String?> mimeType,
+      Value<String> status,
+      Value<String?> lastError,
+      Value<DateTime?> fetchedAt,
+      Value<DateTime?> expiresAt,
+      required DateTime createdAt,
+      required DateTime updatedAt,
+    });
+typedef $$WebsiteLogoCacheTableTableUpdateCompanionBuilder =
+    WebsiteLogoCacheTableCompanion Function({
+      Value<int> id,
+      Value<String> siteKey,
+      Value<String> host,
+      Value<String?> remoteLogoUrl,
+      Value<String?> localLogoPath,
+      Value<String?> mimeType,
+      Value<String> status,
+      Value<String?> lastError,
+      Value<DateTime?> fetchedAt,
+      Value<DateTime?> expiresAt,
+      Value<DateTime> createdAt,
+      Value<DateTime> updatedAt,
+    });
+
+class $$WebsiteLogoCacheTableTableFilterComposer
+    extends Composer<_$AppDatabase, $WebsiteLogoCacheTableTable> {
+  $$WebsiteLogoCacheTableTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get siteKey => $composableBuilder(
+    column: $table.siteKey,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get host => $composableBuilder(
+    column: $table.host,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get remoteLogoUrl => $composableBuilder(
+    column: $table.remoteLogoUrl,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get localLogoPath => $composableBuilder(
+    column: $table.localLogoPath,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get mimeType => $composableBuilder(
+    column: $table.mimeType,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get status => $composableBuilder(
+    column: $table.status,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get lastError => $composableBuilder(
+    column: $table.lastError,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get fetchedAt => $composableBuilder(
+    column: $table.fetchedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get expiresAt => $composableBuilder(
+    column: $table.expiresAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$WebsiteLogoCacheTableTableOrderingComposer
+    extends Composer<_$AppDatabase, $WebsiteLogoCacheTableTable> {
+  $$WebsiteLogoCacheTableTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get siteKey => $composableBuilder(
+    column: $table.siteKey,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get host => $composableBuilder(
+    column: $table.host,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get remoteLogoUrl => $composableBuilder(
+    column: $table.remoteLogoUrl,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get localLogoPath => $composableBuilder(
+    column: $table.localLogoPath,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get mimeType => $composableBuilder(
+    column: $table.mimeType,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get status => $composableBuilder(
+    column: $table.status,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get lastError => $composableBuilder(
+    column: $table.lastError,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get fetchedAt => $composableBuilder(
+    column: $table.fetchedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get expiresAt => $composableBuilder(
+    column: $table.expiresAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$WebsiteLogoCacheTableTableAnnotationComposer
+    extends Composer<_$AppDatabase, $WebsiteLogoCacheTableTable> {
+  $$WebsiteLogoCacheTableTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get siteKey =>
+      $composableBuilder(column: $table.siteKey, builder: (column) => column);
+
+  GeneratedColumn<String> get host =>
+      $composableBuilder(column: $table.host, builder: (column) => column);
+
+  GeneratedColumn<String> get remoteLogoUrl => $composableBuilder(
+    column: $table.remoteLogoUrl,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get localLogoPath => $composableBuilder(
+    column: $table.localLogoPath,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get mimeType =>
+      $composableBuilder(column: $table.mimeType, builder: (column) => column);
+
+  GeneratedColumn<String> get status =>
+      $composableBuilder(column: $table.status, builder: (column) => column);
+
+  GeneratedColumn<String> get lastError =>
+      $composableBuilder(column: $table.lastError, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get fetchedAt =>
+      $composableBuilder(column: $table.fetchedAt, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get expiresAt =>
+      $composableBuilder(column: $table.expiresAt, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+}
+
+class $$WebsiteLogoCacheTableTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $WebsiteLogoCacheTableTable,
+          WebsiteLogoCacheTableData,
+          $$WebsiteLogoCacheTableTableFilterComposer,
+          $$WebsiteLogoCacheTableTableOrderingComposer,
+          $$WebsiteLogoCacheTableTableAnnotationComposer,
+          $$WebsiteLogoCacheTableTableCreateCompanionBuilder,
+          $$WebsiteLogoCacheTableTableUpdateCompanionBuilder,
+          (
+            WebsiteLogoCacheTableData,
+            BaseReferences<
+              _$AppDatabase,
+              $WebsiteLogoCacheTableTable,
+              WebsiteLogoCacheTableData
+            >,
+          ),
+          WebsiteLogoCacheTableData,
+          PrefetchHooks Function()
+        > {
+  $$WebsiteLogoCacheTableTableTableManager(
+    _$AppDatabase db,
+    $WebsiteLogoCacheTableTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$WebsiteLogoCacheTableTableFilterComposer(
+                $db: db,
+                $table: table,
+              ),
+          createOrderingComposer: () =>
+              $$WebsiteLogoCacheTableTableOrderingComposer(
+                $db: db,
+                $table: table,
+              ),
+          createComputedFieldComposer: () =>
+              $$WebsiteLogoCacheTableTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<String> siteKey = const Value.absent(),
+                Value<String> host = const Value.absent(),
+                Value<String?> remoteLogoUrl = const Value.absent(),
+                Value<String?> localLogoPath = const Value.absent(),
+                Value<String?> mimeType = const Value.absent(),
+                Value<String> status = const Value.absent(),
+                Value<String?> lastError = const Value.absent(),
+                Value<DateTime?> fetchedAt = const Value.absent(),
+                Value<DateTime?> expiresAt = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+                Value<DateTime> updatedAt = const Value.absent(),
+              }) => WebsiteLogoCacheTableCompanion(
+                id: id,
+                siteKey: siteKey,
+                host: host,
+                remoteLogoUrl: remoteLogoUrl,
+                localLogoPath: localLogoPath,
+                mimeType: mimeType,
+                status: status,
+                lastError: lastError,
+                fetchedAt: fetchedAt,
+                expiresAt: expiresAt,
+                createdAt: createdAt,
+                updatedAt: updatedAt,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                required String siteKey,
+                required String host,
+                Value<String?> remoteLogoUrl = const Value.absent(),
+                Value<String?> localLogoPath = const Value.absent(),
+                Value<String?> mimeType = const Value.absent(),
+                Value<String> status = const Value.absent(),
+                Value<String?> lastError = const Value.absent(),
+                Value<DateTime?> fetchedAt = const Value.absent(),
+                Value<DateTime?> expiresAt = const Value.absent(),
+                required DateTime createdAt,
+                required DateTime updatedAt,
+              }) => WebsiteLogoCacheTableCompanion.insert(
+                id: id,
+                siteKey: siteKey,
+                host: host,
+                remoteLogoUrl: remoteLogoUrl,
+                localLogoPath: localLogoPath,
+                mimeType: mimeType,
+                status: status,
+                lastError: lastError,
+                fetchedAt: fetchedAt,
+                expiresAt: expiresAt,
+                createdAt: createdAt,
+                updatedAt: updatedAt,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$WebsiteLogoCacheTableTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $WebsiteLogoCacheTableTable,
+      WebsiteLogoCacheTableData,
+      $$WebsiteLogoCacheTableTableFilterComposer,
+      $$WebsiteLogoCacheTableTableOrderingComposer,
+      $$WebsiteLogoCacheTableTableAnnotationComposer,
+      $$WebsiteLogoCacheTableTableCreateCompanionBuilder,
+      $$WebsiteLogoCacheTableTableUpdateCompanionBuilder,
+      (
+        WebsiteLogoCacheTableData,
+        BaseReferences<
+          _$AppDatabase,
+          $WebsiteLogoCacheTableTable,
+          WebsiteLogoCacheTableData
+        >,
+      ),
+      WebsiteLogoCacheTableData,
+      PrefetchHooks Function()
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -4658,4 +5745,6 @@ class $AppDatabaseManager {
       $$SavedItemBoxesTableTableTableManager(_db, _db.savedItemBoxesTable);
   $$EnrichmentJobsTableTableTableManager get enrichmentJobsTable =>
       $$EnrichmentJobsTableTableTableManager(_db, _db.enrichmentJobsTable);
+  $$WebsiteLogoCacheTableTableTableManager get websiteLogoCacheTable =>
+      $$WebsiteLogoCacheTableTableTableManager(_db, _db.websiteLogoCacheTable);
 }

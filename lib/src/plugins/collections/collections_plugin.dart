@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:uni_hub/src/core/database/tables/collection_boxes_table.dart';
 import 'package:uni_hub/src/core/database/tables/enrichment_jobs_table.dart';
+import 'package:uni_hub/src/core/database/tables/website_logo_cache_table.dart';
 import 'package:uni_hub/src/core/database/tables/saved_item_boxes_table.dart';
 import 'package:uni_hub/src/core/database/tables/saved_items_table.dart';
 import 'package:uni_hub/src/core/plugin/plugin_interface.dart';
@@ -41,8 +42,9 @@ class CollectionsPlugin extends UniHubPlugin {
     CollectionBoxesTable,
     SavedItemBoxesTable,
     EnrichmentJobsTable,
+    WebsiteLogoCacheTable,
   ];
 
   @override
-  int get schemaVersion => 3;
+  int get schemaVersion => 4;
 }

@@ -9,6 +9,7 @@ import 'package:uni_hub/src/plugins/collections/domain/media_type.dart';
 import 'package:uni_hub/src/plugins/collections/domain/source_platform.dart';
 import 'package:uni_hub/src/plugins/collections/providers/collections_providers.dart';
 import 'package:uni_hub/src/shared/widgets/app_pill_chip.dart';
+import 'package:uni_hub/src/shared/widgets/website_logo.dart';
 
 /// Full detail panel for a selected [SavedItemsTableData].
 ///
@@ -97,6 +98,12 @@ class _SavedItemDetailPanelState extends ConsumerState<SavedItemDetailPanel> {
     final mediaType = MediaType.fromValue(item.mediaType);
     final platform = SourcePlatform.fromValue(item.sourcePlatform);
 
+    // Read local logo path from cache (non-blocking, shows fallback when null)
+    final logoAsync = ref.watch(
+      websiteLogoForUrlProvider(item.normalizedUrl),
+    );
+    final localLogoPath = logoAsync.valueOrNull?.localLogoPath;
+
     return Container(
       decoration: BoxDecoration(
         color: colorScheme.surface,
@@ -117,6 +124,7 @@ class _SavedItemDetailPanelState extends ConsumerState<SavedItemDetailPanel> {
               item,
               mediaType,
               platform,
+              localLogoPath,
             ),
             _buildTopActionRow(theme, colorScheme, item),
             _plainDivider(colorScheme),
@@ -143,6 +151,7 @@ class _SavedItemDetailPanelState extends ConsumerState<SavedItemDetailPanel> {
     SavedItemsTableData item,
     MediaType mediaType,
     SourcePlatform platform,
+    String? localLogoPath,
   ) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(
@@ -160,19 +169,11 @@ class _SavedItemDetailPanelState extends ConsumerState<SavedItemDetailPanel> {
           return Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Container(
-                width: tileSize,
-                height: tileSize,
-                decoration: BoxDecoration(
-                  color: _identityIconBg(colorScheme, mediaType),
-                  borderRadius: BorderRadius.circular(AppRadius.md),
-                  boxShadow: const [AppShadows.cardSoft],
-                ),
-                child: Icon(
-                  _iconFor(mediaType),
-                  size: iconSize,
-                  color: colorScheme.onTertiaryContainer.withValues(alpha: 0.9),
-                ),
+              WebsiteLogo(
+                localPath: localLogoPath,
+                fallbackIcon: _iconFor(mediaType),
+                size: tileSize,
+                iconSize: iconSize,
               ),
               const SizedBox(width: AppSpacing.sm),
               Expanded(
@@ -240,16 +241,7 @@ class _SavedItemDetailPanelState extends ConsumerState<SavedItemDetailPanel> {
     );
   }
 
-  Color _identityIconBg(ColorScheme colorScheme, MediaType mediaType) {
-    return switch (mediaType) {
-      MediaType.video => colorScheme.tertiaryContainer.withValues(alpha: 0.75),
-      MediaType.repository => colorScheme.secondaryContainer.withValues(
-        alpha: 0.72,
-      ),
-      MediaType.article => colorScheme.primaryContainer.withValues(alpha: 0.64),
-      _ => colorScheme.tertiaryContainer.withValues(alpha: 0.55),
-    };
-  }
+
 
   // ===============================================================
   // B. Top Action Row

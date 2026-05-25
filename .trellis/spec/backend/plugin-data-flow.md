@@ -225,6 +225,44 @@ for (final tableType in pluginTableTypes) {
 
 ---
 
+## Enrichment + Logo 缓存数据流
+
+```
+用户收藏 URL
+  ↓
+CollectionCaptureService.captureUrl()
+  ├─ createSavedItem()          → saved_items 表
+  └─ enqueueEnrichmentJob()     → enrichment_jobs 表
+  ↓
+_triggerEnrichmentQueue()
+  └─ EnrichmentJobService.runPendingJobs()
+       ├─ LocalMetadataProvider.fetchMetadata()
+       │    → 解析 title / description / favicon / ...
+       ├─ CollectionsRepository.updateMetadata()
+       │    → 写回 saved_items
+       ├─ WebsiteLogoCacheService.ensureLogoCached()
+       │    ├─ 下载 favicon（远程 URL 或 fallback /favicon.ico）
+       │    ├─ 保存到本地文件 {appCacheDir}/website_logos/{base64(siteKey)}.{ext}
+       │    └─ 写入 website_logo_cache 表
+       └─ EnrichmentJobsDao.markSuccess()
+  ↓
+UI 自动刷新
+  ├─ websiteLogoRefreshProvider 递增 → 所有 family provider 重取
+  └─ savedItemsListProvider 无效化 → 卡片列表重建
+```
+
+### 关键约束
+
+| 规则 | 说明 |
+|------|------|
+| UI 不抓取 | `WebsiteLogo` 只读 `localPath` + `Image.file`，不发起任何网络请求 |
+| 站点级复用 | 同一 siteKey（host 去 www.、小写）只缓存一份 logo 文件 |
+| 不阻塞收藏 | logo 在 enrichment 后台异步补全，收藏流程不受影响 |
+| 后台下载限制 | 最大 512KB、超时 8s、仅 http/https |
+| TTL 管理 | 成功 30 天、失败 24 小时重试间隔 |
+
+---
+
 ## 新增插件数据层 Checklist
 
 - [ ] Table 位于 `core/database/tables/`，字段命名和默认值符合规范。

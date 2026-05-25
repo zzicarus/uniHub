@@ -57,6 +57,8 @@ class _CollectionCaptureBarState extends ConsumerState<CollectionCaptureBar> {
   Future<void> _triggerEnrichmentQueue() async {
     try {
       await ref.read(enrichmentJobServiceProvider).runPendingJobs();
+      // Trigger logo cache refresh after enrichment completes
+      ref.read(websiteLogoRefreshProvider.notifier).state++;
     } catch (error) {
       debugPrint('Collections enrichment job queue failed: $error');
     } finally {

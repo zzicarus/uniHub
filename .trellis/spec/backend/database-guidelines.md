@@ -209,6 +209,51 @@ class ThoughtsRepository {
 | `document` 中没有 paragraph text | 返回空字符串 |
 | `imagePaths` 不是合法 JSON list | 视为空列表 |
 
+---
+
+## 表：website_logo_cache
+
+| 属性 | 值 |
+|------|-----|
+| 文件名 | `lib/src/core/database/tables/website_logo_cache_table.dart` |
+| 用途 | 站点级 favicon 缓存，同一 host 只缓存一份 logo |
+| siteKey 规则 | `lowerCase(host without leading www.)`，例如 `bilibili.com`、`chatgpt.com` |
+| 后台填充 | `EnrichmentJobService` 在成功抓取 metadata 后触发 `WebsiteLogoCacheService.ensureLogoCached()` |
+| UI 读取 | `WebsiteLogo` 组件通过 `websiteLogoForUrlProvider` 读取 `localLogoPath`，使用 `Image.file`，不发起网络请求 |
+
+```dart
+class WebsiteLogoCacheTable extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  TextColumn get siteKey => text().unique()();     // e.g. "bilibili.com"
+  TextColumn get host => text()();                  // e.g. "www.bilibili.com"
+  TextColumn get remoteLogoUrl => text().nullable()();
+  TextColumn get localLogoPath => text().nullable()();
+  TextColumn get mimeType => text().nullable()();
+  TextColumn get status => text().withDefault(const Constant('pending'))();
+  TextColumn get lastError => text().nullable()();
+  DateTimeColumn get fetchedAt => dateTime().nullable()();
+  DateTimeColumn get expiresAt => dateTime().nullable()();
+  DateTimeColumn get createdAt => dateTime()();
+  DateTimeColumn get updatedAt => dateTime()();
+}
+```
+
+### 缓存策略
+
+| 状态 | 行为 |
+|------|------|
+| success 且未过期（默认 30 天） | 直接复用 |
+| success 但过期 | 先返回旧 logo，后台刷新 |
+| pending | UI 显示 fallback |
+| failed 且未过重试时间（默认 24 小时） | UI 显示 fallback |
+| failed 且可重试 | 后台重新抓取 |
+
+### 注册与迁移
+
+- `collections_plugin.dart`：`tables` 加入 `WebsiteLogoCacheTable`，`schemaVersion` 升至 4
+- `app_database.dart`：`@DriftDatabase(tables: [...]` 加入 `WebsiteLogoCacheTable`，`onUpgrade` 新增 `from < 4 → createTable`
+- logo 文件存于 `{appCacheDir}/website_logos/{base64(siteKey)}.{ext}`
+
 ### 5. Good/Base/Bad Cases
 
 - Good：新建想法，正文以 `unihub.appflowy_json.v1` envelope 写入；卡片/首页/搜索用 `plainTextFromStored` 展示摘要。

@@ -5,6 +5,7 @@ import 'tables/enrichment_jobs_table.dart';
 import 'tables/saved_item_boxes_table.dart';
 import 'tables/saved_items_table.dart';
 import 'tables/thoughts_table.dart';
+import 'tables/website_logo_cache_table.dart';
 
 part 'app_database.g.dart';
 
@@ -30,6 +31,7 @@ part 'app_database.g.dart';
     CollectionBoxesTable,
     SavedItemBoxesTable,
     EnrichmentJobsTable,
+    WebsiteLogoCacheTable,
   ],
 )
 class AppDatabase extends _$AppDatabase {
@@ -65,6 +67,9 @@ class AppDatabase extends _$AppDatabase {
         await m.createTable(collectionBoxesTable);
         await m.createTable(savedItemBoxesTable);
         await m.createTable(enrichmentJobsTable);
+      }
+      if (from < 4) {
+        await m.createTable(websiteLogoCacheTable);
       }
     },
   );

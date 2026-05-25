@@ -82,4 +82,68 @@ void main() {
 
     expect(tapped, isTrue);
   });
+
+  testWidgets('SavedItemCard renders with favicon URL without crashing', (
+    tester,
+  ) async {
+    final now = DateTime(2026, 5, 24, 9);
+
+    await pumpCard(
+      tester,
+      SavedItemCard(
+        item: SavedItemsTableData(
+          id: 2,
+          originalUrl: 'https://example.com/article',
+          normalizedUrl: 'https://example.com/article',
+          title: 'With Favicon',
+          description: 'Article with favicon',
+          mediaType: 'article',
+          sourcePlatform: 'web',
+          status: 'unread',
+          isInInbox: true,
+          enrichmentStatus: 'pending',
+          favicon: 'https://example.com/favicon.ico',
+          createdAt: now,
+          updatedAt: now,
+        ),
+        onTap: () {},
+      ),
+    );
+
+    // The card renders without crashing.
+    // The WalletLogo fallback shows the article icon when the image fails
+    // to load in the test environment (no real HTTP).
+    expect(find.text('With Favicon'), findsOneWidget);
+  });
+
+  testWidgets('SavedItemCard enrichment failed red dot shows with favicon', (
+    tester,
+  ) async {
+    final now = DateTime(2026, 5, 24, 9);
+
+    await pumpCard(
+      tester,
+      SavedItemCard(
+        item: SavedItemsTableData(
+          id: 3,
+          originalUrl: 'https://example.com/failed',
+          normalizedUrl: 'https://example.com/failed',
+          title: 'Failed Enrichment',
+          mediaType: 'article',
+          sourcePlatform: 'web',
+          status: 'unread',
+          isInInbox: true,
+          enrichmentStatus: 'failed',
+          favicon: 'https://example.com/favicon.ico',
+          createdAt: now,
+          updatedAt: now,
+        ),
+        onTap: () {},
+      ),
+    );
+
+    // The card still renders and '抓取失败' chip is shown
+    expect(find.text('Failed Enrichment'), findsOneWidget);
+    expect(find.text('抓取失败'), findsOneWidget);
+  });
 }

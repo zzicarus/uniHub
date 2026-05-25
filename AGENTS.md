@@ -100,6 +100,8 @@ UniHub 是一个 **桌面端优先** 的 Flutter 个人工具箱，基于插件�
 | `lib/src/core/` | 基础设施总览（路由/启动/布局/生命周期） | 深度阅读 |
 | `lib/src/core/plugin/` | **插件系统关键约定 + 已知陷阱** | 新增/修改插件必读 |
 | `lib/src/plugins/thoughts/` | Thoughts 插件内部架构 + data/ui 分层 | 维护该插件必读 |
+| `lib/src/shared/widgets/website_logo.dart` | WebsiteLogo 组件（只读本地缓存，不网络请求） | 了解站点 Logo 展示机制 |
+| `lib/src/plugins/collections/services/website_logo_cache_service.dart` | 站点级 favicon 缓存服务（抓取、缓存、TTL） | 理解 Logo 后台获取流程 |
 | `.trellis/spec/architecture/` | 架构设计文档（编辑引擎迁移、3 层架构说明） | 理解架构演进必读 |
 | `test/` | 测试隔离模式 + ProviderScope override | 新增测试必读 |
 | `.trellis/spec/` | 项目规范（数据库/Widget/工作流等） | 任意任务前查阅 |

@@ -64,8 +64,9 @@ lib/src/core/
 ```
 database/
 ├── tables/
-│   ├── thoughts_table.dart    # Thoughts 表定义
-│   └── ...                    # 其他插件表（按需添加）
+│   ├── thoughts_table.dart            # Thoughts 表定义
+│   ├── website_logo_cache_table.dart  # 站点 favicon 缓存表
+│   └── ...                            # 其他插件表（按需添加）
 ├── app_database.dart          # @DriftDatabase 注解入口
 └── database_provider.dart     # Riverpod Provider
 ```
