@@ -8,8 +8,8 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-1.md`
-- **Total Sessions**: 16
-- **Last Active**: 2026-05-24
+- **Total Sessions**: 17
+- **Last Active**: 2026-05-25
 <!-- @@@/auto:current-status -->
 
 ---
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-1.md` | ~574 | Active |
+| `journal-1.md` | ~633 | Active |
 <!-- @@@/auto:active-documents -->
 
 ---
@@ -29,6 +29,7 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 17 | 2026-05-25 | 修复桌面 Shell 渲染断言失败 + spec 更新 | `d64ad51` | `feature/unified-font-tokens` |
 | 16 | 2026-05-24 | Collections 工作台 UI 重构 | `f522386` | `main` |
 | 15 | 2026-05-24 | Collections MVP 闭环完成 | `8305954`, `c059aae`, `59f29a1` | `main` |
 | 14 | 2026-05-24 | 图片系统 V2 Phase 1-4 + 字体任务 | `3ca86e7`, `35cfa74`, `2a1e9ef`, `977c2b3`, `71ed83a`, `7a0d903`, `06b99aa`, `b42b17a` | `main` |

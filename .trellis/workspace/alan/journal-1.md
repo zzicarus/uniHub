@@ -598,3 +598,36 @@ font: AppFlowy 编辑器使用 Inter 字体 + 主题色; image V2: ThoughtImageB
 
 - `component-guidelines.md`: Workbench layout spec 更新 (面板宽度动态化、间距调整)
 - `component-guidelines.md`: 新增 Overflow 预防第 6 条 (工具栏/操作条) 和第 7 条 (卡片右侧紧缩)
+
+
+## Session 17: 修复桌面 Shell 渲染断言失败 + spec 更新
+
+**Date**: 2026-05-25
+**Task**: 修复桌面 Shell 渲染断言失败 + spec 更新
+**Branch**: `feature/unified-font-tokens`
+
+### Summary
+
+完成桌面 DesktopShell RenderBox was not laid out 断言修复：为 AppCompactListItem、AppSectionHeader 的 trailing action、SavedItemCard 补充本地 Material 宿主；编写 ink_host_regression_test.dart 和 SavedItemCard focused test 防止回归；全量 flutter analyze + focused tests 通过。随后执行 trellis-update-spec，将 hasLocalMaterialAncestor 测试辅助函数写入 component-guidelines.md，并将对应审查项加入 quality-guidelines.md。
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `d64ad51` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
