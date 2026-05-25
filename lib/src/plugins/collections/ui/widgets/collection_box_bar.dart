@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uni_hub/src/core/theme/app_tokens.dart';
 import 'package:uni_hub/src/plugins/collections/providers/collections_providers.dart';
+import 'package:uni_hub/src/plugins/collections/ui/widgets/create_collection_folder_dialog.dart';
 
 /// A box filter bar with label "Box", multi-select [FilterChip]s for each
 /// available collection box, and an ActionChip to create a new box.
@@ -85,36 +86,17 @@ class CollectionBoxBar extends ConsumerWidget {
     BuildContext context,
     WidgetRef ref,
   ) async {
-    final controller = TextEditingController();
     final name = await showDialog<String>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('新建收藏夹'),
-        content: TextField(
-          controller: controller,
-          autofocus: true,
-          decoration: const InputDecoration(hintText: '收藏夹名称'),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('取消'),
-          ),
-          FilledButton(
-            onPressed: () {
-              Navigator.pop(ctx, controller.text.trim());
-            },
-            child: const Text('创建'),
-          ),
-        ],
-      ),
+      builder: (_) => const CreateCollectionFolderDialog(),
     );
     if (name == null || name.isEmpty) return;
+
+    // Wait until the dialog route and all its associated animations (e.g.
+    // InputDecorator tickers) are fully torn down before touching providers.
+    await WidgetsBinding.instance.endOfFrame;
+
     await ref.read(collectionsRepositoryProvider).createBox(name);
-    // Defer invalidation to next frame so the dialog's elements
-    // (e.g. InputDecorator with active tickers) are fully deactivated.
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.invalidate(collectionBoxesProvider);
-    });
+    ref.invalidate(collectionBoxesProvider);
   }
 }

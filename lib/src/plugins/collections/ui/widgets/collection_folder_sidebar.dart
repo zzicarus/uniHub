@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uni_hub/src/core/theme/app_tokens.dart';
 import 'package:uni_hub/src/plugins/collections/domain/collection_models.dart';
 import 'package:uni_hub/src/plugins/collections/providers/collections_providers.dart';
+import 'package:uni_hub/src/plugins/collections/ui/widgets/create_collection_folder_dialog.dart';
 
 class CollectionFolderSidebar extends ConsumerWidget {
   const CollectionFolderSidebar({super.key});
@@ -164,43 +165,20 @@ class CollectionFolderSidebar extends ConsumerWidget {
     BuildContext context,
     WidgetRef ref,
   ) async {
-    final controller = TextEditingController();
     final name = await showDialog<String>(
       context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: const Text('新建收藏夹'),
-        content: TextField(
-          controller: controller,
-          autofocus: true,
-          decoration: const InputDecoration(hintText: '收藏夹名称'),
-          textInputAction: TextInputAction.done,
-          onSubmitted: (value) => Navigator.pop(dialogContext, value.trim()),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext),
-            child: const Text('取消'),
-          ),
-          FilledButton(
-            onPressed: () {
-              Navigator.pop(dialogContext, controller.text.trim());
-            },
-            child: const Text('创建'),
-          ),
-        ],
-      ),
+      builder: (_) => const CreateCollectionFolderDialog(),
     );
-    controller.dispose();
 
     if (name == null || name.isEmpty) return;
 
+    // Wait until the dialog route and all its associated animations (e.g.
+    // InputDecorator tickers) are fully torn down before touching providers.
+    await WidgetsBinding.instance.endOfFrame;
+
     try {
       await ref.read(collectionsRepositoryProvider).createBox(name);
-      // Defer invalidation to next frame so the dialog's elements
-      // are fully deactivated before the parent rebuilds.
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        ref.invalidate(collectionBoxesProvider);
-      });
+      ref.invalidate(collectionBoxesProvider);
       if (!context.mounted) return;
       ScaffoldMessenger.of(
         context,
