@@ -8,15 +8,19 @@ import 'package:uni_hub/src/plugins/collections/domain/consumption_status.dart';
 import 'package:uni_hub/src/plugins/collections/domain/media_type.dart';
 import 'package:uni_hub/src/plugins/collections/domain/source_platform.dart';
 import 'package:uni_hub/src/plugins/collections/providers/collections_providers.dart';
+import 'package:uni_hub/src/shared/widgets/app_pill_chip.dart';
 
 import 'collection_technical_info_section.dart';
 
 /// Full detail panel for a selected [SavedItemsTableData].
 ///
-/// Three sections:
-/// A. 内容身份区 — icon, title, source, open button
-/// B. 整理操作区 — link, status, box, tags, notes (light background group)
-/// C. 内容沉淀区 — content tabs + technical info (collapsed)
+/// Layout structure:
+/// A. 内容身份卡 — prominent identity card with gradient, icon, title, source
+/// B. 主操作行 — open original page, favorite
+/// C. 整理信息区 — source, status, box, tags, notes (light dividers)
+/// D. 内容补充区 — content tabs (weaker visual weight)
+/// E. 技术信息区 — collapsed at bottom
+/// F. 底部固定操作栏 — fixed bottom action bar
 class SavedItemDetailPanel extends ConsumerStatefulWidget {
   const SavedItemDetailPanel({required this.item, super.key});
 
@@ -100,7 +104,7 @@ class _SavedItemDetailPanelState extends ConsumerState<SavedItemDetailPanel>
   }
 
   // ---------------------------------------------------------------
-  // Detail layout — three sections
+  // Detail layout — six sections
   // ---------------------------------------------------------------
 
   Widget _buildDetail(BuildContext context, WidgetRef ref) {
@@ -127,6 +131,7 @@ class _SavedItemDetailPanelState extends ConsumerState<SavedItemDetailPanel>
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  // A. Content Identity Card
                   _buildContentIdentity(
                     theme,
                     colorScheme,
@@ -134,25 +139,30 @@ class _SavedItemDetailPanelState extends ConsumerState<SavedItemDetailPanel>
                     mediaType,
                     platform,
                   ),
+                  // B. Top Action Row
+                  _buildTopActionRow(theme, colorScheme, item),
                   _plainDivider(colorScheme),
+                  // C. Organize Info Section
                   _buildOrganizeSection(theme, colorScheme, item),
                   _plainDivider(colorScheme),
+                  // D. Content Tabs
                   _buildContentTabs(theme, colorScheme, item),
-                  _plainDivider(colorScheme),
+                  // E. Technical Info (collapsed, bottom)
                   CollectionTechnicalInfoSection(item: item),
                 ],
               ),
             ),
           ),
+          // F. Bottom Fixed Action Bar
           _buildBottomActionBar(theme, colorScheme, item),
         ],
       ),
     );
   }
 
-  // ---------------------------------------------------------------
-  // A. Content Identity
-  // ---------------------------------------------------------------
+  // ===============================================================
+  // A. Content Identity Card — prominent blue-tinted card
+  // ===============================================================
 
   Widget _buildContentIdentity(
     ThemeData theme,
@@ -163,90 +173,177 @@ class _SavedItemDetailPanelState extends ConsumerState<SavedItemDetailPanel>
   ) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(
-        AppSpacing.lg,
-        AppSpacing.lg,
-        AppSpacing.sm,
-        AppSpacing.sm,
+        AppSpacing.md,
+        AppSpacing.md,
+        AppSpacing.md,
+        AppSpacing.xxs,
       ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Icon
-          Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              color: colorScheme.primaryContainer.withValues(alpha: 0.5),
-              borderRadius: BorderRadius.circular(AppRadius.sm),
-            ),
-            child: Icon(
-              _iconFor(mediaType),
-              size: 22,
-              color: colorScheme.onPrimaryContainer.withValues(alpha: 0.85),
-            ),
+      child: Container(
+        width: double.infinity,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(AppRadius.lg),
+          border: Border.all(
+            color: colorScheme.outlineVariant.withValues(alpha: 0.5),
           ),
-          const SizedBox(width: AppSpacing.sm),
-          // Title + source
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              colorScheme.primaryContainer.withValues(alpha: 0.30),
+              colorScheme.surface,
+            ],
+          ),
+        ),
+        padding: const EdgeInsets.all(AppSpacing.md),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Large icon
+            Container(
+              width: 60,
+              height: 60,
+              decoration: BoxDecoration(
+                color: _identityIconBg(colorScheme, mediaType),
+                borderRadius: BorderRadius.circular(AppRadius.md),
+              ),
+              child: Icon(
+                _iconFor(mediaType),
+                size: 28,
+                color: colorScheme.onPrimaryContainer.withValues(alpha: 0.85),
+              ),
+            ),
+            const SizedBox(width: AppSpacing.sm),
+            // Title + source
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    item.title.isEmpty ? item.normalizedUrl : item.title,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: AppFontTokens.bold,
+                      height: 1.25,
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.xxs),
+                  Text(
+                    '${platform.label} · ${mediaType.label} · ${_relativeTime(item.createdAt)}',
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: colorScheme.onSurfaceVariant.withValues(alpha: 0.8),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: AppSpacing.xs),
+            // Star + Open buttons
+            Column(
+              mainAxisSize: MainAxisSize.min,
               children: [
-                Text(
-                  item.title.isEmpty ? item.normalizedUrl : item.title,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    fontWeight: AppFontTokens.bold,
-                    height: 1.3,
+                IconButton(
+                  tooltip: '星标功能稍后接入',
+                  icon: const Icon(Icons.star_border_rounded, size: 20),
+                  visualDensity: VisualDensity.compact,
+                  style: IconButton.styleFrom(
+                    foregroundColor: colorScheme.onSurfaceVariant,
                   ),
+                  onPressed: () {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('星标功能稍后接入')),
+                    );
+                  },
                 ),
-                const SizedBox(height: AppSpacing.xxs),
-                Text(
-                  '${platform.label} · ${mediaType.label}',
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: colorScheme.onSurfaceVariant,
+                IconButton(
+                  tooltip: '在浏览器中打开',
+                  icon: const Icon(Icons.open_in_new_rounded, size: 20),
+                  visualDensity: VisualDensity.compact,
+                  style: IconButton.styleFrom(
+                    foregroundColor: colorScheme.primary,
                   ),
-                ),
-                const SizedBox(height: AppSpacing.xxs),
-                Text(
-                  _relativeTime(item.createdAt),
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: colorScheme.onSurfaceVariant,
-                  ),
+                  onPressed: () => _openUrl(item.originalUrl),
                 ),
               ],
             ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Color _identityIconBg(ColorScheme colorScheme, MediaType mediaType) {
+    return switch (mediaType) {
+      MediaType.video => colorScheme.tertiaryContainer.withValues(alpha: 0.5),
+      MediaType.repository => colorScheme.secondaryContainer.withValues(alpha: 0.5),
+      MediaType.article => colorScheme.primaryContainer.withValues(alpha: 0.5),
+      _ => colorScheme.primaryContainer.withValues(alpha: 0.5),
+    };
+  }
+
+  // ===============================================================
+  // B. Top Action Row
+  // ===============================================================
+
+  Widget _buildTopActionRow(
+    ThemeData theme,
+    ColorScheme colorScheme,
+    SavedItemsTableData item,
+  ) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.lg,
+        AppSpacing.xs,
+        AppSpacing.lg,
+        AppSpacing.sm,
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: OutlinedButton.icon(
+              onPressed: () async {
+                final repository = ref.read(collectionsRepositoryProvider);
+                await repository.markOpened(item.id);
+                ref.invalidate(savedItemsListProvider);
+                if (!mounted) return;
+                await _openUrl(item.originalUrl);
+              },
+              icon: const Icon(Icons.open_in_new_rounded, size: 16),
+              label: const Text('打开原网页', style: TextStyle(fontSize: 13)),
+              style: OutlinedButton.styleFrom(
+                visualDensity: VisualDensity.compact,
+                foregroundColor: colorScheme.primary,
+                side: BorderSide(
+                  color: colorScheme.primary.withValues(alpha: 0.4),
+                ),
+              ),
+            ),
           ),
-          const SizedBox(width: AppSpacing.xs),
+          const SizedBox(width: AppSpacing.sm),
           IconButton(
             tooltip: '星标功能稍后接入',
             icon: const Icon(Icons.star_border_rounded, size: 20),
             visualDensity: VisualDensity.compact,
             style: IconButton.styleFrom(
               foregroundColor: colorScheme.onSurfaceVariant,
+              side: BorderSide(
+                color: colorScheme.outlineVariant.withValues(alpha: 0.6),
+              ),
             ),
             onPressed: () {
-              ScaffoldMessenger.of(
-                context,
-              ).showSnackBar(const SnackBar(content: Text('星标功能稍后接入')));
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('星标功能稍后接入')),
+              );
             },
-          ),
-          // Open URL button
-          IconButton(
-            tooltip: '在浏览器中打开',
-            icon: const Icon(Icons.open_in_new_rounded, size: 20),
-            visualDensity: VisualDensity.compact,
-            style: IconButton.styleFrom(foregroundColor: colorScheme.primary),
-            onPressed: () => _openUrl(item.originalUrl),
           ),
         ],
       ),
     );
   }
 
-  // ---------------------------------------------------------------
-  // B. Organize Section — light background group
-  // ---------------------------------------------------------------
+  // ===============================================================
+  // C. Organize Info Section — white bg + light dividers
+  // ===============================================================
 
   Widget _buildOrganizeSection(
     ThemeData theme,
@@ -255,27 +352,18 @@ class _SavedItemDetailPanelState extends ConsumerState<SavedItemDetailPanel>
   ) {
     return Container(
       width: double.infinity,
-      color: colorScheme.surfaceContainerLow.withValues(alpha: 0.4),
+      color: colorScheme.surface,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // -- Link --
           _buildLinkSection(theme, colorScheme, item),
           _sectionDivider(colorScheme),
-
-          // -- Status --
           _buildStatusSection(theme, colorScheme, item),
           _sectionDivider(colorScheme),
-
-          // -- Box --
           _BoxSection(item: item),
           _sectionDivider(colorScheme),
-
-          // -- Tags --
           _TagsSection(item: item),
           _sectionDivider(colorScheme),
-
-          // -- Notes --
           _buildNotesSection(theme, colorScheme),
         ],
       ),
@@ -283,7 +371,7 @@ class _SavedItemDetailPanelState extends ConsumerState<SavedItemDetailPanel>
   }
 
   // ---------------------------------------------------------------
-  // B.1 Link
+  // C.1 Source Link
   // ---------------------------------------------------------------
 
   Widget _buildLinkSection(
@@ -320,7 +408,7 @@ class _SavedItemDetailPanelState extends ConsumerState<SavedItemDetailPanel>
                   style: theme.textTheme.bodySmall?.copyWith(
                     color: colorScheme.primary,
                     decoration: TextDecoration.underline,
-                    decorationColor: colorScheme.primary.withValues(alpha: 0.4),
+                    decorationColor: colorScheme.primary.withValues(alpha: 0.35),
                   ),
                 ),
               ],
@@ -342,9 +430,9 @@ class _SavedItemDetailPanelState extends ConsumerState<SavedItemDetailPanel>
               ),
               onPressed: () {
                 Clipboard.setData(ClipboardData(text: item.originalUrl));
-                ScaffoldMessenger.of(
-                  context,
-                ).showSnackBar(const SnackBar(content: Text('已复制链接')));
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('已复制链接')),
+                );
               },
             ),
           ),
@@ -354,7 +442,7 @@ class _SavedItemDetailPanelState extends ConsumerState<SavedItemDetailPanel>
   }
 
   // ---------------------------------------------------------------
-  // B.2 Status
+  // C.2 Status — AppPillChip
   // ---------------------------------------------------------------
 
   Widget _buildStatusSection(
@@ -386,24 +474,15 @@ class _SavedItemDetailPanelState extends ConsumerState<SavedItemDetailPanel>
             children: ConsumptionStatus.values.map((status) {
               final isSelected =
                   ConsumptionStatus.fromValue(item.status) == status;
-              return ChoiceChip(
-                label: Text(_statusLabel(status)),
+              return AppPillChip(
+                label: _statusLabel(status),
                 selected: isSelected,
-                onSelected: (selected) async {
-                  if (!selected) return;
+                onTap: () async {
                   final repository = ref.read(collectionsRepositoryProvider);
                   await repository.updateStatus(item.id, status);
                   ref.invalidate(savedItemsListProvider);
                 },
-                selectedColor: colorScheme.primary,
-                backgroundColor: colorScheme.surfaceContainerLow,
-                labelStyle: TextStyle(
-                  color: isSelected
-                      ? colorScheme.onPrimary
-                      : colorScheme.onSurface,
-                  fontWeight: isSelected ? AppFontTokens.semiBold : AppFontTokens.normal,
-                ),
-                visualDensity: VisualDensity.compact,
+                compact: true,
               );
             }).toList(),
           ),
@@ -411,6 +490,10 @@ class _SavedItemDetailPanelState extends ConsumerState<SavedItemDetailPanel>
       ),
     );
   }
+
+  // ---------------------------------------------------------------
+  // C.5 Notes — custom drawn note box
+  // ---------------------------------------------------------------
 
   Widget _buildNotesSection(ThemeData theme, ColorScheme colorScheme) {
     return Padding(
@@ -431,25 +514,53 @@ class _SavedItemDetailPanelState extends ConsumerState<SavedItemDetailPanel>
             ),
           ),
           const SizedBox(height: AppSpacing.sm),
-          TextField(
-            enabled: false,
-            maxLines: 3,
-            decoration: InputDecoration(
-              hintText: '写下你收藏这条内容的想法或要点...',
-              helperText: '备注功能稍后接入',
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(AppRadius.md),
+          Container(
+            width: double.infinity,
+            height: 96,
+            decoration: BoxDecoration(
+              color: colorScheme.surface,
+              borderRadius: BorderRadius.circular(AppRadius.md),
+              border: Border.all(
+                color: colorScheme.outlineVariant.withValues(alpha: 0.7),
               ),
             ),
+            padding: const EdgeInsets.all(AppSpacing.md),
+            child: Align(
+              alignment: Alignment.topLeft,
+              child: Text(
+                '写下你收藏这条内容的想法或要点...',
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: colorScheme.onSurfaceVariant.withValues(alpha: 0.55),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: AppSpacing.xs),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                '备注功能稍后接入',
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: colorScheme.onSurfaceVariant.withValues(alpha: 0.6),
+                ),
+              ),
+              Text(
+                '0/500',
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: colorScheme.onSurfaceVariant.withValues(alpha: 0.6),
+                ),
+              ),
+            ],
           ),
         ],
       ),
     );
   }
 
-  // ---------------------------------------------------------------
-  // C. Content Tabs
-  // ---------------------------------------------------------------
+  // ===============================================================
+  // D. Content Tabs — weaker visual weight
+  // ===============================================================
 
   Widget _buildContentTabs(
     ThemeData theme,
@@ -465,9 +576,18 @@ class _SavedItemDetailPanelState extends ConsumerState<SavedItemDetailPanel>
             controller: _tabController,
             isScrollable: false,
             labelColor: colorScheme.primary,
-            unselectedLabelColor: colorScheme.onSurfaceVariant,
-            indicatorColor: colorScheme.primary,
+            unselectedLabelColor:
+                colorScheme.onSurfaceVariant.withValues(alpha: 0.6),
+            indicatorColor: colorScheme.primary.withValues(alpha: 0.5),
             indicatorSize: TabBarIndicatorSize.tab,
+            indicatorWeight: 2,
+            labelStyle: theme.textTheme.labelMedium?.copyWith(
+              fontSize: 12,
+              fontWeight: AppFontTokens.semiBold,
+            ),
+            unselectedLabelStyle: theme.textTheme.labelMedium?.copyWith(
+              fontSize: 12,
+            ),
             onTap: (index) {
               setState(() {
                 _tabIndex = index;
@@ -500,7 +620,7 @@ class _SavedItemDetailPanelState extends ConsumerState<SavedItemDetailPanel>
     };
   }
 
-  /// Summary — appears ONLY in the "摘要" tab.
+  // Summary tab
   Widget _buildSummaryTab(
     ThemeData theme,
     ColorScheme colorScheme,
@@ -533,6 +653,7 @@ class _SavedItemDetailPanelState extends ConsumerState<SavedItemDetailPanel>
     );
   }
 
+  // Preview tab
   Widget _buildPreviewTab(
     ThemeData theme,
     ColorScheme colorScheme,
@@ -562,6 +683,7 @@ class _SavedItemDetailPanelState extends ConsumerState<SavedItemDetailPanel>
     );
   }
 
+  // Placeholder tab
   Widget _buildPlaceholderTab(
     ThemeData theme,
     ColorScheme colorScheme,
@@ -622,18 +744,18 @@ class _SavedItemDetailPanelState extends ConsumerState<SavedItemDetailPanel>
   }
 
   Widget _plainDivider(ColorScheme colorScheme) => Divider(
-    height: 1,
-    thickness: 1,
-    color: colorScheme.outlineVariant.withValues(alpha: 0.5),
-  );
+        height: 1,
+        thickness: 1,
+        color: colorScheme.outlineVariant.withValues(alpha: 0.5),
+      );
 
   Widget _sectionDivider(ColorScheme colorScheme) => Divider(
-    height: 1,
-    thickness: 1,
-    indent: AppSpacing.lg,
-    endIndent: AppSpacing.lg,
-    color: colorScheme.outlineVariant.withValues(alpha: 0.3),
-  );
+        height: 1,
+        thickness: 1,
+        indent: AppSpacing.lg,
+        endIndent: AppSpacing.lg,
+        color: colorScheme.outlineVariant.withValues(alpha: 0.28),
+      );
 
   String _relativeTime(DateTime dt) {
     final now = DateTime.now();
@@ -691,6 +813,10 @@ class _SavedItemDetailPanelState extends ConsumerState<SavedItemDetailPanel>
     }
   }
 
+  // ===============================================================
+  // F. Bottom Fixed Action Bar
+  // ===============================================================
+
   Widget _buildBottomActionBar(
     ThemeData theme,
     ColorScheme colorScheme,
@@ -699,7 +825,11 @@ class _SavedItemDetailPanelState extends ConsumerState<SavedItemDetailPanel>
     return DecoratedBox(
       decoration: BoxDecoration(
         color: colorScheme.surface,
-        border: Border(top: BorderSide(color: colorScheme.outlineVariant)),
+        border: Border(
+          top: BorderSide(
+            color: colorScheme.outlineVariant.withValues(alpha: 0.5),
+          ),
+        ),
       ),
       child: Padding(
         padding: const EdgeInsets.all(AppSpacing.sm),
@@ -715,7 +845,7 @@ class _SavedItemDetailPanelState extends ConsumerState<SavedItemDetailPanel>
                   if (!mounted) return;
                   await _openUrl(item.originalUrl);
                 },
-                icon: const Icon(Icons.open_in_new_rounded),
+                icon: const Icon(Icons.open_in_new_rounded, size: 18),
                 label: const Text('打开内容'),
               ),
             ),
@@ -723,11 +853,11 @@ class _SavedItemDetailPanelState extends ConsumerState<SavedItemDetailPanel>
             Expanded(
               child: OutlinedButton.icon(
                 onPressed: () {
-                  ScaffoldMessenger.of(
-                    context,
-                  ).showSnackBar(const SnackBar(content: Text('编辑功能稍后接入')));
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('编辑功能稍后接入')),
+                  );
                 },
-                icon: const Icon(Icons.edit_outlined),
+                icon: const Icon(Icons.edit_outlined, size: 18),
                 label: const Text('编辑'),
               ),
             ),
@@ -735,9 +865,9 @@ class _SavedItemDetailPanelState extends ConsumerState<SavedItemDetailPanel>
             IconButton(
               tooltip: '更多操作',
               onPressed: () {
-                ScaffoldMessenger.of(
-                  context,
-                ).showSnackBar(const SnackBar(content: Text('更多操作稍后接入')));
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('更多操作稍后接入')),
+                );
               },
               icon: const Icon(Icons.more_horiz_rounded),
             ),
@@ -748,9 +878,9 @@ class _SavedItemDetailPanelState extends ConsumerState<SavedItemDetailPanel>
   }
 }
 
-// ---------------------------------------------------------------
+// ===============================================================
 // Tags Section
-// ---------------------------------------------------------------
+// ===============================================================
 
 class _TagsSection extends ConsumerWidget {
   const _TagsSection({required this.item});
@@ -803,18 +933,21 @@ class _TagsSection extends ConsumerWidget {
                     runSpacing: AppSpacing.xs,
                     children: [
                       for (final label in labels)
-                        Chip(
-                          label: Text(label),
-                          visualDensity: VisualDensity.compact,
+                        AppPillChip(
+                          label: label,
+                          selected: false,
+                          compact: true,
                         ),
-                      ActionChip(
-                        label: const Text('+ 添加标签'),
-                        onPressed: () {
+                      AppPillChip(
+                        label: '+ 添加标签',
+                        selected: false,
+                        compact: true,
+                        icon: Icons.add_rounded,
+                        onTap: () {
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(content: Text('标签功能稍后接入')),
                           );
                         },
-                        visualDensity: VisualDensity.compact,
                       ),
                     ],
                   );
@@ -833,9 +966,9 @@ class _TagsSection extends ConsumerWidget {
   }
 }
 
-// ---------------------------------------------------------------
-// Box Section (B.3)
-// ---------------------------------------------------------------
+// ===============================================================
+// Box Section
+// ===============================================================
 
 class _BoxSection extends ConsumerWidget {
   const _BoxSection({required this.item});
@@ -916,41 +1049,43 @@ class _BoxSection extends ConsumerWidget {
                     spacing: AppSpacing.xs,
                     runSpacing: AppSpacing.xs,
                     children: [
-                      for (final box in boxes) ...[
-                        FilterChip(
-                          label: Text(box.name),
+                      for (final box in boxes)
+                        AppPillChip(
+                          label: box.name,
                           selected: currentSet.contains(box.id),
-                          onSelected: (selected) {
-                            final repository = ref.read(
-                              collectionsRepositoryProvider,
-                            );
-                            if (selected) {
-                              final next = {...currentSet, box.id};
-                              repository.setItemBoxes(item.id, next);
-                              if (currentSet.isEmpty) {
-                                repository.updateInboxState(item.id, false);
-                              }
-                            } else {
+                          compact: true,
+                          onTap: () {
+                            final repository =
+                                ref.read(collectionsRepositoryProvider);
+                            if (currentSet.contains(box.id)) {
                               final next = {...currentSet}..remove(box.id);
                               repository.setItemBoxes(item.id, next);
                               if (next.isEmpty) {
                                 repository.updateInboxState(item.id, true);
                               }
+                            } else {
+                              final next = {...currentSet, box.id};
+                              repository.setItemBoxes(item.id, next);
+                              if (currentSet.isEmpty) {
+                                repository.updateInboxState(item.id, false);
+                              }
                             }
                             ref.invalidate(savedItemsListProvider);
                           },
-                          visualDensity: VisualDensity.compact,
                         ),
-                      ],
-                      ActionChip(
-                        label: const Text('+ 选择收藏夹'),
-                        onPressed: () => _addBox(context, ref, boxes),
-                        visualDensity: VisualDensity.compact,
+                      AppPillChip(
+                        label: '+ 选择收藏夹',
+                        selected: false,
+                        compact: true,
+                        icon: Icons.playlist_add_rounded,
+                        onTap: () => _addBox(context, ref, boxes),
                       ),
-                      ActionChip(
-                        label: const Text('+ 新建'),
-                        onPressed: () => _createBox(context, ref),
-                        visualDensity: VisualDensity.compact,
+                      AppPillChip(
+                        label: '+ 新建',
+                        selected: false,
+                        compact: true,
+                        icon: Icons.add_rounded,
+                        onTap: () => _createBox(context, ref),
                       ),
                     ],
                   );
