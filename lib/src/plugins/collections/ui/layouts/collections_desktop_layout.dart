@@ -4,7 +4,6 @@ import 'package:uni_hub/src/core/database/app_database.dart';
 import 'package:uni_hub/src/core/theme/app_tokens.dart';
 import 'package:uni_hub/src/plugins/collections/providers/collections_providers.dart';
 
-import '../widgets/collection_bulk_action_bar.dart';
 import '../widgets/collection_capture_bar.dart';
 import '../widgets/collection_folder_sidebar.dart';
 import '../widgets/collection_list_toolbar.dart';
@@ -170,7 +169,6 @@ class _CollectionsDesktopLayoutState
                                 ),
                               ),
                             ),
-                            const CollectionBulkActionBar(),
                           ],
                         ),
                       ),
