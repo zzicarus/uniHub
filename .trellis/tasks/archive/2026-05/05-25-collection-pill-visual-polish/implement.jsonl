@@ -1,0 +1,2 @@
+{"file": ".trellis/spec/frontend/component-guidelines.md", "reason": "Widget patterns (Material+Ink+InkWell, colorScheme usage, AppFontTokens, AppSpacing, AppRadius)"}
+{"file": ".trellis/spec/frontend/uiux-guidelines.md", "reason": "UI patterns for pill/chip styling and typography"}
