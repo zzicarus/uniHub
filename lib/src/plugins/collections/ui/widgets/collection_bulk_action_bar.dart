@@ -8,7 +8,7 @@ import 'package:uni_hub/src/plugins/collections/providers/collections_providers.
 ///
 /// Visual style: white background, thin border, light shadow, rounded corners.
 /// Active actions ("标记已看", "归档") look enabled.
-/// Placeholder actions ("移动", "添加到 Box") are visually disabled.
+/// Placeholder actions ("移动", "添加到收藏夹") are visually disabled.
 class CollectionBulkActionBar extends ConsumerWidget {
   const CollectionBulkActionBar({super.key});
 
@@ -49,9 +49,13 @@ class CollectionBulkActionBar extends ConsumerWidget {
               children: [
                 // Selection count
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 3,
+                  ),
                   decoration: BoxDecoration(
-                    color: colorScheme.primaryContainer.withValues(alpha: 0.3),
+                    color:
+                        colorScheme.primaryContainer.withValues(alpha: 0.3),
                     borderRadius: BorderRadius.circular(AppRadius.xs),
                   ),
                   child: Text(
@@ -70,12 +74,13 @@ class CollectionBulkActionBar extends ConsumerWidget {
                     child: Row(
                       children: [
                         // Active: 标记已看
-                        _ActionButton(
+                        _BulkActionPill(
                           icon: Icons.check_circle_outline,
                           label: isCompact ? '已看' : '标记已看',
                           enabled: true,
                           onPressed: () async {
-                            final repository = ref.read(collectionsRepositoryProvider);
+                            final repository =
+                                ref.read(collectionsRepositoryProvider);
                             await repository.updateStatus(
                               selectedId,
                               ConsumptionStatus.done,
@@ -86,32 +91,34 @@ class CollectionBulkActionBar extends ConsumerWidget {
                         ),
                         const SizedBox(width: AppSpacing.xs),
                         // Active: 归档
-                        _ActionButton(
+                        _BulkActionPill(
                           icon: Icons.archive_outlined,
                           label: '归档',
                           enabled: true,
                           onPressed: () async {
-                            final repository = ref.read(collectionsRepositoryProvider);
+                            final repository =
+                                ref.read(collectionsRepositoryProvider);
                             await repository.updateStatus(
                               selectedId,
                               ConsumptionStatus.archived,
                             );
-                            ref.read(selectedSavedItemIdProvider.notifier).state = null;
+                            ref.read(selectedSavedItemIdProvider.notifier)
+                                .state = null;
                             ref.invalidate(savedItemsListProvider);
                           },
                           colorScheme: colorScheme,
                         ),
                         const SizedBox(width: AppSpacing.xs),
                         // Disabled: 移动
-                        _ActionButton(
+                        _BulkActionPill(
                           icon: Icons.drive_file_move_outlined,
                           label: '移动',
                           enabled: false,
                           colorScheme: colorScheme,
                         ),
                         const SizedBox(width: AppSpacing.xs),
-                        // Disabled: 添加到 Box
-                        _ActionButton(
+                        // Disabled: 添加到收藏夹
+                        _BulkActionPill(
                           icon: Icons.folder_outlined,
                           label: isCompact ? '收藏夹' : '添加到收藏夹',
                           enabled: false,
@@ -130,8 +137,11 @@ class CollectionBulkActionBar extends ConsumerWidget {
   }
 }
 
-class _ActionButton extends StatelessWidget {
-  const _ActionButton({
+/// A lightweight pill-style action button for the bulk action bar.
+///
+/// Height 30, transparent background, subtle hover feedback via InkWell.
+class _BulkActionPill extends StatelessWidget {
+  const _BulkActionPill({
     required this.icon,
     required this.label,
     required this.enabled,
@@ -147,25 +157,54 @@ class _ActionButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    const double height = 30.0;
+    const double hPadding = 10.0;
+    const double iconSize = 15.0;
+    const double fontSize = 12.5;
+
     final foregroundColor = enabled
         ? colorScheme.primary
-        : colorScheme.onSurfaceVariant.withValues(alpha: 0.4);
+        : colorScheme.onSurfaceVariant.withValues(alpha: 0.40);
 
-    return TextButton.icon(
-      onPressed: enabled ? onPressed : null,
-      icon: Icon(icon, size: 16, color: foregroundColor),
-      label: Text(
-        label,
-        style: TextStyle(
-          color: foregroundColor,
-          fontWeight: enabled ? AppFontTokens.medium : AppFontTokens.normal,
+    final borderRadius = BorderRadius.circular(AppRadius.full);
+
+    return Material(
+      type: MaterialType.transparency,
+      child: Ink(
+        decoration: BoxDecoration(
+          borderRadius: borderRadius,
         ),
-      ),
-      style: TextButton.styleFrom(
-        visualDensity: VisualDensity.compact,
-        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
-        foregroundColor: foregroundColor,
-        disabledForegroundColor: colorScheme.onSurfaceVariant.withValues(alpha: 0.3),
+        child: InkWell(
+          borderRadius: borderRadius,
+          onTap: enabled ? onPressed : null,
+          child: SizedBox(
+            height: height,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: hPadding),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    icon,
+                    size: iconSize,
+                    color: foregroundColor,
+                  ),
+                  const SizedBox(width: AppSpacing.xxs),
+                  Text(
+                    label,
+                    style: TextStyle(
+                      fontSize: fontSize,
+                      height: 1.15,
+                      fontWeight: AppFontTokens.medium,
+                      color: foregroundColor,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }

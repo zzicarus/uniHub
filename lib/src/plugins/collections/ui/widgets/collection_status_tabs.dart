@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uni_hub/src/core/theme/app_tokens.dart';
 import 'package:uni_hub/src/plugins/collections/domain/consumption_status.dart';
 import 'package:uni_hub/src/plugins/collections/providers/collections_providers.dart';
+import 'package:uni_hub/src/shared/widgets/app_pill_chip.dart';
 
 class CollectionStatusTabs extends ConsumerWidget {
   const CollectionStatusTabs({super.key});
@@ -10,7 +11,6 @@ class CollectionStatusTabs extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final selected = ref.watch(collectionStatusFilterProvider);
-    final colorScheme = Theme.of(context).colorScheme;
 
     final tabs = <_StatusTab>[
       const _StatusTab(label: '全部'),
@@ -25,29 +25,14 @@ class CollectionStatusTabs extends ConsumerWidget {
       child: Row(
         children: [
           for (final tab in tabs) ...[
-            ChoiceChip(
-              label: Text(tab.label),
+            AppPillChip(
+              label: tab.label,
               selected: selected == tab.status,
-              onSelected: (_) {
+              compact: true,
+              onTap: () {
                 ref.read(collectionStatusFilterProvider.notifier).state =
                     tab.status;
               },
-              selectedColor: colorScheme.primary,
-              backgroundColor: colorScheme.surfaceContainerLow,
-              side: BorderSide(
-                color: selected == tab.status
-                    ? colorScheme.primary
-                    : colorScheme.outlineVariant,
-              ),
-              labelStyle: TextStyle(
-                color: selected == tab.status
-                    ? colorScheme.onPrimary
-                    : colorScheme.onSurface,
-                fontWeight: selected == tab.status
-                    ? AppFontTokens.bold
-                    : AppFontTokens.medium,
-              ),
-              visualDensity: VisualDensity.compact,
             ),
             const SizedBox(width: AppSpacing.xs),
           ],

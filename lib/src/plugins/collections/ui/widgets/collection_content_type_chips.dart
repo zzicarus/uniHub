@@ -4,6 +4,7 @@ import 'package:uni_hub/src/core/theme/app_tokens.dart';
 import 'package:uni_hub/src/plugins/collections/domain/media_type.dart';
 import 'package:uni_hub/src/plugins/collections/domain/source_platform.dart';
 import 'package:uni_hub/src/plugins/collections/providers/collections_providers.dart';
+import 'package:uni_hub/src/shared/widgets/app_pill_chip.dart';
 
 class CollectionContentTypeChips extends ConsumerWidget {
   const CollectionContentTypeChips({super.key});
@@ -12,7 +13,6 @@ class CollectionContentTypeChips extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final mediaType = ref.watch(collectionMediaTypeFilterProvider);
     final platform = ref.watch(collectionPlatformFilterProvider);
-    final colorScheme = Theme.of(context).colorScheme;
 
     final entries = <_ContentTypeEntry>[
       const _ContentTypeEntry(label: '全部', icon: Icons.explore_outlined),
@@ -48,36 +48,23 @@ class CollectionContentTypeChips extends ConsumerWidget {
       child: Row(
         children: [
           for (final entry in entries) ...[
-            ChoiceChip(
-              avatar: Icon(entry.icon, size: 16),
-              label: Text(entry.label),
+            AppPillChip(
+              label: entry.label,
+              icon: entry.icon,
               selected: _isSelected(entry, mediaType, platform),
-              onSelected: (_) => _select(ref, entry),
-              selectedColor: colorScheme.primaryContainer,
-              backgroundColor: colorScheme.surface,
-              side: BorderSide(color: colorScheme.outlineVariant),
-              visualDensity: VisualDensity.compact,
-              labelStyle: TextStyle(
-                color: _isSelected(entry, mediaType, platform)
-                    ? colorScheme.primary
-                    : colorScheme.onSurface,
-                fontWeight: _isSelected(entry, mediaType, platform)
-                    ? AppFontTokens.bold
-                    : AppFontTokens.medium,
-              ),
+              onTap: () => _select(ref, entry),
             ),
             const SizedBox(width: AppSpacing.xs),
           ],
-          ActionChip(
-            avatar: const Icon(Icons.more_horiz_rounded, size: 16),
-            label: const Text('更多'),
-            onPressed: () {
+          AppPillChip(
+            label: '更多',
+            icon: Icons.more_horiz_rounded,
+            selected: false,
+            onTap: () {
               ScaffoldMessenger.of(
                 context,
               ).showSnackBar(const SnackBar(content: Text('更多类型稍后接入')));
             },
-            side: BorderSide(color: colorScheme.outlineVariant),
-            visualDensity: VisualDensity.compact,
           ),
         ],
       ),
