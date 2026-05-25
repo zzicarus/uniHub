@@ -4,10 +4,12 @@ import 'package:go_router/go_router.dart';
 import 'package:uni_hub/src/core/plugin/plugin_interface.dart';
 import 'package:uni_hub/src/core/router/route_names.dart';
 import 'package:uni_hub/src/core/database/tables/thoughts_table.dart';
+import 'package:uni_hub/src/core/theme/app_tokens.dart';
+import 'package:uni_hub/src/shared/editor/appflowy_document_tools.dart';
 import 'data/thought_content_codec.dart';
 import 'providers/thoughts_providers.dart';
 import 'ui/thoughts_list_page.dart';
-import 'ui/thoughts_editor_page.dart';
+import 'ui/widgets/thought_editor_workspace.dart';
 
 class ThoughtsPlugin extends UniHubPlugin {
   @override
@@ -64,7 +66,7 @@ class ThoughtsPlugin extends UniHubPlugin {
         if (id == null) {
           return const ThoughtsListPage();
         }
-        return ThoughtsEditorPage(thoughtId: id);
+        return _ThoughtEditorRoutePage(thoughtId: id);
       },
     ),
   ];
@@ -134,9 +136,13 @@ class ThoughtsPlugin extends UniHubPlugin {
     String? tags,
   }) async {
     final repo = ref.read(thoughtsRepositoryProvider);
-    final doc = ThoughtContentCodec.documentFromStored(content);
+    final plainText = content.trim();
+    final document = AppFlowyDocumentTools.documentJsonFromPlainText(plainText);
     final created = await repo.createThought(
-      content: ThoughtContentCodec.encodeDocument(doc),
+      content: ThoughtContentCodec.encodeAppFlowy(
+        document: document,
+        plainText: plainText,
+      ),
       tags: tags,
     );
     return DashboardItem(
@@ -158,6 +164,104 @@ class ThoughtsPlugin extends UniHubPlugin {
         .map((s) => s.trim())
         .where((s) => s.isNotEmpty)
         .toList();
+  }
+}
+
+/// Route host for `/thoughts/:id`.
+///
+/// Keeps the user-facing route on the AppFlowy workspace while leaving the
+/// legacy Quill editor page available only as migration code.
+class _ThoughtEditorRoutePage extends ConsumerWidget {
+  const _ThoughtEditorRoutePage({required this.thoughtId});
+
+  final int thoughtId;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final thoughtAsync = ref.watch(thoughtProvider(thoughtId));
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return Scaffold(
+      backgroundColor: colorScheme.surface,
+      body: SafeArea(
+        child: thoughtAsync.when(
+          loading: () => const Center(child: CircularProgressIndicator()),
+          error: (error, stack) => _ThoughtEditorRouteMessage(
+            icon: Icons.error_outline,
+            title: '暂时无法加载想法',
+            message: '请返回列表后重试。',
+            actionLabel: '返回想法列表',
+            onAction: () => context.go('/thoughts'),
+          ),
+          data: (thought) {
+            if (thought == null) {
+              return _ThoughtEditorRouteMessage(
+                icon: Icons.lightbulb_outline,
+                title: '找不到这条想法',
+                message: '它可能已被删除，或链接已失效。',
+                actionLabel: '返回想法列表',
+                onAction: () => context.go('/thoughts'),
+              );
+            }
+
+            return ThoughtEditorWorkspace(
+              thoughtId: thoughtId,
+              onClose: () => context.go('/thoughts'),
+            );
+          },
+        ),
+      ),
+    );
+  }
+}
+
+class _ThoughtEditorRouteMessage extends StatelessWidget {
+  const _ThoughtEditorRouteMessage({
+    required this.icon,
+    required this.title,
+    required this.message,
+    required this.actionLabel,
+    required this.onAction,
+  });
+
+  final IconData icon;
+  final String title;
+  final String message;
+  final String actionLabel;
+  final VoidCallback onAction;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(AppSpacing.xl),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 48, color: colorScheme.onSurfaceVariant),
+            const SizedBox(height: AppSpacing.md),
+            Text(title, style: theme.textTheme.titleLarge),
+            const SizedBox(height: AppSpacing.xs),
+            Text(
+              message,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: colorScheme.onSurfaceVariant,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: AppSpacing.lg),
+            FilledButton.icon(
+              onPressed: onAction,
+              icon: const Icon(Icons.arrow_back),
+              label: Text(actionLabel),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
 

@@ -127,28 +127,47 @@ Token 定义在 `lib/src/core/theme/app_tokens.dart`：
 | `AppSizes` | 组件尺寸（buttonHeight、listItem 等） | ✅ 优先用 |
 | `AppDesktopSizes` | 桌面端布局尺寸（sidebarWidth 等） | ✅ 必须用 |
 | `AppMobileSizes` | 移动端布局尺寸 | ✅ 必须用 |
-| `AppFonts` | 字体族 | ✅ 必须用 |
+| `AppFonts` | 字体族（Inter + Noto Sans CJK） | ✅ 必须用 |
+| `AppFontTokens` | 字号/行高/字重语义常量（display=28 → mini=10） | ✅ 必须用 |
 | `AppShadows` | 阴影常量 | ✅ 优先用 |
+| `AppBreakpoints` | 响应式断点（WindowSize.compact/medium/expanded） | 在 Shell 层使用 |
 
 ---
 
 ## 响应式布局
 
-```dart
-// 参考 lib/src/shared/layouts/app_layout.dart
-final isDesktop = MediaQuery.of(context).size.width >= 720;
+使用 `AppBreakpoints`（`lib/src/core/theme/app_breakpoints.dart`）作为统一断点来源。不硬编码 `MediaQuery` 或 `Platform` 判断。
 
-if (isDesktop) {
-  // 侧栏布局（Windows）
-} else {
-  // 底部导航布局（Android / 移动端）
-}
+### 三档断点系统
+
+| 档位 | `WindowSize` | 宽度 | 布局策略 |
+|------|-------------|------|----------|
+| 紧凑 | `compact` | `< 900px` | 底部导航 + 全屏页面 |
+| 中等 | `medium` | `900 - 1279px` | 两列布局（侧栏 + 内容） |
+| 扩展 | `expanded` | `>= 1280px` | 三列布局（侧栏 + 内容 + 右栏） |
+
+```dart
+// 参考 lib/src/core/theme/app_breakpoints.dart
+final size = AppBreakpoints.of(context);
+// → WindowSize.compact / medium / expanded
+
+// 或使用便捷方法
+final isCompact = AppBreakpoints.isCompact(context);
+```
+
+```dart
+// 参考 lib/src/shared/widgets/adaptive_layout.dart
+// 自动切换 mobile/desktop builder
+AdaptiveLayout(
+  mobile: (context) => MobileHome(),
+  desktop: (context) => DesktopHome(),
+)
 ```
 
 **约定**：
-- 桌面端断点：`>= 720px`
-- 桌面端：侧栏（`Sidebar`）始终可见
-- 移动端：主导航使用底部 `NavigationBar`，常用入口保持在底部；暂未实现的功能可先通过 Core 占位页保留入口
+- 断点定义：`mobileMax = 899`、`tabletMin = 900`、`wideMin = 1280`
+- 桌面端（≥900px）：侧栏（`Sidebar`）始终可见
+- 移动端（<900px）：主导航使用底部 `NavigationBar`，常用入口保持在底部；暂未实现的功能可先通过 Core 占位页保留入口
 - 不硬编码平台判断（`Platform.isWindows`），使用宽度判断
 - 桌面 Shell 必须提供外层 `Scaffold` 或 `ColoredBox` 背景，不能只返回裸 `Row`；否则 Home 这类非 `Scaffold` 子页面在 Windows 上可能露出黑色默认窗口背景
 
@@ -182,16 +201,178 @@ return Row(
 
 ---
 
-### 已知差距：字号 Token 缺失
+### 字体排版系统：AppFontTokens
 
-当前项目没有 `AppFontSizes` token 类，导致多处 `fontSize: 11`、`fontSize: 12` 等硬编码值。以下文件有 hardcoded fontSize：
+> 实现在 `lib/src/core/theme/app_tokens.dart` — `AppFontTokens` 抽象类。
 
-| 文件 | 上下文 |
-|------|--------|
-| `lib/src/plugins/thoughts/ui/widgets/thought_card.dart` | tag chip、badge 等小字号文本 |
-| `lib/src/plugins/thoughts/ui/layouts/thoughts_shared_widgets.dart` | 辅助信息、标签文本 |
+统一字体尺寸、行高、字重的语义化常量，替代所有硬编码 `fontSize:`、`height:`、`FontWeight.wXXX`。
 
-**建议**：未来引入 `AppFontSizes` 类集中管理字号 token，解决这些散落的硬编码值。
+#### 字母表
+
+| 类别 | 常量 | 值 | 对应 TextTheme | 使用场景 |
+|------|------|-----|---------------|----------|
+| 特大 | `display` | 28 | `headlineMedium` | 大型展示文字 |
+| 标题 | `headline` | 22 | `titleLarge` | 模块标题 |
+| 大标题 | `titleLg` | 16 | `titleMedium` | 列表主标题 |
+| 中标题 | `titleMd` | 14 | `titleSmall` / `labelLarge` | 副标题、标签文字 |
+| 大正文 | `bodyLg` | 16 | `bodyLarge` | 正文大 |
+| 中正文 | `bodyMd` | 14 | `bodyMedium` | 正文中 |
+| 小正文 | `bodySm` | 12 | `bodySmall` / `labelMedium` | 正文小 |
+| 大标签 | `labelLg` | 14 | `labelLarge` | 大标签 |
+| 小标签 | `labelMd` | 12 | `labelMedium` | 小标签 |
+| 巨幅 | `hero` | 34 | — | 移动端欢迎语 |
+| 品牌 | `brand` | 24 | — | Logo / 品牌标识 |
+| 次标 | `subtitle` | 15 | — | 编辑器正文、导航项文字 |
+| 说明 | `caption` | 11 | — | 状态徽章、时间戳 |
+| 极小 | `mini` | 10 | — | 紧凑标签、数量角标 |
+
+#### 行高
+
+每个字号有配套的行高常量（`*Height`）：
+
+```dart
+AppFontTokens.bodyLgHeight  // 1.5（bodyLarge）
+AppFontTokens.bodyMdHeight  // 1.57（bodyMedium）
+AppFontTokens.titleMdHeight // 1.43（titleSmall）
+```
+
+#### 字重语义常量
+
+```dart
+AppFontTokens.bold       // FontWeight.w700
+AppFontTokens.semiBold   // FontWeight.w600
+AppFontTokens.medium     // FontWeight.w500
+AppFontTokens.normal     // FontWeight.w400
+```
+
+#### 使用方式
+
+```dart
+// ✅ 正确
+Text(
+  title,
+  style: theme.textTheme.titleMedium?.copyWith(
+    fontWeight: AppFontTokens.bold,
+  ),
+)
+Text(
+  subtitle,
+  style: TextStyle(
+    fontSize: AppFontTokens.caption,
+    height: AppFontTokens.bodySmHeight,
+  ),
+)
+
+// ❌ 错误：硬编码
+fontSize: 14
+height: 1.4
+FontWeight.w700
+```
+
+### 字体族
+
+| 常量 | 字体 | 用途 |
+|------|------|------|
+| `AppFonts.sansLatin` | Inter（Google Fonts） | 默认 UI 字体 |
+| `AppFonts.sansCJK` | Noto Sans SC | 中文回退字体 |
+| `AppFonts.mono` | JetBrains Mono | 代码/路径等宽字体 |
+
+**约定**：所有文本样式必须设置 `fontFamilyFallback: [AppFonts.sansCJK]`，确保 Latin + CJK 混排时中文字符正确显示。回退配置在 `AppTheme._textTheme()` 中统一完成，自定义样式需手动设置。
+
+```dart
+textTheme.bodyLarge?.copyWith(
+  fontSize: AppFontTokens.bodyLg,
+  fontWeight: AppFontTokens.normal,
+  fontFamilyFallback: const [AppFonts.sansCJK],
+)
+```
+
+### 主题预设系统
+
+> 实现在 `lib/src/core/theme/`：`app_theme_preset.dart`、`app_theme_registry.dart`、`app_theme.dart`。
+
+UniHub 由单一种子色模式演变为多预设系统，每套预设包含 6 个颜色/主题变体。
+
+#### 架构
+
+```
+AppThemePreset（枚举）—— 6 个预设
+  └─ AppThemeRegistry.colorsOf(preset, brightness)
+       └─  UniHubThemeColors → ThemeData.extensions 注册
+            └─ context.appColors（快捷访问）
+
+AppTheme.build(preset:, brightness:) → ThemeData
+  └─ 内部调用 ColorScheme.fromSeed(seedColor: colors.primary)
+       + .copyWith() 个性化
+```
+
+#### 预设枚举
+
+| 预设 | label | 种子色 | 风格 |
+|------|-------|--------|------|
+| `uniBlue` ✅ 默认 | Uni Blue | `#3F6DF6` | 清爽蓝色 |
+| `paper` | Paper | `#4B6382` | 柔和纸感 |
+| `forest` | Forest | `#2F855A` | 绿色低刺激 |
+| `sakura` | Sakura | `#D9468A` | 粉紫柔和 |
+| `amber` | Amber | `#D97706` | 暖色琥珀 |
+| `graphite` | Graphite | `#475569` | 克制灰蓝 |
+
+每套预设同时定义浅色（Light）和深色（Dark）两组颜色。
+
+#### UniHubThemeColors（ThemeExtension）
+
+21 个产品级颜色，通过 `ThemeData.extensions` 注入，使用 `context.appColors` 便捷访问：
+
+```dart
+final colors = context.appColors;
+colors.sidebarBackground  // 侧栏背景
+colors.navSelectedBackground  // 导航选中态
+colors.panelBackground        // 面板背景
+```
+
+**约定**：
+- Widget 层颜色**优先使用** `colorScheme.*`（M3 语义色）
+- 产品特有颜色（侧栏背景、导航选中态、面板背景）使用 `context.appColors.*`
+- `AppTokens.*` 仅用于主题初始化和装饰例外
+- 不得在 Widget 中直接引用 `UniHubThemeColors` 的构造器——始终通过 `context.appColors` 或 `Theme.of(context).extension<UniHubThemeColors>()`
+
+#### 创建 ThemeData
+
+```dart
+// 统一入口
+final theme = AppTheme.build(
+  preset: AppThemePreset.uniBlue,
+  brightness: Brightness.light,
+);
+
+// 兼容简化入口（Uni Blue 预设）
+final light = AppTheme.light;
+final dark = AppTheme.dark;
+
+// MaterialApp 中使用
+MaterialApp.router(
+  theme: currentTheme,
+  darkTheme: darkTheme,
+  themeMode: ThemeMode.system,
+);
+```
+
+#### Theme 子组件主题
+
+`AppTheme.build()` 统一配置以下子主题，组件层不应覆盖：
+
+| 子主题 | 配置内容 |
+|--------|----------|
+| `cardTheme` | `surfaceContainerLow` 背景、`AppRadius.xl` 圆角、`outlineVariant(0.25)` 边框或无边框（暗色模式）|
+| `filledButtonTheme` | `AppSizes.buttonHeight`、primary 色、`AppRadius.sm` 圆角 |
+| `outlinedButtonTheme` | `AppSizes.buttonHeight`、`AppRadius.sm` 圆角 |
+| `inputDecorationTheme` | filled 输入框、`AppRadius.md` 圆角、border 配色 |
+| `listTileTheme` | `AppSizes.listItem` 高度、`AppFontTokens` 字号 |
+| `chipTheme` | `AppRadius.full` 圆角、`outlineVariant` 边框 |
+| `appBarTheme` | 无 elevation、surface 背景 |
+| `dividerTheme` | `AppColors.border` 色 |
+
+**禁止**：不要在 Widget 层用 `Card(...)` 的 `shape`、`elevation` 或 `color` 参数覆盖默认主题——修改应通过修改 `AppTheme.build()` 中的主题配置集中生效。
 
 ---
 

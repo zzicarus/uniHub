@@ -21,44 +21,95 @@ UniHub 采用三层架构：`core/` → `shared/` → `plugins/`。依赖方向�
 ```
 lib/src/
 ├── core/
-│   ├── app/                  # 应用壳、ShellRoute、页面
-│   │   ├── home/             # 首页各区块（Header、Focus、Recent、RightRail）
-│   │   ├── settings/         # 设置页面（外观设置等）
+│   ├── app/                    # 应用壳、ShellRoute、页面
+│   │   ├── home/               # 首页各区块
+│   │   │   ├── focus_section.dart
+│   │   │   ├── header.dart
+│   │   │   ├── mobile_home.dart
+│   │   │   ├── recent_section.dart
+│   │   │   └── right_rail.dart
+│   │   ├── settings/
+│   │   │   └── appearance_settings_section.dart
 │   │   ├── adaptive_shell.dart
 │   │   ├── app.dart
 │   │   ├── dashboard_providers.dart
 │   │   ├── desktop_shell.dart
-│   │   ├── mobile_shell.dart
+│   │   ├── home_page.dart
 │   │   ├── mobile_placeholder_pages.dart
-│   │   └── home_page.dart
-│   ├── database/             # Drift 数据库入口 + 表定义
-│   │   └── tables/           # 各表文件（thoughts_table.dart 等）
-│   ├── plugin/               # 插件系统接口与注册
-│   ├── router/               # GoRouter 路由定义
-│   ├── search/               # 全局搜索
-│   └── theme/                # Material 3 主题配置与 Token
+│   │   ├── mobile_shell.dart
+│   │   └── settings_page.dart
+│   ├── database/               # Drift 数据库入口 + 表定义
+│   │   ├── app_database.dart
+│   │   ├── database_provider.dart
+│   │   └── tables/
+│   │       ├── collection_boxes_table.dart
+│   │       ├── enrichment_jobs_table.dart
+│   │       ├── saved_item_boxes_table.dart
+│   │       ├── saved_items_table.dart
+│   │       └── thoughts_table.dart
+│   ├── plugin/                 # 插件系统接口与注册
+│   │   ├── plugin_interface.dart
+│   │   └── plugin_registry.dart
+│   ├── router/                 # GoRouter 路由定义
+│   │   ├── app_router.dart
+│   │   └── route_names.dart
+│   ├── search/
+│   │   └── search_result.dart
+│   └── theme/                  # Material 3 主题配置与 Token
+│       ├── app_breakpoints.dart       # 响应式断点（900/1280 三档）
+│       ├── app_theme.dart             # AppTheme.build() + 子主题
+│       ├── app_theme_preset.dart      # 6 套主题预设
+│       ├── app_theme_registry.dart    # 预设→颜色映射（亮/暗×6）
+│       ├── app_theme_tokens.dart      # UniHubThemeColors extensions
+│       ├── app_tokens.dart            # 所有 Token 常量
+│       └── theme_settings_provider.dart  # 主题偏好
 ├── shared/                   # 共享组件层
+│   ├── editor/               # AppFlowy 编辑器集成
+│   │   ├── appflowy_document_tools.dart
+│   │   └── appflowy_thought_editor.dart
+│   ├── layouts/              # 响应式布局组件
+│   │   └── app_layout.dart
 │   ├── tags/                 # TagKit 核心层（纯函数，无 UI 依赖）
 │   │   ├── tag_models.dart           # AppTagStat、TagMatchMode、TagValidationResult
-│   │   ├── tag_codec.dart            # 标签编解码：normalize、parseCommaSeparated、validate
-│   │   └── tag_filter_logic.dart     # 过滤逻辑：toggle、matches、countTags、sortStats
+│   │   ├── tag_codec.dart            # 标签编解码
+│   │   └── tag_filter_logic.dart     # 过滤逻辑
 │   ├── ui/                   # 可复用 UI 组件
 │   │   ├── rich_text_editor/ # 富文本编辑器
-│   │   └── style_guide_screen.dart   # 样式指南页面
+│   │   └── style_guide_screen.dart
 │   └── widgets/              # 通用 Widget
+│       ├── adaptive_layout.dart      # AdaptiveLayout(mobile/desktop)
+│       ├── app_compact_list_item.dart # 紧凑列表项（图标+标题+副标题+onTap）
+│       ├── app_icon_bubble.dart      # 图标气泡
+│       ├── app_panel.dart            # Panel 容器
+│       ├── app_search_box.dart       # 搜索框
+│       ├── app_section_header.dart   # 区域标题（可选图标+尾部操作）
+│       ├── sidebar.dart              # 侧栏导航
+│       ├── uni_icon_badge.dart       # 图标角标
+│       ├── uni_panel.dart            # Uni Panel 容器
+│       ├── uni_pill.dart             # 标签状徽章
+│       ├── uni_status_panel.dart     # 状态面板（加载/空/错误通用）
 │       └── tags/             # TagKit UI 组件（无 Provider 依赖）
-│           ├── app_tag_chip.dart          # AppTagChip、AppSelectedTagChip、AppMoreTagsButton
-│           ├── app_tag_filter_bar.dart    # AppTagFilterBar
-│           ├── app_selected_tags_bar.dart # AppSelectedTagsBar
-│           ├── app_common_tags_panel.dart # AppCommonTagsPanel
-│           └── app_more_tags_popover.dart # AppMoreTagsPopover
+│           ├── app_tag_chip.dart
+│           ├── app_tag_filter_bar.dart
+│           ├── app_selected_tags_bar.dart
+│           ├── app_common_tags_panel.dart
+│           ├── app_tag_input.dart
+│           └── app_more_tags_popover.dart
 ├── plugins/
-│   └── thoughts/             # Thoughts 功能插件
-│       ├── data/             # DAO+Repository+Service
-│       ├── providers/        # Riverpod Provider 定义
+│   ├── thoughts/             # Thoughts 功能插件
+│   │   ├── data/             # DAO+Repository+Service
+│   │   ├── providers/        # Riverpod Provider 定义
+│   │   └── ui/
+│   │       ├── layouts/      # 响应式页面（desktop/mobile/shared）
+│   │       └── widgets/      # 可复用组件
+│   └── collections/          # 内容收藏功能插件
+│       ├── data/             # DAO
+│       ├── domain/           # 值对象/枚举（MediaType, SourcePlatform 等）
+│       ├── providers/        # Riverpod Provider
+│       ├── services/         # 元数据抓取、收藏等服务
 │       └── ui/
-│           ├── pages/        # 页面级 Widget
-│           └── widgets/      # 可复用组件
+│           ├── layouts/      # 桌面工作台
+│           └── widgets/      # 卡片、面板、筛选栏
 └── AGENTS.md                 # Agent 入口文档
 ```
 

@@ -1,8 +1,15 @@
+import 'dart:convert';
+
+import 'package:drift/native.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:uni_hub/src/core/app/dashboard_providers.dart';
+import 'package:uni_hub/src/core/database/app_database.dart';
+import 'package:uni_hub/src/core/database/database_provider.dart';
 import 'package:uni_hub/src/core/plugin/plugin_interface.dart';
 import 'package:uni_hub/src/core/plugin/plugin_registry.dart';
+import 'package:uni_hub/src/plugins/thoughts/data/thought_content_codec.dart';
+import 'package:uni_hub/src/plugins/thoughts/thoughts_plugin.dart';
 
 /// A minimal stub plugin that returns controlled dashboard data.
 class _StubPlugin extends UniHubPlugin {
@@ -10,11 +17,7 @@ class _StubPlugin extends UniHubPlugin {
   final List<DashboardItem> items;
   final List<DashboardItem> pinned;
 
-  _StubPlugin({
-    this.stat,
-    this.items = const [],
-    this.pinned = const [],
-  });
+  _StubPlugin({this.stat, this.items = const [], this.pinned = const []});
 
   @override
   String get id => 'stub';
@@ -25,17 +28,11 @@ class _StubPlugin extends UniHubPlugin {
   Future<PluginStat?> getStat(Ref ref) async => stat;
 
   @override
-  Future<List<DashboardItem>> getRecentItems(
-    Ref ref, {
-    int count = 4,
-  }) async =>
+  Future<List<DashboardItem>> getRecentItems(Ref ref, {int count = 4}) async =>
       items;
 
   @override
-  Future<List<DashboardItem>> getPinnedItems(
-    Ref ref, {
-    int count = 3,
-  }) async =>
+  Future<List<DashboardItem>> getPinnedItems(Ref ref, {int count = 3}) async =>
       pinned;
 }
 
@@ -60,9 +57,7 @@ void main() {
     test('empty registry returns empty list', () async {
       final registry = PluginRegistry();
       final container = ProviderContainer(
-        overrides: [
-          pluginRegistryProvider.overrideWithValue(registry),
-        ],
+        overrides: [pluginRegistryProvider.overrideWithValue(registry)],
       );
       addTearDown(() => container.dispose());
 
@@ -79,9 +74,7 @@ void main() {
       final registry = PluginRegistry();
       registry.register(_StubPlugin(stat: stat));
       final container = ProviderContainer(
-        overrides: [
-          pluginRegistryProvider.overrideWithValue(registry),
-        ],
+        overrides: [pluginRegistryProvider.overrideWithValue(registry)],
       );
       addTearDown(() => container.dispose());
 
@@ -96,9 +89,7 @@ void main() {
       final registry = PluginRegistry();
       registry.register(_EmptyPlugin());
       final container = ProviderContainer(
-        overrides: [
-          pluginRegistryProvider.overrideWithValue(registry),
-        ],
+        overrides: [pluginRegistryProvider.overrideWithValue(registry)],
       );
       addTearDown(() => container.dispose());
 
@@ -111,9 +102,7 @@ void main() {
     test('empty registry returns empty list', () async {
       final registry = PluginRegistry();
       final container = ProviderContainer(
-        overrides: [
-          pluginRegistryProvider.overrideWithValue(registry),
-        ],
+        overrides: [pluginRegistryProvider.overrideWithValue(registry)],
       );
       addTearDown(() => container.dispose());
 
@@ -132,9 +121,7 @@ void main() {
       final registry = PluginRegistry();
       registry.register(_StubPlugin(items: [dashboardItem]));
       final container = ProviderContainer(
-        overrides: [
-          pluginRegistryProvider.overrideWithValue(registry),
-        ],
+        overrides: [pluginRegistryProvider.overrideWithValue(registry)],
       );
       addTearDown(() => container.dispose());
 
@@ -145,13 +132,44 @@ void main() {
     });
   });
 
+  group('quickCreateProvider', () {
+    test('ThoughtsPlugin writes AppFlowy JSON content', () async {
+      final registry = PluginRegistry()..register(ThoughtsPlugin());
+      final db = AppDatabase(NativeDatabase.memory(), registry);
+      final container = ProviderContainer(
+        overrides: [
+          appDatabaseProvider.overrideWithValue(db),
+          pluginRegistryProvider.overrideWithValue(registry),
+        ],
+      );
+      addTearDown(container.dispose);
+      addTearDown(db.close);
+
+      final item = await container.read(
+        quickCreateProvider((
+          content: 'AppFlowy quick create',
+          tags: 'idea',
+        )).future,
+      );
+
+      expect(item?.content, 'AppFlowy quick create');
+      final thoughts = await db.select(db.thoughtsTable).get();
+      expect(thoughts, hasLength(1));
+
+      final stored = jsonDecode(thoughts.single.content);
+      expect(stored, isA<Map<String, dynamic>>());
+      final envelope = stored as Map<String, dynamic>;
+      expect(envelope['format'], ThoughtContentCodec.format);
+      expect(envelope['plainText'], 'AppFlowy quick create');
+      expect(envelope['document'], isA<Map<String, dynamic>>());
+    });
+  });
+
   group('dashboardPinnedProvider', () {
     test('empty registry returns empty list', () async {
       final registry = PluginRegistry();
       final container = ProviderContainer(
-        overrides: [
-          pluginRegistryProvider.overrideWithValue(registry),
-        ],
+        overrides: [pluginRegistryProvider.overrideWithValue(registry)],
       );
       addTearDown(() => container.dispose());
 
@@ -171,9 +189,7 @@ void main() {
       final registry = PluginRegistry();
       registry.register(_StubPlugin(pinned: [pinnedItem]));
       final container = ProviderContainer(
-        overrides: [
-          pluginRegistryProvider.overrideWithValue(registry),
-        ],
+        overrides: [pluginRegistryProvider.overrideWithValue(registry)],
       );
       addTearDown(() => container.dispose());
 
