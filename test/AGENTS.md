@@ -94,7 +94,7 @@ test/
 | `thoughts/ui/` | 40% | 含 widgets 子目录 (2/5 当前可见 UI 文件) |
 | `shared/tags/` | 67% | (2/3 文件: tag_codec, tag_filter_logic; tag_models 待覆盖) |
 | `shared/widgets/tags/` | 80% | (4/5 文件: app_tag_chip, app_tag_filter_bar, app_selected_tags_bar, app_common_tags_panel; app_more_tags_popover 待覆盖) |
-| `shared/widgets/`（非 tags） | 86% | (6/7 其他通用组件) |
+| `shared/widgets/`（非 tags） | 88% | (7/8 其他通用组件，含 `delete_confirm_dialog`） |
 | `collections/` | 覆盖新增 | logo cache 服务层 13 条、metadata 解析 7 条、enrichment 4 条、capture 3 条、Card widget 3 条、DetailPanel 2 条、desktop layout 1 条、Repository 7 条、DAO 8 条、domain 24 条 |
 
 **新增功能时建议至少为对应目录添加基本覆盖。**
@@ -144,6 +144,10 @@ git status
 ## 近期变更
 
 > 本 section 由 sync-knowledge 自动管理，按时间倒序追加。
+
+### 2026-05-25: 收藏删除确认弹窗 UI 改造
+- 新增 `test/shared/widgets/delete_confirm_dialog_test.dart` — 9 条（单条弹窗渲染、取消按钮、删除按钮、不再提示跳过、批量弹窗、多收藏夹选择、警示图标、偏好持久化）
+- `shared/widgets/` 覆盖从 6→7 文件
 
 ### 2026-05-23: TagKit widget 测试覆盖 + 适配 AppCommonTagsPanel
 - 新增 `test/shared/widgets/tags/app_common_tags_panel_test.dart` — 8 条（title/helperText/empty/tag chips/count/selected/maxVisibleTags）

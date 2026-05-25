@@ -8,6 +8,8 @@ import 'package:uni_hub/src/plugins/collections/domain/enrichment_status.dart';
 import 'package:uni_hub/src/plugins/collections/domain/media_type.dart';
 import 'package:uni_hub/src/plugins/collections/domain/source_platform.dart';
 import 'package:uni_hub/src/plugins/collections/providers/collections_providers.dart';
+import 'package:uni_hub/src/shared/preferences/delete_confirm_prefs_provider.dart';
+import 'package:uni_hub/src/shared/widgets/delete_confirm_dialog.dart';
 import 'package:uni_hub/src/shared/widgets/website_logo.dart';
 
 /// Content-style saved-item card for the collection list.
@@ -479,31 +481,117 @@ class _CardMoreMenu extends ConsumerWidget {
                   .updateStatus(item.id, ConsumptionStatus.archived);
               ref.invalidate(savedItemsListProvider);
             case _CardAction.delete:
-              final confirmed = await showDialog<bool>(
-                context: context,
-                builder: (ctx) => AlertDialog(
-                  title: const Text('确认删除'),
-                  content: Text('确定要删除「${item.title.isEmpty ? item.normalizedUrl : item.title}」吗？\n删除后无法恢复。'),
-                  actions: [
-                    TextButton(
-                      onPressed: () => Navigator.pop(ctx, false),
-                      child: const Text('取消'),
-                    ),
-                    FilledButton(
-                      onPressed: () => Navigator.pop(ctx, true),
-                      child: const Text('删除'),
-                    ),
-                  ],
-                ),
-              );
-              if (confirmed != true || !context.mounted) return;
-              await ref.read(collectionsRepositoryProvider).deleteSavedItem(item.id);
+              final prefsAsync = ref.read(deleteConfirmPrefsProvider);
+              final prefs = prefsAsync.valueOrNull;
+              if (prefs == null) return;
+
+              final repository = ref.read(collectionsRepositoryProvider);
+              final displayTitle =
+                  item.title.isEmpty ? item.normalizedUrl : item.title;
+              final mediaType = MediaType.fromValue(item.mediaType);
+              final platform = SourcePlatform.fromValue(item.sourcePlatform);
+
+              // Check multi-box
+              final boxIds = await repository.getBoxIdsForItem(item.id);
+
+              DeleteConfirmResult? result;
+              if (boxIds.length > 1) {
+                final boxes = await repository.getBoxes();
+                final boxNames = boxes
+                    .where((b) => boxIds.contains(b.id))
+                    .map((b) => b.name)
+                    .toList();
+                result = await DeleteConfirmDialog.showMultiBox(
+                  context: context,
+                  title: displayTitle,
+                  source: item.siteName?.isNotEmpty == true
+                      ? item.siteName!
+                      : _domainOf(item.normalizedUrl),
+                  typeLabel: platform.label,
+                  relativeTime: _relativeTime(item.createdAt),
+                  fallbackIcon: _iconFor(mediaType),
+                  boxNames: boxNames,
+                  prefs: prefs,
+                );
+              } else {
+                result = await DeleteConfirmDialog.showSingle(
+                  context: context,
+                  title: displayTitle,
+                  source: item.siteName?.isNotEmpty == true
+                      ? item.siteName!
+                      : _domainOf(item.normalizedUrl),
+                  typeLabel: platform.label,
+                  relativeTime: _relativeTime(item.createdAt),
+                  fallbackIcon: _iconFor(mediaType),
+                  prefs: prefs,
+                );
+              }
+
+              if (result == null ||
+                  result == DeleteConfirmResult.cancel ||
+                  !context.mounted) {
+                return;
+              }
+
+              if (result == DeleteConfirmResult.removeFromBox) {
+                if (boxIds.isNotEmpty) {
+                  final boxes = await repository.getBoxes();
+                  final boxName = boxes
+                      .where((b) => b.id == boxIds.first)
+                      .map((b) => b.name)
+                      .firstOrNull ?? '收藏夹';
+                  await repository.removeItemFromBox(item.id, boxIds.first);
+                  ref.invalidate(savedItemsListProvider);
+                  ref.invalidate(collectionFolderCountsProvider);
+                  if (!context.mounted) return;
+                  _showUndoSnackBar(
+                    context,
+                    '已从「$boxName」中移除',
+                    () async {
+                      final currentBoxIds =
+                          await repository.getBoxIdsForItem(item.id);
+                      await repository.setItemBoxes(
+                        item.id,
+                        {...currentBoxIds, boxIds.first},
+                      );
+                      await repository.updateInboxState(item.id, false);
+                      ref.invalidate(savedItemsListProvider);
+                      ref.invalidate(collectionFolderCountsProvider);
+                    },
+                  );
+                }
+                return;
+              }
+
+              // Full delete with undo
+              final undoBoxIds = List<int>.from(boxIds);
+              await repository.deleteSavedItem(item.id);
               ref.read(selectedSavedItemIdProvider.notifier).state = null;
               ref.invalidate(savedItemsListProvider);
               ref.invalidate(collectionFolderCountsProvider);
               if (!context.mounted) return;
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('已删除')),
+              _showUndoSnackBar(
+                context,
+                '已删除「$displayTitle」',
+                () async {
+                  final restored = await repository.createSavedItem(
+                    originalUrl: item.originalUrl,
+                    normalizedUrl: item.normalizedUrl,
+                    title: item.title,
+                    mediaType: mediaType,
+                    sourcePlatform: platform,
+                    isInInbox: undoBoxIds.isEmpty,
+                  );
+                  if (undoBoxIds.isNotEmpty) {
+                    await repository.setItemBoxes(
+                      restored.id,
+                      undoBoxIds.toSet(),
+                    );
+                    await repository.updateInboxState(restored.id, false);
+                  }
+                  ref.invalidate(savedItemsListProvider);
+                  ref.invalidate(collectionFolderCountsProvider);
+                },
               );
           }
         },
@@ -518,6 +606,56 @@ class _CardMoreMenu extends ConsumerWidget {
             child: Text('删除', style: TextStyle(color: colorScheme.error)),
           ),
         ],
+      ),
+    );
+  }
+
+  // --- Helpers (duplicated from SavedItemCard for standalone access) ---
+
+  static String _domainOf(String url) {
+    final host = Uri.tryParse(url)?.host;
+    if (host == null || host.isEmpty) return url;
+    return host.startsWith('www.') ? host.substring(4) : host;
+  }
+
+  static String _relativeTime(DateTime dt) {
+    final now = DateTime.now();
+    final diff = now.difference(dt);
+    if (diff.inMinutes < 1) return '刚刚';
+    if (diff.inHours < 1) return '${diff.inMinutes} 分钟前';
+    if (diff.inDays < 1) return '${diff.inHours} 小时前';
+    if (diff.inDays < 7) return '${diff.inDays} 天前';
+    return '${dt.month}月${dt.day}日';
+  }
+
+  static IconData _iconFor(MediaType mediaType) {
+    return switch (mediaType) {
+      MediaType.article => Icons.article_outlined,
+      MediaType.video => Icons.play_circle_outline_rounded,
+      MediaType.repository => Icons.code_rounded,
+      MediaType.webpage => Icons.language_rounded,
+      MediaType.image => Icons.image_outlined,
+      MediaType.pdf => Icons.picture_as_pdf_rounded,
+      MediaType.audio => Icons.headphones_rounded,
+      MediaType.post => Icons.forum_outlined,
+      MediaType.document => Icons.description_outlined,
+      MediaType.unknown => Icons.link_rounded,
+    };
+  }
+
+  static void _showUndoSnackBar(
+    BuildContext context,
+    String message,
+    VoidCallback onUndo,
+  ) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        duration: const Duration(seconds: 5),
+        action: SnackBarAction(
+          label: '撤销',
+          onPressed: onUndo,
+        ),
       ),
     );
   }

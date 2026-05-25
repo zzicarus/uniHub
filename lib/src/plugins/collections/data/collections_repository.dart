@@ -162,6 +162,17 @@ class CollectionsRepository {
     );
   }
 
+  /// Remove an item from a single collection box without deleting the item.
+  ///
+  /// If this was the last box assignment, moves the item back to Inbox.
+  Future<void> removeItemFromBox(int itemId, int boxId) async {
+    await _collectionBoxesDao.deleteItemBox(itemId, boxId);
+    final remaining = await _collectionBoxesDao.getBoxIdsForItem(itemId);
+    if (remaining.isEmpty) {
+      await updateInboxState(itemId, true);
+    }
+  }
+
   /// Delete a saved item and all related data (box assignments, enrichment jobs).
   Future<void> deleteSavedItem(int itemId) async {
     await _collectionBoxesDao.deleteAllItemBoxes(itemId);

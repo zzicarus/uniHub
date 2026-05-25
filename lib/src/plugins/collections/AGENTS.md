@@ -26,7 +26,49 @@ collections/
 - 使用 Material 3 `ColorScheme` 与 `app_tokens.dart` 间距/圆角。
 - URL 捕获、筛选、列表都通过 `providers/collections_providers.dart` 访问状态。
 
-### 详情面板 Chip 展示规则（`saved_item_detail_panel.dart`）
+## 删除确认弹窗
+
+删除操作使用 `DeleteConfirmDialog`（`lib/src/shared/widgets/delete_confirm_dialog.dart`），不再使用简陋的 `AlertDialog`。
+
+### 三种弹窗模式
+
+| 模式 | 触发条件 | 静态方法 |
+|------|----------|----------|
+| 单条确认 | item 属于 0-1 个收藏夹 | `showSingle()` |
+| 批量确认 | 多选删除（后续支持） | `showBatch()` |
+| 多收藏夹选择 | item 属于 2+ 个收藏夹 | `showMultiBox()` |
+
+### 弹窗结构
+
+- 红色警示图标（`delete_outline_rounded`，44×44，`errorContainer` 背景）
+- 标题 + 说明（`titleLarge` bold + `bodyMedium`）
+- 内容预览卡（logo + 标题 + 来源/类型/时间）
+- 「以后不再提示」checkbox + "可在 设置 > 内容收藏 中重新开启" 辅助说明
+- 取消（白底描边）+ 删除（红色 `colorScheme.error` 背景）按钮
+
+### "不再提示" 偏好
+
+- `confirmDeleteSingleItem: bool = true`
+- `confirmDeleteBatchItems: bool = true`
+- 存储在 `SharedPreferences`，通过 `DeleteConfirmPrefs` 读写
+- Provider：`deleteConfirmPrefsProvider`（`lib/src/shared/preferences/`）
+
+### 删除后撤销
+
+所有删除操作后显示 5 秒 SnackBar 带「撤销」action：
+
+| 操作 | SnackBar 文案 | 撤销行为 |
+|------|--------------|----------|
+| 单条删除 | `已删除「{title}」` | 重新 `createSavedItem()` 并恢复 box 关联 |
+| 从收藏夹移除 | `已从「{folderName}」中移除` | 重新 `setItemBoxes(id, {..., boxId})` |
+
+### 多收藏夹场景
+
+当 `getBoxIdsForItem().length > 1` 时，优先展示操作选择弹窗：
+- 「仅从当前收藏夹移除」→ `repository.removeItemFromBox(itemId, boxId)`
+- 「删除这条收藏」→ `repository.deleteSavedItem(itemId)`
+
+### 详细面板 Chip 展示规则（`saved_item_detail_panel.dart`）
 
 **收藏夹区域（`_BoxSection`）**：
 - 只显示当前 item 已归属的收藏夹 chip，不再展示所有可选收藏夹。

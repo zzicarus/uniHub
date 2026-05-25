@@ -45,6 +45,12 @@ class CollectionBoxesDao {
     return result;
   }
 
+  /// Remove a single box assignment for an item.
+  Future<int> deleteItemBox(int itemId, int boxId) {
+    return (_db.delete(_db.savedItemBoxesTable)
+      ..where((t) => t.itemId.equals(itemId) & t.boxId.equals(boxId))).go();
+  }
+
   Future<void> setItemBoxes(int itemId, Set<int> boxIds) async {
     await _db.transaction(() async {
       await (_db.delete(
