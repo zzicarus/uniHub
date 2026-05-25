@@ -10,8 +10,6 @@ import 'package:uni_hub/src/plugins/collections/domain/source_platform.dart';
 import 'package:uni_hub/src/plugins/collections/providers/collections_providers.dart';
 import 'package:uni_hub/src/shared/widgets/app_pill_chip.dart';
 
-import 'collection_technical_info_section.dart';
-
 /// Full detail panel for a selected [SavedItemsTableData].
 ///
 /// Layout structure:
@@ -30,22 +28,7 @@ class SavedItemDetailPanel extends ConsumerStatefulWidget {
       _SavedItemDetailPanelState();
 }
 
-class _SavedItemDetailPanelState extends ConsumerState<SavedItemDetailPanel>
-    with SingleTickerProviderStateMixin {
-  late final TabController _tabController;
-  int _tabIndex = 0;
-
-  @override
-  void initState() {
-    super.initState();
-    _tabController = TabController(length: 4, vsync: this);
-  }
-
-  @override
-  void dispose() {
-    _tabController.dispose();
-    super.dispose();
-  }
+class _SavedItemDetailPanelState extends ConsumerState<SavedItemDetailPanel> {
 
   @override
   Widget build(BuildContext context) {
@@ -140,11 +123,6 @@ class _SavedItemDetailPanelState extends ConsumerState<SavedItemDetailPanel>
             _plainDivider(colorScheme),
             // C. Organize Info Section
             _buildOrganizeSection(theme, colorScheme, item),
-            _plainDivider(colorScheme),
-            // D. Content Tabs
-            _buildContentTabs(theme, colorScheme, item),
-            // E. Technical Info (collapsed, bottom)
-            CollectionTechnicalInfoSection(item: item),
           ],
         ),
       ),
@@ -370,8 +348,6 @@ class _SavedItemDetailPanelState extends ConsumerState<SavedItemDetailPanel>
           _BoxSection(item: item),
           _sectionDivider(colorScheme),
           _TagsSection(item: item),
-          _sectionDivider(colorScheme),
-          _buildNotesSection(theme, colorScheme),
         ],
       ),
     );
@@ -498,260 +474,15 @@ class _SavedItemDetailPanelState extends ConsumerState<SavedItemDetailPanel>
     );
   }
 
-  // ---------------------------------------------------------------
-  // C.5 Notes — custom drawn note box
-  // ---------------------------------------------------------------
 
-  Widget _buildNotesSection(ThemeData theme, ColorScheme colorScheme) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(
-        AppSpacing.lg,
-        AppSpacing.sm,
-        AppSpacing.lg,
-        AppSpacing.md,
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            '备注',
-            style: theme.textTheme.labelMedium?.copyWith(
-              color: colorScheme.onSurfaceVariant,
-              fontWeight: AppFontTokens.medium,
-            ),
-          ),
-          const SizedBox(height: AppSpacing.sm),
-          ConstrainedBox(
-            constraints: const BoxConstraints(minHeight: 88),
-            child: Container(
-              width: double.infinity,
-              decoration: BoxDecoration(
-                color: colorScheme.surface,
-                borderRadius: BorderRadius.circular(AppRadius.md),
-                border: Border.all(
-                  color: colorScheme.outlineVariant.withValues(alpha: 0.7),
-                ),
-              ),
-              padding: const EdgeInsets.all(AppSpacing.md),
-              child: Align(
-                alignment: Alignment.topLeft,
-                child: Text(
-                  '写下你收藏这条内容的想法或要点...',
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    color: colorScheme.onSurfaceVariant.withValues(alpha: 0.55),
-                  ),
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(height: AppSpacing.xs),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                '备注功能稍后接入',
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: colorScheme.onSurfaceVariant.withValues(alpha: 0.6),
-                ),
-              ),
-              Text(
-                '0/500',
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: colorScheme.onSurfaceVariant.withValues(alpha: 0.6),
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
 
-  // ===============================================================
-  // D. Content Tabs — weaker visual weight
-  // ===============================================================
 
-  Widget _buildContentTabs(
-    ThemeData theme,
-    ColorScheme colorScheme,
-    SavedItemsTableData item,
-  ) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        SizedBox(
-          width: double.infinity,
-          child: TabBar(
-            controller: _tabController,
-            isScrollable: true,
-            tabAlignment: TabAlignment.start,
-            labelColor: colorScheme.primary,
-            unselectedLabelColor:
-                colorScheme.onSurfaceVariant.withValues(alpha: 0.6),
-            indicatorColor: colorScheme.primary.withValues(alpha: 0.5),
-            indicatorSize: TabBarIndicatorSize.tab,
-            indicatorWeight: 2,
-            labelStyle: theme.textTheme.labelMedium?.copyWith(
-              fontSize: 12,
-              fontWeight: AppFontTokens.semiBold,
-            ),
-            unselectedLabelStyle: theme.textTheme.labelMedium?.copyWith(
-              fontSize: 12,
-            ),
-            onTap: (index) {
-              setState(() {
-                _tabIndex = index;
-              });
-            },
-            tabs: const [
-              Tab(text: '摘要'),
-              Tab(text: '内容预览'),
-              Tab(text: '笔记'),
-              Tab(text: '相关'),
-            ],
-          ),
-        ),
-        _buildCurrentTabContent(theme, colorScheme, item),
-      ],
-    );
-  }
-
-  Widget _buildCurrentTabContent(
-    ThemeData theme,
-    ColorScheme colorScheme,
-    SavedItemsTableData item,
-  ) {
-    return switch (_tabIndex) {
-      0 => _buildSummaryTab(theme, colorScheme, item),
-      1 => _buildPreviewTab(theme, colorScheme, item),
-      2 => _buildPlaceholderTab(theme, colorScheme, '笔记功能稍后接入'),
-      3 => _buildPlaceholderTab(theme, colorScheme, '相关想法 / 待办 / 笔记稍后接入'),
-      _ => const SizedBox.shrink(),
-    };
-  }
-
-  // Summary tab
-  Widget _buildSummaryTab(
-    ThemeData theme,
-    ColorScheme colorScheme,
-    SavedItemsTableData item,
-  ) {
-    final hasDescription =
-        item.description != null && item.description!.trim().isNotEmpty;
-
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(
-        AppSpacing.lg,
-        AppSpacing.md,
-        AppSpacing.lg,
-        AppSpacing.md,
-      ),
-      child: hasDescription
-          ? Text(
-              item.description!,
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: colorScheme.onSurface,
-                height: 1.6,
-              ),
-            )
-          : Text(
-              '暂无摘要',
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: colorScheme.onSurfaceVariant,
-              ),
-            ),
-    );
-  }
-
-  // Preview tab
-  Widget _buildPreviewTab(
-    ThemeData theme,
-    ColorScheme colorScheme,
-    SavedItemsTableData item,
-  ) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(
-        AppSpacing.lg,
-        AppSpacing.md,
-        AppSpacing.lg,
-        AppSpacing.md,
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildInfoLine(theme, colorScheme, '标题', item.title),
-          if (item.siteName != null && item.siteName!.isNotEmpty)
-            _buildInfoLine(theme, colorScheme, '站点', item.siteName!),
-          if (item.author != null && item.author!.isNotEmpty)
-            _buildInfoLine(theme, colorScheme, '作者', item.author!),
-          if (item.coverImage != null && item.coverImage!.isNotEmpty)
-            _buildInfoLine(theme, colorScheme, '封面', item.coverImage!),
-          _buildInfoLine(theme, colorScheme, '原始 URL', item.originalUrl),
-          _buildInfoLine(theme, colorScheme, '标准化 URL', item.normalizedUrl),
-        ],
-      ),
-    );
-  }
-
-  // Placeholder tab
-  Widget _buildPlaceholderTab(
-    ThemeData theme,
-    ColorScheme colorScheme,
-    String message,
-  ) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(
-        AppSpacing.lg,
-        AppSpacing.md,
-        AppSpacing.lg,
-        AppSpacing.md,
-      ),
-      child: Text(
-        message,
-        style: theme.textTheme.bodySmall?.copyWith(
-          color: colorScheme.onSurfaceVariant,
-        ),
-      ),
-    );
-  }
 
   // ---------------------------------------------------------------
   // Shared helpers
   // ---------------------------------------------------------------
 
-  Widget _buildInfoLine(
-    ThemeData theme,
-    ColorScheme colorScheme,
-    String label,
-    String value,
-  ) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: AppSpacing.xs),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SizedBox(
-            width: 80,
-            child: Text(
-              label,
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: colorScheme.onSurfaceVariant,
-              ),
-            ),
-          ),
-          const SizedBox(width: AppSpacing.xs),
-          Expanded(
-            child: Text(
-              value,
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: colorScheme.onSurface,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+
 
   Widget _plainDivider(ColorScheme colorScheme) => Divider(
         height: 1,
