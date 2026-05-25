@@ -15,6 +15,9 @@ import 'package:uni_hub/src/plugins/collections/services/collection_debug_logger
 /// All sizing is controlled by [size] (container dimensions) and [iconSize]
 /// (fallback icon size). Styling uses [AppRadius] and [colorScheme].
 class WebsiteLogo extends StatelessWidget {
+  /// Tracks reported decode-failure paths to prevent log flood.
+  static final Set<String> _reportedDecodeFailures = <String>{};
+
   const WebsiteLogo({
     super.key,
     this.localPath,
@@ -50,6 +53,13 @@ class WebsiteLogo extends StatelessWidget {
         );
         return _fallbackContainer(colorScheme);
       }
+      // SVG files cannot be decoded by Image.file — skip to fallback.
+      if (localPath!.toLowerCase().endsWith('.svg')) {
+        CollectionDebugLogger.warn(
+          'WebsiteLogo skips svg localPath because Image.file cannot decode svg: $localPath',
+        );
+        return _fallbackContainer(colorScheme);
+      }
       return ClipRRect(
         borderRadius: BorderRadius.circular(AppRadius.sm),
         child: Image.file(
@@ -58,11 +68,13 @@ class WebsiteLogo extends StatelessWidget {
           height: size,
           fit: BoxFit.cover,
           errorBuilder: (_, error, stackTrace) {
-            CollectionDebugLogger.error(
-              'WebsiteLogo Image.file decode failed path=$localPath',
-              error,
-              stackTrace,
-            );
+            if (_reportedDecodeFailures.add(localPath!)) {
+              CollectionDebugLogger.error(
+                'WebsiteLogo Image.file decode failed path=$localPath',
+                error,
+                stackTrace,
+              );
+            }
             return _fallbackContainer(colorScheme);
           },
         ),

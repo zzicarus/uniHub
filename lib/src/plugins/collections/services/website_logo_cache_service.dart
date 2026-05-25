@@ -227,6 +227,19 @@ class WebsiteLogoCacheService {
   /// Whether an existing cache entry is still valid.
   bool _isEntryValid(WebsiteLogoCacheTableData row) {
     if (row.status == 'success' && row.expiresAt != null) {
+      // SVG cached entries are invalid — Image.file cannot decode SVG.
+      if (row.localLogoPath != null && row.localLogoPath!.toLowerCase().endsWith('.svg')) {
+        CollectionDebugLogger.warn(
+          'logo cache entry is SVG (invalid for Image.file) siteKey=${row.siteKey}',
+        );
+        return false;
+      }
+      if (row.mimeType != null && row.mimeType!.toLowerCase().contains('image/svg+xml')) {
+        CollectionDebugLogger.warn(
+          'logo cache entry mimeType is image/svg+xml (invalid) siteKey=${row.siteKey}',
+        );
+        return false;
+      }
       // Verify the local file actually exists.
       if (row.localLogoPath == null || row.localLogoPath!.isEmpty) {
         return false;
@@ -366,6 +379,17 @@ class WebsiteLogoCacheService {
           uri: uri,
         );
       }
+    }
+
+    // Reject SVG content-type (not supported by Image.file)
+    if (contentTypeLower.contains('image/svg+xml')) {
+      CollectionDebugLogger.warn(
+        'SVG favicon content-type not supported, skip: $url',
+      );
+      throw HttpException(
+        'SVG favicon content-type is not supported by WebsiteLogo Image.file',
+        uri: uri,
+      );
     }
 
     // Allow application/octet-stream for .ico URLs

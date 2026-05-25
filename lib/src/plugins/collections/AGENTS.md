@@ -181,9 +181,12 @@ UI 层
 | success 缓存复用 | 未过期 + `localLogoPath` 文件存在 → 直接返回 |
 | success 文件缺失 | 视为无效，重新抓取 |
 | failed 缓存 | **10 分钟**（开发期）过期时间内不重试；过期后重新抓取 |
+| SVG 缓存淘汰 | 已有 `.svg` 后缀或 `image/svg+xml` 的 success 条目 → `_isEntryValid` 返回 false，触发重抓 |
+| failed 清理 | `markFailed` 清除 `localLogoPath` 和 `mimeType` 字段，UI 不会继续加载无效文件 |
 | MIME 兼容 | `_extensionForMimeType` 先 `split(';').first` 剥离 charset，再匹配类型 |
 | URL 协议 | 只允许 `http`/`https` |
-| SVG 拒绝 | URL 以 `.svg` 结尾 → 跳过该候选；不在 Image.file 中显示 |
+| SVG 拒绝（URL） | URL 以 `.svg` 结尾 → 跳过该候选；不在 Image.file 中显示 |
+| SVG 拒绝（content-type） | 响应 `Content-Type` 为 `image/svg+xml` → 跳过该候选 |
 | HTML 检测 | 响应 content-type 含 `text/html` 或 body 开头为 `<!doctype html` → 拒绝 |
 | application/octet-stream | 仅当 URL 以 `.ico` 结尾时放行（部分服务器行为） |
 
@@ -192,7 +195,8 @@ UI 层
 位于 `lib/src/shared/widgets/website_logo.dart`：
 
 - 当 `localPath` 不为空且文件存在时：使用 `Image.file` 显示。
-- `Image.file.errorBuilder` 打印详细错误日志，而非静默 fallback。
+- SVG 文件直接跳到 fallback，不给 `Image.file` 尝试的机会。
+- `Image.file.errorBuilder` 用 `_reportedDecodeFailures` 静态 Set 去重，同路径只打印一次错误日志。
 - 文件不存在时打印 warning 日志，可区分「无缓存」和「缓存缺失」两种场景。
 - 不允许 UI 层直接联网。
 

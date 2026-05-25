@@ -53,6 +53,8 @@ class WebsiteLogoCacheDao {
       WebsiteLogoCacheTableCompanion(
         status: const Value('failed'),
         lastError: Value(error),
+        localLogoPath: const Value(null),
+        mimeType: const Value(null),
         expiresAt: Value(now.add(retryDelay)),
         updatedAt: Value(now),
       ),
