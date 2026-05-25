@@ -8,10 +8,12 @@ import 'package:uni_hub/src/core/database/database_provider.dart';
 import 'package:uni_hub/src/core/database/tables/thoughts_table.dart';
 import 'package:uni_hub/src/core/plugin/plugin_interface.dart';
 import 'package:uni_hub/src/core/plugin/plugin_registry.dart';
+import 'package:uni_hub/src/plugins/thoughts/data/thought_content_codec.dart';
 import 'package:uni_hub/src/plugins/thoughts/providers/thought_status_filter.dart';
 import 'package:uni_hub/src/plugins/thoughts/providers/thoughts_providers.dart';
 import 'package:uni_hub/src/plugins/thoughts/ui/widgets/thought_card.dart';
 import 'package:uni_hub/src/plugins/thoughts/ui/widgets/thought_state_templates.dart';
+import 'package:uni_hub/src/shared/editor/appflowy_document_tools.dart';
 
 class _ThoughtsTablePlugin extends UniHubPlugin {
   @override
@@ -61,8 +63,8 @@ void main() {
 
       final thoughts = await container.read(allThoughtsProvider.future);
       expect(thoughts, hasLength(2));
-      expect(thoughts.map((t) => t.content), contains('Active thought'));
-      expect(thoughts.map((t) => t.content), contains('Archived thought'));
+      expect(thoughts.map((t) => ThoughtContentCodec.plainTextFromStored(t.content)), contains('Active thought'));
+      expect(thoughts.map((t) => ThoughtContentCodec.plainTextFromStored(t.content)), contains('Archived thought'));
     });
 
     test('thoughtsListProvider composes all filters in correct order', () async {
@@ -108,7 +110,7 @@ void main() {
 
       final thoughts = await container.read(thoughtsListProvider.future);
       expect(thoughts, hasLength(1));
-      expect(thoughts.single.content, 'Pinned work item');
+      expect(ThoughtContentCodec.plainTextFromStored(thoughts.single.content), 'Pinned work item');
     });
 
     test('tag filter alone works correctly', () async {
@@ -130,7 +132,7 @@ void main() {
 
       final thoughts = await container.read(thoughtsListProvider.future);
       expect(thoughts, hasLength(1));
-      expect(thoughts.single.content, 'Item A');
+      expect(ThoughtContentCodec.plainTextFromStored(thoughts.single.content), 'Item A');
     });
 
     // Skip: Timer-based debounce cannot be reliably tested in fake-async
@@ -225,8 +227,8 @@ void main() {
 
       final pinned = await container.read(pinnedThoughtsProvider.future);
       expect(pinned, hasLength(2));
-      expect(pinned.map((t) => t.content), contains('Pinned work'));
-      expect(pinned.map((t) => t.content), contains('Pinned personal'));
+      expect(pinned.map((t) => ThoughtContentCodec.plainTextFromStored(t.content)), contains('Pinned work'));
+      expect(pinned.map((t) => ThoughtContentCodec.plainTextFromStored(t.content)), contains('Pinned personal'));
     });
 
     test('commonTagsProvider ignores tag and search filters', () async {
@@ -251,7 +253,7 @@ void main() {
 
       final pending = await container.read(pendingReviewProvider.future);
       expect(pending, hasLength(1));
-      expect(pending.single.content, 'Old untagged');
+      expect(ThoughtContentCodec.plainTextFromStored(pending.single.content), 'Old untagged');
     });
 
     test('randomReviewProvider ignores tag and search filters', () async {
@@ -262,7 +264,7 @@ void main() {
 
       final random = await container.read(randomReviewProvider.future);
       expect(random, isA<ThoughtsTableData>());
-      expect(random!.content, 'Old untagged');
+      expect(ThoughtContentCodec.plainTextFromStored(random!.content), 'Old untagged');
     });
   });
 
@@ -419,7 +421,10 @@ void main() {
           home: Scaffold(
             body: ThoughtCard(
               id: 1,
-              content: 'Test content',
+              content: ThoughtContentCodec.encodeAppFlowy(
+                document: AppFlowyDocumentTools.documentJsonFromPlainText('Test content'),
+                plainText: 'Test content',
+              ),
               tags: 'test',
               color: null,
               isPinned: false,
@@ -446,7 +451,10 @@ void main() {
           home: Scaffold(
             body: ThoughtCard(
               id: 1,
-              content: 'Archived content',
+              content: ThoughtContentCodec.encodeAppFlowy(
+                document: AppFlowyDocumentTools.documentJsonFromPlainText('Archived content'),
+                plainText: 'Archived content',
+              ),
               tags: 'test',
               color: null,
               isPinned: false,
@@ -523,11 +531,15 @@ Future<int> _insertThought(
   DateTime? archivedAt,
 }) {
   final timestamp = createdAt ?? DateTime.now();
+  final encoded = ThoughtContentCodec.encodeAppFlowy(
+    document: AppFlowyDocumentTools.documentJsonFromPlainText(content),
+    plainText: content,
+  );
   return db
       .into(db.thoughtsTable)
       .insert(
         ThoughtsTableCompanion(
-          content: Value(content),
+          content: Value(encoded),
           tags: Value(tags),
           isPinned: Value(isPinned),
           createdAt: Value(timestamp),

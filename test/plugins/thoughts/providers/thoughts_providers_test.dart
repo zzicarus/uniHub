@@ -7,8 +7,10 @@ import 'package:uni_hub/src/core/database/database_provider.dart';
 import 'package:uni_hub/src/core/database/tables/thoughts_table.dart';
 import 'package:uni_hub/src/core/plugin/plugin_interface.dart';
 import 'package:uni_hub/src/core/plugin/plugin_registry.dart';
+import 'package:uni_hub/src/plugins/thoughts/data/thought_content_codec.dart';
 import 'package:uni_hub/src/plugins/thoughts/providers/thought_status_filter.dart';
 import 'package:uni_hub/src/plugins/thoughts/providers/thoughts_providers.dart';
+import 'package:uni_hub/src/shared/editor/appflowy_document_tools.dart';
 
 class _ThoughtsTablePlugin extends UniHubPlugin {
   @override
@@ -325,6 +327,13 @@ Future<_SeededThoughts> _seedThoughts(AppDatabase db) async {
   );
 }
 
+String _appFlowyContent(String plainText) {
+  return ThoughtContentCodec.encodeAppFlowy(
+    document: AppFlowyDocumentTools.documentJsonFromPlainText(plainText),
+    plainText: plainText,
+  );
+}
+
 Future<int> _insertThought(
   AppDatabase db, {
   required String content,
@@ -339,7 +348,7 @@ Future<int> _insertThought(
       .into(db.thoughtsTable)
       .insert(
         ThoughtsTableCompanion(
-          content: Value(content),
+          content: Value(_appFlowyContent(content)),
           tags: Value(tags),
           isPinned: Value(isPinned),
           imagePaths: Value(imagePaths),

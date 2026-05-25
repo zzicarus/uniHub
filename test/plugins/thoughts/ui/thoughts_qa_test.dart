@@ -10,8 +10,10 @@ import 'package:uni_hub/src/core/plugin/plugin_interface.dart';
 import 'package:uni_hub/src/core/plugin/plugin_registry.dart';
 import 'package:uni_hub/src/core/theme/app_breakpoints.dart';
 import 'package:uni_hub/src/shared/widgets/adaptive_layout.dart';
+import 'package:uni_hub/src/plugins/thoughts/data/thought_content_codec.dart';
 import 'package:uni_hub/src/plugins/thoughts/providers/thought_status_filter.dart';
 import 'package:uni_hub/src/plugins/thoughts/providers/thoughts_providers.dart';
+import 'package:uni_hub/src/shared/editor/appflowy_document_tools.dart';
 import 'package:uni_hub/src/plugins/thoughts/ui/layouts/thoughts_mobile_layout.dart';
 import 'package:uni_hub/src/plugins/thoughts/ui/thoughts_page.dart';
 import 'package:uni_hub/src/plugins/thoughts/ui/widgets/thought_card.dart';
@@ -164,7 +166,7 @@ void main() {
 
       final thoughts = await container.read(thoughtsListProvider.future);
       expect(thoughts, hasLength(1));
-      expect(thoughts.single.content, 'Archived work item');
+      expect(ThoughtContentCodec.plainTextFromStored(thoughts.single.content), 'Archived work item');
     });
 
     test('pinned + tag + search', () async {
@@ -176,7 +178,7 @@ void main() {
 
       final thoughts = await container.read(thoughtsListProvider.future);
       expect(thoughts, hasLength(1));
-      expect(thoughts.single.content, 'Pinned work with image');
+      expect(ThoughtContentCodec.plainTextFromStored(thoughts.single.content), 'Pinned work with image');
     });
 
     test('withImages + tag filter', () async {
@@ -186,7 +188,7 @@ void main() {
 
       final thoughts = await container.read(thoughtsListProvider.future);
       expect(thoughts, hasLength(1));
-      expect(thoughts.single.content, 'Pinned work with image');
+      expect(ThoughtContentCodec.plainTextFromStored(thoughts.single.content), 'Pinned work with image');
     });
 
     test('all filters combined - no results', () async {
@@ -205,7 +207,7 @@ void main() {
 
       final thoughts = await container.read(thoughtsListProvider.future);
       expect(thoughts, hasLength(1));
-      expect(thoughts.single.content, 'Personal pinned item');
+      expect(ThoughtContentCodec.plainTextFromStored(thoughts.single.content), 'Personal pinned item');
     });
   });
 
@@ -285,7 +287,7 @@ void main() {
 
       final random = await container.read(randomReviewProvider.future);
       expect(random, isA<ThoughtsTableData>());
-      expect(random!.content, 'Old untagged');
+      expect(ThoughtContentCodec.plainTextFromStored(random!.content), 'Old untagged');
     });
   });
 
@@ -709,7 +711,7 @@ void main() {
 
       final thoughts = await container.read(thoughtsListProvider.future);
       expect(thoughts, hasLength(1));
-      expect(thoughts.single.content, 'Archived thought');
+      expect(ThoughtContentCodec.plainTextFromStored(thoughts.single.content), 'Archived thought');
     });
 
     test('active filter shows only active thoughts', () async {
@@ -717,7 +719,7 @@ void main() {
 
       final thoughts = await container.read(thoughtsListProvider.future);
       expect(thoughts, hasLength(1));
-      expect(thoughts.single.content, 'Active thought');
+      expect(ThoughtContentCodec.plainTextFromStored(thoughts.single.content), 'Active thought');
     });
 
     test('archive status chip toggles archive filter', () async {
@@ -781,7 +783,10 @@ Future<int> _insertThought(
       .into(db.thoughtsTable)
       .insert(
         ThoughtsTableCompanion(
-          content: Value(content),
+          content: Value(ThoughtContentCodec.encodeAppFlowy(
+            document: AppFlowyDocumentTools.documentJsonFromPlainText(content),
+            plainText: content,
+          )),
           tags: Value(tags),
           isPinned: Value(isPinned),
           imagePaths: Value(imagePaths),

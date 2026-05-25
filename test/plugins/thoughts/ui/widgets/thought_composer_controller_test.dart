@@ -88,8 +88,7 @@ void main() {
     test('computes canSubmit from document content', () {
       final controller = container.read(composerProvider);
 
-      controller.contentController.replaceText(0, 0, 'Hello', null);
-      controller.syncContentState();
+      controller.textController.text = 'Hello';
 
       expect(controller.canSubmit, isTrue);
     });
@@ -179,9 +178,8 @@ void main() {
 
     test('submit creates thought then clears composer state', () async {
       final controller = container.read(composerProvider);
-      controller.contentController.replaceText(0, 0, 'Ship composer', null);
-      controller.syncContentState();
-      controller.handleTagInput('work,');
+      controller.textController.text = 'Ship composer';
+      controller.setTags({'work'});
       controller.togglePin();
 
       await controller.submit();
@@ -199,16 +197,15 @@ void main() {
 
     test('clear resets tags, images, pin, submit flag, and content', () async {
       final controller = container.read(composerProvider);
-      controller.contentController.replaceText(0, 0, 'Draft', null);
-      controller.syncContentState();
-      controller.handleTagInput('draft,');
+      controller.textController.text = 'Draft';
+      controller.setTags({'draft'});
       controller.togglePin();
       fakePicker.setResult(Uint8List.fromList([4]), '.png');
       await controller.pickImageForComposer();
 
       controller.clear();
 
-      expect(controller.contentController.document.toPlainText().trim(), isEmpty);
+      expect(controller.textController.text.trim(), isEmpty);
       expect(controller.tagChips, isEmpty);
       expect(controller.pendingImages, isEmpty);
       expect(controller.pendingImagePaths, isEmpty);
