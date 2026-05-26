@@ -10,6 +10,7 @@ import 'package:uni_hub/src/plugins/collections/data/saved_items_dao.dart';
 import 'package:uni_hub/src/plugins/collections/domain/collection_models.dart';
 import 'package:uni_hub/src/plugins/collections/domain/consumption_status.dart';
 import 'package:uni_hub/src/plugins/collections/domain/media_type.dart';
+import 'package:uni_hub/src/plugins/collections/domain/saved_items_query.dart';
 import 'package:uni_hub/src/plugins/collections/domain/source_platform.dart';
 
 void main() {
@@ -64,15 +65,17 @@ void main() {
       );
       await repository.updateStatus(article.id, ConsumptionStatus.done);
 
-      final result = await repository.queryItems(
-        view: CollectionView.done,
-        platform: SourcePlatform.web,
-        mediaType: MediaType.article,
-        query: 'article',
+      final page = await repository.queryItems(
+        SavedItemsQuery(
+          view: CollectionView.done,
+          platform: SourcePlatform.web,
+          mediaType: MediaType.article,
+          searchQuery: 'article',
+        ),
       );
 
-      expect(result, hasLength(1));
-      expect(result.single.id, article.id);
+      expect(page.items, hasLength(1));
+      expect(page.items.single.id, article.id);
     });
 
     test('filters by assigned Box ids', () async {
@@ -89,12 +92,14 @@ void main() {
       );
       await repository.setItemBoxes(matched.id, {box.id});
 
-      final result = await repository.queryItems(
-        view: CollectionView.all,
-        boxIds: {box.id},
+      final page = await repository.queryItems(
+        SavedItemsQuery(
+          view: CollectionView.all,
+          selectedBoxIds: {box.id},
+        ),
       );
 
-      expect(result.map((item) => item.id), [matched.id]);
+      expect(page.items.map((item) => item.id), [matched.id]);
     });
 
     test('marks opened and updates status timestamps', () async {
@@ -147,14 +152,16 @@ void main() {
       await repository.setItemBoxes(itemA.id, {box1.id});
       await repository.setItemBoxes(itemB.id, {box2.id});
 
-      final result = await repository.queryItems(
-        view: CollectionView.all,
-        boxIds: {box1.id, box2.id},
+      final page = await repository.queryItems(
+        SavedItemsQuery(
+          view: CollectionView.all,
+          selectedBoxIds: {box1.id, box2.id},
+        ),
       );
 
-      expect(result.any((e) => e.id == itemA.id), isTrue);
-      expect(result.any((e) => e.id == itemB.id), isTrue);
-      expect(result.any((e) => e.id == itemC.id), isFalse);
+      expect(page.items.any((e) => e.id == itemA.id), isTrue);
+      expect(page.items.any((e) => e.id == itemB.id), isTrue);
+      expect(page.items.any((e) => e.id == itemC.id), isFalse);
     });
 
     test('deletes saved item and related data', () async {

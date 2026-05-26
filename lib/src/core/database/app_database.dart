@@ -71,6 +71,32 @@ class AppDatabase extends _$AppDatabase {
       if (from < 4) {
         await m.createTable(websiteLogoCacheTable);
       }
+      if (from < 5) {
+        await customStatement(
+          'CREATE INDEX IF NOT EXISTS idx_saved_items_status_updated '
+          'ON saved_items(status, updated_at DESC)',
+        );
+        await customStatement(
+          'CREATE INDEX IF NOT EXISTS idx_saved_items_inbox_updated '
+          'ON saved_items(is_in_inbox, updated_at DESC)',
+        );
+        await customStatement(
+          'CREATE INDEX IF NOT EXISTS idx_saved_items_platform_updated '
+          'ON saved_items(source_platform, updated_at DESC)',
+        );
+        await customStatement(
+          'CREATE INDEX IF NOT EXISTS idx_saved_items_media_type_updated '
+          'ON saved_items(media_type, updated_at DESC)',
+        );
+        await customStatement(
+          'CREATE INDEX IF NOT EXISTS idx_saved_items_updated_created '
+          'ON saved_items(updated_at DESC, created_at DESC)',
+        );
+        await customStatement(
+          'CREATE INDEX IF NOT EXISTS idx_saved_item_boxes_box_item '
+          'ON saved_item_boxes(box_id, item_id)',
+        );
+      }
     },
   );
 

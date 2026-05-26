@@ -13,6 +13,7 @@ import 'package:uni_hub/src/plugins/collections/data/saved_items_dao.dart';
 import 'package:uni_hub/src/plugins/collections/domain/collection_models.dart';
 import 'package:uni_hub/src/plugins/collections/domain/consumption_status.dart';
 import 'package:uni_hub/src/plugins/collections/domain/media_type.dart';
+import 'package:uni_hub/src/plugins/collections/domain/saved_items_query.dart';
 import 'package:uni_hub/src/plugins/collections/domain/source_platform.dart';
 import 'package:uni_hub/src/plugins/collections/services/enrichment_job_service.dart';
 import 'package:uni_hub/src/plugins/collections/services/metadata_provider.dart';
@@ -151,8 +152,10 @@ void main() {
       await deleteResult.undo!.execute();
 
       // The restored item may have a new ID; find it by normalized URL
-      final all = await repository.queryItems(view: CollectionView.all);
-      final restored = all.where(
+      final all = await repository.queryItems(
+        const SavedItemsQuery(view: CollectionView.all, limit: 500),
+      );
+      final restored = all.items.where(
         (i) => i.normalizedUrl == item.normalizedUrl,
       );
       expect(restored, isNotEmpty);
@@ -175,8 +178,10 @@ void main() {
         // Execute the undo action which calls restoreDeletedItem internally
         await deleteResult.undo!.execute();
 
-        final all = await repository.queryItems(view: CollectionView.all);
-        final restored = all.firstWhere(
+        final all = await repository.queryItems(
+          const SavedItemsQuery(view: CollectionView.all, limit: 500),
+        );
+        final restored = all.items.firstWhere(
           (i) => i.normalizedUrl == item.normalizedUrl,
         );
         final restoredBoxIds =

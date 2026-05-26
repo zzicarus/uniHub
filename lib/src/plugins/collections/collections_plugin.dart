@@ -46,5 +46,5 @@ class CollectionsPlugin extends UniHubPlugin {
   ];
 
   @override
-  int get schemaVersion => 4;
+  int get schemaVersion => 5;
 }

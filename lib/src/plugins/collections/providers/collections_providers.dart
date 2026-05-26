@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -14,6 +15,8 @@ import '../domain/collection_models.dart';
 import '../domain/consumption_status.dart';
 import '../domain/media_type.dart';
 import '../domain/platform_detector.dart';
+import '../domain/saved_items_page.dart';
+import '../domain/saved_items_query.dart';
 import '../domain/source_platform.dart';
 import '../domain/url_normalizer.dart';
 import '../services/collection_capture_service.dart';
@@ -136,7 +139,23 @@ final selectedCollectionBoxIdsProvider = StateProvider<Set<int>>(
   (ref) => const <int>{},
 );
 
+/// 搜索 input 原始值（防抖前，用于输入框绑定）。
+///
+/// UI 输入框通过 [collectionSearchQueryProvider.notifier] 写入此值。
 final collectionSearchQueryProvider = StateProvider<String>((ref) => '');
+
+/// 防抖延迟后的搜索关键词（250ms 防抖），数据库查询应绑定此 provider。
+final collectionDebouncedSearchQueryProvider =
+    AutoDisposeFutureProvider<String>((ref) async {
+  final query = ref.watch(collectionSearchQueryProvider);
+
+  if (query.isEmpty) return '';
+
+  await Future<void>.delayed(const Duration(milliseconds: 250));
+
+  // 读取最终值，防止过时
+  return ref.read(collectionSearchQueryProvider).trim();
+});
 
 final collectionBoxesProvider = FutureProvider<List<CollectionBoxesTableData>>((
   ref,
@@ -145,16 +164,34 @@ final collectionBoxesProvider = FutureProvider<List<CollectionBoxesTableData>>((
   return repository.getBoxes();
 });
 
-final savedItemsListProvider = FutureProvider<List<SavedItemsTableData>>((ref) {
+/// 收藏列表分页查询。
+///
+/// 所有筛选条件在数据库侧完成。每次筛选变化时重新加载第一页。
+/// 搜索关键词使用防抖后的值。
+final savedItemsPageProvider =
+    FutureProvider<SavedItemsPage>((ref) async {
   final repository = ref.watch(collectionsRepositoryProvider);
-  return repository.queryItems(
+  final searchQuery = await ref.watch(collectionDebouncedSearchQueryProvider.future);
+
+  final query = SavedItemsQuery(
     view: ref.watch(collectionViewProvider),
     status: ref.watch(collectionStatusFilterProvider),
     platform: ref.watch(collectionPlatformFilterProvider),
     mediaType: ref.watch(collectionMediaTypeFilterProvider),
-    boxIds: ref.watch(selectedCollectionBoxIdsProvider),
-    query: ref.watch(collectionSearchQueryProvider),
+    selectedBoxIds: ref.watch(selectedCollectionBoxIdsProvider),
+    searchQuery: searchQuery,
+    sort: SavedItemsSort.updatedDesc,
+    limit: 50,
+    offset: 0,
   );
+
+  return repository.queryItems(query);
+});
+
+/// 兼容旧 provider 名称，从 page provider 中取 items。
+final savedItemsListProvider = FutureProvider<List<SavedItemsTableData>>((ref) async {
+  final page = await ref.watch(savedItemsPageProvider.future);
+  return page.items;
 });
 
 final selectedSavedItemIdProvider = StateProvider<int?>((ref) => null);
@@ -220,13 +257,11 @@ final savedItemListEntriesProvider =
     FutureProvider<List<SavedItemListEntry>>((ref) async {
   // Watch the refresh counter so that logos update after enrichment completes.
   ref.watch(websiteLogoRefreshProvider);
-  final items = await ref.watch(savedItemsListProvider.future);
+  final page = await ref.watch(savedItemsPageProvider.future);
   final selectedId = ref.watch(selectedSavedItemIdProvider);
 
-  final repository = ref.watch(collectionsRepositoryProvider);
-  final boxIdsMap = await repository.getBoxIdsForItems(
-    items.map((item) => item.id),
-  );
+  final boxIdsMap = page.boxIdsByItemId;
+  final items = page.items;
 
   final boxes = await ref.watch(collectionBoxesProvider.future);
   final boxById = {for (final box in boxes) box.id: box};

@@ -2,10 +2,11 @@ import 'package:drift/drift.dart';
 import 'package:uni_hub/src/core/database/app_database.dart';
 
 import '../domain/collection_folder_counts.dart';
-import '../domain/collection_models.dart';
 import '../domain/consumption_status.dart';
 import '../domain/enrichment_status.dart';
 import '../domain/media_type.dart';
+import '../domain/saved_items_page.dart';
+import '../domain/saved_items_query.dart';
 import '../domain/source_platform.dart';
 import 'collection_boxes_dao.dart';
 import 'enrichment_jobs_dao.dart';
@@ -253,53 +254,28 @@ class CollectionsRepository {
     return box;
   }
 
-  Future<List<SavedItemsTableData>> queryItems({
-    required CollectionView view,
-    ConsumptionStatus? status,
-    SourcePlatform? platform,
-    MediaType? mediaType,
-    Set<int> boxIds = const {},
-    String query = '',
-  }) async {
-    final items = await _savedItemsDao.getAll();
-    final itemBoxIds = await _collectionBoxesDao.getBoxIdsForItems(
-      items.map((item) => item.id),
+  /// 使用 SQL 化分页查询获取收藏列表。
+  ///
+  /// 所有筛选在数据库侧完成。
+  /// Box 关系只查询当前页（limit + 1 判断 hasMore）。
+  Future<SavedItemsPage> queryItems(SavedItemsQuery query) async {
+    // 多查一条判断 hasMore
+    final items = await _savedItemsDao.queryItemsPage(
+      query.copyWith(limit: query.limit + 1),
     );
-    final normalizedQuery = query.trim().toLowerCase();
 
-    return items.where((item) {
-      if (!_matchesView(item, view)) return false;
-      if (status != null && item.status != status.value) return false;
-      if (platform != null && item.sourcePlatform != platform.value) {
-        return false;
-      }
-      if (mediaType != null && item.mediaType != mediaType.value) return false;
-      if (boxIds.isNotEmpty) {
-        final ids = itemBoxIds[item.id]?.toSet() ?? const <int>{};
-        if (!boxIds.any(ids.contains)) return false;
-      }
-      if (normalizedQuery.isEmpty) return true;
-      final haystack = [
-        item.title,
-        item.description,
-        item.originalUrl,
-        item.normalizedUrl,
-        item.siteName,
-      ].whereType<String>().join(' ').toLowerCase();
-      return haystack.contains(normalizedQuery);
-    }).toList();
-  }
+    final hasMore = items.length > query.limit;
+    final pageItems = hasMore ? items.take(query.limit).toList() : items;
 
-  bool _matchesView(SavedItemsTableData item, CollectionView view) {
-    final status = ConsumptionStatus.fromValue(item.status);
-    return switch (view) {
-      CollectionView.inbox =>
-        item.isInInbox && status != ConsumptionStatus.archived,
-      CollectionView.all => true,
-      CollectionView.unread => status == ConsumptionStatus.unread,
-      CollectionView.inProgress => status == ConsumptionStatus.inProgress,
-      CollectionView.done => status == ConsumptionStatus.done,
-      CollectionView.archived => status == ConsumptionStatus.archived,
-    };
+    // 只查当前页的 Box 关系
+    final boxIdsByItemId = await _collectionBoxesDao.getBoxIdsForItems(
+      pageItems.map((item) => item.id),
+    );
+
+    return SavedItemsPage(
+      items: pageItems,
+      boxIdsByItemId: boxIdsByItemId,
+      hasMore: hasMore,
+    );
   }
 }

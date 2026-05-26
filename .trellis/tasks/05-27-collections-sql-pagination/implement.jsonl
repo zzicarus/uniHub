@@ -1,0 +1,4 @@
+{"file": ".trellis/spec/backend/database-guidelines.md", "reason": "Database migration guide, Drift DAO/Repository patterns, index creation conventions"}
+{"file": ".trellis/spec/backend/plugin-data-flow.md", "reason": "Collections plugin data flow, DAO → Repository → Provider chain"}
+{"file": ".trellis/spec/architecture/app-architecture.md", "reason": "3-layer architecture, cross-layer dependency direction"}
+{"file": ".trellis/spec/frontend/state-management.md", "reason": "Riverpod provider patterns for collections providers"}
