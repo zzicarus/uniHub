@@ -61,6 +61,24 @@ class WebsiteLogoCacheDao {
     );
   }
 
+  /// 批量查询多个 siteKey 的缓存记录。
+  ///
+  /// 返回 siteKey → row 的映射，未找到的 key 对应 null。
+  Future<Map<String, WebsiteLogoCacheTableData?>> getLogosBySiteKeys(
+    Iterable<String> siteKeys,
+  ) async {
+    final keys = siteKeys.toSet();
+    if (keys.isEmpty) return const {};
+    final results = await (_db.select(_db.websiteLogoCacheTable)
+      ..where((t) => t.siteKey.isIn(keys.toList())))
+      .get();
+    final map = <String, WebsiteLogoCacheTableData?>{};
+    for (final key in keys) {
+      map[key] = results.where((r) => r.siteKey == key).firstOrNull;
+    }
+    return map;
+  }
+
   /// 清空所有缓存记录，返回删除行数。
   Future<int> clearAll() {
     return (_db.delete(_db.websiteLogoCacheTable)).go();

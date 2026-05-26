@@ -18,6 +18,9 @@ import '../domain/source_platform.dart';
 import '../domain/url_normalizer.dart';
 import '../services/collection_capture_service.dart';
 import '../data/website_logo_cache_dao.dart';
+import '../application/enrichment_queue_controller.dart';
+import '../application/saved_item_actions_controller.dart';
+import '../application/saved_item_list_entry.dart';
 import '../services/enrichment_job_service.dart';
 import '../services/local_metadata_provider.dart';
 import '../services/metadata_provider.dart';
@@ -72,6 +75,14 @@ final metadataProviderProvider = Provider<MetadataProvider>((ref) {
   );
 });
 
+final enrichmentQueueControllerProvider =
+    Provider<EnrichmentQueueController>((ref) {
+  return EnrichmentQueueController(
+    jobService: ref.watch(enrichmentJobServiceProvider),
+    ref: ref,
+  );
+});
+
 final enrichmentJobServiceProvider = Provider<EnrichmentJobService>((ref) {
   return EnrichmentJobService(
     repository: ref.watch(collectionsRepositoryProvider),
@@ -83,6 +94,15 @@ final enrichmentJobServiceProvider = Provider<EnrichmentJobService>((ref) {
       // so UI re-reads the cached logo from the database.
       ref.read(websiteLogoRefreshProvider.notifier).state++;
     },
+  );
+});
+
+final savedItemActionsControllerProvider =
+    Provider<SavedItemActionsController>((ref) {
+  return SavedItemActionsController(
+    repository: ref.watch(collectionsRepositoryProvider),
+    enrichmentJobService: ref.watch(enrichmentJobServiceProvider),
+    ref: ref,
   );
 });
 
@@ -187,4 +207,67 @@ final websiteLogoForUrlProvider =
     localLogoPath: row.localLogoPath,
     status: row.status,
   );
+});
+
+// ---------------------------------------------------------------------------
+// ViewModel list
+// ---------------------------------------------------------------------------
+
+/// 聚合收藏列表数据，消除列表渲染时的 N+1 查询。
+///
+/// 每个 [SavedItemListEntry] 包含 item 本身、所属 Box、Logo 缓存、选中状态。
+final savedItemListEntriesProvider =
+    FutureProvider<List<SavedItemListEntry>>((ref) async {
+  // Watch the refresh counter so that logos update after enrichment completes.
+  ref.watch(websiteLogoRefreshProvider);
+  final items = await ref.watch(savedItemsListProvider.future);
+  final selectedId = ref.watch(selectedSavedItemIdProvider);
+
+  final repository = ref.watch(collectionsRepositoryProvider);
+  final boxIdsMap = await repository.getBoxIdsForItems(
+    items.map((item) => item.id),
+  );
+
+  final boxes = await ref.watch(collectionBoxesProvider.future);
+  final boxById = {for (final box in boxes) box.id: box};
+
+  // Batch load logos
+  final logoDao = ref.watch(websiteLogoCacheDaoProvider);
+  final siteKeys = items
+      .map((item) => WebsiteLogoCacheService.siteKey(item.originalUrl));
+  final logoRows = await logoDao.getLogosBySiteKeys(siteKeys);
+  final logos = <String, WebsiteLogoCacheEntry?>{};
+  for (final entry in logoRows.entries) {
+    final row = entry.value;
+    logos[entry.key] = row != null
+        ? WebsiteLogoCacheEntry(
+            siteKey: row.siteKey,
+            localLogoPath: row.localLogoPath,
+            status: row.status,
+          )
+        : null;
+  }
+
+  return [
+    for (final item in items)
+      SavedItemListEntry(
+        item: item,
+        boxes: [
+          for (final boxId in boxIdsMap[item.id] ?? const <int>[])
+            if (boxById[boxId] != null) boxById[boxId]!,
+        ],
+        logo: logos[WebsiteLogoCacheService.siteKey(item.originalUrl)],
+        selected: item.id == selectedId,
+      ),
+  ];
+});
+
+/// 当前选中的收藏项的 ViewModel。
+final selectedSavedItemEntryProvider = Provider<SavedItemListEntry?>((ref) {
+  final entriesAsync = ref.watch(savedItemListEntriesProvider);
+  final selectedId = ref.watch(selectedSavedItemIdProvider);
+  if (selectedId == null) return null;
+  return entriesAsync.valueOrNull
+      ?.where((e) => e.item.id == selectedId)
+      .firstOrNull;
 });

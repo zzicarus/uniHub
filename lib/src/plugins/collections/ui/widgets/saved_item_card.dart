@@ -3,6 +3,8 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uni_hub/src/core/database/app_database.dart';
 import 'package:uni_hub/src/core/theme/app_tokens.dart';
+import 'package:uni_hub/src/plugins/collections/application/saved_item_list_entry.dart';
+import 'package:uni_hub/src/plugins/collections/application/saved_item_undo_snapshot.dart';
 import 'package:uni_hub/src/plugins/collections/domain/consumption_status.dart';
 import 'package:uni_hub/src/plugins/collections/domain/enrichment_status.dart';
 import 'package:uni_hub/src/plugins/collections/domain/media_type.dart';
@@ -13,32 +15,31 @@ import 'package:uni_hub/src/shared/widgets/delete_confirm_dialog.dart';
 import 'package:uni_hub/src/shared/widgets/website_logo.dart';
 
 /// Content-style saved-item card for the collection list.
+///
+/// Accepts a [SavedItemListEntry] ViewModel which pre-aggregates the item
+/// data, box assignments, logo cache, and selection state — eliminating
+/// N+1 queries during list rendering.
 class SavedItemCard extends ConsumerWidget {
   const SavedItemCard({
-    required this.item,
-    this.selected = false,
+    required this.entry,
     this.onTap,
     super.key,
   });
 
-  final SavedItemsTableData item;
-  final bool selected;
+  final SavedItemListEntry entry;
   final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
+    final item = entry.item;
     final platform = SourcePlatform.fromValue(item.sourcePlatform);
     final mediaType = MediaType.fromValue(item.mediaType);
     final status = ConsumptionStatus.fromValue(item.status);
     final enrichmentStatus = EnrichmentStatus.fromValue(item.enrichmentStatus);
-
-    // Read local logo path from cache (non-blocking, shows fallback when null)
-    final logoAsync = ref.watch(
-      websiteLogoForUrlProvider(item.normalizedUrl),
-    );
-    final localLogoPath = logoAsync.valueOrNull?.localLogoPath;
+    final selected = entry.selected;
+    final localLogoPath = entry.logo?.localLogoPath;
 
     final borderRadius = BorderRadius.circular(AppRadius.md);
 
@@ -107,13 +108,16 @@ class SavedItemCard extends ConsumerWidget {
                           platform,
                           mediaType,
                           enrichmentStatus,
-                          item.id,
+                          entry.boxes,
+                          item,
+                          ref,
+                          context,
                         ),
                       ],
                     ),
                   ),
                   const SizedBox(width: AppSpacing.xs),
-                  _rightColumn(context, theme, colorScheme, status, ref),
+                  _rightColumn(context, theme, colorScheme, status, ref, item),
                 ],
               ),
             ),
@@ -170,7 +174,10 @@ class SavedItemCard extends ConsumerWidget {
     SourcePlatform platform,
     MediaType mediaType,
     EnrichmentStatus enrichmentStatus,
-    int itemId,
+    List<CollectionBoxesTableData> boxes,
+    SavedItemsTableData item,
+    WidgetRef ref,
+    BuildContext context,
   ) {
     return SizedBox(
       height: 22,
@@ -182,10 +189,40 @@ class SavedItemCard extends ConsumerWidget {
             const SizedBox(width: AppSpacing.xxs),
             _miniChip(theme, colorScheme, mediaType.label),
             const SizedBox(width: AppSpacing.xxs),
-            _ItemBoxChips(itemId: itemId),
+            // Box chips from pre-aggregated entry data
+            for (final box in boxes.take(2)) ...[
+              const SizedBox(width: AppSpacing.xxs),
+              _BoxMiniChip(label: box.name),
+            ],
+            if (boxes.length > 2) ...[
+              const SizedBox(width: AppSpacing.xxs),
+              Text(
+                '+${boxes.length - 2}',
+                style: TextStyle(
+                  fontSize: AppFontTokens.mini,
+                  color: colorScheme.onSurfaceVariant,
+                ),
+              ),
+            ],
             if (enrichmentStatus == EnrichmentStatus.failed) ...[
               const SizedBox(width: AppSpacing.xxs),
-              _miniChip(theme, colorScheme, '抓取失败', isError: true),
+              _miniChip(
+                theme,
+                colorScheme,
+                '抓取失败 · 重试',
+                isError: true,
+                onTap: () async {
+                  final controller =
+                      ref.read(savedItemActionsControllerProvider);
+                  final result =
+                      await controller.retryEnrichment(item.id);
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text(result.message ?? '')),
+                    );
+                  }
+                },
+              ),
             ],
             if (item.lastOpenedAt != null) ...[
               const SizedBox(width: AppSpacing.xxs),
@@ -229,23 +266,28 @@ class SavedItemCard extends ConsumerWidget {
     ColorScheme colorScheme,
     String label, {
     bool isError = false,
+    VoidCallback? onTap,
   }) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-      decoration: BoxDecoration(
-        color: isError
-            ? colorScheme.errorContainer.withValues(alpha: 0.65)
-            : colorScheme.surfaceContainerLow,
-        borderRadius: BorderRadius.circular(AppRadius.xs),
-      ),
-      child: Text(
-        label,
-        style: theme.textTheme.labelSmall?.copyWith(
-          color: isError
-              ? colorScheme.onErrorContainer
-              : colorScheme.onSurfaceVariant,
-          fontSize: AppFontTokens.mini,
-          height: 1.4,
+    return Material(
+      color: isError
+          ? colorScheme.errorContainer.withValues(alpha: 0.65)
+          : colorScheme.surfaceContainerLow,
+      borderRadius: BorderRadius.circular(AppRadius.xs),
+      clipBehavior: Clip.antiAlias,
+      child: GestureDetector(
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+          child: Text(
+            label,
+            style: theme.textTheme.labelSmall?.copyWith(
+              color: isError
+                  ? colorScheme.onErrorContainer
+                  : colorScheme.onSurfaceVariant,
+              fontSize: AppFontTokens.mini,
+              height: 1.4,
+            ),
+          ),
         ),
       ),
     );
@@ -261,6 +303,7 @@ class SavedItemCard extends ConsumerWidget {
     ColorScheme colorScheme,
     ConsumptionStatus status,
     WidgetRef ref,
+    SavedItemsTableData item,
   ) {
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -272,9 +315,8 @@ class SavedItemCard extends ConsumerWidget {
             tooltip: '切换状态',
             initialValue: status,
             onSelected: (next) async {
-              final repository = ref.read(collectionsRepositoryProvider);
-              await repository.updateStatus(item.id, next);
-              ref.invalidate(savedItemsListProvider);
+              final controller = ref.read(savedItemActionsControllerProvider);
+              await controller.updateStatus(item.id, next);
             },
             itemBuilder: (context) => [
               for (final value in ConsumptionStatus.values)
@@ -379,65 +421,6 @@ class SavedItemCard extends ConsumerWidget {
 // Item box chips (reused from previous impl, simplified)
 // ---------------------------------------------------------------
 
-class _ItemBoxChips extends ConsumerWidget {
-  const _ItemBoxChips({required this.itemId});
-
-  final int itemId;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final repository = ref.read(collectionsRepositoryProvider);
-    final boxesAsync = ref.watch(collectionBoxesProvider);
-
-    return FutureBuilder<List<int>>(
-      future: repository.getBoxIdsForItem(itemId),
-      builder: (context, snapshot) {
-        if (!snapshot.hasData || snapshot.data!.isEmpty) {
-          return const SizedBox.shrink();
-        }
-
-        final boxIds = snapshot.data!;
-
-        return boxesAsync.when(
-          data: (boxes) {
-            final namedBoxes = boxes
-                .where((b) => boxIds.contains(b.id))
-                .map((b) => b.name)
-                .toList();
-
-            if (namedBoxes.isEmpty) return const SizedBox.shrink();
-
-            final shown = namedBoxes.take(2).toList();
-            final extra = namedBoxes.length - shown.length;
-
-            return Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                for (final name in shown) ...[
-                  const SizedBox(width: AppSpacing.xxs),
-                  _BoxMiniChip(label: name),
-                ],
-                if (extra > 0) ...[
-                  const SizedBox(width: AppSpacing.xxs),
-                  Text(
-                    '+$extra',
-                    style: TextStyle(
-                      fontSize: AppFontTokens.mini,
-                      color: Theme.of(context).colorScheme.onSurfaceVariant,
-                    ),
-                  ),
-                ],
-              ],
-            );
-          },
-          loading: () => const SizedBox.shrink(),
-          error: (_, _) => const SizedBox.shrink(),
-        );
-      },
-    );
-  }
-}
-
 class _CardMoreMenu extends ConsumerWidget {
   const _CardMoreMenu({required this.item});
 
@@ -466,7 +449,8 @@ class _CardMoreMenu extends ConsumerWidget {
                 context,
               ).showSnackBar(const SnackBar(content: Text('链接已复制，可在浏览器中打开')));
             case _CardAction.copy:
-              await Clipboard.setData(ClipboardData(text: item.originalUrl));
+              final controller = ref.read(savedItemActionsControllerProvider);
+              await controller.copyUrl(item.id);
               if (!context.mounted) return;
               ScaffoldMessenger.of(
                 context,
@@ -476,123 +460,10 @@ class _CardMoreMenu extends ConsumerWidget {
                 itemId: item.id,
               )._showBoxMenu(context, ref);
             case _CardAction.archive:
-              await ref
-                  .read(collectionsRepositoryProvider)
-                  .updateStatus(item.id, ConsumptionStatus.archived);
-              ref.invalidate(savedItemsListProvider);
+              final ctrl = ref.read(savedItemActionsControllerProvider);
+              await ctrl.archiveItem(item.id);
             case _CardAction.delete:
-              final prefsAsync = ref.read(deleteConfirmPrefsProvider);
-              final prefs = prefsAsync.valueOrNull;
-              if (prefs == null) return;
-
-              final repository = ref.read(collectionsRepositoryProvider);
-              final displayTitle =
-                  item.title.isEmpty ? item.normalizedUrl : item.title;
-              final mediaType = MediaType.fromValue(item.mediaType);
-              final platform = SourcePlatform.fromValue(item.sourcePlatform);
-
-              // Check multi-box
-              final boxIds = await repository.getBoxIdsForItem(item.id);
-
-              DeleteConfirmResult? result;
-              if (boxIds.length > 1) {
-                final boxes = await repository.getBoxes();
-                final boxNames = boxes
-                    .where((b) => boxIds.contains(b.id))
-                    .map((b) => b.name)
-                    .toList();
-                result = await DeleteConfirmDialog.showMultiBox(
-                  context: context,
-                  title: displayTitle,
-                  source: item.siteName?.isNotEmpty == true
-                      ? item.siteName!
-                      : _domainOf(item.normalizedUrl),
-                  typeLabel: platform.label,
-                  relativeTime: _relativeTime(item.createdAt),
-                  fallbackIcon: _iconFor(mediaType),
-                  boxNames: boxNames,
-                  prefs: prefs,
-                );
-              } else {
-                result = await DeleteConfirmDialog.showSingle(
-                  context: context,
-                  title: displayTitle,
-                  source: item.siteName?.isNotEmpty == true
-                      ? item.siteName!
-                      : _domainOf(item.normalizedUrl),
-                  typeLabel: platform.label,
-                  relativeTime: _relativeTime(item.createdAt),
-                  fallbackIcon: _iconFor(mediaType),
-                  prefs: prefs,
-                );
-              }
-
-              if (result == null ||
-                  result == DeleteConfirmResult.cancel ||
-                  !context.mounted) {
-                return;
-              }
-
-              if (result == DeleteConfirmResult.removeFromBox) {
-                if (boxIds.isNotEmpty) {
-                  final boxes = await repository.getBoxes();
-                  final boxName = boxes
-                      .where((b) => b.id == boxIds.first)
-                      .map((b) => b.name)
-                      .firstOrNull ?? '收藏夹';
-                  await repository.removeItemFromBox(item.id, boxIds.first);
-                  ref.invalidate(savedItemsListProvider);
-                  ref.invalidate(collectionFolderCountsProvider);
-                  if (!context.mounted) return;
-                  _showUndoSnackBar(
-                    context,
-                    '已从「$boxName」中移除',
-                    () async {
-                      final currentBoxIds =
-                          await repository.getBoxIdsForItem(item.id);
-                      await repository.setItemBoxes(
-                        item.id,
-                        {...currentBoxIds, boxIds.first},
-                      );
-                      await repository.updateInboxState(item.id, false);
-                      ref.invalidate(savedItemsListProvider);
-                      ref.invalidate(collectionFolderCountsProvider);
-                    },
-                  );
-                }
-                return;
-              }
-
-              // Full delete with undo
-              final undoBoxIds = List<int>.from(boxIds);
-              await repository.deleteSavedItem(item.id);
-              ref.read(selectedSavedItemIdProvider.notifier).state = null;
-              ref.invalidate(savedItemsListProvider);
-              ref.invalidate(collectionFolderCountsProvider);
-              if (!context.mounted) return;
-              _showUndoSnackBar(
-                context,
-                '已删除「$displayTitle」',
-                () async {
-                  final restored = await repository.createSavedItem(
-                    originalUrl: item.originalUrl,
-                    normalizedUrl: item.normalizedUrl,
-                    title: item.title,
-                    mediaType: mediaType,
-                    sourcePlatform: platform,
-                    isInInbox: undoBoxIds.isEmpty,
-                  );
-                  if (undoBoxIds.isNotEmpty) {
-                    await repository.setItemBoxes(
-                      restored.id,
-                      undoBoxIds.toSet(),
-                    );
-                    await repository.updateInboxState(restored.id, false);
-                  }
-                  ref.invalidate(savedItemsListProvider);
-                  ref.invalidate(collectionFolderCountsProvider);
-                },
-              );
+              await _handleDelete(context, ref, item);
           }
         },
         itemBuilder: (context) => [
@@ -608,6 +479,108 @@ class _CardMoreMenu extends ConsumerWidget {
         ],
       ),
     );
+  }
+
+  Future<void> _handleDelete(
+    BuildContext context,
+    WidgetRef ref,
+    SavedItemsTableData item,
+  ) async {
+    final prefsAsync = ref.read(deleteConfirmPrefsProvider);
+    final prefs = prefsAsync.valueOrNull;
+    if (prefs == null) return;
+
+    final displayTitle =
+        item.title.isEmpty ? item.normalizedUrl : item.title;
+    final mediaType = MediaType.fromValue(item.mediaType);
+    final platform = SourcePlatform.fromValue(item.sourcePlatform);
+    final repository = ref.read(collectionsRepositoryProvider);
+    final controller = ref.read(savedItemActionsControllerProvider);
+
+    final boxIds = await repository.getBoxIdsForItem(item.id);
+
+    DeleteConfirmResult? result;
+    if (boxIds.length > 1) {
+      final boxes = await repository.getBoxes();
+      final boxNames = boxes
+          .where((b) => boxIds.contains(b.id))
+          .map((b) => b.name)
+          .toList();
+      result = await DeleteConfirmDialog.showMultiBox(
+        context: context,
+        title: displayTitle,
+        source: item.siteName?.isNotEmpty == true
+            ? item.siteName!
+            : _domainOf(item.normalizedUrl),
+        typeLabel: platform.label,
+        relativeTime: _relativeTime(item.createdAt),
+        fallbackIcon: _iconFor(mediaType),
+        boxNames: boxNames,
+        prefs: prefs,
+      );
+    } else {
+      result = await DeleteConfirmDialog.showSingle(
+        context: context,
+        title: displayTitle,
+        source: item.siteName?.isNotEmpty == true
+            ? item.siteName!
+            : _domainOf(item.normalizedUrl),
+        typeLabel: platform.label,
+        relativeTime: _relativeTime(item.createdAt),
+        fallbackIcon: _iconFor(mediaType),
+        prefs: prefs,
+      );
+    }
+
+    if (result == null ||
+        result == DeleteConfirmResult.cancel ||
+        !context.mounted) {
+      return;
+    }
+
+    if (result == DeleteConfirmResult.removeFromBox) {
+      if (boxIds.isNotEmpty) {
+        final boxes = await repository.getBoxes();
+        final boxName = boxes
+                .where((b) => b.id == boxIds.first)
+                .map((b) => b.name)
+                .firstOrNull ??
+            '收藏夹';
+        final deleteResult = await controller.deleteItem(
+          item.id,
+          mode: DeleteMode.removeFromBox,
+          boxId: boxIds.first,
+          boxName: boxName,
+        );
+        if (!context.mounted) return;
+        if (deleteResult.undo != null) {
+          _showUndoSnackBar(
+            context,
+            deleteResult.message ?? '已从「$boxName」中移除',
+            () async {
+              await deleteResult.undo!.execute();
+            },
+          );
+        }
+      }
+      return;
+    }
+
+    // Full delete
+    final deleteResult = await controller.deleteItem(
+      item.id,
+      mode: DeleteMode.fullDelete,
+    );
+    if (!context.mounted) return;
+    if (deleteResult.undo != null) {
+      _showUndoSnackBar(
+        context,
+        deleteResult.message ?? '已删除「$displayTitle」',
+        () async {
+          await deleteResult.undo!.execute();
+        },
+      );
+    }
   }
 
   // --- Helpers (duplicated from SavedItemCard for standalone access) ---

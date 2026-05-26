@@ -6,6 +6,7 @@ import 'package:uni_hub/src/core/database/app_database.dart';
 import 'package:uni_hub/src/core/database/database_provider.dart';
 import 'package:uni_hub/src/core/plugin/plugin_registry.dart';
 import 'package:uni_hub/src/plugins/collections/collections_plugin.dart';
+import 'package:uni_hub/src/plugins/collections/application/saved_item_list_entry.dart';
 import 'package:uni_hub/src/plugins/collections/ui/widgets/saved_item_card.dart';
 
 void main() {
@@ -21,6 +22,7 @@ void main() {
           pluginRegistryProvider.overrideWithValue(registry),
         ],
         child: MaterialApp(
+          theme: ThemeData(splashFactory: InkSplash.splashFactory),
           home: Scaffold(body: Center(child: child)),
         ),
       ),
@@ -57,19 +59,23 @@ void main() {
     await pumpCard(
       tester,
       SavedItemCard(
-        item: SavedItemsTableData(
-          id: 1,
-          originalUrl: 'https://example.com/article',
-          normalizedUrl: 'https://example.com/article',
-          title: 'Flutter Ink host note',
-          description: 'Local Material prevents Scaffold-level ink features',
-          mediaType: 'article',
-          sourcePlatform: 'web',
-          status: 'unread',
-          isInInbox: true,
-          enrichmentStatus: 'pending',
-          createdAt: now,
-          updatedAt: now,
+        entry: SavedItemListEntry(
+          item: SavedItemsTableData(
+            id: 1,
+            originalUrl: 'https://example.com/article',
+            normalizedUrl: 'https://example.com/article',
+            title: 'Flutter Ink host note',
+            description: 'Local Material prevents Scaffold-level ink features',
+            mediaType: 'article',
+            sourcePlatform: 'web',
+            status: 'unread',
+            isInInbox: true,
+            enrichmentStatus: 'pending',
+            createdAt: now,
+            updatedAt: now,
+          ),
+          boxes: const [],
+          selected: false,
         ),
         onTap: () => tapped = true,
       ),
@@ -103,20 +109,24 @@ void main() {
     await pumpCard(
       tester,
       SavedItemCard(
-        item: SavedItemsTableData(
-          id: 2,
-          originalUrl: 'https://example.com/article',
-          normalizedUrl: 'https://example.com/article',
-          title: 'With Favicon',
-          description: 'Article with favicon',
-          mediaType: 'article',
-          sourcePlatform: 'web',
-          status: 'unread',
-          isInInbox: true,
-          enrichmentStatus: 'pending',
-          favicon: 'https://example.com/favicon.ico',
-          createdAt: now,
-          updatedAt: now,
+        entry: SavedItemListEntry(
+          item: SavedItemsTableData(
+            id: 2,
+            originalUrl: 'https://example.com/article',
+            normalizedUrl: 'https://example.com/article',
+            title: 'With Favicon',
+            description: 'Article with favicon',
+            mediaType: 'article',
+            sourcePlatform: 'web',
+            status: 'unread',
+            isInInbox: true,
+            enrichmentStatus: 'pending',
+            favicon: 'https://example.com/favicon.ico',
+            createdAt: now,
+            updatedAt: now,
+          ),
+          boxes: const [],
+          selected: false,
         ),
         onTap: () {},
       ),
@@ -136,26 +146,30 @@ void main() {
     await pumpCard(
       tester,
       SavedItemCard(
-        item: SavedItemsTableData(
-          id: 3,
-          originalUrl: 'https://example.com/failed',
-          normalizedUrl: 'https://example.com/failed',
-          title: 'Failed Enrichment',
-          mediaType: 'article',
-          sourcePlatform: 'web',
-          status: 'unread',
-          isInInbox: true,
-          enrichmentStatus: 'failed',
-          favicon: 'https://example.com/favicon.ico',
-          createdAt: now,
-          updatedAt: now,
+        entry: SavedItemListEntry(
+          item: SavedItemsTableData(
+            id: 3,
+            originalUrl: 'https://example.com/failed',
+            normalizedUrl: 'https://example.com/failed',
+            title: 'Failed Enrichment',
+            mediaType: 'article',
+            sourcePlatform: 'web',
+            status: 'unread',
+            isInInbox: true,
+            enrichmentStatus: 'failed',
+            favicon: 'https://example.com/favicon.ico',
+            createdAt: now,
+            updatedAt: now,
+          ),
+          boxes: const [],
+          selected: false,
         ),
         onTap: () {},
       ),
     );
 
-    // The card still renders and '抓取失败' chip is shown
+    // The card still renders and the enrichment failed indicator is shown
     expect(find.text('Failed Enrichment'), findsOneWidget);
-    expect(find.text('抓取失败'), findsOneWidget);
+    expect(find.text('抓取失败 · 重试'), findsOneWidget);
   });
 }

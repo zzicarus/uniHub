@@ -65,6 +65,56 @@ class CollectionsRepository {
     return created;
   }
 
+  /// Restore a previously deleted saved item with all original fields.
+  ///
+  /// Creates a new row preserving title, timestamps, enrichment status,
+  /// metadata, and box associations.
+  Future<SavedItemsTableData> restoreSavedItem(
+    SavedItemsTableData item,
+    List<int> boxIds,
+  ) async {
+    // If the URL was re-bookmarked since deletion, return the existing entry.
+    final existing = await findByNormalizedUrl(item.normalizedUrl);
+    if (existing != null) return existing;
+
+    final now = DateTime.now();
+    final id = await _savedItemsDao.insert(
+      SavedItemsTableCompanion(
+        originalUrl: Value(item.originalUrl),
+        normalizedUrl: Value(item.normalizedUrl),
+        title: Value(item.title),
+        description: Value(item.description),
+        author: Value(item.author),
+        siteName: Value(item.siteName),
+        coverImage: Value(item.coverImage),
+        favicon: Value(item.favicon),
+        mediaType: Value(item.mediaType),
+        sourcePlatform: Value(item.sourcePlatform),
+        status: Value(item.status),
+        isInInbox: Value(boxIds.isEmpty),
+        enrichmentStatus: Value(item.enrichmentStatus),
+        extractedText: Value(item.extractedText),
+        summary: Value(item.summary),
+        metadataJson: Value(item.metadataJson),
+        createdAt: Value(item.createdAt),
+        updatedAt: Value(now),
+        lastOpenedAt: Value(item.lastOpenedAt),
+        completedAt: Value(item.completedAt),
+        archivedAt: Value(item.archivedAt),
+      ),
+    );
+
+    if (boxIds.isNotEmpty) {
+      await _collectionBoxesDao.setItemBoxes(id, boxIds.toSet());
+    }
+
+    final created = await _savedItemsDao.getById(id);
+    if (created == null) {
+      throw StateError('恢复收藏项失败：${item.originalUrl}');
+    }
+    return created;
+  }
+
   Future<void> updateMetadata(
     int itemId, {
     String? title,
@@ -131,6 +181,15 @@ class CollectionsRepository {
 
   Future<List<int>> getBoxIdsForItem(int itemId) {
     return _collectionBoxesDao.getBoxIdsForItem(itemId);
+  }
+
+  /// 批量查询多个 item 的收藏夹 ID 映射。
+  ///
+  /// 返回 itemId → boxIds 列表。未找到的 item 不会出现在返回的 map 中。
+  Future<Map<int, List<int>>> getBoxIdsForItems(
+    Iterable<int> itemIds,
+  ) {
+    return _collectionBoxesDao.getBoxIdsForItems(itemIds);
   }
 
   Future<void> setItemBoxes(int itemId, Set<int> boxIds) {

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:uni_hub/src/core/database/app_database.dart';
 import 'package:uni_hub/src/core/theme/app_tokens.dart';
+import 'package:uni_hub/src/plugins/collections/application/saved_item_list_entry.dart';
 import 'package:uni_hub/src/plugins/collections/providers/collections_providers.dart';
 import 'package:uni_hub/src/shared/widgets/responsive_page_header.dart';
 
@@ -26,7 +26,17 @@ class _CollectionsDesktopLayoutState
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _autoSelectFirstItem();
+      _drainPendingEnrichment();
     });
+  }
+
+  void _drainPendingEnrichment() {
+    // 收藏页进入时主动扫描并消费 pending enrichment jobs
+    final controller = ref.read(enrichmentQueueControllerProvider);
+    controller.drainPending(
+      batchSize: 5,
+      maxBatches: 3,
+    );
   }
 
   void _autoSelectFirstItem() {
@@ -44,16 +54,18 @@ class _CollectionsDesktopLayoutState
 
   @override
   Widget build(BuildContext context) {
-    final itemsAsync = ref.watch(savedItemsListProvider);
+    final entriesAsync = ref.watch(savedItemListEntriesProvider);
     final selectedId = ref.watch(selectedSavedItemIdProvider);
 
-    // Compute display item from async data synchronously
-    final items = itemsAsync.asData?.value ?? <SavedItemsTableData>[];
-    SavedItemsTableData? displayItem;
+    // Compute display item from entries synchronously
+    final entries = entriesAsync.asData?.value ?? <SavedItemListEntry>[];
+    SavedItemListEntry? displayEntry;
     if (selectedId != null) {
-      displayItem = items.where((item) => item.id == selectedId).firstOrNull;
+      displayEntry =
+          entries.where((e) => e.item.id == selectedId).firstOrNull;
     }
-    displayItem ??= items.isNotEmpty ? items.first : null;
+    displayEntry ??= entries.isNotEmpty ? entries.first : null;
+    final displayItem = displayEntry?.item;
 
     return SafeArea(
       child: Padding(
@@ -127,21 +139,19 @@ class _CollectionsDesktopLayoutState
                             const CollectionListToolbar(),
                             const SizedBox(height: AppSpacing.sm),
                             Expanded(
-                              child: itemsAsync.when(
-                                data: (items) {
-                                  if (items.isEmpty) {
+                              child: entriesAsync.when(
+                                data: (entries) {
+                                  if (entries.isEmpty) {
                                     return const _EmptyState();
                                   }
                                   return ListView.separated(
-                                    itemCount: items.length,
+                                    itemCount: entries.length,
                                     separatorBuilder: (context, index) =>
                                         const SizedBox(height: AppSpacing.sm),
                                     itemBuilder: (context, index) {
-                                      final item = items[index];
-                                      final isSelected = item.id == selectedId;
+                                      final entry = entries[index];
                                       return SavedItemCard(
-                                        item: item,
-                                        selected: isSelected,
+                                        entry: entry,
                                         onTap: () {
                                           ref
                                                   .read(
@@ -149,7 +159,7 @@ class _CollectionsDesktopLayoutState
                                                         .notifier,
                                                   )
                                                   .state =
-                                              item.id;
+                                              entry.item.id;
                                         },
                                       );
                                     },

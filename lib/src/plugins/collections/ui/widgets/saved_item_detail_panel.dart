@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:url_launcher/url_launcher.dart';
 import 'package:uni_hub/src/core/database/app_database.dart';
 import 'package:uni_hub/src/core/theme/app_tokens.dart';
+import 'package:uni_hub/src/plugins/collections/application/saved_item_undo_snapshot.dart';
 import 'package:uni_hub/src/plugins/collections/domain/consumption_status.dart';
+import 'package:uni_hub/src/plugins/collections/domain/enrichment_status.dart';
 import 'package:uni_hub/src/plugins/collections/domain/media_type.dart';
 import 'package:uni_hub/src/plugins/collections/domain/source_platform.dart';
 import 'package:uni_hub/src/plugins/collections/providers/collections_providers.dart';
@@ -331,6 +331,8 @@ class _SavedItemDetailPanelState extends ConsumerState<SavedItemDetailPanel> {
           _BoxSection(item: item),
           _sectionDivider(colorScheme),
           _TagsSection(item: item),
+          _sectionDivider(colorScheme),
+          _EnrichmentStatusSection(item: item),
         ],
       ),
     );
@@ -393,7 +395,7 @@ class _SavedItemDetailPanelState extends ConsumerState<SavedItemDetailPanel> {
                 foregroundColor: colorScheme.onSurfaceVariant,
               ),
               onPressed: () {
-                _copyLink(item.originalUrl);
+                _copyLink(item.id);
               },
             ),
           ),
@@ -442,10 +444,8 @@ class _SavedItemDetailPanelState extends ConsumerState<SavedItemDetailPanel> {
                   label: _statusLabel(status),
                   selected: isSelected,
                   onTap: () async {
-                    final repository = ref.read(collectionsRepositoryProvider);
-                    await repository.updateStatus(item.id, status);
-                    ref.invalidate(savedItemsListProvider);
-                    ref.invalidate(collectionFolderCountsProvider);
+                    final controller = ref.read(savedItemActionsControllerProvider);
+                    await controller.updateStatus(item.id, status);
                   },
                   compact: true,
                 );
@@ -569,7 +569,7 @@ class _SavedItemDetailPanelState extends ConsumerState<SavedItemDetailPanel> {
                 child: _QuickActionTile(
                   icon: Icons.content_copy_rounded,
                   label: '复制链接',
-                  onTap: () => _copyLink(item.originalUrl),
+                  onTap: () => _copyLink(item.id),
                 ),
               ),
               const SizedBox(width: AppSpacing.xs),
@@ -674,18 +674,19 @@ class _SavedItemDetailPanelState extends ConsumerState<SavedItemDetailPanel> {
   }
 
   Future<void> _openAndMark(SavedItemsTableData item) async {
-    final repository = ref.read(collectionsRepositoryProvider);
-    await repository.markOpened(item.id);
-    ref.invalidate(savedItemsListProvider);
-    ref.invalidate(collectionFolderCountsProvider);
+    final controller = ref.read(savedItemActionsControllerProvider);
+    final result = await controller.openItem(item.id);
     if (!mounted) return;
-    await _openUrl(item.originalUrl);
+    if (!result.success && result.message != null) {
+      _showSnackBar(result.message!);
+    }
   }
 
-  Future<void> _copyLink(String url) async {
-    await Clipboard.setData(ClipboardData(text: url));
+  Future<void> _copyLink(int itemId) async {
+    final controller = ref.read(savedItemActionsControllerProvider);
+    final result = await controller.copyUrl(itemId);
     if (!mounted) return;
-    _showSnackBar('已复制链接');
+    _showSnackBar(result.message ?? '已复制链接');
   }
 
   Future<void> _deleteItem(int itemId) async {
@@ -696,8 +697,8 @@ class _SavedItemDetailPanelState extends ConsumerState<SavedItemDetailPanel> {
     final prefs = prefsAsync.valueOrNull;
     if (prefs == null) return;
 
-    // Check if item belongs to multiple boxes
     final repository = ref.read(collectionsRepositoryProvider);
+    final controller = ref.read(savedItemActionsControllerProvider);
     final boxIds = await repository.getBoxIdsForItem(itemId);
     final boxes = boxIds.isNotEmpty
         ? await repository.getBoxes()
@@ -713,7 +714,6 @@ class _SavedItemDetailPanelState extends ConsumerState<SavedItemDetailPanel> {
     DeleteConfirmResult? result;
 
     if (boxNames.length > 1) {
-      // Multi-box: let user choose action
       result = await DeleteConfirmDialog.showMultiBox(
         context: context,
         title: item.title.isEmpty ? item.normalizedUrl : item.title,
@@ -722,13 +722,12 @@ class _SavedItemDetailPanelState extends ConsumerState<SavedItemDetailPanel> {
             : _domainOf(item.normalizedUrl),
         typeLabel: platform.label,
         relativeTime: _relativeTime(item.createdAt),
-        localLogoPath: null, // Optional: could pass from parent if available
+        localLogoPath: null,
         fallbackIcon: _iconFor(mediaType),
         boxNames: boxNames,
         prefs: prefs,
       );
     } else {
-      // Single box or inbox: standard confirm
       result = await DeleteConfirmDialog.showSingle(
         context: context,
         title: item.title.isEmpty ? item.normalizedUrl : item.title,
@@ -749,64 +748,43 @@ class _SavedItemDetailPanelState extends ConsumerState<SavedItemDetailPanel> {
     final displayTitle = item.title.isEmpty ? item.normalizedUrl : item.title;
 
     if (result == DeleteConfirmResult.removeFromBox) {
-      // Remove from current box (first one in the list)
       if (boxIds.isNotEmpty) {
         final currentBoxName = boxNames.isNotEmpty ? boxNames.first : '收藏夹';
-        await repository.removeItemFromBox(itemId, boxIds.first);
-        ref.invalidate(savedItemsListProvider);
-        ref.invalidate(collectionFolderCountsProvider);
-        if (!mounted) return;
-        _showUndoSnackBar(
-          context,
-          '已从「$currentBoxName」中移除',
-          () async {
-            // Undo: re-add to box
-            final currentBoxIds =
-                await repository.getBoxIdsForItem(itemId);
-            await repository.setItemBoxes(
-              itemId,
-              {...currentBoxIds, boxIds.first},
-            );
-            await repository.updateInboxState(itemId, false);
-            ref.invalidate(savedItemsListProvider);
-            ref.invalidate(collectionFolderCountsProvider);
-          },
+        final deleteResult = await controller.deleteItem(
+          itemId,
+          mode: DeleteMode.removeFromBox,
+          boxId: boxIds.first,
+          boxName: currentBoxName,
         );
+        if (!mounted) return;
+        if (deleteResult.undo != null) {
+          _showUndoSnackBar(
+            context,
+            deleteResult.message ?? '已从「$currentBoxName」中移除',
+            () async {
+              await deleteResult.undo!.execute();
+            },
+          );
+        }
       }
       return;
     }
 
-    // Full delete — save data for undo
-    final undoBoxIds = List<int>.from(boxIds);
-    await repository.deleteSavedItem(itemId);
-    ref.read(selectedSavedItemIdProvider.notifier).state = null;
-    ref.invalidate(savedItemsListProvider);
-    ref.invalidate(collectionFolderCountsProvider);
-    if (!mounted) return;
-    _showUndoSnackBar(
-      context,
-      '已删除「$displayTitle」',
-      () async {
-        // Undo: recreate item and restore box assignments
-        final restored = await repository.createSavedItem(
-          originalUrl: item.originalUrl,
-          normalizedUrl: item.normalizedUrl,
-          title: item.title,
-          mediaType: mediaType,
-          sourcePlatform: platform,
-          isInInbox: undoBoxIds.isEmpty,
-        );
-        if (undoBoxIds.isNotEmpty) {
-          await repository.setItemBoxes(
-            restored.id,
-            undoBoxIds.toSet(),
-          );
-          await repository.updateInboxState(restored.id, false);
-        }
-        ref.invalidate(savedItemsListProvider);
-        ref.invalidate(collectionFolderCountsProvider);
-      },
+    // Full delete
+    final deleteResult = await controller.deleteItem(
+      itemId,
+      mode: DeleteMode.fullDelete,
     );
+    if (!mounted) return;
+    if (deleteResult.undo != null) {
+      _showUndoSnackBar(
+        context,
+        deleteResult.message ?? '已删除「$displayTitle」',
+        () async {
+          await deleteResult.undo!.execute();
+        },
+      );
+    }
   }
 
   String _domainOf(String url) {
@@ -816,16 +794,17 @@ class _SavedItemDetailPanelState extends ConsumerState<SavedItemDetailPanel> {
   }
 
   Future<void> _archiveItem(int itemId) async {
-    final repository = ref.read(collectionsRepositoryProvider);
-    await repository.updateStatus(itemId, ConsumptionStatus.archived);
-    ref.invalidate(savedItemsListProvider);
-    ref.invalidate(collectionFolderCountsProvider);
+    final controller = ref.read(savedItemActionsControllerProvider);
+    final result = await controller.archiveItem(itemId);
     if (!mounted) return;
-    _showSnackBar('已归档');
+    if (result.message != null) {
+      _showSnackBar(result.message!);
+    }
   }
 
   Future<void> _showBoxMenu(int itemId) async {
     final repository = ref.read(collectionsRepositoryProvider);
+    final controller = ref.read(savedItemActionsControllerProvider);
     final boxes = await repository.getBoxes();
     final currentBoxIds = await repository.getBoxIdsForItem(itemId);
     final currentSet = currentBoxIds.toSet();
@@ -869,25 +848,14 @@ class _SavedItemDetailPanelState extends ConsumerState<SavedItemDetailPanel> {
     if (selection == null || !mounted) return;
 
     if (selection == _inboxBoxValue) {
-      await repository.setItemBoxes(itemId, const {});
-      await repository.updateInboxState(itemId, true);
+      await controller.assignBoxes(itemId, const {});
     } else if (currentSet.contains(selection)) {
       final next = {...currentSet}..remove(selection);
-      await repository.setItemBoxes(itemId, next);
-      if (next.isEmpty) {
-        await repository.updateInboxState(itemId, true);
-      }
+      await controller.assignBoxes(itemId, next);
     } else {
       final next = {...currentSet, selection};
-      await repository.setItemBoxes(itemId, next);
-      await repository.updateInboxState(itemId, false);
+      await controller.assignBoxes(itemId, next);
     }
-
-    if (!mounted) return;
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.invalidate(savedItemsListProvider);
-      ref.invalidate(collectionFolderCountsProvider);
-    });
   }
 
   void _showSnackBar(String message) {
@@ -916,24 +884,7 @@ class _SavedItemDetailPanelState extends ConsumerState<SavedItemDetailPanel> {
     );
   }
 
-  Future<void> _openUrl(String url) async {
-    final uri = Uri.tryParse(url);
-    if (uri == null || !uri.hasScheme || !uri.hasAuthority) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('无效的链接')));
-      return;
-    }
-    try {
-      await launchUrl(uri, mode: LaunchMode.externalApplication);
-    } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('打开链接失败：$e')));
-    }
-  }
+
 }
 
 class _InfoTile extends StatelessWidget {
@@ -1051,6 +1002,82 @@ class _QuickActionTile extends StatelessWidget {
             ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+// ===============================================================
+// Enrichment Status Section
+// ===============================================================
+
+class _EnrichmentStatusSection extends ConsumerWidget {
+  const _EnrichmentStatusSection({required this.item});
+
+  final SavedItemsTableData item;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final enrichmentStatus = EnrichmentStatus.fromValue(item.enrichmentStatus);
+
+    if (enrichmentStatus != EnrichmentStatus.failed) {
+      return const SizedBox.shrink();
+    }
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.lg,
+        AppSpacing.sm,
+        AppSpacing.lg,
+        AppSpacing.sm,
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 64,
+            child: Text(
+              '抓取',
+              style: theme.textTheme.labelMedium?.copyWith(
+                color: colorScheme.onSurfaceVariant,
+                fontWeight: AppFontTokens.medium,
+              ),
+            ),
+          ),
+          GestureDetector(
+            onTap: () async {
+              final controller =
+                  ref.read(savedItemActionsControllerProvider);
+              final result = await controller.retryEnrichment(item.id);
+              if (!context.mounted) return;
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text(result.message ?? '')),
+              );
+            },
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  Icons.error_outline_rounded,
+                  size: 16,
+                  color: colorScheme.error,
+                ),
+                const SizedBox(width: AppSpacing.xxs),
+                Text(
+                  '抓取失败 · 重试',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: colorScheme.error,
+                    fontWeight: AppFontTokens.medium,
+                    decoration: TextDecoration.underline,
+                    decorationColor: colorScheme.error.withValues(alpha: 0.4),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -1279,21 +1306,12 @@ class _BoxSection extends ConsumerWidget {
                                   selected: true,
                                   compact: true,
                                   onTap: () {
-                                    final repository = ref.read(
-                                      collectionsRepositoryProvider,
+                                    final controller = ref.read(
+                                      savedItemActionsControllerProvider,
                                     );
-                                    final next =
-                                        {...currentSet}..remove(box.id);
-                                    repository.setItemBoxes(item.id, next);
-                                    if (next.isEmpty) {
-                                      repository.updateInboxState(
-                                        item.id,
-                                        true,
-                                      );
-                                    }
-                                    ref.invalidate(savedItemsListProvider);
-                                    ref.invalidate(
-                                      collectionFolderCountsProvider,
+                                    controller.removeFromBox(
+                                      item.id,
+                                      box.id,
                                     );
                                   },
                                 ),

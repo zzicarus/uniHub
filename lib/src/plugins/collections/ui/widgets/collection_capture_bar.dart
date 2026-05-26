@@ -37,7 +37,10 @@ class _CollectionCaptureBarState extends ConsumerState<CollectionCaptureBar> {
       ref.invalidate(savedItemsListProvider);
       ref.invalidate(collectionFolderCountsProvider);
       if (result.wasCreated) {
-        unawaited(_triggerEnrichmentQueue());
+        unawaited(ref.read(enrichmentQueueControllerProvider).drainPending(
+          batchSize: 5,
+          maxBatches: 3,
+        ));
       }
       ref.invalidate(collectionBoxesProvider);
       final message = result.wasCreated ? '已添加到收藏' : '已存在，已跳转到该收藏';
@@ -51,20 +54,6 @@ class _CollectionCaptureBarState extends ConsumerState<CollectionCaptureBar> {
       ).showSnackBar(SnackBar(content: Text('收藏失败：$error')));
     } finally {
       if (mounted) setState(() => _isSubmitting = false);
-    }
-  }
-
-  Future<void> _triggerEnrichmentQueue() async {
-    try {
-      await ref.read(enrichmentJobServiceProvider).runPendingJobs();
-      // Trigger logo cache refresh after enrichment completes
-      ref.read(websiteLogoRefreshProvider.notifier).state++;
-    } catch (error) {
-      debugPrint('Collections enrichment job queue failed: $error');
-    } finally {
-      if (mounted) {
-        ref.invalidate(savedItemsListProvider);
-      }
     }
   }
 

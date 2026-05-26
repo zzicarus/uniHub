@@ -85,6 +85,16 @@ class EnrichmentJobsDao {
     );
   }
 
+  /// Returns a pending or running job for the given item, or null.
+  Future<EnrichmentJobsTableData?> getPendingForItem(int itemId) async {
+    final results = await (_db.select(_db.enrichmentJobsTable)
+      ..where((t) => t.itemId.equals(itemId))
+      ..where((t) => t.status.isIn(['pending', 'running']))
+      ..orderBy([(t) => OrderingTerm.desc(t.createdAt)])
+      ..limit(1)).get();
+    return results.isNotEmpty ? results.first : null;
+  }
+
   Future<int> deleteByItemId(int itemId) {
     return (_db.delete(_db.enrichmentJobsTable)
       ..where((t) => t.itemId.equals(itemId))).go();

@@ -34,8 +34,9 @@ class EnrichmentJobService {
 
   /// 消费 pending job 队列，每轮最多处理 [limit] 个。
   ///
+  /// 返回本轮实际处理的 job 数量。
   /// 单个 job 失败不阻断其它 job，异常被捕获并打印日志后继续处理下一个。
-  Future<void> runPendingJobs({int limit = 3}) async {
+  Future<int> runPendingJobs({int limit = 3}) async {
     final jobs = await _jobsDao.getPending(limit: limit);
     CollectionDebugLogger.log(
       'runPendingJobs limit=$limit pendingCount=${jobs.length}',
@@ -54,6 +55,7 @@ class EnrichmentJobService {
         );
       }
     }
+    return jobs.length;
   }
 
   Future<void> _processJob(EnrichmentJobsTableData job) async {
