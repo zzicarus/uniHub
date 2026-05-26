@@ -4,11 +4,13 @@ import 'dart:math';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uni_hub/src/core/database/app_database.dart';
 import 'package:uni_hub/src/core/database/database_provider.dart';
+import 'package:uni_hub/src/core/storage/providers/storage_providers.dart';
 import '../data/file_image_storage.dart';
 import '../data/image_picker_service.dart';
 import '../data/image_storage.dart';
 import '../data/platform_image_picker.dart';
 import '../data/thought_content_codec.dart';
+import '../data/thought_deletion_service.dart';
 import '../data/thought_image_service.dart';
 import '../data/thoughts_dao.dart';
 import '../data/thoughts_repository.dart';
@@ -31,15 +33,65 @@ final imagePickerServiceProvider = Provider<ImagePickerService>((ref) {
   return PlatformImagePicker();
 });
 
-final imageStorageProvider = Provider<ImageStorage>((ref) {
-  return FileImageStorage();
+final imageStorageProvider = FutureProvider<ImageStorage>((ref) async {
+  final storagePaths = await ref.watch(appStoragePathsProvider.future);
+  return FileImageStorage(imagesDir: storagePaths.thoughtImagesDir);
 });
 
-final thoughtImageServiceProvider = Provider<ThoughtImageService>((ref) {
+final thoughtImageServiceProvider = FutureProvider<ThoughtImageService>((ref) async {
+  final storage = await ref.watch(imageStorageProvider.future);
   return ThoughtImageService(
     picker: ref.watch(imagePickerServiceProvider),
-    storage: ref.watch(imageStorageProvider),
+    storage: storage,
   );
+});
+
+/// 安全删除想法及其附件的协调服务。
+///
+/// 返回 null 当 [thoughtImageServiceProvider] 尚未完成初始化时。
+final thoughtDeletionServiceProvider = Provider<ThoughtDeletionService?>((ref) {
+  final imageService = ref.watch(thoughtImageServiceProvider).valueOrNull;
+  if (imageService == null) return null;
+
+  final repository = ref.watch(thoughtsRepositoryProvider);
+  return ThoughtDeletionService(
+    repository: repository,
+    imageService: imageService,
+  );
+});
+
+/// 启动时迁移：若 [AppStoragePaths] 在构造期重命名了旧的
+/// `thought_images` 目录，则将 DB 中所有 imagePaths 的前缀
+/// 从旧路径替换为新路径。
+///
+/// 无迁移需求时不执行任何操作。
+final thoughtImageMigrationProvider = FutureProvider<void>((ref) async {
+  final paths = await ref.watch(appStoragePathsProvider.future);
+  final migrations = paths.thoughtImageMigrations;
+  if (migrations.isEmpty) return;
+
+  final repo = ref.read(thoughtsRepositoryProvider);
+  final active = await repo.getThoughts();
+  final archived = await repo.getThoughts(archived: true);
+  final allThoughts = [...active, ...archived];
+
+  for (final thought in allThoughts) {
+    final oldPaths = thought.imagePaths;
+    if (oldPaths == null || oldPaths.isEmpty) continue;
+
+    var updated = oldPaths;
+    var changed = false;
+    for (final entry in migrations.entries) {
+      if (updated.contains(entry.key)) {
+        updated = updated.replaceAll(entry.key, entry.value);
+        changed = true;
+      }
+    }
+
+    if (changed) {
+      await repo.updateThought(thought.id, imagePaths: updated);
+    }
+  }
 });
 
 /// Active tag filters for the thoughts page.
@@ -89,9 +141,15 @@ final thoughtStatusFilterProvider = StateProvider<ThoughtStatusFilter>(
 );
 
 /// All thoughts without UI filters. Filtering is composed in [thoughtsListProvider].
+///
+/// Depends on [thoughtImageMigrationProvider] to ensure path migration
+/// completes before any thought data is loaded.
 final allThoughtsProvider = FutureProvider<List<ThoughtsTableData>>((
   ref,
 ) async {
+  // Ensure path migration completes before loading data.
+  await ref.watch(thoughtImageMigrationProvider.future);
+
   final repo = ref.watch(thoughtsRepositoryProvider);
   final active = await repo.getThoughts(archived: false);
   final archived = await repo.getThoughts(archived: true);

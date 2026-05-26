@@ -250,7 +250,7 @@ Future<_TestEnv> _createEnv(
   final service = WebsiteLogoCacheService(
     dao: dao,
     client: mockClient,
-    logosDirectory: logosDir,
+    logosDir: logosDir,
   );
 
   return _TestEnv(

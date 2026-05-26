@@ -3,11 +3,23 @@ import 'dart:io';
 
 import 'package:drift/drift.dart' show Value;
 import 'package:flutter/foundation.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:uni_hub/src/core/database/app_database.dart';
 
 import '../data/website_logo_cache_dao.dart';
 import 'collection_debug_logger.dart';
+
+/// Result returned by [WebsiteLogoCacheService.clearCache].
+class CacheClearResult {
+  final int deletedFiles;
+  final int deletedDbRows;
+  final int freedBytes;
+
+  const CacheClearResult({
+    required this.deletedFiles,
+    required this.deletedDbRows,
+    required this.freedBytes,
+  });
+}
 
 /// Result returned by [WebsiteLogoCacheService] for UI consumption.
 class WebsiteLogoCacheEntry {
@@ -35,33 +47,18 @@ class WebsiteLogoCacheEntry {
 class WebsiteLogoCacheService {
   WebsiteLogoCacheService({
     required WebsiteLogoCacheDao dao,
+    required Directory logosDir,
     HttpClient? client,
-    Directory? logosDirectory,
   }) : _dao = dao,
-       _client = client ?? HttpClient(),
-       _logosDirectory = logosDirectory;
+       _logosDir = logosDir,
+       _client = client ?? HttpClient();
 
   final WebsiteLogoCacheDao _dao;
+  final Directory _logosDir;
   final HttpClient _client;
-  final Directory? _logosDirectory;
 
   /// Tracks in-flight downloads per siteKey to prevent concurrent duplicates.
   final Map<String, Future<WebsiteLogoCacheEntry?>> _inFlight = {};
-
-  /// Default cache dir, lazily initialised and cached across instances.
-  static Directory? _defaultCacheDir;
-
-  Future<Directory> _getLogosDir() async {
-    if (_logosDirectory != null) return _logosDirectory;
-    final dir = _defaultCacheDir ?? Directory(
-      '${(await getApplicationCacheDirectory()).path}/website_logos',
-    );
-    if (!dir.existsSync()) {
-      await dir.create(recursive: true);
-    }
-    _defaultCacheDir ??= dir;
-    return dir;
-  }
 
   // ------------------------------------------------------------------
   // Public API
@@ -423,9 +420,11 @@ class WebsiteLogoCacheService {
     );
 
     // Save to local file
-    final dir = await _getLogosDir();
+    if (!_logosDir.existsSync()) {
+      await _logosDir.create(recursive: true);
+    }
     final fileName = '${_safeFileName(siteKey)}$ext';
-    final file = File('${dir.path}/$fileName');
+    final file = File('${_logosDir.path}/$fileName');
     await file.writeAsBytes(bytes);
 
     CollectionDebugLogger.log(
@@ -535,5 +534,56 @@ class WebsiteLogoCacheService {
   /// Create a filesystem-safe name from a site key.
   String _safeFileName(String key) {
     return base64Url.encode(utf8.encode(key));
+  }
+
+  // ------------------------------------------------------------------
+  // Cache clearing
+  // ------------------------------------------------------------------
+
+  /// 清除所有本地 Logo 缓存文件和数据库记录。
+  ///
+  /// 流程：
+  /// 1. 丢弃所有 in-flight 下载
+  /// 2. 统计缓存目录大小
+  /// 3. 删除所有缓存文件
+  /// 4. 清空数据库记录
+  ///
+  /// 并发安全：先清空 [_inFlight]，后删除文件。
+  Future<CacheClearResult> clearCache() async {
+    // 1. 丢弃 in-flight 下载
+    for (final entry in _inFlight.entries) {
+      entry.value.ignore();
+    }
+    _inFlight.clear();
+
+    // 2. 统计大小
+    final dir = _logosDir;
+    int totalSize = 0;
+    int fileCount = 0;
+    if (dir.existsSync()) {
+      try {
+        for (final entity in dir.listSync(recursive: true, followLinks: false)) {
+          if (entity is File) {
+            totalSize += entity.lengthSync();
+            fileCount++;
+          }
+        }
+      } catch (_) {}
+    }
+
+    // 3. 删除文件并重建空目录
+    if (dir.existsSync()) {
+      await dir.delete(recursive: true);
+      await dir.create(recursive: true);
+    }
+
+    // 4. 清空数据库记录
+    final deletedRows = await _dao.clearAll();
+
+    return CacheClearResult(
+      deletedFiles: fileCount,
+      deletedDbRows: deletedRows,
+      freedBytes: totalSize,
+    );
   }
 }

@@ -26,9 +26,15 @@ thoughts/
 ### ThoughtImageService
 - 管理想法的图片生命周期：选择、保存、删除
 - 不直接依赖平台 API，通过构造器注入 `ImagePickerService` + `ImageStorage`
-- 平台实现（`PlatformImagePicker`、`FileImageStorage`）依赖 `image_picker`、`path_provider`
+- `FileImageStorage` 接收 `Directory imagesDir` 构造参数，目录通过 `AppStoragePaths.thoughtImagesDir` 统一管理
 - 测试中可通过 `FakeImagePicker` + `FakeImageStorage` 完全解耦文件系统
 - `encodeImagePaths` / `decodeImagePaths` 为静态方法，纯 JSON 编解码
+
+### ThoughtDeletionService
+- `deleteThoughtWithAssets(id)` 安全删除想法及附件
+- 流程：读取 thought → 解析 imagePaths → 删除 DB 记录 → 删除图片文件
+- DB 删除失败时不得删除图片（事务安全）
+- 图片删除失败由孤儿文件扫描机制修复
 
 ### ThoughtContentCodec
 - 处理富文本存储格式转换
@@ -117,6 +123,7 @@ thoughts/ui/
 | 遗留 Markdown fallback 路径 | `thought_content_codec.dart` | 未修复 |
 | 主页使用硬编码 Mock 数据（5 个 TODO） | `home_page.dart` | 未修复 |
 | ~~图片服务硬依赖平台 API~~ | ~~`thought_image_service.dart`~~ | ✅ **P2-15 已完成** |
+| ~~图片路径分散~~ | ~~`file_image_storage.dart`~~ | ✅ **Storage Governance: `AppStoragePaths` 统一管理** |
 | ~~标签 UI 与 provider 强耦合于 thoughts 内部~~ | ~~`thoughts/ui/layouts/thought_tag_filter_bar.dart`~~ | ✅ **已完成 → 提取共享 tag system** |
 
 ---
@@ -124,6 +131,14 @@ thoughts/ui/
 ## 近期变更
 
 > 本 section 由 sync-knowledge 自动管理，按时间倒序追加。
+
+### 2026-05-26: 统一存储接入
+- `FileImageStorage` 改为构造器注入 `Directory imagesDir`，路径统一通过 `AppStoragePaths.thoughtImagesDir` 获取
+- `imageStorageProvider` 改为 `FutureProvider`，从 `appStoragePathsProvider` 推导目录
+- 新增 `thoughtDeletionServiceProvider` 提供 `ThoughtDeletionService`
+- `ThoughtDeletionService.deleteThoughtWithAssets(id)` 安全删除想法及附件（先删 DB，再删图片）
+- 图片目录从 `Documents/thought_images` 迁移至 `Documents/media/thought_images`（自动迁移）
+- `thoughtImageMigrationProvider` 在启动时更新 DB 中旧路径为新路径
 
 ### 2026-05-24: flutter_quill → AppFlowy Editor 迁移
 - 编辑器主线从 `flutter_quill` 切换为 `appflowy_editor`，详情编辑器改为 AppFlowy block editor

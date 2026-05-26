@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../shared/ui/style_guide_screen.dart';
+import '../storage/ui/storage_management_page.dart';
 import '../app/adaptive_shell.dart';
 import '../app/home_page.dart';
 import '../app/mobile_placeholder_pages.dart';
@@ -56,6 +57,11 @@ final routerProvider = Provider<GoRouter>((ref) {
             path: '/style-guide',
             name: RouteNames.styleGuide,
             builder: (context, state) => const StyleGuideScreen(),
+          ),
+          GoRoute(
+            path: '/settings/storage',
+            name: RouteNames.storageManagement,
+            builder: (context, state) => const StorageManagementPage(),
           ),
         ],
       ),

@@ -2,15 +2,17 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:path/path.dart' as p;
-import 'package:path_provider/path_provider.dart';
 
 import 'image_storage.dart';
 
-/// 使用文件系统 + [path_provider] 的存储实现。
+/// 使用文件系统存储图片。
 ///
-/// 图片保存在应用的 `thought_images` 子目录下，文件名使用时间戳
-/// 避免冲突。
+/// 目录由 [AppStoragePaths.thoughtImagesDir] 通过构造器注入，
+/// 禁止在实现层直接调用 path_provider。
 class FileImageStorage implements ImageStorage {
+  FileImageStorage({required Directory imagesDir}) : _imagesDir = imagesDir;
+
+  final Directory _imagesDir;
   static int _counter = 0;
 
   @override
@@ -39,15 +41,13 @@ class FileImageStorage implements ImageStorage {
   bool existsSync(String path) => File(path).existsSync();
 
   Future<String> _newImagePath(String extension) async {
-    final appDir = await getApplicationDocumentsDirectory();
-    final imagesDir = Directory(p.join(appDir.path, 'thought_images'));
-    if (!await imagesDir.exists()) {
-      await imagesDir.create(recursive: true);
+    if (!await _imagesDir.exists()) {
+      await _imagesDir.create(recursive: true);
     }
 
     final ext = extension.startsWith('.') ? extension : '.$extension';
     final fileName =
         '${DateTime.now().microsecondsSinceEpoch}_${_counter++}$ext';
-    return p.join(imagesDir.path, fileName);
+    return p.join(_imagesDir.path, fileName);
   }
 }

@@ -10,4 +10,5 @@ abstract final class RouteNames {
   static const search = 'search';
   static const settings = 'settings';
   static const styleGuide = 'style-guide';
+  static const storageManagement = 'storage-management';
 }

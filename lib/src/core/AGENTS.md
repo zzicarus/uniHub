@@ -93,6 +93,21 @@ context.appColors.textSecondary
 
 > 本 section 由 sync-knowledge 自动管理，按时间倒序追加。
 
+### 2026-05-26: 统一存储与缓存管理系统
+- **app_storage_paths.dart（新增）** — `AppStoragePaths` 统一管理所有业务目录路径（databaseFile、thoughtImagesDir、websiteLogosDir 等）；支持 thought_images 旧路径迁移
+- **storage_providers.dart（新增）** — `appStoragePathsProvider` (FutureProvider) + `storageRegistryProvider` + `storageManagerProvider` + `clearRegenerableCacheAction`
+- **storage_area.dart（新增）** — `StorageAreaType` 枚举 + `StorageAreaDescriptor`（插件声明） + `StorageArea`（运行时含路径）两级注册模型
+- **storage_manager.dart（新增）** — `StorageManager.scan()` 异步扫描所有区域（Isolate），`clearRegenerableCache()` 清除可再生缓存，`findOrphanedFiles()` 扫描孤儿文件
+- **storage_cleanup_providers.dart（新增）** — 协调文件系统清理和 DB 索引清理
+- **storage_orphaned_providers.dart（新增）** — `orphanedImagesProvider` 扫描孤儿图片 + `cleanOrphanedImagesAction`
+- **storage_management_page.dart（新增）** — 存储管理页面，展示总占用/分组详情/操作按钮/危险操作区
+- **database_provider.dart** — 改为从 `AppStoragePaths.databaseFile` 获取数据库路径
+- **file_image_storage.dart** — 接收 `Directory imagesDir` 构造参数，不再直接调用 path_provider
+- **website_logo_cache_service.dart** — `logosDir` 改为必需构造参数；新增 `clearCache()` 方法
+- **website_logo_cache_dao.dart** — 新增 `clearAll()`、`count()`、`getAll()` 方法
+- **thought_deletion_service.dart（新增）** — `ThoughtDeletionService.deleteThoughtWithAssets()` 安全删除想法及附件
+- **settings_page.dart** — "数据"面板替换为"存储管理"入口链接
+
 ### 2026-05-23: 设置页外观设置组件化重构
 - **appearance_settings_section.dart（新增）** — `AppearanceSettingsSection` ConsumerWidget，将外观设置（主题模式切换 + 主题预设选择）从 `settings_page.dart` 提取为独立可复用组件
 - **settings\_page.dart** — 外观面板替换为 `AppearanceSettingsSection`；Scaffold backgroundColor 切换至 `context.appColors.background`；`_SettingsPanel` 样式改用 `panelBackground`/`border` Token

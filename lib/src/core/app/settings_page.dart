@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import '../router/route_names.dart';
 import '../theme/app_tokens.dart';
 import '../theme/app_theme_tokens.dart';
 import 'settings/appearance_settings_section.dart';
@@ -47,14 +49,16 @@ class SettingsPage extends ConsumerWidget {
                 const SizedBox(height: AppSpacing.xxl),
                 const AppearanceSettingsSection(),
                 const SizedBox(height: AppSpacing.xl),
+                _InkSettingsRow(
+                  icon: Icons.storage_outlined,
+                  title: '存储管理',
+                  subtitle: '查看和管理应用存储空间',
+                  onTap: () => context.pushNamed(RouteNames.storageManagement),
+                ),
+                const SizedBox(height: AppSpacing.lg),
                 const _SettingsPanel(
-                  title: '数据',
+                  title: '隐私',
                   children: [
-                    _SettingsRow(
-                      icon: Icons.storage_outlined,
-                      title: '本地数据库',
-                      subtitle: '数据保存在本机 SQLite 数据库中',
-                    ),
                     _SettingsRow(
                       icon: Icons.lock_outline,
                       title: '隐私',
@@ -143,6 +147,66 @@ class _SettingsRow extends StatelessWidget {
           ),
           const Icon(Icons.chevron_right_rounded),
         ],
+      ),
+    );
+  }
+}
+
+class _InkSettingsRow extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final VoidCallback onTap;
+
+  const _InkSettingsRow({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final colors = context.appColors;
+    return Material(
+      color: colors.panelBackground,
+      borderRadius: BorderRadius.circular(AppRadius.lg),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(AppRadius.lg),
+        child: Padding(
+          padding: const EdgeInsets.all(AppSpacing.lg),
+          child: Row(
+            children: [
+              Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  color: colorScheme.primaryContainer,
+                  borderRadius: BorderRadius.circular(AppRadius.md),
+                ),
+                child: Icon(icon, color: colorScheme.onPrimaryContainer),
+              ),
+              const SizedBox(width: AppSpacing.md),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(title, style: theme.textTheme.titleSmall),
+                    const SizedBox(height: AppSpacing.xxs),
+                    Text(subtitle, style: theme.textTheme.bodyMedium),
+                  ],
+                ),
+              ),
+              Icon(
+                Icons.chevron_right_rounded,
+                color: colorScheme.onSurfaceVariant,
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

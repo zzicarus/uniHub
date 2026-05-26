@@ -103,6 +103,25 @@ $env:UNIHUB_COLLECTION_DEBUG='true'
 flutter run -d windows
 ```
 
+### 缓存清理
+
+`WebsiteLogoCacheService.clearCache()` 统一清理网站 Logo 缓存：
+- 丢弃所有 in-flight 下载
+- 删除 `website_logos` 目录所有文件
+- 清空 `website_logo_cache` 表
+- 触发 `websiteLogoRefreshProvider` 刷新 UI
+- 返回 `CacheClearResult`（删除文件数、释放空间、错误列表）
+
+目录路径通过 `AppStoragePaths.websiteLogosDir` 注入，不再直接调用 `path_provider`。
+
+### 存储注册
+
+Collections 插件在 `StorageRegistry` 中注册一项可清理缓存：
+
+| ID | 名称 | 类型 | clearable |
+|---|---|---|---|
+| `collections.website_logos` | 网站 Logo 缓存 | cache | ✅ |
+
 ### 日志覆盖的完整链路
 
 ```text
@@ -135,7 +154,7 @@ EnrichmentJobService._processJob()
        │    ├─ 协议限制：仅 http/https
        │    ├─ MIME charset 剥离 → 正确后缀
        │    ├─ SVG 可渲染（UI 侧通过 flutter_svg 的 SvgPicture.file 支持）
-       │    └─ 写入 {appCacheDir}/website_logos/{base64(siteKey)}.{ext}
+       │    └─ 写入 {websiteLogosDir}/{base64(siteKey)}.{ext}（路径通过 AppStoragePaths）
        └─ onLogoCached 回调 → websiteLogoRefreshProvider 递增
 
 UI 层

@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'dart:ui' as ui;
 
 import 'package:drift/native.dart';
@@ -10,6 +11,8 @@ import 'package:uni_hub/src/core/database/database_provider.dart';
 import 'package:uni_hub/src/core/database/tables/thoughts_table.dart';
 import 'package:uni_hub/src/core/plugin/plugin_interface.dart';
 import 'package:uni_hub/src/core/plugin/plugin_registry.dart';
+import 'package:uni_hub/src/core/storage/app_storage_paths.dart';
+import 'package:uni_hub/src/core/storage/providers/storage_providers.dart';
 import 'package:uni_hub/src/plugins/thoughts/providers/thoughts_providers.dart';
 import 'package:uni_hub/src/plugins/thoughts/ui/thoughts_page.dart';
 import 'package:uni_hub/src/plugins/thoughts/ui/widgets/thought_composer_controller.dart';
@@ -39,7 +42,16 @@ void main() {
     late FakeImageStorage fakeStorage;
     late ProviderContainer container;
 
+    late Directory tempDir;
+    late AppStoragePaths testPaths;
+
     setUp(() {
+      tempDir = Directory.systemTemp.createTempSync('thought_composer_test_');
+      testPaths = AppStoragePaths(
+        documentsDir: tempDir,
+        cacheDir: tempDir,
+      );
+
       registry = PluginRegistry()..register(_ThoughtsTablePlugin());
       db = AppDatabase(NativeDatabase.memory(), registry);
       fakePicker = FakeImagePicker();
@@ -48,8 +60,9 @@ void main() {
         overrides: [
           appDatabaseProvider.overrideWithValue(db),
           pluginRegistryProvider.overrideWithValue(registry),
+          appStoragePathsProvider.overrideWith((ref) => Future.value(testPaths)),
           imagePickerServiceProvider.overrideWithValue(fakePicker),
-          imageStorageProvider.overrideWithValue(fakeStorage),
+          imageStorageProvider.overrideWith((ref) => Future.value(fakeStorage)),
         ],
       );
     });
@@ -57,6 +70,7 @@ void main() {
     tearDown(() async {
       container.dispose();
       await db.close();
+      try { tempDir.deleteSync(recursive: true); } catch (_) {}
     });
 
     test('starts empty and owns editable controllers', () {
@@ -229,8 +243,9 @@ void main() {
           overrides: [
             appDatabaseProvider.overrideWithValue(db),
             pluginRegistryProvider.overrideWithValue(registry),
+            appStoragePathsProvider.overrideWith((ref) => Future.value(testPaths)),
             imagePickerServiceProvider.overrideWithValue(fakePicker),
-            imageStorageProvider.overrideWithValue(fakeStorage),
+            imageStorageProvider.overrideWith((ref) => Future.value(fakeStorage)),
             composerProvider.overrideWith((ref) {
               final controller = ThoughtComposerController(ref: ref);
               controller.contentController.replaceText(

@@ -275,7 +275,8 @@ class ThoughtEditorController {
     );
 
     if (confirmed == true) {
-      await ref.read(thoughtImageServiceProvider).deleteImages(images);
+      final svc = await ref.read(thoughtImageServiceProvider.future);
+      await svc.deleteImages(images);
       await ref.read(thoughtsRepositoryProvider).deleteThought(thoughtId);
       ref.invalidate(allThoughtsProvider);
     }
@@ -361,16 +362,16 @@ class ThoughtEditorController {
   /// 新编辑器不依赖此方法。
   @Deprecated('Use insertImageIntoDocument instead')
   Future<String?> onPickImage() async {
-    final path = await ref.read(thoughtImageServiceProvider).pickImage();
+    final svc = await ref.read(thoughtImageServiceProvider.future);
+    final path = await svc.pickImage();
     return path;
   }
 
   /// 已废弃 — 供旧 [RichTextEditor] 回调使用。
   @Deprecated('Use insertImageIntoDocument instead')
   Future<String?> onPasteImage(Uint8List bytes) async {
-    final path = await ref
-        .read(thoughtImageServiceProvider)
-        .saveImageBytes(bytes);
+    final svc = await ref.read(thoughtImageServiceProvider.future);
+    final path = await svc.saveImageBytes(bytes);
     return path;
   }
 
@@ -385,7 +386,7 @@ class ThoughtEditorController {
   /// 新代码应使用 [insertImageIntoDocument] 将图片插入到正文中。
   @Deprecated('Use insertImageIntoDocument instead')
   Future<void> addImage() async {
-    final svc = ref.read(thoughtImageServiceProvider);
+    final svc = await ref.read(thoughtImageServiceProvider.future);
     final path = await svc.pickImage();
     if (path != null) {
       images.add(path);
@@ -400,7 +401,8 @@ class ThoughtEditorController {
   Future<void> removeImage(int index) async {
     if (index < 0 || index >= images.length) return;
     final path = images[index];
-    await ref.read(thoughtImageServiceProvider).deleteImage(path);
+    final svc = await ref.read(thoughtImageServiceProvider.future);
+    await svc.deleteImage(path);
     images.removeAt(index);
     isDirty = true;
     _notifyStateChanged();
@@ -421,7 +423,7 @@ class ThoughtEditorController {
   ///
   /// 如果插入失败，删除已保存的本地文件以避免孤儿文件。
   Future<void> insertImageIntoDocument() async {
-    final svc = ref.read(thoughtImageServiceProvider);
+    final svc = await ref.read(thoughtImageServiceProvider.future);
     final path = await svc.pickImage();
     if (path == null) return;
 
@@ -463,7 +465,8 @@ class ThoughtEditorController {
 
     if (!stillReferenced) {
       // No remaining references — safe to delete the local file.
-      await ref.read(thoughtImageServiceProvider).deleteImage(path);
+      final svc = await ref.read(thoughtImageServiceProvider.future);
+      await svc.deleteImage(path);
     }
   }
 }

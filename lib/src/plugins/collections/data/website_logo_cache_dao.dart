@@ -60,4 +60,22 @@ class WebsiteLogoCacheDao {
       ),
     );
   }
+
+  /// 清空所有缓存记录，返回删除行数。
+  Future<int> clearAll() {
+    return (_db.delete(_db.websiteLogoCacheTable)).go();
+  }
+
+  /// 查询所有缓存记录。
+  Future<List<WebsiteLogoCacheTableData>> getAll() {
+    return _db.select(_db.websiteLogoCacheTable).get();
+  }
+
+  /// 统计缓存记录数。
+  Future<int> count() async {
+    final result = await (_db.selectOnly(_db.websiteLogoCacheTable)
+      ..addColumns([_db.websiteLogoCacheTable.id.count()]))
+      .getSingle();
+    return result.read(_db.websiteLogoCacheTable.id.count()) ?? 0;
+  }
 }

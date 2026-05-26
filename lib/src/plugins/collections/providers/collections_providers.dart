@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uni_hub/src/core/database/app_database.dart';
 import 'package:uni_hub/src/core/database/database_provider.dart';
+import 'package:uni_hub/src/core/storage/providers/storage_providers.dart';
 
 import '../data/collection_boxes_dao.dart';
 import '../data/collections_repository.dart';
@@ -146,8 +147,10 @@ final websiteLogoCacheDaoProvider = Provider<WebsiteLogoCacheDao>((ref) {
 });
 
 final websiteLogoCacheServiceProvider = Provider<WebsiteLogoCacheService>((ref) {
+  final storagePaths = ref.watch(appStoragePathsProvider).requireValue;
   return WebsiteLogoCacheService(
     dao: ref.watch(websiteLogoCacheDaoProvider),
+    logosDir: storagePaths.websiteLogosDir,
   );
 });
 

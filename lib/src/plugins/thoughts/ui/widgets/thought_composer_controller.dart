@@ -85,9 +85,11 @@ class ThoughtComposerController extends ChangeNotifier {
     final picked = await ref.read(imagePickerServiceProvider).pickImage();
     if (picked == null) return;
 
-    final path = await ref
-        .read(imageStorageProvider)
-        .saveBytes(picked.bytes, extension: picked.extension);
+    final storage = await ref.read(imageStorageProvider.future);
+    final path = await storage.saveBytes(
+      picked.bytes,
+      extension: picked.extension,
+    );
 
     if (!_pendingImagePaths.contains(path)) {
       _pendingImagePaths.add(path);
@@ -100,7 +102,8 @@ class ThoughtComposerController extends ChangeNotifier {
   Future<void> removePendingImage(int index) async {
     if (index < 0 || index >= _pendingImagePaths.length) return;
     final path = _pendingImagePaths[index];
-    await ref.read(thoughtImageServiceProvider).deleteImage(path);
+    final svc = await ref.read(thoughtImageServiceProvider.future);
+    await svc.deleteImage(path);
     _pendingImagePaths.removeAt(index);
     if (index < _pendingImages.length) {
       _pendingImages.removeAt(index);
@@ -140,7 +143,7 @@ class ThoughtComposerController extends ChangeNotifier {
       );
 
       final repo = ref.read(thoughtsRepositoryProvider);
-      final svc = ref.read(thoughtImageServiceProvider);
+      final svc = await ref.read(thoughtImageServiceProvider.future);
 
       // Encode tags.
       final tags = TagCodec.encodeCommaSeparated(_tags);
@@ -248,17 +251,18 @@ class ThoughtComposerController extends ChangeNotifier {
   Future<String?> onPickEditorImage() async {
     final picked = await ref.read(imagePickerServiceProvider).pickImage();
     if (picked == null) return null;
-    final path = await ref
-        .read(imageStorageProvider)
-        .saveBytes(picked.bytes, extension: picked.extension);
+    final storage = await ref.read(imageStorageProvider.future);
+    final path = await storage.saveBytes(
+      picked.bytes,
+      extension: picked.extension,
+    );
     return path;
   }
 
   @Deprecated('Use pickImageForComposer instead')
   Future<String> onPasteImage(Uint8List bytes) async {
-    final path = await ref
-        .read(thoughtImageServiceProvider)
-        .saveImageBytes(bytes);
+    final svc = await ref.read(thoughtImageServiceProvider.future);
+    final path = await svc.saveImageBytes(bytes);
     return path;
   }
 

@@ -366,3 +366,88 @@ test('query returns data', () async {
 - 每个测试获得独立的数据库实例
 - 即使测试断言失败，`tearDown` 仍然执行
 - 不会在测试间泄漏连接或状态
+
+---
+
+## 存储管理规范
+
+### 路径管理
+
+所有业务目录必须通过 `AppStoragePaths` 获取，禁止直接调用 `path_provider` 的
+`getApplicationDocumentsDirectory()` 或 `getApplicationCacheDirectory()`。
+
+```dart
+// ✅ 通过 AppStoragePaths 获取
+final paths = ref.read(appStoragePathsProvider).requireValue;
+final dbFile = paths.databaseFile;
+
+// ❌ 禁止
+final dir = await getApplicationDocumentsDirectory();
+```
+
+### 存储区域注册
+
+任何插件需要写入文件系统时，必须在 Provider 中注册对应的 `StorageAreaDescriptor`，
+并通过 `StorageRegistry` 组装完整 `StorageArea`。
+
+```dart
+final storageRegistryProvider = Provider<StorageRegistry>((ref) {
+  final paths = ref.watch(appStoragePathsProvider).requireValue;
+  final registry = StorageRegistry(paths);
+  registry.registerAll([
+    const StorageAreaDescriptor(
+      id: 'myplugin.data',
+      name: '插件数据',
+      type: StorageAreaType.userAttachment,
+      owner: 'myplugin',
+      clearable: false,
+      description: '插件用户数据',
+    ),
+  ]);
+  return registry;
+});
+```
+
+### 孤儿文件治理
+
+删除数据库记录时必须联动清理对应的文件附件。对于可能被多个记录引用的文件，
+建议使用孤儿文件扫描机制（`StorageManager.findOrphanedFilesSync`）而非在删除时
+硬删除文件。
+
+```dart
+final orphaned = StorageManager.findOrphanedFilesSync(
+  dirPath: paths.thoughtImagesDir.path,
+  referencedPaths: allReferencedImagePaths,
+);
+
+if (orphaned.isNotEmpty) {
+  await storageManager.cleanOrphanedFiles(orphaned);
+}
+```
+
+### 缓存清理
+
+缓存型存储（`StorageAreaType.cache` / `temporary`）必须同时清理文件系统和数据库
+索引。例如，网站 Logo 缓存的 `clearCache()` 必须同时删除 logo 文件和清空
+`website_logo_cache` 表。
+
+```dart
+Future<void> clearCache() async {
+  // 1. 清理文件系统
+  await _deleteAllLogoFiles();
+  // 2. 清理数据库索引
+  await _dao.clearAll();
+}
+```
+
+### 存储扫描
+
+`StorageManager.scan()` 使用 `Isolate.run` 在后台线程执行目录扫描，
+避免阻塞 UI。扫描结果通过 `AppStorageReport` 返回，包含按类型分组的统计：
+
+```dart
+final report = await storageManager.scan();
+print('数据库: ${StorageSizeUtils.format(report.databaseBytes)}');
+print('缓存: ${StorageSizeUtils.format(report.cacheBytes)}');
+print('总占用: ${StorageSizeUtils.format(report.totalBytes)}');
+```

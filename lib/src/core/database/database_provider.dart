@@ -1,23 +1,21 @@
 import 'package:drift/drift.dart';
 import 'package:drift/native.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:path_provider/path_provider.dart';
-import 'package:path/path.dart' as p;
-import 'dart:io';
+
 import 'app_database.dart';
 import '../plugin/plugin_registry.dart';
+import '../storage/providers/storage_providers.dart';
 
-QueryExecutor _createExecutor() {
+QueryExecutor _createExecutor(Ref ref) {
   return LazyDatabase(() async {
-    final dir = await getApplicationDocumentsDirectory();
-    final file = File(p.join(dir.path, 'unihub.db'));
-    return NativeDatabase(file);
+    final storagePaths = await ref.read(appStoragePathsProvider.future);
+    return NativeDatabase(storagePaths.databaseFile);
   });
 }
 
 final appDatabaseProvider = Provider<AppDatabase>((ref) {
   final registry = ref.read(pluginRegistryProvider);
-  final db = AppDatabase(_createExecutor(), registry);
+  final db = AppDatabase(_createExecutor(ref), registry);
   ref.onDispose(() => db.close());
   return db;
 });

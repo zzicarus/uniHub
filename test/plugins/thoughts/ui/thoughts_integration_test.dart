@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:drift/drift.dart';
 import 'package:drift/native.dart';
 import 'package:flutter/material.dart';
@@ -8,6 +10,8 @@ import 'package:uni_hub/src/core/database/database_provider.dart';
 import 'package:uni_hub/src/core/database/tables/thoughts_table.dart';
 import 'package:uni_hub/src/core/plugin/plugin_interface.dart';
 import 'package:uni_hub/src/core/plugin/plugin_registry.dart';
+import 'package:uni_hub/src/core/storage/app_storage_paths.dart';
+import 'package:uni_hub/src/core/storage/providers/storage_providers.dart';
 import 'package:uni_hub/src/plugins/thoughts/data/thought_content_codec.dart';
 import 'package:uni_hub/src/plugins/thoughts/providers/thought_status_filter.dart';
 import 'package:uni_hub/src/plugins/thoughts/providers/thoughts_providers.dart';
@@ -34,14 +38,22 @@ void main() {
     late AppDatabase db;
     late PluginRegistry registry;
     late ProviderContainer container;
+    late Directory tempDir;
 
     setUp(() async {
+      tempDir = Directory.systemTemp.createTempSync('thoughts_integration_test_');
+      final testPaths = AppStoragePaths(
+        documentsDir: tempDir,
+        cacheDir: tempDir,
+      );
+
       registry = PluginRegistry()..register(_ThoughtsTablePlugin());
       db = AppDatabase(NativeDatabase.memory(), registry);
       container = ProviderContainer(
         overrides: [
           appDatabaseProvider.overrideWithValue(db),
           pluginRegistryProvider.overrideWithValue(registry),
+          appStoragePathsProvider.overrideWith((ref) => Future.value(testPaths)),
         ],
       );
     });
@@ -49,6 +61,7 @@ void main() {
     tearDown(() async {
       container.dispose();
       await db.close();
+      try { tempDir.deleteSync(recursive: true); } catch (_) {}
     });
 
     test('allThoughtsProvider returns active + archived thoughts', () async {
@@ -174,8 +187,15 @@ void main() {
     late AppDatabase db;
     late PluginRegistry registry;
     late ProviderContainer container;
+    late Directory tempDir;
 
     setUp(() async {
+      tempDir = Directory.systemTemp.createTempSync('thoughts_integration_rr_');
+      final testPaths = AppStoragePaths(
+        documentsDir: tempDir,
+        cacheDir: tempDir,
+      );
+
       registry = PluginRegistry()..register(_ThoughtsTablePlugin());
       db = AppDatabase(NativeDatabase.memory(), registry);
       final now = DateTime.now();
@@ -210,6 +230,7 @@ void main() {
         overrides: [
           appDatabaseProvider.overrideWithValue(db),
           pluginRegistryProvider.overrideWithValue(registry),
+          appStoragePathsProvider.overrideWith((ref) => Future.value(testPaths)),
         ],
       );
     });
@@ -217,6 +238,7 @@ void main() {
     tearDown(() async {
       container.dispose();
       await db.close();
+      try { tempDir.deleteSync(recursive: true); } catch (_) {}
     });
 
     test('pinnedThoughtsProvider ignores tag and search filters', () async {
