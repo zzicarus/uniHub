@@ -133,6 +133,53 @@ CollectionCaptureService.captureUrl                    → 输入/归一化/创�
                       └─ WebsiteLogo Image.file          → UI 解码/文件缺失
 ```
 
+## 平台化爬取架构（Platform Adapters）
+
+### 架构
+
+```
+metadataProviderProvider
+  └─ PlatformAwareMetadataProvider
+       ├─ BilibiliMetadataAdapter (bilibili.com, b23.tv)
+       │    ├─ b23.tv → follow redirect
+       │    ├─ 412/403/429 → limited success（不反复 retry）
+       │    └─ siteName="Bilibili", favicon fallback
+       ├─ WeiboMetadataAdapter (weibo.com, m.weibo.cn)
+       │    ├─ 登录墙/非2xx → limited success
+       │    ├─ siteName="微博", favicon=weibo.com/favicon.ico
+       │    └─ 检测 .login / 请登录 等登录墙特征
+       ├─ GitHubMetadataAdapter (github.com)
+       │    ├─ URL类型识别: repo/issue/pull_request/blob
+       │    ├─ title 结构化: owner/repo / owner/repo#123
+       │    └─ siteName="GitHub", favicon=github.com/favicon.ico
+       └─ LocalMetadataProvider（通用 fallback）
+```
+
+### Adapter 接口
+
+```dart
+abstract interface class PlatformMetadataAdapter {
+  bool canHandle(Uri uri);
+  Future<PlatformAdapterResult> fetch(Uri uri);
+}
+```
+
+### limited success 机制
+
+Adapter 被平台限制（登录墙/412/403/429）时，返回 `PlatformAdapterResult(limited: true, reason: ...)`，包含最佳努力的 title/siteName/favicon，标记 `EnrichmentStatus.success`。
+
+避免：
+1. 反复 retry（retry 次数耗尽后 failed，用户看到失败状态）
+2. 平台特殊逻辑污染 `LocalMetadataProvider`
+
+### 日志前缀
+
+| Adapter | 日志前缀 |
+|---------|----------|
+| `BilibiliMetadataAdapter` | `bilibili ...` |
+| `WeiboMetadataAdapter` | `weibo ...` |
+| `GitHubMetadataAdapter` | `github ...` |
+
 ## Website Logo 缓存服务
 
 ### 架构概览

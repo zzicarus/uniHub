@@ -21,6 +21,10 @@ import '../data/website_logo_cache_dao.dart';
 import '../services/enrichment_job_service.dart';
 import '../services/local_metadata_provider.dart';
 import '../services/metadata_provider.dart';
+import '../services/platform_adapters/bilibili_metadata_adapter.dart';
+import '../services/platform_adapters/github_metadata_adapter.dart';
+import '../services/platform_adapters/weibo_metadata_adapter.dart';
+import '../services/platform_aware_metadata_provider.dart';
 import '../services/website_logo_cache_service.dart';
 
 final savedItemsDaoProvider = Provider<SavedItemsDao>((ref) {
@@ -57,7 +61,15 @@ final platformDetectorProvider = Provider<PlatformDetector>((ref) {
 final metadataProviderProvider = Provider<MetadataProvider>((ref) {
   final client = HttpClient();
   ref.onDispose(() => client.close(force: true));
-  return LocalMetadataProvider(client: client);
+  final local = LocalMetadataProvider(client: client);
+  return PlatformAwareMetadataProvider(
+    adapters: [
+      BilibiliMetadataAdapter(client: client),
+      WeiboMetadataAdapter(client: client),
+      GitHubMetadataAdapter(client: client),
+    ],
+    fallback: local,
+  );
 });
 
 final enrichmentJobServiceProvider = Provider<EnrichmentJobService>((ref) {
