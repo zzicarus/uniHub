@@ -745,3 +745,45 @@ font: AppFlowy 编辑器使用 Inter 字体 + 主题色; image V2: ThoughtImageB
 ### Next Steps
 
 - None - task complete
+
+
+## Session 20: 收藏模块架构治理 v1.5 — 全面实施
+
+**Date**: 2026-05-27
+**Task**: 收藏模块架构治理 v1.5 — 全面实施
+**Branch**: `main`
+
+### Summary
+
+按 PRD v1.5 完成收藏模块三层架构治理：
+- Phase 1: SavedItemActionsController 统一封装收藏项操作，UI 不再直接调用 Repository
+- Phase 2: SavedItemListEntry ViewModel 消除列表 N+1 查询，Card 入参改为 entry
+- Phase 3: EnrichmentQueueController 支持启动恢复/页面进入/手动重试三种触发
+- Spec 更新：collections AGENTS.md 和 plugin-data-flow.md 记录新 application 层模式
+- 新增 7 个文件（5 application + 2 test），修改 12 个文件
+- flutter analyze 0 error 0 warning，156 测试通过
+- 同时归档 6 个已完成任务（含 5 个旧任务 + 当前任务）
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `862361b` | (see git log) |
+| `d1511e2` | (see git log) |
+| `e21a8f7` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
