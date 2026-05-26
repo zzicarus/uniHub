@@ -1,7 +1,0 @@
-{"file": ".trellis/spec/frontend/component-guidelines.md", "reason": "Design tokens (AppSpacing, AppRadius, AppShadows, AppFontTokens), ColorScheme patterns, Typography, Layout Overflow prevention — all needed for dialog widget implementation"}
-{"file": ".trellis/spec/frontend/uiux-guidelines.md", "reason": "UI/UX guidelines for dialog patterns, destructive actions, and feedback patterns"}
-{"file": "lib/src/plugins/collections/AGENTS.md", "reason": "Collections plugin architecture conventions and UI conventions for chip display"}
-{"file": ".trellis/tasks/05-25-ui/prd.md", "reason": "Full feature specification with visual specs, copywriting, and acceptance criteria"}
-{"file": "lib/src/core/theme/app_tokens.dart", "reason": "AppSpacing, AppRadius, AppSizes, AppShadows, AppFontTokens constants needed throughout"}
-{"file": "lib/src/plugins/collections/data/collections_repository.dart", "reason": "deleteSavedItem and box management methods — need to add removeItemFromBox"}
-{"file": "lib/src/plugins/collections/providers/collections_providers.dart", "reason": "Current providers — need to add delete preferences provider"}
