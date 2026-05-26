@@ -181,13 +181,13 @@ class HtmlMetadataParser {
   // file extension. Falls back to /favicon.ico at the origin.
 
   static const _faviconScores = <String, int>{
-    '.png': 80,
-    '.webp': 75,
+    '.png': 90,
+    '.webp': 85,
+    '.svg': 80,
+    '.ico': 70,
     '.jpg': 60,
     '.jpeg': 60,
     '.gif': 50,
-    '.ico': 40,
-    '.svg': 30,
   };
 
   String? _parseFavicon() {

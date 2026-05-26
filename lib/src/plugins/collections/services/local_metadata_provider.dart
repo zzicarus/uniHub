@@ -122,6 +122,10 @@ class LocalMetadataProvider implements MetadataProvider {
       final remaining = _maxBodyBytes - total;
       if (chunk.length > remaining) {
         chunks.add(chunk.sublist(0, remaining));
+        total += remaining;
+        CollectionDebugLogger.warn(
+          'metadata response body truncated maxBytes=$_maxBodyBytes',
+        );
         break;
       }
       chunks.add(chunk);

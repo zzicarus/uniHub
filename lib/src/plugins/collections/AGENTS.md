@@ -190,12 +190,12 @@ LocalMetadataProvider.fetchMetadata(url)
 | 类型 | 分数 | 说明 |
 |------|------|------|
 | apple-touch-icon | 100 | 高分辨率 PNG，优先选择 |
-| .png URL | 80 | 显式 PNG |
-| .webp URL | 75 | WebP 格式 |
+| .png URL | 90 | 显式 PNG |
+| .webp URL | 85 | WebP 格式 |
+| .svg URL | 80 | SVG（flutter_svg 渲染，参见 WebsiteLogo） |
+| .ico URL | 70 | 传统 ICO |
 | .jpg / .jpeg URL | 60 | JPEG 格式 |
 | .gif URL | 50 | GIF 格式 |
-| .ico URL | 40 | 传统 ICO |
-| .svg URL | 30 | SVG（flutter_svg 渲染，参见 WebsiteLogo） |
 | 通用 icon link（无扩展名） | 70 | rel="icon" / "shortcut icon" 但无扩展名 |
 | 其他 | 10 | 兜底 |
 
@@ -238,8 +238,10 @@ LocalMetadataProvider.fetchMetadata(url)
   - `.svg` → `SvgPicture.file`（flutter_svg 包），支持本地 SVG favicon 渲染。
   - 其他（`.ico`/`.png`/`.jpg`/`.webp`/`.gif`）→ `Image.file`。
 - `placeholderBuilder` / `errorBuilder` 均 fallback 到 `_fallbackContainer`。
-- 错误日志（decode 失败、文件缺失）通过 `_reportedDecodeFailures` 静态 Set 去重，同路径只打印一次。
-- 文件不存在时打印 warning 日志，可区分「无缓存」和「缓存缺失」两种场景。
+- 错误日志使用两个独立的静态 Set 去重：
+  - `_reportedMissingFiles`：文件不存在 warning，同路径只打印一次
+  - `_reportedDecodeFailures`：decode 失败 error（SvgPicture.file / Image.file），同路径只打印一次
+- 文件缺失 warning 不会吞掉后续 decode 失败日志（使用不同的 Set）。
 - 不允许 UI 层直接联网。
 
 ### 测试策略

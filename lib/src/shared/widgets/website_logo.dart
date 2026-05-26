@@ -16,6 +16,9 @@ import 'package:uni_hub/src/plugins/collections/services/collection_debug_logger
 /// All sizing is controlled by [size] (container dimensions) and [iconSize]
 /// (fallback icon size). Styling uses [AppRadius] and [colorScheme].
 class WebsiteLogo extends StatelessWidget {
+  /// Tracks reported missing-file paths to prevent log flood.
+  static final Set<String> _reportedMissingFiles = <String>{};
+
   /// Tracks reported decode-failure paths to prevent log flood.
   static final Set<String> _reportedDecodeFailures = <String>{};
 
@@ -49,7 +52,7 @@ class WebsiteLogo extends StatelessWidget {
     if (localPath != null && localPath!.isNotEmpty) {
       final file = File(localPath!);
       if (!file.existsSync()) {
-        if (_reportedDecodeFailures.add(localPath!)) {
+        if (_reportedMissingFiles.add(localPath!)) {
           CollectionDebugLogger.warn(
             'WebsiteLogo local file missing path=$localPath',
           );
