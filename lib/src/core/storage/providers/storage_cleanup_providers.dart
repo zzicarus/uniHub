@@ -22,7 +22,7 @@ final clearRegenerableCacheAction = Provider<Future<ClearResult> Function()>(
 
       // 1. 清除网站 Logo 缓存（文件 + DB 索引）
       try {
-        final logoService = ref.read(websiteLogoCacheServiceProvider);
+        final logoService = await ref.read(websiteLogoCacheServiceProvider.future);
         final logoResult = await logoService.clearCache();
         totalFiles += logoResult.deletedFiles;
         totalBytes += logoResult.freedBytes;

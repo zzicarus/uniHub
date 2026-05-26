@@ -412,8 +412,21 @@ class WebsiteLogoCacheService {
       }
     }
 
-    // Allow application/octet-stream for .ico URLs
+    // Reject unsupported content types (favicon must be an image or allowed binary)
+    final baseContentType = (mimeType ?? '').split(';').first.trim().toLowerCase();
     final ext = _extensionForMimeType(mimeType, url);
+    final looksLikeImageType = baseContentType.startsWith('image/');
+    final allowedBinaryIco =
+        baseContentType == 'application/octet-stream' && ext == '.ico';
+
+    if (baseContentType.isNotEmpty &&
+        !looksLikeImageType &&
+        !allowedBinaryIco) {
+      throw HttpException(
+        'Unsupported favicon content-type: $baseContentType',
+        uri: uri,
+      );
+    }
 
     CollectionDebugLogger.log(
       'logo fetch bytesLength=${bytes.length} ext=$ext',

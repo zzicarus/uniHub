@@ -65,7 +65,7 @@ final enrichmentJobServiceProvider = Provider<EnrichmentJobService>((ref) {
     repository: ref.watch(collectionsRepositoryProvider),
     jobsDao: ref.watch(enrichmentJobsDaoProvider),
     metadataProvider: ref.watch(metadataProviderProvider),
-    logoCacheService: ref.watch(websiteLogoCacheServiceProvider),
+    logoCacheService: ref.watch(websiteLogoCacheServiceProvider).valueOrNull,
     onLogoCached: () {
       // Increment the refresh counter after logo cache write completes,
       // so UI re-reads the cached logo from the database.
@@ -146,8 +146,8 @@ final websiteLogoCacheDaoProvider = Provider<WebsiteLogoCacheDao>((ref) {
   return WebsiteLogoCacheDao(db);
 });
 
-final websiteLogoCacheServiceProvider = Provider<WebsiteLogoCacheService>((ref) {
-  final storagePaths = ref.watch(appStoragePathsProvider).requireValue;
+final websiteLogoCacheServiceProvider = FutureProvider<WebsiteLogoCacheService>((ref) async {
+  final storagePaths = await ref.watch(appStoragePathsProvider.future);
   return WebsiteLogoCacheService(
     dao: ref.watch(websiteLogoCacheDaoProvider),
     logosDir: storagePaths.websiteLogosDir,

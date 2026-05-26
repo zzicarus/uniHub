@@ -227,6 +227,7 @@ LocalMetadataProvider.fetchMetadata(url)
 | MIME 兼容 | `_extensionForMimeType` 先 `split(';').first` 剥离 charset，再匹配类型 |
 | URL 协议 | 只允许 `http`/`https` |
 | HTML 检测 | 响应 content-type 含 `text/html` 或 body 开头为 `<!doctype html` → 拒绝 |
+| 内容类型白名单 | 响应必须为 `image/*` 或 `application/octet-stream`（仅 `.ico` 结尾）→ 放行；其余（`application/json`、`application/xml`、`binary/octet-stream` 等）→ 拒绝 |
 | application/octet-stream | 仅当 URL 以 `.ico` 结尾时放行（部分服务器行为） |
 
 ### WebsiteLogo UI 组件
@@ -257,7 +258,8 @@ LocalMetadataProvider.fetchMetadata(url)
 ```dart
 final enrichmentJobServiceProvider = Provider<EnrichmentJobService>((ref) {
   return EnrichmentJobService(
-    logoCacheService: ref.watch(websiteLogoCacheServiceProvider),
+    // FutureProvider 通过 valueOrNull 安全读取（启动未就绪时为 null）
+    logoCacheService: ref.watch(websiteLogoCacheServiceProvider).valueOrNull,
     onLogoCached: () {
       ref.read(websiteLogoRefreshProvider.notifier).state++;
     },

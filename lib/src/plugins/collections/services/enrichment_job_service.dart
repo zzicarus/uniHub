@@ -26,6 +26,7 @@ class EnrichmentJobService {
   final EnrichmentJobsDao _jobsDao;
   final MetadataProvider _metadataProvider;
   final WebsiteLogoCacheService? _logoCacheService;
+  static const int _maxAttempts = 3;
 
   /// Called after every successful logo cache write.
   /// Used to trigger UI refresh of cached logo lookups.
@@ -142,11 +143,11 @@ class EnrichmentJobService {
       final currentAttempts = job.attempts + 1;
 
       CollectionDebugLogger.error(
-        '_processJob failed id=${job.id} attempts=$currentAttempts/$job.attempts error=$errorMsg',
+        '_processJob failed id=${job.id} attempts=$currentAttempts/$_maxAttempts error=$errorMsg',
         error,
       );
 
-      if (currentAttempts >= 3) {
+      if (currentAttempts >= _maxAttempts) {
         // 超过最大重试次数，标记永久失败
         CollectionDebugLogger.warn(
           '_processJob permanent fail id=${job.id} (max retries reached)',
@@ -159,7 +160,7 @@ class EnrichmentJobService {
       } else {
         // 重新入队等待下次重试
         CollectionDebugLogger.log(
-          '_processJob requeue id=${job.id} for retry $currentAttempts/3',
+          '_processJob requeue id=${job.id} for retry $currentAttempts/$_maxAttempts',
         );
         await _jobsDao.requeue(job.id, errorMsg);
         await _repository.updateMetadata(
