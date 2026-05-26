@@ -1,0 +1,6 @@
+{"file": ".trellis/spec/frontend/component-guidelines.md", "reason": "Verify dialog follows all design token conventions, Typography rules, and ColorScheme patterns"}
+{"file": ".trellis/spec/frontend/quality-guidelines.md", "reason": "Quality check: const optimization, type safety, test coverage requirements"}
+{"file": "lib/src/plugins/collections/AGENTS.md", "reason": "Verify no violation of plugin architecture conventions"}
+{"file": ".trellis/spec/backend/database-guidelines.md", "reason": "Verify repository changes follow database conventions"}
+{"file": "test/AGENTS.md", "reason": "Verify test patterns follow project conventions"}
+{"file": ".trellis/tasks/05-25-ui/prd.md", "reason": "Verify all acceptance criteria are met"}
