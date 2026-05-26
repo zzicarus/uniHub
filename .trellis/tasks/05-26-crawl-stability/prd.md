@@ -60,38 +60,40 @@
 
 截断分支添加 `total += remaining` 和 truncated 日志。
 
-## 待处理（Phase 2 — 平台化爬取架构）
+## 已完成（Phase 2 — 平台化爬取架构）
 
-平台化爬取为设计预留，不强制实现所有 adapter。
+| # | 文件 | Commit |
+|---|------|--------|
+| Adapter 接口 | `platform_metadata_adapter.dart` | dfd9906 |
+| Provider Router | `platform_aware_metadata_provider.dart` | dfd9906 |
+| Bilibili | `platform_adapters/bilibili_metadata_adapter.dart` | dfd9906 |
+| Weibo | `platform_adapters/weibo_metadata_adapter.dart` | dfd9906 |
+| GitHub | `platform_adapters/github_metadata_adapter.dart` | dfd9906 |
+| Provider wiring | `collections_providers.dart` | dfd9906 |
 
 ### 架构
 
-```dart
-abstract class PlatformMetadataAdapter {
-  bool canHandle(Uri uri);
-  Future<MetadataResult> fetch(Uri uri);
-}
+```
+metadataProviderProvider
+  └─ PlatformAwareMetadataProvider
+       ├─ BilibiliMetadataAdapter (bilibili.com, b23.tv)
+       ├─ WeiboMetadataAdapter (weibo.com, m.weibo.cn)
+       ├─ GitHubMetadataAdapter (github.com)
+       └─ LocalMetadataProvider（通用 fallback）
 ```
 
-### 首批平台
+### Adapter 接口
 
-| 平台 | 文件 | 策略 |
-|------|------|------|
-| Bilibili | `bilibili_metadata_adapter.dart` | 浏览器 UA，解析 og:title，siteName="Bilibili"，favicon PNG → ico fallback，412/403 → limited success |
-| Weibo | `weibo_metadata_adapter.dart` | siteName="微博"，favicon 固定，登录墙 → limited success |
-| GitHub | `github_metadata_adapter.dart` | URL 类型识别（repo/issue/pr/blob），title 结构化，favicon 固定 |
+```dart
+abstract interface class PlatformMetadataAdapter {
+  bool canHandle(Uri uri);
+  Future<PlatformAdapterResult> fetch(Uri uri);
+}
+```
 
 ### limited success 机制
 
-```json
-{
-  "source": "bilibili_adapter",
-  "limited": true,
-  "reason": "http_412"
-}
-```
-
-adapter 被平台限制时不反复 retry，直接以 limited success 返回。
+adapter 被平台限制（登录墙/412/403/429）时，返回 `PlatformAdapterResult(limited: true, reason: ...)`，包含最佳努力的 title/siteName/favicon，标记 `EnrichmentStatus.success`。避免反复 retry。
 
 ## 日志规范
 
