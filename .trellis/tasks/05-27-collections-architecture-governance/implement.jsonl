@@ -1,0 +1,7 @@
+{"file": "lib/src/plugins/collections/AGENTS.md", "reason": "Collections plugin architecture conventions, existing delete dialog patterns, DAO/Repository structure, UI component hierarchy"}
+{"file": ".trellis/spec/frontend/component-guidelines.md", "reason": "Widget conventions, design tokens (AppSpacing/AppRadius/AppShadows/AppFontTokens), ColorScheme patterns, Typography rules"}
+{"file": ".trellis/spec/frontend/uiux-guidelines.md", "reason": "UI/UX guidelines for dialog patterns, destructive actions, snackbar feedback, empty/loading/error states"}
+{"file": ".trellis/spec/frontend/state-management.md", "reason": "Riverpod provider patterns — FutureProvider, StateProvider, Provider, ref.invalidate, ref.watch/read conventions"}
+{"file": ".trellis/spec/backend/database-guidelines.md", "reason": "Drift DAO/Repository pattern, database transaction conventions, migration approach"}
+{"file": ".trellis/spec/backend/plugin-data-flow.md", "reason": "Plugin data flow — UI → Provider → Service → DAO → Database layering"}
+{"file": ".trellis/tasks/05-27-collections-architecture-governance/prd.md", "reason": "Full PRD with three-phase architecture governance plan, file modification list, and acceptance criteria"}

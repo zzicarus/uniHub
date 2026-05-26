@@ -1,0 +1,7 @@
+{"file": ".trellis/spec/frontend/component-guidelines.md", "reason": "Widget conventions, design tokens, ColorScheme, Typography — for checking UI code compliance"}
+{"file": ".trellis/spec/frontend/quality-guidelines.md", "reason": "Frontend quality standards — lint, type safety, widget test coverage"}
+{"file": ".trellis/spec/backend/quality-guidelines.md", "reason": "Backend quality standards — DAO/Repository test patterns, service layer testing"}
+{"file": ".trellis/spec/backend/database-guidelines.md", "reason": "Database conventions — drift DAO/Repository pattern, migration rules"}
+{"file": ".trellis/spec/backend/error-handling.md", "reason": "Error handling patterns — RepositoryException, retry, logging conventions"}
+{"file": "lib/src/plugins/collections/AGENTS.md", "reason": "Collections plugin conventions for checking architecture compliance"}
+{"file": ".trellis/tasks/05-27-collections-architecture-governance/prd.md", "reason": "PRD with acceptance criteria — verify all three phases meet specs"}
