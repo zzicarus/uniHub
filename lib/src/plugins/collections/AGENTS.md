@@ -11,9 +11,23 @@ collections/
 ├── domain/      # 枚举、轻量模型、URL normalizer、platform detector
 ├── data/        # DAO + Repository，只通过 AppDatabase 访问 Drift
 ├── services/    # 捕获、元数据抓取、异步 enrichment 服务
+├── application/ # Controller + ViewModel + QueueController — 用例编排与展示数据聚合
 ├── providers/   # Riverpod providers，UI 不直接访问 DAO/Database
 └── ui/          # 页面、布局、组件
 ```
+
+### application/ 层说明
+
+`application/` 层位于 `providers/` 和 `ui/` 之间，职责是：
+
+- **Controller** — 封装业务操作（删除/归档/状态切换/Box 管理/复制链接等），UI 不再直接调用 Repository
+- **ViewModel (ListEntry)** — 聚合跨多种数据源的展示模型（item + boxes + logo + selected），消除 N+1 查询
+- **QueueController** — 统一调度异步后台任务（Enrichment 队列恢复），支持启动恢复、页面进入触发、手动重试
+
+**原则**：
+- Controller 返回 `SavedItemActionResult`（含 message + undo），不直接依赖 `BuildContext`
+- ViewModel 在 Provider 中批量聚合数据，不在每个 Widget 中独立查询
+- QueueController 内部使用 `_isRunning` 防止并发执行
 
 ## 数据库约定
 
@@ -25,6 +39,79 @@ collections/
 
 - 使用 Material 3 `ColorScheme` 与 `app_tokens.dart` 间距/圆角。
 - URL 捕获、筛选、列表都通过 `providers/collections_providers.dart` 访问状态。
+
+## Controller 模式（SavedItemActionsController）
+
+所有收藏项的业务操作必须通过 `SavedItemActionsController` 执行，不直接在 UI 中调用 Repository。
+
+### 可用方法
+
+| 方法 | 用途 | 返回值 |
+|------|------|--------|
+| `openItem(itemId)` | 打开原网页 + 标记已打开 | `message` |
+| `copyUrl(itemId)` | 复制链接到剪贴板 | `message` |
+| `updateStatus(itemId, status)` | 切换消费状态 | `message` |
+| `archiveItem(itemId)` | 快速归档 | `message` |
+| `assignBoxes(itemId, boxIds)` | 分配收藏夹 | undo action |
+| `removeFromBox(itemId, boxId)` | 从收藏夹移除 | undo action |
+| `deleteItem(itemId, {mode, boxId})` | 删除收藏（单条/多Box） | undo action |
+| `restoreDeletedItem(snapshot)` | 撤销删除 | `message` |
+| `retryEnrichment(itemId)` | 重试元数据抓取 | `message` |
+
+### 使用模式
+
+```dart
+// UI 中调用
+final result = await ref.read(savedItemActionsControllerProvider).deleteItem(item.id);
+
+if (context.mounted && result.message != null) {
+  ScaffoldMessenger.of(context).showSnackBar(
+    SnackBar(
+      content: Text(result.message!),
+      action: result.undo == null
+          ? null
+          : SnackBarAction(
+              label: result.undo!.label,
+              onPressed: () => unawaited(result.undo!.execute()),
+            ),
+    ),
+  );
+}
+```
+
+### Controller 持有 Ref
+
+Controller 需要持有 `Ref` 来调用 `ref.invalidate()` 刷新列表和计数。这是一个可接受的架构折中——短期加快落地速度，中期可改为回调/Notifier 模式。
+
+## ViewModel 模式（SavedItemListEntry）
+
+列表展示数据通过 `savedItemListEntriesProvider` 聚合，而非由每个 Widget 独立查询：
+
+```dart
+class SavedItemListEntry {
+  final SavedItemsTableData item;
+  final List<CollectionBoxesTableData> boxes;
+  final WebsiteLogoCacheEntry? logo;
+  final bool selected;
+}
+```
+
+**消除 N+1 查询**：
+- Box 通过 `repository.getBoxIdsForItems()` 批量查询（一次查询所有 item 的 boxIds）
+- Logo 通过 `logoDao.getLogosBySiteKeys()` 批量查询（一次查询所有 item 的 logo）
+- `SavedItemCard` 不再 watch `websiteLogoForUrlProvider` 或 `collectionBoxesProvider`
+
+## EnrichmentQueueController
+
+Enrichment 队列调度统一通过 `EnrichmentQueueController`：
+
+| 触发时机 | 位置 | 方式 |
+|----------|------|------|
+| App 启动 | `collections_desktop_layout.initState` | `drainPending(batchSize:5, maxBatches:3)` |
+| 收藏成功 | `collection_capture_bar` | `drainPending(batchSize:5, maxBatches:3)` |
+| 手动重试 | card / detail panel 的失败 chip | `retryItem(itemId)` |
+
+`_isRunning` guard 防止并发 drain。每次 drain 完成后自动 `invalidate` 列表和 logo。
 
 ## 删除确认弹窗
 

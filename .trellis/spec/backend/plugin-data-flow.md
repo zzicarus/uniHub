@@ -126,11 +126,77 @@ Riverpod Provider 负责组装依赖与生命周期：
 - UI 只 watch/read Repository 或用例 Provider，不直接访问 DAO/Database。
 - 数据库 Provider 必须在 `ref.onDispose` 中关闭数据库（测试 override 例外按 test 规范处理）。
 
-推荐依赖方向：
+## 8. Application 层（可选）
+
+对于复杂度较高的插件（如 Collections），可以在 `providers/` 和 `ui/` 之间增加 `application/` 层，分为三类组件：
+
+### Controller
+
+封装业务用例操作，返回结果模型而非直接操作 UI。
+
+```dart
+class SavedItemActionsController {
+  Future<SavedItemActionResult> deleteItem(int id);
+  Future<SavedItemActionResult> archiveItem(int id);
+  Future<SavedItemActionResult> assignBoxes(int id, Set<int> boxIds);
+}
+```
+
+**约定**：
+- 方法返回 `ActionResult` 模型（含 `success`、`message`、`undo`、`error`），不直接操作 `BuildContext`
+- Controller 可持有 `Ref` 用于 `ref.invalidate()`，这是一个可接受的折中
+- UI 通过 Provider 获取 Controller 实例，调用方法后根据返回值展示 SnackBar/Dialog
+
+### ViewModel
+
+聚合跨多种数据源的展示模型，消除 N+1 查询。
+
+```dart
+class SavedItemListEntry {
+  final SavedItemsTableData item;
+  final List<CollectionBoxesTableData> boxes;
+  final WebsiteLogoCacheEntry? logo;
+  final bool selected;
+}
+```
+
+**约定**：
+- ViewModel 在 Provider 中批量聚合完成，不再允许每个 Widget 独立查询附属数据
+- 通过 `batchIdsMap` / `batchDaoQuery` 一次加载所有 item 的相关数据
+- Widget 通过构造器接收 ViewModel，不再 watch 分散的 family Provider
+
+### QueueController
+
+统一调度异步后台任务，支持多种触发时机。
+
+```dart
+class EnrichmentQueueController {
+  Future<int> runOnce({int limit = 5});
+  Future<int> drainPending({int batchSize = 5, int maxBatches = 5});
+  Future<ActionResult> retryItem(int itemId);
+}
+```
+
+**约定**：
+- 内部使用 `_isRunning` guard 防止并发执行
+- 每次 drain 完成后自动 `invalidate` 相关 Provider
+- 支持 App 启动恢复、页面进入触发、手动重试三种触发方式
+
+### 推荐依赖方向
 
 ```
-UI Widget → UseCase/Repository Provider → Repository → DAO → AppDatabase
+UI Widget → Application Provider → Controller/ViewModel → Repository → DAO → AppDatabase
 ```
+
+```
+UI Widget → Application Provider → QueueController → Service → Repository/DAO → AppDatabase
+```
+
+何时添加 `application/` 层：
+- Widget 文件超过 300 行且包含业务逻辑
+- 同一业务操作在多个 Widget 中重复
+- 列表展示需要聚合 3+ 种数据源
+- 后台任务需要多种触发时机和重试策略
 
 ---
 
