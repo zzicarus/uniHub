@@ -263,7 +263,6 @@ final savedItemListEntriesProvider =
   // Watch the refresh counter so that logos update after enrichment completes.
   ref.watch(websiteLogoRefreshProvider);
   final page = await ref.watch(savedItemsPageProvider.future);
-  final selectedId = ref.watch(selectedSavedItemIdProvider);
 
   final boxIdsMap = page.boxIdsByItemId;
   final items = page.items;
@@ -297,7 +296,7 @@ final savedItemListEntriesProvider =
             if (boxById[boxId] != null) boxById[boxId]!,
         ],
         logo: logos[WebsiteLogoCacheService.siteKey(item.originalUrl)],
-        selected: item.id == selectedId,
+        selected: false,
       ),
   ];
 });

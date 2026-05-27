@@ -144,17 +144,21 @@ class _CollectionsDesktopLayoutState
                                     separatorBuilder: (context, index) =>
                                         const SizedBox(height: AppSpacing.sm),
                                     itemBuilder: (context, index) {
-                                      final entry = entries[index];
+                                      final rawEntry = entries[index];
+                                      final entry = rawEntry.copyWith(
+                                        selected: rawEntry.item.id == selectedId,
+                                      );
                                       return SavedItemCard(
+                                        key: ValueKey(entry.item.id),
                                         entry: entry,
                                         onTap: () {
+                                          if (selectedId == entry.item.id) return;
                                           ref
-                                                  .read(
-                                                    selectedSavedItemIdProvider
-                                                        .notifier,
-                                                  )
-                                                  .state =
-                                              entry.item.id;
+                                              .read(
+                                                selectedSavedItemIdProvider
+                                                    .notifier,
+                                              )
+                                              .state = entry.item.id;
                                         },
                                       );
                                     },

@@ -27,6 +27,21 @@ class SavedItemListEntry {
   /// Whether this item is currently selected in the list.
   final bool selected;
 
+  /// Returns a copy of this entry with the given fields replaced.
+  SavedItemListEntry copyWith({
+    SavedItemsTableData? item,
+    List<CollectionBoxesTableData>? boxes,
+    WebsiteLogoCacheEntry? logo,
+    bool? selected,
+  }) {
+    return SavedItemListEntry(
+      item: item ?? this.item,
+      boxes: boxes ?? this.boxes,
+      logo: logo ?? this.logo,
+      selected: selected ?? this.selected,
+    );
+  }
+
   /// Display title: falls back to the normalized URL when empty.
   String get displayTitle =>
       item.title.trim().isEmpty ? item.normalizedUrl : item.title;
