@@ -42,7 +42,7 @@ class SavedItemActionsController {
 
   @protected
   void invalidateLists() {
-    _ref?.invalidate(savedItemsListProvider);
+    _ref?.invalidate(savedItemsPageProvider);
   }
 
   @protected

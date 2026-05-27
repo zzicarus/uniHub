@@ -215,7 +215,7 @@ class CollectionBulkActionBar extends ConsumerWidget {
                                   item.id,
                                   boxIds.first,
                                 );
-                                ref.invalidate(savedItemsListProvider);
+                                ref.invalidate(savedItemsPageProvider);
                                 ref.invalidate(
                                   collectionFolderCountsProvider,
                                 );
@@ -235,7 +235,7 @@ class CollectionBulkActionBar extends ConsumerWidget {
                                       false,
                                     );
                                     ref.invalidate(
-                                      savedItemsListProvider,
+                                      savedItemsPageProvider,
                                     );
                                     ref.invalidate(
                                       collectionFolderCountsProvider,
@@ -251,7 +251,7 @@ class CollectionBulkActionBar extends ConsumerWidget {
                             ref
                                 .read(selectedSavedItemIdProvider.notifier)
                                 .state = null;
-                            ref.invalidate(savedItemsListProvider);
+                            ref.invalidate(savedItemsPageProvider);
                             ref.invalidate(collectionFolderCountsProvider);
                             if (!context.mounted) return;
                             _showUndoSnackBar(
@@ -277,7 +277,7 @@ class CollectionBulkActionBar extends ConsumerWidget {
                                     false,
                                   );
                                 }
-                                ref.invalidate(savedItemsListProvider);
+                                ref.invalidate(savedItemsPageProvider);
                                 ref.invalidate(
                                   collectionFolderCountsProvider,
                                 );

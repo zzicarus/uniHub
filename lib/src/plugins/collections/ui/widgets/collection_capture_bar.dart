@@ -34,7 +34,7 @@ class _CollectionCaptureBarState extends ConsumerState<CollectionCaptureBar> {
       final result = await service.captureUrl(url);
       if (!mounted) return;
       _controller.clear();
-      ref.invalidate(savedItemsListProvider);
+      ref.invalidate(savedItemsPageProvider);
       ref.invalidate(collectionFolderCountsProvider);
       if (result.wasCreated) {
         unawaited(ref.read(enrichmentQueueControllerProvider).drainPending(

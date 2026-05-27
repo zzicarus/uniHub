@@ -442,7 +442,7 @@ class _CardMoreMenu extends ConsumerWidget {
           switch (action) {
             case _CardAction.open:
               await ref.read(collectionsRepositoryProvider).markOpened(item.id);
-              ref.invalidate(savedItemsListProvider);
+              ref.invalidate(savedItemsPageProvider);
               await Clipboard.setData(ClipboardData(text: item.originalUrl));
               if (!context.mounted) return;
               ScaffoldMessenger.of(
@@ -729,7 +729,7 @@ class _CompactBoxButton extends ConsumerWidget {
     // Defer invalidation to next frame so showMenu's popup elements
     // are fully deactivated before the parent rebuilds.
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.invalidate(savedItemsListProvider);
+      ref.invalidate(savedItemsPageProvider);
     });
   }
 }

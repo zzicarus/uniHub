@@ -26,8 +26,7 @@ class EnrichmentQueueController {
   bool _isRunning = false;
 
   void _invalidateLists() {
-    _ref?.invalidate(savedItemsListProvider);
-    _ref?.invalidate(savedItemListEntriesProvider);
+    _ref?.invalidate(savedItemsPageProvider);
     _ref?.read(websiteLogoRefreshProvider.notifier).state++;
   }
 

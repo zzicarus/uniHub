@@ -117,7 +117,7 @@ class _CollectionSearchCaptureFieldState
 
       if (!mounted) return;
 
-      ref.invalidate(savedItemsListProvider);
+      ref.invalidate(savedItemsPageProvider);
       ref.invalidate(collectionFolderCountsProvider);
 
       if (result.wasCreated) {

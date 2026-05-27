@@ -99,12 +99,12 @@ class _CollectionsDesktopLayoutState
                         icon: const Icon(Icons.refresh_rounded),
                         tooltip: '刷新',
                         onPressed: () =>
-                            ref.invalidate(savedItemsListProvider),
+                            ref.invalidate(savedItemsPageProvider),
                       )
                     else
                       OutlinedButton.icon(
                         onPressed: () =>
-                            ref.invalidate(savedItemsListProvider),
+                            ref.invalidate(savedItemsPageProvider),
                         icon: const Icon(Icons.refresh_rounded),
                         label: const Text('刷新'),
                       ),
@@ -170,7 +170,7 @@ class _CollectionsDesktopLayoutState
                                 error: (error, stackTrace) => _ErrorState(
                                   error: error,
                                   onRetry: () =>
-                                      ref.invalidate(savedItemsListProvider),
+                                      ref.invalidate(savedItemsPageProvider),
                                 ),
                               ),
                             ),

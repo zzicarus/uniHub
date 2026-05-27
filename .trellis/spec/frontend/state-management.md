@@ -191,4 +191,5 @@ void initState() {
 | `ref.watch` 非 Provider 的变量 | 用 `ref.listen` + 回调 |
 | `provider.future` 后不再 `.when` | AsyncValue 必须三态处理 |
 | 手动 `setState` 管理数据库数据 | 应通过 Provider 链驱动 rebuild |
-| 在 `FutureProvider` 异步体内 `watch` UI-only 的 `StateProvider`（如 `selectedId`） | 纯 UI 状态（如选中项 ID）放在 `FutureProvider` 的 `async` 函数体内 `watch`，会导致每次选中变化时 **整个异步 Provider 重新执行**（重新查询 DB、重新聚合数据），造成页面「刷新」闪烁和多余 I/O。**正确做法**：`FutureProvider` 只负责数据聚合，`selected` 等 UI 状态由 Widget 层通过 `copyWith` 在列表 `itemBuilder` 中合成。
+| 在 `FutureProvider` 异步体内 `watch` UI-only 的 `StateProvider`（如 `selectedId`） | 纯 UI 状态（如选中项 ID）放在 `FutureProvider` 的 `async` 函数体内 `watch`，会导致每次选中变化时 **整个异步 Provider 重新执行**（重新查询 DB、重新聚合数据），造成页面「刷新」闪烁和多余 I/O。**正确做法**：`FutureProvider` 只负责数据聚合，`selected` 等 UI 状态由 Widget 层通过 `copyWith` 在列表 `itemBuilder` 中合成。 |
+| CRUD 后 invalidate 中间层 Provider 而非最上游数据 Provider | 如 `invalidate(savedItemsListProvider)` 但 UI 实际 watch `savedItemListEntriesProvider`（二者都依赖 `savedItemsPageProvider`）。invalidate 中间层不会反向传播到上游 Provider，下游仍读到上游缓存的旧数据。**正确做法**：始终 invalidate 最上游的异步数据 Provider（如 `savedItemsPageProvider`），通过 Riverpod 级联使整个依赖链刷新。
