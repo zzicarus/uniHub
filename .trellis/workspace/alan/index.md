@@ -8,7 +8,7 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-1.md`
-- **Total Sessions**: 20
+- **Total Sessions**: 21
 - **Last Active**: 2026-05-27
 <!-- @@@/auto:current-status -->
 
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-1.md` | ~789 | Active |
+| `journal-1.md` | ~822 | Active |
 <!-- @@@/auto:active-documents -->
 
 ---
@@ -29,6 +29,7 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 21 | 2026-05-27 | 收藏列表命令栏统一 | `2707423` | `main` |
 | 20 | 2026-05-27 | 收藏模块架构治理 v1.5 — 全面实施 | `862361b`, `d1511e2`, `e21a8f7` | `main` |
 | 19 | 2026-05-25 | 归档 Scale 任务 + 修复 showDialog wrong build scope 异常 | `dd49c6d`, `5204094` | `main` |
 | 18 | 2026-05-25 | 内容收藏右侧详情边栏视觉增强 | `cef6f84` | `main` |

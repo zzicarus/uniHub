@@ -787,3 +787,36 @@ font: AppFlowy 编辑器使用 Inter 字体 + 主题色; image V2: ThoughtImageB
 ### Next Steps
 
 - None - task complete
+
+
+## Session 21: 收藏列表命令栏统一
+
+**Date**: 2026-05-27
+**Task**: 收藏列表命令栏统一
+**Branch**: `main`
+
+### Summary
+
+将收藏列表页的快速收藏栏(CollectionCaptureBar)、列表工具栏(CollectionListToolbar)和头部搜索框统合为 CollectionCommandBar，新增可复用的 CollectionFilterChip泛型组件、CollectionSearchCaptureField双模搜索/URL收藏输入框、CollectionSortMenu排序下拉菜单，并在 provider 层添加 collectionSortProvider 支持动态排序切换。
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `2707423` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
