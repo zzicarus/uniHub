@@ -135,6 +135,11 @@ final collectionMediaTypeFilterProvider = StateProvider<MediaType?>(
   (ref) => null,
 );
 
+/// 排序方式，默认最新收藏（创建时间倒序）。
+final collectionSortProvider = StateProvider<SavedItemsSort>(
+  (ref) => SavedItemsSort.createdDesc,
+);
+
 final selectedCollectionBoxIdsProvider = StateProvider<Set<int>>(
   (ref) => const <int>{},
 );
@@ -180,7 +185,7 @@ final savedItemsPageProvider =
     mediaType: ref.watch(collectionMediaTypeFilterProvider),
     selectedBoxIds: ref.watch(selectedCollectionBoxIdsProvider),
     searchQuery: searchQuery,
-    sort: SavedItemsSort.updatedDesc,
+    sort: ref.watch(collectionSortProvider),
     limit: 50,
     offset: 0,
   );

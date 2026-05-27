@@ -40,8 +40,7 @@ void main() {
     expect(find.text('内容收藏'), findsOneWidget);
     expect(find.text('收藏夹'), findsOneWidget);
     expect(find.text('全部收藏'), findsOneWidget);
-    expect(find.text('快速收藏'), findsOneWidget);
-    expect(find.text('搜索收藏内容（标题 / 来源 / 标签 / URL）'), findsOneWidget);
+    expect(find.text('排序：最新收藏'), findsOneWidget);
     expect(find.text('还没有收藏'), findsOneWidget);
   });
 }

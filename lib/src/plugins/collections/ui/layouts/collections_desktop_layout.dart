@@ -5,9 +5,8 @@ import 'package:uni_hub/src/plugins/collections/application/saved_item_list_entr
 import 'package:uni_hub/src/plugins/collections/providers/collections_providers.dart';
 import 'package:uni_hub/src/shared/widgets/responsive_page_header.dart';
 
-import '../widgets/collection_capture_bar.dart';
+import '../widgets/collection_command_bar.dart';
 import '../widgets/collection_folder_sidebar.dart';
-import '../widgets/collection_list_toolbar.dart';
 import '../widgets/saved_item_card.dart';
 import '../widgets/saved_item_detail_panel.dart';
 
@@ -81,7 +80,7 @@ class _CollectionsDesktopLayoutState
                 return ResponsivePageHeader(
                   title: '内容收藏',
                   subtitle: '收集网页、视频、公众号、文章与其他值得保存的内容。',
-                  search: const _HeaderSearchField(),
+                  search: null,
                   actions: [
                     if (isNarrow)
                       IconButton(
@@ -113,9 +112,7 @@ class _CollectionsDesktopLayoutState
                 );
               },
             ),
-            const SizedBox(height: AppSpacing.sm),
-            const CollectionCaptureBar(),
-            const SizedBox(height: AppSpacing.sm),
+            const CollectionCommandBar(),
             Expanded(
               child: LayoutBuilder(
                 builder: (context, constraints) {
@@ -136,8 +133,6 @@ class _CollectionsDesktopLayoutState
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const CollectionListToolbar(),
-                            const SizedBox(height: AppSpacing.sm),
                             Expanded(
                               child: entriesAsync.when(
                                 data: (entries) {
@@ -199,65 +194,6 @@ class _CollectionsDesktopLayoutState
   void _showImportSoon(BuildContext context) {
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('导入功能稍后接入')),
-    );
-  }
-}
-
-class _HeaderSearchField extends ConsumerWidget {
-  const _HeaderSearchField();
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final query = ref.watch(collectionSearchQueryProvider);
-    final colorScheme = Theme.of(context).colorScheme;
-
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: colorScheme.surface,
-        borderRadius: BorderRadius.circular(AppRadius.md),
-        border: Border.all(color: colorScheme.outlineVariant),
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: TextFormField(
-              key: ValueKey('collection-header-search-$query'),
-              initialValue: query,
-              decoration: const InputDecoration(
-                prefixIcon: Icon(Icons.search_rounded),
-                hintText: '搜索收藏内容（标题 / 来源 / 标签 / URL）',
-                border: InputBorder.none,
-                isDense: true,
-              ),
-              onChanged: (value) {
-                ref.read(collectionSearchQueryProvider.notifier).state = value;
-              },
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.only(right: AppSpacing.sm),
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                color: colorScheme.surfaceContainerLow,
-                borderRadius: BorderRadius.circular(AppRadius.xs),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: AppSpacing.xs,
-                  vertical: AppSpacing.xxs,
-                ),
-                child: Text(
-                  'Ctrl K',
-                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                    color: colorScheme.onSurfaceVariant,
-                    fontWeight: AppFontTokens.bold,
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
     );
   }
 }
