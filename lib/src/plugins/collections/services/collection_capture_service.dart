@@ -26,8 +26,19 @@ class CollectionCaptureService {
     final existing = await _repository.findByNormalizedUrl(normalizedUrl);
     if (existing != null) {
       CollectionDebugLogger.log(
-        'captureUrl already exists id=${existing.id}',
+        'captureUrl already exists id=${existing.id} boxId=$boxId',
       );
+      if (boxId != null) {
+        final currentIds = await _repository.getBoxIdsForItem(existing.id);
+        await _repository.setItemBoxes(
+          existing.id,
+          {...currentIds, boxId},
+        );
+        await _repository.updateInboxState(existing.id, false);
+        CollectionDebugLogger.log(
+          'captureUrl added existing item to boxId=$boxId',
+        );
+      }
       return CaptureResult(itemId: existing.id, wasCreated: false);
     }
 

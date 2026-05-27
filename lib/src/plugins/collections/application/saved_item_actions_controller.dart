@@ -141,26 +141,16 @@ class SavedItemActionsController {
 
   /// Assign a set of box IDs to an item, replacing any existing assignments.
   ///
-  /// Automatically flips [isInInbox] when necessary:
-  /// - assigning the first box → sets inbox to false
-  /// - removing all boxes → sets inbox to true
+  /// Flips [isInInbox] based solely on whether [boxIds] is non-empty,
+  /// regardless of prior state — this ensures inbox stays consistent
+  /// with box assignments even if the DB was previously out of sync.
   Future<SavedItemActionResult> assignBoxes(
     int itemId,
     Set<int> boxIds,
   ) async {
     try {
-      final currentBoxIds = await _repository.getBoxIdsForItem(itemId);
-      final currentSet = currentBoxIds.toSet();
-
       await _repository.setItemBoxes(itemId, boxIds);
-
-      if (currentSet.isEmpty && boxIds.isNotEmpty) {
-        // First assignment → move out of inbox
-        await _repository.updateInboxState(itemId, false);
-      } else if (boxIds.isEmpty && currentSet.isNotEmpty) {
-        // All removed → back to inbox
-        await _repository.updateInboxState(itemId, true);
-      }
+      await _repository.updateInboxState(itemId, boxIds.isEmpty);
 
       // Defer invalidation to next frame for safe UI rebuild
       if (_ref != null) {
