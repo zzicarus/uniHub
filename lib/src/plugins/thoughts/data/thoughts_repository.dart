@@ -11,6 +11,17 @@ class ThoughtsRepository {
     return _dao.getAll(archived: archived);
   }
 
+  /// 活跃想法数量（数据库侧 COUNT）。
+  Future<int> countActive() => _dao.countActive();
+
+  /// 最近 N 条未归档想法（数据库侧 LIMIT）。
+  Future<List<ThoughtsTableData>> getRecent({required int limit}) =>
+      _dao.getRecent(limit: limit);
+
+  /// 最近 N 条置顶想法（数据库侧 LIMIT）。
+  Future<List<ThoughtsTableData>> getPinned({required int limit}) =>
+      _dao.getPinned(limit: limit);
+
   Future<ThoughtsTableData?> getThought(int id) {
     return _dao.getById(id);
   }

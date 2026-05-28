@@ -75,16 +75,15 @@ class ThoughtsPlugin extends UniHubPlugin {
   List<Type> get tables => [ThoughtsTable];
 
   @override
-  int get schemaVersion => 2;
+  int get schemaVersion => 6;
 
   // ─── Dashboard methods ───────────────────────────────────────────
 
   @override
   Future<List<DashboardItem>> getRecentItems(Ref ref, {int count = 4}) async {
     final repo = ref.read(thoughtsRepositoryProvider);
-    final thoughts = await repo.getThoughts(archived: false);
-    thoughts.sort((a, b) => b.createdAt.compareTo(a.createdAt));
-    final recent = thoughts.take(count).toList();
+    // #11: 使用 DAO 层 LIMIT 查询，避免全量读取后内存过滤
+    final recent = await repo.getRecent(limit: count);
     return recent
         .map(
           (t) => DashboardItem(
@@ -104,8 +103,8 @@ class ThoughtsPlugin extends UniHubPlugin {
   @override
   Future<List<DashboardItem>> getPinnedItems(Ref ref, {int count = 3}) async {
     final repo = ref.read(thoughtsRepositoryProvider);
-    final thoughts = await repo.getThoughts(archived: false);
-    final pinned = thoughts.where((t) => t.isPinned).take(count).toList();
+    // #11: 使用 DAO 层 LIMIT 查询，避免全量读取后内存过滤
+    final pinned = await repo.getPinned(limit: count);
     return pinned
         .map(
           (t) => DashboardItem(
@@ -125,8 +124,23 @@ class ThoughtsPlugin extends UniHubPlugin {
   @override
   Future<PluginStat?> getStat(Ref ref) async {
     final repo = ref.read(thoughtsRepositoryProvider);
-    final thoughts = await repo.getThoughts(archived: false);
-    return PluginStat(pluginId: id, label: '想法', count: thoughts.length);
+    // #11: 使用 DAO 层 COUNT 查询，避免全量读取
+    final count = await repo.countActive();
+    return PluginStat(pluginId: id, label: '想法', count: count);
+  }
+
+  @override
+  bool canHandleQuickCreate(String content) {
+    // #7: Thoughts 处理非 URL 的普通文本
+    final trimmed = content.trim();
+    if (trimmed.isEmpty) return false;
+    return !_looksLikeUrl(trimmed);
+  }
+
+  static bool _looksLikeUrl(String text) {
+    if (text.startsWith('http://') || text.startsWith('https://')) return true;
+    if (text.contains(' ') || !text.contains('.')) return false;
+    return RegExp(r'^[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}').hasMatch(text);
   }
 
   @override

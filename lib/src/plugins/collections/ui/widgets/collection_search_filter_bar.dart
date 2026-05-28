@@ -9,11 +9,40 @@ import 'package:uni_hub/src/plugins/collections/providers/collections_providers.
 /// dropdowns, a sort label, and a "clear all filters" button.
 ///
 /// Resets all filtering providers on clear (except [collectionViewProvider]).
-class CollectionSearchFilterBar extends ConsumerWidget {
+class CollectionSearchFilterBar extends ConsumerStatefulWidget {
   const CollectionSearchFilterBar({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<CollectionSearchFilterBar> createState() =>
+      _CollectionSearchFilterBarState();
+}
+
+class _CollectionSearchFilterBarState
+    extends ConsumerState<CollectionSearchFilterBar> {
+  late final TextEditingController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = TextEditingController(
+      text: ref.read(collectionSearchQueryProvider),
+    );
+    // #8: 同步 provider 变化回 controller，确保"清空筛选"后输入框也清空
+    ref.listenManual<String>(collectionSearchQueryProvider, (prev, next) {
+      if (next != _controller.text) {
+        _controller.text = next;
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final platform = ref.watch(collectionPlatformFilterProvider);
     final mediaType = ref.watch(collectionMediaTypeFilterProvider);
     final colorScheme = Theme.of(context).colorScheme;
@@ -25,6 +54,7 @@ class CollectionSearchFilterBar extends ConsumerWidget {
           SizedBox(
             width: 220,
             child: TextField(
+              controller: _controller,
               decoration: InputDecoration(
                 hintText: '搜索标题、描述或 URL',
                 prefixIcon: const Icon(Icons.search_rounded),

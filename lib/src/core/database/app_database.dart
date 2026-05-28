@@ -46,6 +46,13 @@ class AppDatabase extends _$AppDatabase {
     );
   }
 
+  /// 全局数据库版本 = 所有插件的 [UniHubPlugin.schemaVersion] 最大值。
+  ///
+  /// 设计决策（已知风险）：迁移脚本全局写在 [AppDatabase.onUpgrade] 中，
+  /// 而版本号由插件最大值决定。未来某个插件升级版本会推动全局迁移，
+  /// 但各插件的迁移逻辑未隔离。当前方案适用于单一迁移序列，
+  /// 长期建议将迁移脚本与插件绑定（插件隔离 schema），
+  /// 全局版本仅做协调。
   @override
   int get schemaVersion {
     final versions = _registry.plugins.map((p) => p.schemaVersion);
@@ -70,6 +77,17 @@ class AppDatabase extends _$AppDatabase {
       }
       if (from < 4) {
         await m.createTable(websiteLogoCacheTable);
+      }
+      if (from < 6) {
+        // #12: thoughts_table 查询索引（archived_at 过滤 + pinned 排序）
+        await customStatement(
+          'CREATE INDEX IF NOT EXISTS idx_thoughts_archive_pinned_created '
+          'ON thoughts_table(archived_at, is_pinned, created_at DESC)',
+        );
+        await customStatement(
+          'CREATE INDEX IF NOT EXISTS idx_thoughts_updated '
+          'ON thoughts_table(updated_at DESC)',
+        );
       }
       if (from < 5) {
         await customStatement(

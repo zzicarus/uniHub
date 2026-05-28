@@ -2,6 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uni_hub/src/core/theme/app_tokens.dart';
 import 'package:uni_hub/src/plugins/collections/application/saved_item_list_entry.dart';
+import 'package:uni_hub/src/plugins/collections/domain/collection_models.dart';
+import 'package:uni_hub/src/plugins/collections/domain/consumption_status.dart';
+import 'package:uni_hub/src/plugins/collections/domain/media_type.dart';
+import 'package:uni_hub/src/plugins/collections/domain/saved_items_query.dart';
+import 'package:uni_hub/src/plugins/collections/domain/source_platform.dart';
 import 'package:uni_hub/src/plugins/collections/providers/collections_providers.dart';
 import 'package:uni_hub/src/shared/widgets/responsive_page_header.dart';
 
@@ -20,13 +25,71 @@ class CollectionsDesktopLayout extends ConsumerStatefulWidget {
 
 class _CollectionsDesktopLayoutState
     extends ConsumerState<CollectionsDesktopLayout> {
+  final List<SavedItemListEntry> _accumulatedEntries = [];
+
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _autoSelectFirstItem();
       _drainPendingEnrichment();
     });
+    // #3: 持续监听列表数据就绪，自动选中第一条（替代 post-frame 一次性读取）
+    ref.listenManual<AsyncValue<List<SavedItemListEntry>>>(
+      savedItemListEntriesProvider,
+      (prev, next) {
+        final selected = ref.read(selectedSavedItemIdProvider);
+        if (selected != null) return;
+        final entries = next.valueOrNull;
+        if (entries != null && entries.isNotEmpty && mounted) {
+          ref.read(selectedSavedItemIdProvider.notifier).state =
+              entries.first.item.id;
+        }
+        // #4: 累积分页条目
+        final offset = ref.read(collectionPageOffsetProvider);
+        final newEntries = next.valueOrNull ?? const [];
+        if (offset == 0) {
+          _accumulatedEntries
+            ..clear()
+            ..addAll(newEntries);
+        } else {
+          final existingIds = _accumulatedEntries.map((e) => e.item.id).toSet();
+          for (final e in newEntries) {
+            if (!existingIds.contains(e.item.id)) {
+              _accumulatedEntries.add(e);
+            }
+          }
+        }
+      },
+    );
+    // #4: 筛选条件变化时重置分页
+    ref.listenManual<CollectionView>(
+      collectionViewProvider,
+      (_, _) => _resetPagination(),
+    );
+    ref.listenManual<ConsumptionStatus?>(
+      collectionStatusFilterProvider,
+      (_, _) => _resetPagination(),
+    );
+    ref.listenManual<SourcePlatform?>(
+      collectionPlatformFilterProvider,
+      (_, _) => _resetPagination(),
+    );
+    ref.listenManual<MediaType?>(
+      collectionMediaTypeFilterProvider,
+      (_, _) => _resetPagination(),
+    );
+    ref.listenManual<Set<int>>(
+      selectedCollectionBoxIdsProvider,
+      (_, _) => _resetPagination(),
+    );
+    ref.listenManual<SavedItemsSort>(
+      collectionSortProvider,
+      (_, _) => _resetPagination(),
+    );
+  }
+
+  void _resetPagination() {
+    ref.read(collectionPageOffsetProvider.notifier).state = 0;
   }
 
   void _drainPendingEnrichment() {
@@ -38,33 +101,10 @@ class _CollectionsDesktopLayoutState
     );
   }
 
-  void _autoSelectFirstItem() {
-    final itemsAsync = ref.read(savedItemsListProvider);
-    final currentSelectedId = ref.read(selectedSavedItemIdProvider);
-
-    if (currentSelectedId != null) return;
-
-    itemsAsync.whenData((items) {
-      if (items.isNotEmpty && mounted) {
-        ref.read(selectedSavedItemIdProvider.notifier).state = items.first.id;
-      }
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
     final entriesAsync = ref.watch(savedItemListEntriesProvider);
-    final selectedId = ref.watch(selectedSavedItemIdProvider);
-
-    // Compute display item from entries synchronously
-    final entries = entriesAsync.asData?.value ?? <SavedItemListEntry>[];
-    SavedItemListEntry? displayEntry;
-    if (selectedId != null) {
-      displayEntry =
-          entries.where((e) => e.item.id == selectedId).firstOrNull;
-    }
-    displayEntry ??= entries.isNotEmpty ? entries.first : null;
-    final displayItem = displayEntry?.item;
+    final hasMore = ref.watch(collectionHasMoreProvider);
 
     return SafeArea(
       child: Padding(
@@ -135,24 +175,44 @@ class _CollectionsDesktopLayoutState
                           children: [
                             Expanded(
                               child: entriesAsync.when(
-                                data: (entries) {
-                                  if (entries.isEmpty) {
+                                data: (_) {
+                                  if (_accumulatedEntries.isEmpty) {
                                     return const _EmptyState();
                                   }
                                   return ListView.separated(
-                                    itemCount: entries.length,
+                                    itemCount: _accumulatedEntries.length +
+                                        (hasMore ? 1 : 0),
                                     separatorBuilder: (context, index) =>
                                         const SizedBox(height: AppSpacing.sm),
                                     itemBuilder: (context, index) {
-                                      final rawEntry = entries[index];
-                                      final entry = rawEntry.copyWith(
-                                        selected: rawEntry.item.id == selectedId,
-                                      );
+                                      // #4: 加载更多按钮（列表末尾）
+                                      if (hasMore &&
+                                          index ==
+                                              _accumulatedEntries.length) {
+                                        return Center(
+                                          child: TextButton.icon(
+                                            onPressed: () {
+                                              ref
+                                                  .read(
+                                                    collectionPageOffsetProvider
+                                                        .notifier,
+                                                  )
+                                                  .update((o) => o + 50);
+                                            },
+                                            icon: const Icon(
+                                              Icons.expand_more_rounded,
+                                              size: 18,
+                                            ),
+                                            label: const Text('加载更多'),
+                                          ),
+                                        );
+                                      }
+                                      final entry =
+                                          _accumulatedEntries[index];
                                       return SavedItemCard(
                                         key: ValueKey(entry.item.id),
                                         entry: entry,
                                         onTap: () {
-                                          if (selectedId == entry.item.id) return;
                                           ref
                                               .read(
                                                 selectedSavedItemIdProvider
@@ -164,14 +224,68 @@ class _CollectionsDesktopLayoutState
                                     },
                                   );
                                 },
-                                loading: () => const Center(
-                                  child: CircularProgressIndicator(),
-                                ),
-                                error: (error, stackTrace) => _ErrorState(
-                                  error: error,
-                                  onRetry: () =>
-                                      ref.invalidate(savedItemsPageProvider),
-                                ),
+                                loading: () {
+                                  if (_accumulatedEntries.isNotEmpty) {
+                                    return ListView.separated(
+                                      itemCount: _accumulatedEntries.length,
+                                      separatorBuilder: (context, index) =>
+                                          const SizedBox(
+                                        height: AppSpacing.sm,
+                                      ),
+                                      itemBuilder: (context, index) {
+                                        final entry =
+                                            _accumulatedEntries[index];
+                                        return SavedItemCard(
+                                          key: ValueKey(entry.item.id),
+                                          entry: entry,
+                                          onTap: () {
+                                            ref
+                                                .read(
+                                                  selectedSavedItemIdProvider
+                                                      .notifier,
+                                                )
+                                                .state = entry.item.id;
+                                          },
+                                        );
+                                      },
+                                    );
+                                  }
+                                  return const Center(
+                                    child: CircularProgressIndicator(),
+                                  );
+                                },
+                                error: (error, stackTrace) {
+                                  if (_accumulatedEntries.isNotEmpty) {
+                                    return ListView.separated(
+                                      itemCount: _accumulatedEntries.length,
+                                      separatorBuilder: (context, index) =>
+                                          const SizedBox(
+                                        height: AppSpacing.sm,
+                                      ),
+                                      itemBuilder: (context, index) {
+                                        final entry =
+                                            _accumulatedEntries[index];
+                                        return SavedItemCard(
+                                          key: ValueKey(entry.item.id),
+                                          entry: entry,
+                                          onTap: () {
+                                            ref
+                                                .read(
+                                                  selectedSavedItemIdProvider
+                                                      .notifier,
+                                                )
+                                                .state = entry.item.id;
+                                          },
+                                        );
+                                      },
+                                    );
+                                  }
+                                  return _ErrorState(
+                                    error: error,
+                                    onRetry: () =>
+                                        ref.invalidate(savedItemsPageProvider),
+                                  );
+                                },
                               ),
                             ),
                           ],
@@ -181,7 +295,7 @@ class _CollectionsDesktopLayoutState
                         const SizedBox(width: AppSpacing.md),
                         SizedBox(
                           width: detailWidth,
-                          child: SavedItemDetailPanel(item: displayItem),
+                          child: const _DetailPanel(),
                         ),
                       ],
                     ],
@@ -199,6 +313,28 @@ class _CollectionsDesktopLayoutState
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('导入功能稍后接入')),
     );
+  }
+}
+
+/// 详情面板容器：内部 watch [selectedSavedItemEntryProvider]，
+/// 选中变化时只有本 widget 重建，布局父级不受影响。
+class _DetailPanel extends ConsumerWidget {
+  const _DetailPanel();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final entry = ref.watch(selectedSavedItemEntryProvider);
+    if (entry == null) {
+      return Center(
+        child: Text(
+          '选择一条收藏查看详情',
+          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+          ),
+        ),
+      );
+    }
+    return SavedItemDetailPanel(item: entry.item);
   }
 }
 

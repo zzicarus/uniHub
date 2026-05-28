@@ -281,9 +281,9 @@ class WebsiteLogoCacheService {
       return false;
     }
 
-    // During development with debug logging enabled, always retry failed
+    // During development (debug mode), always retry failed
     // entries instead of waiting for the cooldown to expire.
-    if (CollectionDebugLogger.enabled) {
+    if (kDebugMode) {
       return false;
     }
 
@@ -294,7 +294,7 @@ class WebsiteLogoCacheService {
   /// can quickly re-test. In production, cool down for 24 hours to avoid
   /// hammering sites that don't serve favicons.
   Duration get _failedTtl =>
-      CollectionDebugLogger.enabled
+      kDebugMode
           ? const Duration(minutes: 10)
           : const Duration(hours: 24);
 

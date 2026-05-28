@@ -33,7 +33,10 @@ class SavedItemCard extends ConsumerWidget {
     final mediaType = MediaType.fromValue(item.mediaType);
     final status = ConsumptionStatus.fromValue(item.status);
     final enrichmentStatus = EnrichmentStatus.fromValue(item.enrichmentStatus);
-    final selected = entry.selected;
+    // #1: 卡片内部判断选中态，避免父布局 watch selectedSavedItemIdProvider 导致整页重建
+    final selected = ref.watch(
+      selectedSavedItemIdProvider.select((id) => id == entry.item.id),
+    );
     final localLogoPath = entry.logo?.localLogoPath;
 
     final borderRadius = BorderRadius.circular(AppRadius.md);

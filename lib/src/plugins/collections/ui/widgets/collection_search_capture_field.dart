@@ -56,7 +56,9 @@ class _CollectionSearchCaptureFieldState
 
   void _onChanged(String value) {
     final trimmed = value.trim();
-    final isUrl = _detectUrl(trimmed);
+    // #9: 使用 UrlNormalizer.tryNormalize 替代本地 _detectUrl，
+    // 确保 UI 层 URL 判断与实际收藏能力一致。
+    final isUrl = ref.read(urlNormalizerProvider).tryNormalize(trimmed) != null;
 
     setState(() {
       _isUrl = isUrl;
@@ -77,25 +79,12 @@ class _CollectionSearchCaptureFieldState
     });
   }
 
-  bool _detectUrl(String text) {
-    if (text.isEmpty) return false;
-
-    if (text.startsWith('http://') || text.startsWith('https://')) {
-      return true;
-    }
-
-    if (text.contains(' ') || !text.contains('.')) {
-      return false;
-    }
-
-    return RegExp(r'^[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}').hasMatch(text);
-  }
-
   Future<void> _onSubmitted() async {
     final text = _controller.text.trim();
     if (text.isEmpty) return;
 
-    if (_detectUrl(text)) {
+    final isUrl = ref.read(urlNormalizerProvider).tryNormalize(text) != null;
+    if (isUrl) {
       await _captureUrl(text);
     } else {
       ref.read(collectionSearchQueryProvider.notifier).state = text;

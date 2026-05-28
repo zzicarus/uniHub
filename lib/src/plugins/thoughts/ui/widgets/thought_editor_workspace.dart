@@ -321,10 +321,25 @@ class _MainEditorColumnState extends State<_MainEditorColumn> {
   }
 
   void _onTitleChanged(String value) {
-    // Sync the title to the AppFlowy document's first paragraph via the
+    // #10: Sync the title to the AppFlowy document's first paragraph via the
     // editor controller. The editor's onChanged will fire back and
     // update ctrl.documentJson / ctrl.plainText atomically.
-    widget.ctrl.editorController?.updateFirstParagraphText(value);
+    // Wrapped in unawaited + catchError to prevent unhandled async errors
+    // when the editor is not yet bound or has no first paragraph.
+    unawaited(
+      widget.ctrl.editorController
+          ?.updateFirstParagraphText(value)
+          .catchError((Object error, StackTrace stackTrace) {
+        FlutterError.reportError(
+          FlutterErrorDetails(
+            exception: error,
+            stack: stackTrace,
+            library: 'thought_editor_workspace',
+            context: ErrorDescription('while updating first paragraph title'),
+          ),
+        );
+      }) ?? Future<void>.value(),
+    );
   }
 
   @override

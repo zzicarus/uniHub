@@ -85,6 +85,12 @@ abstract class UniHubPlugin {
   /// Return stats (count) for the dashboard.
   Future<PluginStat?> getStat(Ref ref) async => null;
 
+  /// 判断本插件是否可处理该快速创建内容。
+  ///
+  /// 用于 [PluginRegistry.quickCreate] 分流：先过滤出可处理的插件，
+  /// 再按注册顺序调用 [quickCreate]。默认返回 false。
+  bool canHandleQuickCreate(String content) => false;
+
   /// Quick-create an item from the dashboard. Returns the created item.
   Future<DashboardItem?> quickCreate(
     Ref ref, {

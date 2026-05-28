@@ -64,4 +64,29 @@ class ThoughtsDao {
       ),
     );
   }
+
+  /// 活跃（未归档）想法数量。
+  Future<int> countActive() {
+    final query = _db.selectOnly(_db.thoughtsTable)..addColumns([_db.thoughtsTable.id]);
+    query.where(_db.thoughtsTable.archivedAt.isNull());
+    return query.map((row) => row.read(_db.thoughtsTable.id)).get().then((list) => list.length);
+  }
+
+  /// 最近 N 条未归档想法。
+  Future<List<ThoughtsTableData>> getRecent({required int limit}) {
+    final query = _db.select(_db.thoughtsTable)
+      ..where((t) => t.archivedAt.isNull())
+      ..orderBy([(t) => OrderingTerm.desc(t.createdAt)])
+      ..limit(limit);
+    return query.get();
+  }
+
+  /// 最近 N 条置顶的未归档想法。
+  Future<List<ThoughtsTableData>> getPinned({required int limit}) {
+    final query = _db.select(_db.thoughtsTable)
+      ..where((t) => t.archivedAt.isNull() & t.isPinned.equals(true))
+      ..orderBy([(t) => OrderingTerm.desc(t.createdAt)])
+      ..limit(limit);
+    return query.get();
+  }
 }

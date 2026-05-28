@@ -1093,9 +1093,12 @@ class _TagsSection extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    final boxesAsync = ref.watch(collectionBoxesProvider);
     final mediaType = MediaType.fromValue(item.mediaType);
     final platform = SourcePlatform.fromValue(item.sourcePlatform);
+    // #2: 直接从 selectedSavedItemEntryProvider 获取预聚合的 boxes，
+    // 不再通过 FutureBuilder 额外查询数据库。
+    final entry = ref.watch(selectedSavedItemEntryProvider);
+    final boxes = entry?.boxes ?? const <CollectionBoxesTableData>[];
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(
@@ -1118,70 +1121,56 @@ class _TagsSection extends ConsumerWidget {
             ),
           ),
           Expanded(
-            child: FutureBuilder<List<int>>(
-              future: ref
-                  .read(collectionsRepositoryProvider)
-                  .getBoxIdsForItem(item.id),
-              builder: (context, snapshot) {
-                final boxIds = snapshot.data?.toSet() ?? const <int>{};
-                return boxesAsync.when(
-                  data: (boxes) {
-                    final rawLabels = <String>[
-                      for (final box in boxes)
-                        if (boxIds.contains(box.id)) box.name,
-                      mediaType.label,
-                      platform.label,
-                    ];
+            child: Builder(
+              builder: (context) {
+                final rawLabels = <String>[
+                  for (final box in boxes) box.name,
+                  mediaType.label,
+                  platform.label,
+                ];
 
-                    final labels = <String>[];
-                    for (final label in rawLabels) {
-                      final normalized = label.trim();
-                      if (normalized.isEmpty) continue;
-                      if (normalized == '未知') continue;
-                      if (labels.contains(normalized)) continue;
-                      labels.add(normalized);
-                    }
+                final labels = <String>[];
+                for (final label in rawLabels) {
+                  final normalized = label.trim();
+                  if (normalized.isEmpty) continue;
+                  if (normalized == '未知') continue;
+                  if (labels.contains(normalized)) continue;
+                  labels.add(normalized);
+                }
 
-                    return LayoutBuilder(
-                      builder: (context, constraints) {
-                        final maxVisibleLabels = constraints.maxWidth < 260
-                            ? 3
-                            : 4;
-                        final visibleLabels = labels
-                            .take(maxVisibleLabels)
-                            .toList();
+                return LayoutBuilder(
+                  builder: (context, constraints) {
+                    final maxVisibleLabels = constraints.maxWidth < 260
+                        ? 3
+                        : 4;
+                    final visibleLabels = labels
+                        .take(maxVisibleLabels)
+                        .toList();
 
-                        return Wrap(
-                          spacing: AppSpacing.xs,
-                          runSpacing: AppSpacing.xs,
-                          children: [
-                            for (final label in visibleLabels)
-                              AppPillChip(
-                                label: label,
-                                selected: false,
-                                compact: true,
-                              ),
-                            AppPillChip(
-                              label: '+ 添加标签',
-                              selected: false,
-                              compact: true,
-                              icon: Icons.add_rounded,
-                              onTap: () {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(content: Text('标签功能稍后接入')),
-                                );
-                              },
-                            ),
-                          ],
-                        );
-                      },
+                    return Wrap(
+                      spacing: AppSpacing.xs,
+                      runSpacing: AppSpacing.xs,
+                      children: [
+                        for (final label in visibleLabels)
+                          AppPillChip(
+                            label: label,
+                            selected: false,
+                            compact: true,
+                          ),
+                        AppPillChip(
+                          label: '+ 添加标签',
+                          selected: false,
+                          compact: true,
+                          icon: Icons.add_rounded,
+                          onTap: () {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('标签功能稍后接入')),
+                            );
+                          },
+                        ),
+                      ],
                     );
                   },
-                  loading: () => const LinearProgressIndicator(minHeight: 2),
-                  error: (error, stackTrace) => Text(
-                    '标签加载失败：$error',
-                    style: TextStyle(color: colorScheme.error),
-                  ),
                 );
               },
             ),
@@ -1206,6 +1195,11 @@ class _BoxSection extends ConsumerWidget {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final boxesAsync = ref.watch(collectionBoxesProvider);
+    // #2: 直接从 selectedSavedItemEntryProvider 获取预聚合的 boxes，
+    // 不再通过 FutureBuilder 额外查询数据库。
+    final entry = ref.watch(selectedSavedItemEntryProvider);
+    final currentBoxIds =
+        entry?.boxes.map((b) => b.id).toSet() ?? const <int>{};
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(
@@ -1228,106 +1222,87 @@ class _BoxSection extends ConsumerWidget {
             ),
           ),
           Expanded(
-            child: FutureBuilder<List<int>>(
-              future: ref
-                  .read(collectionsRepositoryProvider)
-                  .getBoxIdsForItem(item.id),
-              builder: (context, snapshot) {
-                if (!snapshot.hasData) {
-                  return Text(
-                    '加载中...',
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: colorScheme.onSurfaceVariant,
-                    ),
+            child: boxesAsync.when(
+              data: (boxes) {
+                if (boxes.isEmpty) {
+                  return Row(
+                    children: [
+                      Text(
+                        '暂无收藏夹',
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                      const SizedBox(width: AppSpacing.sm),
+                      TextButton.icon(
+                        onPressed: () => _createBox(context, ref),
+                        icon: const Icon(Icons.add_rounded, size: 14),
+                        label: const Text('新建收藏夹'),
+                        style: TextButton.styleFrom(
+                          visualDensity: VisualDensity.compact,
+                          foregroundColor: colorScheme.primary,
+                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: AppSpacing.sm,
+                          ),
+                        ),
+                      ),
+                    ],
                   );
                 }
 
-                final currentBoxIds = snapshot.data!;
-                final currentSet = currentBoxIds.toSet();
+                return LayoutBuilder(
+                  builder: (context, constraints) {
+                    final selectedBoxes = boxes
+                        .where((box) => currentBoxIds.contains(box.id))
+                        .toList();
+                    final maxVisibleItems = constraints.maxWidth < 260
+                        ? 3
+                        : 4;
+                    final visibleBoxes = selectedBoxes
+                        .take(maxVisibleItems)
+                        .toList();
 
-                return boxesAsync.when(
-                  data: (boxes) {
-                    if (boxes.isEmpty) {
-                      return Row(
-                        children: [
-                          Text(
-                            '暂无收藏夹',
-                            style: theme.textTheme.bodySmall?.copyWith(
-                              color: colorScheme.onSurfaceVariant,
-                            ),
-                          ),
-                          const SizedBox(width: AppSpacing.sm),
-                          TextButton.icon(
-                            onPressed: () => _createBox(context, ref),
-                            icon: const Icon(Icons.add_rounded, size: 14),
-                            label: const Text('新建收藏夹'),
-                            style: TextButton.styleFrom(
-                              visualDensity: VisualDensity.compact,
-                              foregroundColor: colorScheme.primary,
-                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: AppSpacing.sm,
-                              ),
-                            ),
-                          ),
-                        ],
-                      );
-                    }
-
-                    return LayoutBuilder(
-                      builder: (context, constraints) {
-                        final selectedBoxes = boxes
-                            .where((box) => currentSet.contains(box.id))
-                            .toList();
-                        final maxVisibleItems = constraints.maxWidth < 260
-                            ? 3
-                            : 4;
-                        final visibleBoxes = selectedBoxes
-                            .take(maxVisibleItems)
-                            .toList();
-
-                        return Wrap(
-                          spacing: AppSpacing.xs,
-                          runSpacing: AppSpacing.xs,
-                          children: [
-                            if (visibleBoxes.isEmpty)
-                              AppPillChip(
-                                label: '待整理',
-                                selected: true,
-                                compact: true,
-                              )
-                            else
-                              for (final box in visibleBoxes)
-                                AppPillChip(
-                                  label: box.name,
-                                  selected: true,
-                                  compact: true,
-                                  onTap: () {
-                                    final controller = ref.read(
-                                      savedItemActionsControllerProvider,
-                                    );
-                                    controller.removeFromBox(item.id, box.id);
-                                  },
-                                ),
+                    return Wrap(
+                      spacing: AppSpacing.xs,
+                      runSpacing: AppSpacing.xs,
+                      children: [
+                        if (visibleBoxes.isEmpty)
+                          AppPillChip(
+                            label: '待整理',
+                            selected: true,
+                            compact: true,
+                          )
+                        else
+                          for (final box in visibleBoxes)
                             AppPillChip(
-                              label: '+ 新建',
-                              selected: false,
+                              label: box.name,
+                              selected: true,
                               compact: true,
-                              icon: Icons.add_rounded,
-                              onTap: () => _createBox(context, ref),
+                              onTap: () {
+                                final controller = ref.read(
+                                  savedItemActionsControllerProvider,
+                                );
+                                controller.removeFromBox(item.id, box.id);
+                              },
                             ),
-                          ],
-                        );
-                      },
+                        AppPillChip(
+                          label: '+ 新建',
+                          selected: false,
+                          compact: true,
+                          icon: Icons.add_rounded,
+                          onTap: () => _createBox(context, ref),
+                        ),
+                      ],
                     );
                   },
-                  loading: () => const LinearProgressIndicator(minHeight: 2),
-                  error: (e, _) => Text(
-                    '加载收藏夹失败：$e',
-                    style: TextStyle(color: colorScheme.error),
-                  ),
                 );
               },
+              loading: () => const LinearProgressIndicator(minHeight: 2),
+              error: (e, _) => Text(
+                '加载收藏夹失败：$e',
+                style: TextStyle(color: colorScheme.error),
+              ),
             ),
           ),
         ],

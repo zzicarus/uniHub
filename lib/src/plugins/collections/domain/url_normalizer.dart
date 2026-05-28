@@ -12,6 +12,17 @@ class UrlNormalizer {
     'share_source',
   };
 
+  /// 尝试归一化输入为 URL；若输入不是合法 URL，返回 null。
+  ///
+  /// 与 [normalize] 不同，此方法不抛异常，用于 UI 层判断是否为 URL 候选。
+  String? tryNormalize(String input) {
+    try {
+      return normalize(input);
+    } on Exception {
+      return null;
+    }
+  }
+
   String normalize(String input) {
     final trimmed = input.trim();
     if (trimmed.isEmpty) {

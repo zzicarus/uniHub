@@ -173,6 +173,9 @@ final collectionBoxesProvider = FutureProvider<List<CollectionBoxesTableData>>((
 ///
 /// 所有筛选条件在数据库侧完成。每次筛选变化时重新加载第一页。
 /// 搜索关键词使用防抖后的值。
+/// 分页偏移由 [collectionPageOffsetProvider] 控制。
+///
+/// TODO: 改为真正的 infinite scroll / 累积分页，当前仍为每页独立加载。
 final savedItemsPageProvider =
     FutureProvider<SavedItemsPage>((ref) async {
   final repository = ref.watch(collectionsRepositoryProvider);
@@ -187,7 +190,7 @@ final savedItemsPageProvider =
     searchQuery: searchQuery,
     sort: ref.watch(collectionSortProvider),
     limit: 50,
-    offset: 0,
+    offset: ref.watch(collectionPageOffsetProvider),
   );
 
   return repository.queryItems(query);
@@ -200,6 +203,19 @@ final savedItemsListProvider = FutureProvider<List<SavedItemsTableData>>((ref) a
 });
 
 final selectedSavedItemIdProvider = StateProvider<int?>((ref) => null);
+
+// ---------------------------------------------------------------------------
+// Pagination
+// ---------------------------------------------------------------------------
+
+/// 分页偏移量，每次"加载更多"递增。筛选条件变化时自动重置为 0。
+final collectionPageOffsetProvider = StateProvider<int>((ref) => 0);
+
+/// 是否还有更多数据可加载。
+final collectionHasMoreProvider = Provider<bool>((ref) {
+  final pageAsync = ref.watch(savedItemsPageProvider);
+  return pageAsync.valueOrNull?.hasMore ?? false;
+});
 
 /// Global navigation counts for the sidebar.
 ///

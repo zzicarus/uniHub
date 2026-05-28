@@ -66,7 +66,9 @@ class PluginRegistry {
     required String content,
     String? tags,
   }) async {
+    // #7: 先按 canHandleQuickCreate 过滤，避免非 URL 内容被 Thoughts 优先拦截
     for (final p in _plugins) {
+      if (!p.canHandleQuickCreate(content)) continue;
       final item = await p.quickCreate(ref, content: content, tags: tags);
       if (item != null) return item;
     }

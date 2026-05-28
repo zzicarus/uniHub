@@ -33,6 +33,7 @@ class _MobileNavigationBar extends StatelessWidget {
     final moreSelected =
         location == '/calendar' ||
         location == '/favorites' ||
+        location == '/collections' ||
         location == '/settings';
     final searchSelected = location == '/search';
     final selectedIndex = switch (location) {
