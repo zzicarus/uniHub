@@ -30,18 +30,12 @@ class _MobileNavigationBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final moreSelected =
-        location == '/calendar' ||
-        location == '/favorites' ||
-        location == '/collections' ||
-        location == '/settings';
-    final searchSelected = location == '/search';
     final selectedIndex = switch (location) {
       '/' => 0,
       '/thoughts' => 1,
       '/todos' => 2,
       '/notes' => 3,
-      _ when searchSelected || moreSelected => 4,
+      '/collections' => 4,
       _ => 0,
     };
 
@@ -72,14 +66,10 @@ class _MobileNavigationBar extends StatelessWidget {
           selectedIcon: Icon(Icons.article_rounded),
           label: '笔记',
         ),
-        NavigationDestination(
-          icon: Icon(
-            searchSelected ? Icons.search_rounded : Icons.grid_view_rounded,
-          ),
-          selectedIcon: Icon(
-            searchSelected ? Icons.search_rounded : Icons.grid_view_rounded,
-          ),
-          label: searchSelected ? '搜索' : '更多',
+        const NavigationDestination(
+          icon: Icon(Icons.bookmark_border_rounded),
+          selectedIcon: Icon(Icons.bookmark_rounded),
+          label: '收藏库',
         ),
       ],
       onDestinationSelected: (index) {
@@ -93,9 +83,7 @@ class _MobileNavigationBar extends StatelessWidget {
           case 3:
             context.goNamed(RouteNames.notes);
           case 4:
-            context.goNamed(
-              searchSelected ? RouteNames.search : RouteNames.calendar,
-            );
+            context.goNamed(RouteNames.collections);
         }
       },
     );

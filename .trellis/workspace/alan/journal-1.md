@@ -920,3 +920,21 @@ font: AppFlowy 编辑器使用 Inter 字体 + 主题色; image V2: ThoughtImageB
 ### Next Steps
 
 - None - task complete
+
+---
+
+## 2026-05-28 — Collections: 修复中间列表空但详情有数据的割裂状态
+
+### 根因
+
+CollectionsDesktopLayout 的 `listenManual(savedItemListEntriesProvider, ...)` 中，`if (selected != null) return;` 放在累积逻辑之前，导致只要已有选中项，_accumulatedEntries 就永远不会被填充。此时列表渲染空状态，但详情面板通过 `selectedSavedItemEntryProvider` 仍能显示选中项，形成割裂。
+
+### 改动
+
+- `listenManual` 回调：先累积列表数据、再做自动选中，移除 `selected != null 提前 return`
+- 添加 `_refreshList()` 方法：清空本地累积 + 重置分页 + 同时 invalidate 两个 provider
+- 两个刷新按钮改为调用 `_refreshList()`
+
+### 文件
+
+- `lib/src/plugins/collections/ui/layouts/collections_desktop_layout.dart`

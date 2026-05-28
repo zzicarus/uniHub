@@ -6,6 +6,7 @@ import 'package:uni_hub/src/core/router/route_names.dart';
 import 'package:uni_hub/src/core/database/tables/thoughts_table.dart';
 import 'package:uni_hub/src/core/theme/app_tokens.dart';
 import 'package:uni_hub/src/shared/editor/appflowy_document_tools.dart';
+import 'package:uni_hub/src/shared/url/url_normalizer.dart';
 import 'data/thought_content_codec.dart';
 import 'providers/thoughts_providers.dart';
 import 'ui/thoughts_list_page.dart';
@@ -132,15 +133,10 @@ class ThoughtsPlugin extends UniHubPlugin {
   @override
   bool canHandleQuickCreate(String content) {
     // #7: Thoughts 处理非 URL 的普通文本
+    // 使用 shared UrlNormalizer 与 Collections 保持一致
     final trimmed = content.trim();
     if (trimmed.isEmpty) return false;
-    return !_looksLikeUrl(trimmed);
-  }
-
-  static bool _looksLikeUrl(String text) {
-    if (text.startsWith('http://') || text.startsWith('https://')) return true;
-    if (text.contains(' ') || !text.contains('.')) return false;
-    return RegExp(r'^[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}').hasMatch(text);
+    return const UrlNormalizer().tryNormalize(trimmed) == null;
   }
 
   @override

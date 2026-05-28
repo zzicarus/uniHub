@@ -65,11 +65,16 @@ class ThoughtsDao {
     );
   }
 
-  /// 活跃（未归档）想法数量。
-  Future<int> countActive() {
-    final query = _db.selectOnly(_db.thoughtsTable)..addColumns([_db.thoughtsTable.id]);
-    query.where(_db.thoughtsTable.archivedAt.isNull());
-    return query.map((row) => row.read(_db.thoughtsTable.id)).get().then((list) => list.length);
+  /// 活跃（未归档）想法数量，使用数据库侧 COUNT 聚合。
+  Future<int> countActive() async {
+    final countExp = _db.thoughtsTable.id.count();
+
+    final query = _db.selectOnly(_db.thoughtsTable)
+      ..addColumns([countExp])
+      ..where(_db.thoughtsTable.archivedAt.isNull());
+
+    final row = await query.getSingle();
+    return row.read(countExp) ?? 0;
   }
 
   /// 最近 N 条未归档想法。

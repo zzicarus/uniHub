@@ -56,9 +56,16 @@ class _CollectionsDesktopLayoutState
           }
         }
 
-        // 再做自动选中
+        // 检查当前选中项是否仍然可见，不可见时自动选中第一条
         final selected = ref.read(selectedSavedItemIdProvider);
-        if (selected == null && entries.isNotEmpty && mounted) {
+        final selectedStillVisible =
+            selected != null && _accumulatedEntries.any((e) => e.item.id == selected);
+
+        if (!selectedStillVisible && _accumulatedEntries.isNotEmpty && mounted) {
+          ref.read(selectedSavedItemIdProvider.notifier).state =
+              _accumulatedEntries.first.item.id;
+        } else if (selected == null && entries.isNotEmpty && mounted) {
+          // 初始无选中时自动选第一条
           ref.read(selectedSavedItemIdProvider.notifier).state =
               entries.first.item.id;
         }
@@ -93,19 +100,36 @@ class _CollectionsDesktopLayoutState
       collectionSortProvider,
       (_, _) => _resetPagination(),
     );
+    // #5: 搜索内容变化时重置分页
+    ref.listenManual<String>(
+      collectionSearchQueryProvider,
+      (_, _) => _resetPagination(),
+    );
   }
 
   void _resetPagination() {
     ref.read(collectionPageOffsetProvider.notifier).state = 0;
+    if (mounted) {
+      setState(() {
+        _accumulatedEntries.clear();
+      });
+    } else {
+      _accumulatedEntries.clear();
+    }
   }
 
   void _refreshList() {
-    setState(() {
+    if (mounted) {
+      setState(() {
+        _accumulatedEntries.clear();
+      });
+    } else {
       _accumulatedEntries.clear();
-    });
+    }
     ref.read(collectionPageOffsetProvider.notifier).state = 0;
     ref.invalidate(savedItemsPageProvider);
     ref.invalidate(savedItemListEntriesProvider);
+    ref.invalidate(collectionFolderCountsProvider);
   }
 
   void _drainPendingEnrichment() {
@@ -309,7 +333,9 @@ class _CollectionsDesktopLayoutState
                         const SizedBox(width: AppSpacing.md),
                         SizedBox(
                           width: detailWidth,
-                          child: const _DetailPanel(),
+                          child: _DetailPanel(
+                            entries: List.unmodifiable(_accumulatedEntries),
+                          ),
                         ),
                       ],
                     ],
@@ -330,14 +356,27 @@ class _CollectionsDesktopLayoutState
   }
 }
 
-/// 详情面板容器：内部 watch [selectedSavedItemEntryProvider]，
-/// 选中变化时只有本 widget 重建，布局父级不受影响。
+/// 详情面板容器：从已累积列表中查找选中项并展示详情。
+///
+/// 不依赖 [selectedSavedItemEntryProvider]，确保分页后
+/// 历史条目的详情仍然可以正确显示。
 class _DetailPanel extends ConsumerWidget {
-  const _DetailPanel();
+  const _DetailPanel({required this.entries});
+
+  final List<SavedItemListEntry> entries;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final entry = ref.watch(selectedSavedItemEntryProvider);
+    final selectedId = ref.watch(selectedSavedItemIdProvider);
+
+    SavedItemListEntry? entry;
+    for (final candidate in entries) {
+      if (candidate.item.id == selectedId) {
+        entry = candidate;
+        break;
+      }
+    }
+
     if (entry == null) {
       return Center(
         child: Text(
@@ -348,7 +387,7 @@ class _DetailPanel extends ConsumerWidget {
         ),
       );
     }
-    return SavedItemDetailPanel(item: entry.item);
+    return SavedItemDetailPanel(entry: entry);
   }
 }
 

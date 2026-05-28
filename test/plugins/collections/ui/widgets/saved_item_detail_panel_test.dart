@@ -7,6 +7,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:uni_hub/src/core/database/app_database.dart';
 import 'package:uni_hub/src/core/database/database_provider.dart';
 import 'package:uni_hub/src/core/plugin/plugin_registry.dart';
+import 'package:uni_hub/src/plugins/collections/application/saved_item_list_entry.dart';
 import 'package:uni_hub/src/plugins/collections/collections_plugin.dart';
 import 'package:uni_hub/src/plugins/collections/ui/widgets/saved_item_detail_panel.dart';
 
@@ -53,7 +54,14 @@ void main() {
               child: SizedBox(
                 width: 375,
                 height: 900,
-                child: SavedItemDetailPanel(item: item),
+                child: SavedItemDetailPanel(
+                  entry: SavedItemListEntry(
+                    item: item,
+                    boxes: const [],
+                    logo: null,
+                    selected: false,
+                  ),
+                ),
               ),
             ),
           ),
@@ -122,7 +130,14 @@ void main() {
               child: SizedBox(
                 width: 375,
                 height: 900,
-                child: SavedItemDetailPanel(item: item),
+                child: SavedItemDetailPanel(
+                  entry: SavedItemListEntry(
+                    item: item,
+                    boxes: const [],
+                    logo: null,
+                    selected: false,
+                  ),
+                ),
               ),
             ),
           ),

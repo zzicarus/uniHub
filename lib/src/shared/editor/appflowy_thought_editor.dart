@@ -139,6 +139,9 @@ class AppFlowyThoughtEditorController extends ChangeNotifier {
   /// Used to sync the title input with the AppFlowy document. This
   /// triggers the editor's [onChanged] callback so the parent's
   /// [documentJson] and [plainText] are updated atomically.
+  ///
+  /// If the document has no paragraph node (e.g. only an image block),
+  /// a new paragraph is inserted at the beginning of the document.
   Future<void> updateFirstParagraphText(String text) async {
     final editorState = _editorState;
     if (editorState == null) {
@@ -164,6 +167,12 @@ class AppFlowyThoughtEditorController extends ChangeNotifier {
         }
       }
     }
+
+    // No paragraph found: insert a new paragraph at the beginning.
+    final paragraph = paragraphNode(text: text);
+    final transaction = editorState.transaction
+      ..insertNode([0], paragraph);
+    await editorState.apply(transaction);
   }
 
   @override

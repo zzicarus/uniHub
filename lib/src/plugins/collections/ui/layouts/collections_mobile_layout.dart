@@ -5,10 +5,11 @@ import 'package:uni_hub/src/plugins/collections/providers/collections_providers.
 
 import '../widgets/collection_command_bar.dart';
 import '../widgets/saved_item_card.dart';
+import '../widgets/saved_item_detail_panel.dart';
 
 /// 移动端收藏布局：简化版列表，无侧栏和详情面板。
 ///
-/// TODO: 后续添加详情页导航（push 而非侧栏展示）。
+/// 点击卡片弹出详情 bottom sheet。
 class CollectionsMobileLayout extends ConsumerWidget {
   const CollectionsMobileLayout({super.key});
 
@@ -35,29 +36,13 @@ class CollectionsMobileLayout extends ConsumerWidget {
               child: entriesAsync.when(
                 data: (entries) {
                   if (entries.isEmpty) {
-                    return Center(
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            Icons.bookmark_add_outlined,
-                            size: 48,
-                            color: Theme.of(context).colorScheme.primary,
-                          ),
-                          const SizedBox(height: AppSpacing.md),
-                          Text(
-                            '还没有收藏',
-                            style: Theme.of(context).textTheme.titleLarge,
-                          ),
-                        ],
-                      ),
-                    );
+                    return _buildEmptyState(context);
                   }
                   return ListView.separated(
                     itemCount: entries.length,
                     separatorBuilder: (_, _) =>
                         const SizedBox(height: AppSpacing.sm),
-                    itemBuilder: (context, index) {
+                    itemBuilder: (ctx, index) {
                       final entry = entries[index];
                       return SavedItemCard(
                         key: ValueKey(entry.item.id),
@@ -66,6 +51,17 @@ class CollectionsMobileLayout extends ConsumerWidget {
                           ref
                               .read(selectedSavedItemIdProvider.notifier)
                               .state = entry.item.id;
+                          showModalBottomSheet<void>(
+                            context: context,
+                            isScrollControlled: true,
+                            useSafeArea: true,
+                            builder: (_) {
+                              return FractionallySizedBox(
+                                heightFactor: 0.92,
+                                child: SavedItemDetailPanel(entry: entry),
+                              );
+                            },
+                          );
                         },
                       );
                     },
@@ -81,6 +77,26 @@ class CollectionsMobileLayout extends ConsumerWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildEmptyState(BuildContext context) {
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            Icons.bookmark_add_outlined,
+            size: 48,
+            color: Theme.of(context).colorScheme.primary,
+          ),
+          const SizedBox(height: AppSpacing.md),
+          Text(
+            '还没有收藏',
+            style: Theme.of(context).textTheme.titleLarge,
+          ),
+        ],
       ),
     );
   }

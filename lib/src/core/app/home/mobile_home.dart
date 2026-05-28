@@ -282,17 +282,33 @@ class _MobileQuickCaptureCardState
 
     setState(() => _submitting = true);
     try {
-      await ref.read(
+      final item = await ref.read(
         quickCreateProvider((content: content, tags: null)).future,
       );
+
+      if (!mounted) return;
+
+      if (item == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('无法识别内容')),
+        );
+        return;
+      }
+
+      final message = switch (item.pluginId) {
+        'collections' => '已收藏',
+        'thoughts' => '想法已记录',
+        _ => '已记录',
+      };
+
+      _controller.clear();
       ref.invalidate(dashboardItemsProvider);
       ref.invalidate(dashboardPinnedProvider);
       ref.invalidate(dashboardStatsProvider);
-      if (!mounted) return;
-      _controller.clear();
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('想法已记录')));
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(message)),
+      );
     } finally {
       if (mounted) setState(() => _submitting = false);
     }

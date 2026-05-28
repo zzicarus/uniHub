@@ -46,19 +46,15 @@ class AppDatabase extends _$AppDatabase {
     );
   }
 
-  /// 全局数据库版本 = 所有插件的 [UniHubPlugin.schemaVersion] 最大值。
+  /// 显式维护的数据库 schema 版本号。
   ///
-  /// 设计决策（已知风险）：迁移脚本全局写在 [AppDatabase.onUpgrade] 中，
-  /// 而版本号由插件最大值决定。未来某个插件升级版本会推动全局迁移，
-  /// 但各插件的迁移逻辑未隔离。当前方案适用于单一迁移序列，
-  /// 长期建议将迁移脚本与插件绑定（插件隔离 schema），
-  /// 全局版本仅做协调。
+  /// 不再由插件最大版本号动态计算。版本迁移统一在此文件中维护。
+  /// 插件中的 schemaVersion 仅作声明信息，不驱动 Drift 数据库版本。
+  static const int currentSchemaVersion = 6;
+
   @override
-  int get schemaVersion {
-    final versions = _registry.plugins.map((p) => p.schemaVersion);
-    if (versions.isEmpty) return 1;
-    return versions.reduce((a, b) => a > b ? a : b);
-  }
+  int get schemaVersion => currentSchemaVersion;
+
 
   @override
   MigrationStrategy get migration => MigrationStrategy(

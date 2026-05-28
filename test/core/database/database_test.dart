@@ -33,17 +33,17 @@ void main() {
   });
 
   group('AppDatabase', () {
-    test('derives schema version from registered plugins', () {
-      expect(database.schemaVersion, 2);
+    test('uses static currentSchemaVersion (not derived from plugins)', () {
+      expect(database.schemaVersion, AppDatabase.currentSchemaVersion);
     });
 
-    test('schema version reflects max across plugins', () {
+    test('schema version is always currentSchemaVersion regardless of plugins', () {
       final multiRegistry = PluginRegistry();
       multiRegistry.register(_TestDbPlugin());
       multiRegistry.register(_OtherSchemaPlugin());
 
       final db = AppDatabase(NativeDatabase.memory(), multiRegistry);
-      expect(db.schemaVersion, 5);
+      expect(db.schemaVersion, AppDatabase.currentSchemaVersion);
       addTearDown(() => db.close());
     });
 

@@ -9,6 +9,7 @@ import 'package:uni_hub/src/core/database/tables/saved_items_table.dart';
 import 'package:uni_hub/src/core/plugin/plugin_interface.dart';
 import 'package:uni_hub/src/core/router/route_names.dart';
 import 'package:uni_hub/src/plugins/collections/domain/url_normalizer.dart';
+import 'package:uni_hub/src/plugins/collections/providers/collections_providers.dart';
 
 import 'ui/collections_page.dart';
 
@@ -66,21 +67,33 @@ class CollectionsPlugin extends UniHubPlugin {
     required String content,
     String? tags,
   }) async {
-    final normalized = const UrlNormalizer().tryNormalize(content.trim());
-    if (normalized == null) return null;
+    final trimmed = content.trim();
+    if (!canHandleQuickCreate(trimmed)) return null;
+
+    // 调用完整收藏创建链路：创建或定位已存在的收藏项
+    final result = await ref
+        .read(collectionCaptureServiceProvider)
+        .captureUrl(trimmed);
+
+    // 从数据库查询创建后的真实数据
+    final item = await ref
+        .read(collectionsRepositoryProvider)
+        .getSavedItem(result.itemId);
+
+    if (item == null) return null;
 
     return DashboardItem(
       pluginId: id,
-      itemId: normalized.hashCode.toString(),
-      content: normalized,
+      itemId: item.id.toString(),
+      content: item.title.trim().isNotEmpty ? item.title : item.normalizedUrl,
       tags: tags != null
           ? tags
               .split(',')
               .map((s) => s.trim())
               .where((s) => s.isNotEmpty)
               .toList()
-          : [],
-      createdAt: DateTime.now(),
+          : const [],
+      createdAt: item.createdAt,
       routePath: '/collections',
     );
   }

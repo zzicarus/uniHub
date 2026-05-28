@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uni_hub/src/core/database/app_database.dart';
 import 'package:uni_hub/src/core/theme/app_tokens.dart';
+import 'package:uni_hub/src/plugins/collections/application/saved_item_list_entry.dart';
 import 'package:uni_hub/src/plugins/collections/application/saved_item_undo_snapshot.dart';
 import 'package:uni_hub/src/plugins/collections/domain/consumption_status.dart';
 import 'package:uni_hub/src/plugins/collections/domain/enrichment_status.dart';
@@ -13,7 +14,7 @@ import 'package:uni_hub/src/shared/widgets/app_pill_chip.dart';
 import 'package:uni_hub/src/shared/widgets/delete_confirm_dialog.dart';
 import 'package:uni_hub/src/shared/widgets/website_logo.dart';
 
-/// Full detail panel for a selected [SavedItemsTableData].
+/// Full detail panel for a selected saved item entry.
 ///
 /// Layout structure:
 /// A. 内容身份卡 — prominent identity card with gradient, icon, title, source
@@ -21,10 +22,17 @@ import 'package:uni_hub/src/shared/widgets/website_logo.dart';
 /// C. 整理信息区 — source, status, box, tags, notes (light dividers)
 /// D. 内容补充区 — content tabs (weaker visual weight)
 /// E. 技术信息区 — collapsed at bottom
+///
+/// Uses the [entry]'s pre-aggregated boxes instead of querying
+/// [selectedSavedItemEntryProvider], ensuring data consistency with
+/// the list that opened this panel.
 class SavedItemDetailPanel extends ConsumerStatefulWidget {
-  const SavedItemDetailPanel({required this.item, super.key});
+  const SavedItemDetailPanel({required this.entry, super.key});
 
-  final SavedItemsTableData? item;
+  final SavedItemListEntry entry;
+
+  /// Convenience accessor for the underlying saved item.
+  SavedItemsTableData get item => entry.item;
 
   @override
   ConsumerState<SavedItemDetailPanel> createState() =>
@@ -34,59 +42,12 @@ class SavedItemDetailPanel extends ConsumerStatefulWidget {
 class _SavedItemDetailPanelState extends ConsumerState<SavedItemDetailPanel> {
   static const _inboxBoxValue = -1;
 
+  late final SavedItemsTableData item = widget.entry.item;
+  late final List<CollectionBoxesTableData> boxes = widget.entry.boxes;
+
   @override
   Widget build(BuildContext context) {
-    if (widget.item == null) return _buildEmpty(context);
     return _buildDetail(context, ref);
-  }
-
-  // ---------------------------------------------------------------
-  // Empty state
-  // ---------------------------------------------------------------
-
-  Widget _buildEmpty(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-
-    return Container(
-      decoration: BoxDecoration(
-        color: colorScheme.surface,
-        borderRadius: BorderRadius.circular(AppRadius.xl),
-        border: Border.all(
-          color: colorScheme.outlineVariant.withValues(alpha: 0.6),
-        ),
-      ),
-      child: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 260),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                Icons.bookmark_outline_rounded,
-                size: 48,
-                color: colorScheme.onSurfaceVariant.withValues(alpha: 0.4),
-              ),
-              const SizedBox(height: AppSpacing.md),
-              Text(
-                '选择一条收藏',
-                style: theme.textTheme.titleMedium?.copyWith(
-                  color: colorScheme.onSurfaceVariant,
-                ),
-              ),
-              const SizedBox(height: AppSpacing.xs),
-              Text(
-                '从左侧列表选择一条收藏，\n在这里查看详情和整理。',
-                textAlign: TextAlign.center,
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
   }
 
   // ---------------------------------------------------------------
@@ -96,7 +57,6 @@ class _SavedItemDetailPanelState extends ConsumerState<SavedItemDetailPanel> {
   Widget _buildDetail(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    final item = widget.item!;
     final mediaType = MediaType.fromValue(item.mediaType);
     final platform = SourcePlatform.fromValue(item.sourcePlatform);
 
@@ -324,9 +284,9 @@ class _SavedItemDetailPanelState extends ConsumerState<SavedItemDetailPanel> {
           _sectionDivider(colorScheme),
           _buildStatusSection(theme, colorScheme, item),
           _sectionDivider(colorScheme),
-          _BoxSection(item: item),
+          _BoxSection(item: item, currentBoxes: boxes),
           _sectionDivider(colorScheme),
-          _TagsSection(item: item),
+          _TagsSection(item: item, boxes: boxes),
           _sectionDivider(colorScheme),
           _EnrichmentStatusSection(item: item),
         ],
@@ -688,8 +648,7 @@ class _SavedItemDetailPanelState extends ConsumerState<SavedItemDetailPanel> {
   }
 
   Future<void> _deleteItem(int itemId) async {
-    final item = widget.item;
-    if (item == null) return;
+    final item = this.item;
 
     final prefsAsync = ref.read(deleteConfirmPrefsProvider);
     final prefs = prefsAsync.valueOrNull;
@@ -1085,9 +1044,10 @@ class _EnrichmentStatusSection extends ConsumerWidget {
 // ===============================================================
 
 class _TagsSection extends ConsumerWidget {
-  const _TagsSection({required this.item});
+  const _TagsSection({required this.item, this.boxes = const []});
 
   final SavedItemsTableData item;
+  final List<CollectionBoxesTableData> boxes;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -1095,10 +1055,6 @@ class _TagsSection extends ConsumerWidget {
     final colorScheme = theme.colorScheme;
     final mediaType = MediaType.fromValue(item.mediaType);
     final platform = SourcePlatform.fromValue(item.sourcePlatform);
-    // #2: 直接从 selectedSavedItemEntryProvider 获取预聚合的 boxes，
-    // 不再通过 FutureBuilder 额外查询数据库。
-    final entry = ref.watch(selectedSavedItemEntryProvider);
-    final boxes = entry?.boxes ?? const <CollectionBoxesTableData>[];
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(
@@ -1186,20 +1142,17 @@ class _TagsSection extends ConsumerWidget {
 // ===============================================================
 
 class _BoxSection extends ConsumerWidget {
-  const _BoxSection({required this.item});
+  const _BoxSection({required this.item, this.currentBoxes = const []});
 
   final SavedItemsTableData item;
+  final List<CollectionBoxesTableData> currentBoxes;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final boxesAsync = ref.watch(collectionBoxesProvider);
-    // #2: 直接从 selectedSavedItemEntryProvider 获取预聚合的 boxes，
-    // 不再通过 FutureBuilder 额外查询数据库。
-    final entry = ref.watch(selectedSavedItemEntryProvider);
-    final currentBoxIds =
-        entry?.boxes.map((b) => b.id).toSet() ?? const <int>{};
+    final currentBoxIds = currentBoxes.map((b) => b.id).toSet();
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(
