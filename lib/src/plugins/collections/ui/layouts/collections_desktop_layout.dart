@@ -37,27 +37,34 @@ class _CollectionsDesktopLayoutState
     ref.listenManual<AsyncValue<List<SavedItemListEntry>>>(
       savedItemListEntriesProvider,
       (prev, next) {
-        final selected = ref.read(selectedSavedItemIdProvider);
-        if (selected != null) return;
         final entries = next.valueOrNull;
-        if (entries != null && entries.isNotEmpty && mounted) {
-          ref.read(selectedSavedItemIdProvider.notifier).state =
-              entries.first.item.id;
-        }
-        // #4: 累积分页条目
+        if (entries == null) return;
+
         final offset = ref.read(collectionPageOffsetProvider);
-        final newEntries = next.valueOrNull ?? const [];
+
+        // 先维护列表数据，不受 selected 影响
         if (offset == 0) {
           _accumulatedEntries
             ..clear()
-            ..addAll(newEntries);
+            ..addAll(entries);
         } else {
           final existingIds = _accumulatedEntries.map((e) => e.item.id).toSet();
-          for (final e in newEntries) {
-            if (!existingIds.contains(e.item.id)) {
-              _accumulatedEntries.add(e);
+          for (final entry in entries) {
+            if (!existingIds.contains(entry.item.id)) {
+              _accumulatedEntries.add(entry);
             }
           }
+        }
+
+        // 再做自动选中
+        final selected = ref.read(selectedSavedItemIdProvider);
+        if (selected == null && entries.isNotEmpty && mounted) {
+          ref.read(selectedSavedItemIdProvider.notifier).state =
+              entries.first.item.id;
+        }
+
+        if (mounted) {
+          setState(() {});
         }
       },
     );
@@ -90,6 +97,15 @@ class _CollectionsDesktopLayoutState
 
   void _resetPagination() {
     ref.read(collectionPageOffsetProvider.notifier).state = 0;
+  }
+
+  void _refreshList() {
+    setState(() {
+      _accumulatedEntries.clear();
+    });
+    ref.read(collectionPageOffsetProvider.notifier).state = 0;
+    ref.invalidate(savedItemsPageProvider);
+    ref.invalidate(savedItemListEntriesProvider);
   }
 
   void _drainPendingEnrichment() {
@@ -138,13 +154,11 @@ class _CollectionsDesktopLayoutState
                       IconButton(
                         icon: const Icon(Icons.refresh_rounded),
                         tooltip: '刷新',
-                        onPressed: () =>
-                            ref.invalidate(savedItemsPageProvider),
+                        onPressed: _refreshList,
                       )
                     else
                       OutlinedButton.icon(
-                        onPressed: () =>
-                            ref.invalidate(savedItemsPageProvider),
+                        onPressed: _refreshList,
                         icon: const Icon(Icons.refresh_rounded),
                         label: const Text('刷新'),
                       ),
