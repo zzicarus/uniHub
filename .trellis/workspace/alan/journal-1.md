@@ -887,3 +887,36 @@ font: AppFlowy 编辑器使用 Inter 字体 + 主题色; image V2: ThoughtImageB
 ### Next Steps
 
 - None - task complete
+
+
+## Session 24: 修复收藏模块运行时体验与架构一致性 15 项问题
+
+**Date**: 2026-05-28
+**Task**: 修复收藏模块运行时体验与架构一致性 15 项问题
+**Branch**: `main`
+
+### Summary
+
+三类修复：运行时 Bug（#1 选中态下放、#2 FutureBuilder 移除、#3 listenManual 自选、#8 搜索框同步、#10 async error 兜底）、功能缺口（#4 加载更多、#5 移动端布局、#6 导航命名、#7 quickCreate 分流、#9 URL 判断统一）、基础设施（#11 DAO 边界查询、#12 索引迁移、#13 schema 注释、#14 日志关闭、#15 CI）。21 文件 +645/-233，679 tests 通过。
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `42a1ab2` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete

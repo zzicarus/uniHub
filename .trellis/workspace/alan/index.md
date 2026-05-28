@@ -8,7 +8,7 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-1.md`
-- **Total Sessions**: 23
+- **Total Sessions**: 24
 - **Last Active**: 2026-05-28
 <!-- @@@/auto:current-status -->
 
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-1.md` | ~889 | Active |
+| `journal-1.md` | ~922 | Active |
 <!-- @@@/auto:active-documents -->
 
 ---
@@ -29,6 +29,7 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 24 | 2026-05-28 | 修复收藏模块运行时体验与架构一致性 15 项问题 | `42a1ab2` | `main` |
 | 23 | 2026-05-28 | 修复文档与低风险一致性问题 | `91dd221` | `main` |
 | 22 | 2026-05-28 | 修复编辑器 P0 数据一致性 5 个 Bug + Spec 记录 | `6c0c50e`, `10b0c40` | `main` |
 | 21 | 2026-05-27 | 收藏列表命令栏统一 | `2707423` | `main` |
