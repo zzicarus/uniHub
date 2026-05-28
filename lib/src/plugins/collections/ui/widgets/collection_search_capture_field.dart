@@ -185,15 +185,15 @@ class _CollectionSearchCaptureFieldState
     return Container(
       height: 44,
       decoration: BoxDecoration(
-        color: isFocused ? colorScheme.surface : const Color(0xFFF6F8FC),
+        color: isFocused ? colorScheme.surface : colorScheme.surfaceContainerLow,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: isFocused ? const Color(0xFF93C5FD) : Colors.transparent,
+          color: isFocused ? colorScheme.primary.withValues(alpha: 0.4) : Colors.transparent,
         ),
         boxShadow: isFocused
             ? [
                 BoxShadow(
-                  color: const Color(0xFF4F6BFF).withValues(alpha: 0.08),
+                  color: colorScheme.primary.withValues(alpha: 0.08),
                   blurRadius: 6,
                   spreadRadius: 2,
                 ),
@@ -226,7 +226,7 @@ class _CollectionSearchCaptureFieldState
               decoration: InputDecoration(
                 hintText: '搜索或粘贴链接收藏',
                 hintStyle: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: const Color(0xFF94A3B8),
+                  color: colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
                   fontWeight: AppFontTokens.normal,
                 ),
                 border: InputBorder.none,
@@ -234,7 +234,7 @@ class _CollectionSearchCaptureFieldState
                 contentPadding: const EdgeInsets.symmetric(vertical: 12),
               ),
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: const Color(0xFF0F172A),
+                color: colorScheme.onSurface,
                 fontWeight: AppFontTokens.normal,
               ),
             ),

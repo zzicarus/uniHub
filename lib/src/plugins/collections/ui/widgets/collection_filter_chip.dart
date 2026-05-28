@@ -104,12 +104,12 @@ class CollectionFilterChip<T> extends StatelessWidget {
                     ),
                   )
                 else
-                  const Padding(
-                    padding: EdgeInsets.only(right: 6),
+                  Padding(
+                    padding: const EdgeInsets.only(right: 6),
                     child: Icon(
                       Icons.expand_more_rounded,
                       size: 16,
-                      color: Color(0xFF94A3B8),
+                      color: colorScheme.onSurfaceVariant.withValues(alpha: 0.6),
                     ),
                   ),
               ],

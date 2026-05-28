@@ -131,17 +131,18 @@ class _ContainerBox extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return Container(
       height: height,
       margin: const EdgeInsets.fromLTRB(24, 12, 24, 10),
       padding: padding,
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: cs.surface,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: const Color(0xFFE6ECF5)),
+        border: Border.all(color: cs.outlineVariant.withValues(alpha: 0.6)),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF0F172A).withValues(alpha: 0.035),
+            color: Colors.black.withValues(alpha: 0.035),
             blurRadius: 18,
             offset: const Offset(0, 8),
           ),
