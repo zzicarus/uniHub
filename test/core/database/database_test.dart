@@ -77,7 +77,7 @@ class _OtherSchemaPlugin extends UniHubPlugin {
   @override
   String get name => 'Other';
   @override
-  List<Type> get tables => [ThoughtsTable];
+  List<Type> get tables => [];
   @override
   int get schemaVersion => 5;
 }

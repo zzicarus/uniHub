@@ -46,7 +46,9 @@ void main() {
         originalUrl: Value(originalUrl),
         normalizedUrl: Value(uniqueUrl),
         title: Value(title),
-        description: description != null ? Value(description) : const Value.absent(),
+        description: description != null
+            ? Value(description)
+            : const Value.absent(),
         author: author != null ? Value(author) : const Value.absent(),
         siteName: siteName != null ? Value(siteName) : const Value.absent(),
         mediaType: Value(mediaType),
@@ -55,7 +57,9 @@ void main() {
         isInInbox: Value(isInInbox),
         createdAt: Value(createdAt ?? now),
         updatedAt: Value(updatedAt ?? now),
-        lastOpenedAt: lastOpenedAt != null ? Value(lastOpenedAt) : const Value.absent(),
+        lastOpenedAt: lastOpenedAt != null
+            ? Value(lastOpenedAt)
+            : const Value.absent(),
       ),
     );
   }
@@ -182,10 +186,7 @@ void main() {
         title: 'GitHub',
         sourcePlatform: SourcePlatform.github.value,
       );
-      await insertItem(
-        title: 'Web',
-        sourcePlatform: SourcePlatform.web.value,
-      );
+      await insertItem(title: 'Web', sourcePlatform: SourcePlatform.web.value);
 
       final result = await dao.queryItemsPage(
         const SavedItemsQuery(
@@ -272,10 +273,7 @@ void main() {
     });
 
     test('matches description', () async {
-      await insertItem(
-        title: 'Article',
-        description: '这是一篇关于 Flutter 的文章',
-      );
+      await insertItem(title: 'Article', description: '这是一篇关于 Flutter 的文章');
       await insertItem(title: 'Other', description: '无关内容');
 
       final result = await dao.queryItemsPage(
@@ -385,6 +383,51 @@ void main() {
 
       expect(result.length, 1);
     });
+
+    test('treats percent as a literal character', () async {
+      await insertItem(title: '100% useful');
+      await insertItem(title: '100x useful');
+
+      final result = await dao.queryItemsPage(
+        const SavedItemsQuery(
+          view: CollectionView.all,
+          searchQuery: '%',
+          limit: 100,
+        ),
+      );
+
+      expect(result.map((item) => item.title), ['100% useful']);
+    });
+
+    test('treats underscore as a literal character', () async {
+      await insertItem(title: 'draft_note');
+      await insertItem(title: 'draft-note');
+
+      final result = await dao.queryItemsPage(
+        const SavedItemsQuery(
+          view: CollectionView.all,
+          searchQuery: '_',
+          limit: 100,
+        ),
+      );
+
+      expect(result.map((item) => item.title), ['draft_note']);
+    });
+
+    test('treats backslash as a literal character', () async {
+      await insertItem(title: r'path\to\note');
+      await insertItem(title: 'path/to/note');
+
+      final result = await dao.queryItemsPage(
+        const SavedItemsQuery(
+          view: CollectionView.all,
+          searchQuery: r'\',
+          limit: 100,
+        ),
+      );
+
+      expect(result.map((item) => item.title), [r'path\to\note']);
+    });
   });
 
   group('queryItemsPage - pagination', () {
@@ -487,11 +530,7 @@ void main() {
 
     test('lastOpenedDesc sort', () async {
       final now = DateTime.now();
-      await insertItem(
-        title: 'Just opened',
-        updatedAt: now,
-        lastOpenedAt: now,
-      );
+      await insertItem(title: 'Just opened', updatedAt: now, lastOpenedAt: now);
       await insertItem(
         title: 'Never opened',
         updatedAt: now.subtract(const Duration(hours: 1)),

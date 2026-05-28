@@ -6,7 +6,7 @@
 
 ## Overview
 
-状态管理以 Riverpod（`flutter_riverpod` + `riverpod_annotation`）为核心：
+状态管理以 Riverpod（当前仅依赖 `flutter_riverpod`，未启用代码生成）为核心：
 
 - **全局状态**：应用级 Provider（数据库、插件注册、搜索）
 - **功能状态**：插件级 Provider（thoughts 列表、过滤、编辑）

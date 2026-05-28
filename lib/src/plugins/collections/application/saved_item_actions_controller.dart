@@ -25,9 +25,9 @@ class SavedItemActionsController {
     required CollectionsRepository repository,
     required EnrichmentJobService enrichmentJobService,
     Ref? ref,
-  })  : _repository = repository,
-        _enrichmentJobService = enrichmentJobService,
-        _ref = ref;
+  }) : _repository = repository,
+       _enrichmentJobService = enrichmentJobService,
+       _ref = ref;
 
   final CollectionsRepository _repository;
   final EnrichmentJobService _enrichmentJobService;
@@ -60,39 +60,33 @@ class SavedItemActionsController {
   // Actions
   // ------------------------------------------------------------------
 
-  /// Mark the item as opened and launch its URL in an external browser.
+  /// Launch the item's URL in an external browser and mark it opened only
+  /// after the launcher reports success.
   Future<SavedItemActionResult> openItem(int itemId) async {
     final item = await _repository.getSavedItem(itemId);
     if (item == null) {
-      return const SavedItemActionResult(
-        success: false,
-        message: '收藏项不存在',
-      );
+      return const SavedItemActionResult(success: false, message: '收藏项不存在');
     }
-
-    await _repository.markOpened(itemId);
-    invalidateLists();
 
     final uri = Uri.tryParse(item.originalUrl);
     if (uri == null || !uri.hasScheme || !uri.hasAuthority) {
-      return const SavedItemActionResult(
-        success: false,
-        message: '无效的链接',
-      );
+      return const SavedItemActionResult(success: false, message: '无效的链接');
     }
 
     try {
-      await launchUrl(uri, mode: LaunchMode.externalApplication);
-      return const SavedItemActionResult(
-        success: true,
-        message: '已打开',
+      final launched = await launchUrl(
+        uri,
+        mode: LaunchMode.externalApplication,
       );
+      if (!launched) {
+        return const SavedItemActionResult(success: false, message: '打开链接失败');
+      }
+
+      await _repository.markOpened(itemId);
+      invalidateLists();
+      return const SavedItemActionResult(success: true, message: '已打开');
     } catch (e) {
-      return SavedItemActionResult(
-        success: false,
-        message: '打开链接失败',
-        error: e,
-      );
+      return SavedItemActionResult(success: false, message: '打开链接失败', error: e);
     }
   }
 
@@ -100,17 +94,11 @@ class SavedItemActionsController {
   Future<SavedItemActionResult> copyUrl(int itemId) async {
     final item = await _repository.getSavedItem(itemId);
     if (item == null) {
-      return const SavedItemActionResult(
-        success: false,
-        message: '收藏项不存在',
-      );
+      return const SavedItemActionResult(success: false, message: '收藏项不存在');
     }
 
     await Clipboard.setData(ClipboardData(text: item.originalUrl));
-    return const SavedItemActionResult(
-      success: true,
-      message: '链接已复制到剪贴板',
-    );
+    return const SavedItemActionResult(success: true, message: '链接已复制到剪贴板');
   }
 
   /// Update the consumption status of a saved item.
@@ -126,11 +114,7 @@ class SavedItemActionsController {
         message: '状态已更新为「${status.label}」',
       );
     } catch (e) {
-      return SavedItemActionResult(
-        success: false,
-        message: '状态更新失败',
-        error: e,
-      );
+      return SavedItemActionResult(success: false, message: '状态更新失败', error: e);
     }
   }
 
@@ -144,10 +128,7 @@ class SavedItemActionsController {
   /// Flips [isInInbox] based solely on whether [boxIds] is non-empty,
   /// regardless of prior state — this ensures inbox stays consistent
   /// with box assignments even if the DB was previously out of sync.
-  Future<SavedItemActionResult> assignBoxes(
-    int itemId,
-    Set<int> boxIds,
-  ) async {
+  Future<SavedItemActionResult> assignBoxes(int itemId, Set<int> boxIds) async {
     try {
       await _repository.setItemBoxes(itemId, boxIds);
       await _repository.updateInboxState(itemId, boxIds.isEmpty);
@@ -172,10 +153,7 @@ class SavedItemActionsController {
   /// Remove an item from a single collection box.
   ///
   /// If this was the last box, the item returns to Inbox.
-  Future<SavedItemActionResult> removeFromBox(
-    int itemId,
-    int boxId,
-  ) async {
+  Future<SavedItemActionResult> removeFromBox(int itemId, int boxId) async {
     try {
       await _repository.removeItemFromBox(itemId, boxId);
       // Defer invalidation to next frame for safe UI rebuild
@@ -205,10 +183,7 @@ class SavedItemActionsController {
   }) async {
     final item = await _repository.getSavedItem(itemId);
     if (item == null) {
-      return const SavedItemActionResult(
-        success: false,
-        message: '收藏项不存在',
-      );
+      return const SavedItemActionResult(success: false, message: '收藏项不存在');
     }
 
     final boxIds = await _repository.getBoxIdsForItem(itemId);
@@ -223,8 +198,9 @@ class SavedItemActionsController {
         _ref?.read(selectedSavedItemIdProvider.notifier).state = null;
         invalidateAll();
 
-        final displayTitle =
-            item.title.isEmpty ? item.normalizedUrl : item.title;
+        final displayTitle = item.title.isEmpty
+            ? item.normalizedUrl
+            : item.title;
 
         return SavedItemActionResult(
           success: true,
@@ -253,12 +229,8 @@ class SavedItemActionsController {
           undo: SavedItemUndoAction(
             label: '撤销',
             execute: () async {
-              final currentIds =
-                  await _repository.getBoxIdsForItem(itemId);
-              await _repository.setItemBoxes(
-                itemId,
-                {...currentIds, boxId},
-              );
+              final currentIds = await _repository.getBoxIdsForItem(itemId);
+              await _repository.setItemBoxes(itemId, {...currentIds, boxId});
               await _repository.updateInboxState(itemId, false);
               invalidateAll();
             },
@@ -280,8 +252,9 @@ class SavedItemActionsController {
         snapshot.boxIds,
       );
       invalidateAll();
-      final displayTitle =
-          restored.title.isEmpty ? restored.originalUrl : restored.title;
+      final displayTitle = restored.title.isEmpty
+          ? restored.originalUrl
+          : restored.title;
       return SavedItemActionResult(
         success: true,
         message: '已恢复「$displayTitle」',
@@ -317,24 +290,14 @@ class SavedItemActionsController {
     try {
       await _repository.enqueueEnrichmentJob(itemId);
       unawaited(_enrichmentJobService.runPendingJobs());
-      return const SavedItemActionResult(
-        success: true,
-        message: '已重新加入抓取队列',
-      );
+      return const SavedItemActionResult(success: true, message: '已重新加入抓取队列');
     } catch (e) {
-      return SavedItemActionResult(
-        success: false,
-        message: '重试抓取失败',
-        error: e,
-      );
+      return SavedItemActionResult(success: false, message: '重试抓取失败', error: e);
     }
   }
 
   /// Toggle favorite status for an item (not yet supported).
   Future<SavedItemActionResult> toggleFavorite(int itemId) async {
-    return const SavedItemActionResult(
-      success: false,
-      message: '星标功能稍后接入',
-    );
+    return const SavedItemActionResult(success: false, message: '星标功能稍后接入');
   }
 }

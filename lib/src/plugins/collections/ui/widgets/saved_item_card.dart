@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uni_hub/src/core/database/app_database.dart';
 import 'package:uni_hub/src/core/theme/app_tokens.dart';
@@ -20,11 +19,7 @@ import 'package:uni_hub/src/shared/widgets/website_logo.dart';
 /// data, box assignments, logo cache, and selection state — eliminating
 /// N+1 queries during list rendering.
 class SavedItemCard extends ConsumerWidget {
-  const SavedItemCard({
-    required this.entry,
-    this.onTap,
-    super.key,
-  });
+  const SavedItemCard({required this.entry, this.onTap, super.key});
 
   final SavedItemListEntry entry;
   final VoidCallback? onTap;
@@ -75,7 +70,12 @@ class SavedItemCard extends ConsumerWidget {
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  _iconColumn(colorScheme, mediaType, enrichmentStatus, localLogoPath),
+                  _iconColumn(
+                    colorScheme,
+                    mediaType,
+                    enrichmentStatus,
+                    localLogoPath,
+                  ),
                   const SizedBox(width: AppSpacing.sm),
                   Expanded(
                     child: Column(
@@ -212,10 +212,10 @@ class SavedItemCard extends ConsumerWidget {
                 '抓取失败 · 重试',
                 isError: true,
                 onTap: () async {
-                  final controller =
-                      ref.read(savedItemActionsControllerProvider);
-                  final result =
-                      await controller.retryEnrichment(item.id);
+                  final controller = ref.read(
+                    savedItemActionsControllerProvider,
+                  );
+                  final result = await controller.retryEnrichment(item.id);
                   if (context.mounted) {
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(content: Text(result.message ?? '')),
@@ -441,13 +441,12 @@ class _CardMoreMenu extends ConsumerWidget {
         onSelected: (action) async {
           switch (action) {
             case _CardAction.open:
-              await ref.read(collectionsRepositoryProvider).markOpened(item.id);
-              ref.invalidate(savedItemsPageProvider);
-              await Clipboard.setData(ClipboardData(text: item.originalUrl));
-              if (!context.mounted) return;
+              final controller = ref.read(savedItemActionsControllerProvider);
+              final result = await controller.openItem(item.id);
+              if (!context.mounted || result.message == null) return;
               ScaffoldMessenger.of(
                 context,
-              ).showSnackBar(const SnackBar(content: Text('链接已复制，可在浏览器中打开')));
+              ).showSnackBar(SnackBar(content: Text(result.message!)));
             case _CardAction.copy:
               final controller = ref.read(savedItemActionsControllerProvider);
               await controller.copyUrl(item.id);
@@ -490,14 +489,14 @@ class _CardMoreMenu extends ConsumerWidget {
     final prefs = prefsAsync.valueOrNull;
     if (prefs == null) return;
 
-    final displayTitle =
-        item.title.isEmpty ? item.normalizedUrl : item.title;
+    final displayTitle = item.title.isEmpty ? item.normalizedUrl : item.title;
     final mediaType = MediaType.fromValue(item.mediaType);
     final platform = SourcePlatform.fromValue(item.sourcePlatform);
     final repository = ref.read(collectionsRepositoryProvider);
     final controller = ref.read(savedItemActionsControllerProvider);
 
     final boxIds = await repository.getBoxIdsForItem(item.id);
+    if (!context.mounted) return;
 
     DeleteConfirmResult? result;
     if (boxIds.length > 1) {
@@ -506,6 +505,7 @@ class _CardMoreMenu extends ConsumerWidget {
           .where((b) => boxIds.contains(b.id))
           .map((b) => b.name)
           .toList();
+      if (!context.mounted) return;
       result = await DeleteConfirmDialog.showMultiBox(
         context: context,
         title: displayTitle,
@@ -541,7 +541,8 @@ class _CardMoreMenu extends ConsumerWidget {
     if (result == DeleteConfirmResult.removeFromBox) {
       if (boxIds.isNotEmpty) {
         final boxes = await repository.getBoxes();
-        final boxName = boxes
+        final boxName =
+            boxes
                 .where((b) => b.id == boxIds.first)
                 .map((b) => b.name)
                 .firstOrNull ??
@@ -625,10 +626,7 @@ class _CardMoreMenu extends ConsumerWidget {
       SnackBar(
         content: Text(message),
         duration: const Duration(seconds: 5),
-        action: SnackBarAction(
-          label: '撤销',
-          onPressed: onUndo,
-        ),
+        action: SnackBarAction(label: '撤销', onPressed: onUndo),
       ),
     );
   }

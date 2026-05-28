@@ -13,6 +13,8 @@ import 'enrichment_jobs_dao.dart';
 import 'saved_items_dao.dart';
 
 class CollectionsRepository {
+  static const maxBoxNameLength = 30;
+
   CollectionsRepository({
     required SavedItemsDao savedItemsDao,
     required CollectionBoxesDao collectionBoxesDao,
@@ -157,10 +159,12 @@ class CollectionsRepository {
         status: Value(status.value),
         completedAt: status == ConsumptionStatus.done
             ? Value(now)
+            : status == ConsumptionStatus.unread
+            ? const Value(null)
             : const Value.absent(),
         archivedAt: status == ConsumptionStatus.archived
             ? Value(now)
-            : const Value.absent(),
+            : const Value(null),
         updatedAt: Value(now),
       ),
     );
@@ -187,9 +191,7 @@ class CollectionsRepository {
   /// 批量查询多个 item 的收藏夹 ID 映射。
   ///
   /// 返回 itemId → boxIds 列表。未找到的 item 不会出现在返回的 map 中。
-  Future<Map<int, List<int>>> getBoxIdsForItems(
-    Iterable<int> itemIds,
-  ) {
+  Future<Map<int, List<int>>> getBoxIdsForItems(Iterable<int> itemIds) {
     return _collectionBoxesDao.getBoxIdsForItems(itemIds);
   }
 
@@ -241,16 +243,27 @@ class CollectionsRepository {
   }
 
   Future<CollectionBoxesTableData> createBox(String name) async {
+    final trimmed = name.trim();
+    if (trimmed.isEmpty) {
+      throw ArgumentError('收藏夹名称不能为空');
+    }
+    if (trimmed.length > maxBoxNameLength) {
+      throw ArgumentError('收藏夹名称过长，最多 $maxBoxNameLength 个字符');
+    }
+    if (await _collectionBoxesDao.existsByName(trimmed)) {
+      throw StateError('收藏夹已存在：$trimmed');
+    }
+
     final now = DateTime.now();
     final id = await _collectionBoxesDao.insert(
       CollectionBoxesTableCompanion(
-        name: Value(name.trim()),
+        name: Value(trimmed),
         createdAt: Value(now),
         updatedAt: Value(now),
       ),
     );
     final box = await _collectionBoxesDao.getById(id);
-    if (box == null) throw StateError('Box 创建失败：$name');
+    if (box == null) throw StateError('Box 创建失败：$trimmed');
     return box;
   }
 

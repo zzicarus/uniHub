@@ -1,0 +1,12 @@
+{"_example": "Fill with {\"file\": \"<path>\", \"reason\": \"<why>\"}. Put spec/research files only — no code paths. Run `python3 .trellis/scripts/get_context.py --mode packages` to list available specs. Delete this line once real entries are added."}
+{"file": "AGENTS.md", "reason": "项目总入口、工作流与边界约定"}
+{"file": "lib/src/core/AGENTS.md", "reason": "启动序列与核心层约定"}
+{"file": "lib/src/core/plugin/AGENTS.md", "reason": "插件系统注册与测试约定"}
+{"file": "lib/src/plugins/collections/AGENTS.md", "reason": "Collections 分层、Controller、Repository 约定"}
+{"file": "test/AGENTS.md", "reason": "测试隔离与 Provider override 约定"}
+{"file": ".trellis/spec/backend/database-guidelines.md", "reason": "Drift/DAO/Repository 数据层规范"}
+{"file": ".trellis/spec/backend/error-handling.md", "reason": "异常处理与分层错误约定"}
+{"file": ".trellis/spec/frontend/component-guidelines.md", "reason": "启动 fallback UI 组件与 Typography 约束"}
+{"file": ".trellis/spec/frontend/uiux-guidelines.md", "reason": "错误态/反馈 UI 规范"}
+{"file": ".trellis/spec/frontend/state-management.md", "reason": "Riverpod Provider 状态管理规范"}
+{"file": ".trellis/tasks/05-28-fix-docs-and-low-risk-consistency-issues/prd.md", "reason": "任务目标、范围、验收标准"}

@@ -101,9 +101,7 @@ class _SavedItemDetailPanelState extends ConsumerState<SavedItemDetailPanel> {
     final platform = SourcePlatform.fromValue(item.sourcePlatform);
 
     // Read local logo path from cache (non-blocking, shows fallback when null)
-    final logoAsync = ref.watch(
-      websiteLogoForUrlProvider(item.normalizedUrl),
-    );
+    final logoAsync = ref.watch(websiteLogoForUrlProvider(item.normalizedUrl));
     final localLogoPath = logoAsync.valueOrNull?.localLogoPath;
 
     return Container(
@@ -242,8 +240,6 @@ class _SavedItemDetailPanelState extends ConsumerState<SavedItemDetailPanel> {
       ),
     );
   }
-
-
 
   // ===============================================================
   // B. Top Action Row
@@ -444,7 +440,9 @@ class _SavedItemDetailPanelState extends ConsumerState<SavedItemDetailPanel> {
                   label: _statusLabel(status),
                   selected: isSelected,
                   onTap: () async {
-                    final controller = ref.read(savedItemActionsControllerProvider);
+                    final controller = ref.read(
+                      savedItemActionsControllerProvider,
+                    );
                     await controller.updateStatus(item.id, status);
                   },
                   compact: true,
@@ -703,6 +701,8 @@ class _SavedItemDetailPanelState extends ConsumerState<SavedItemDetailPanel> {
     final boxes = boxIds.isNotEmpty
         ? await repository.getBoxes()
         : <CollectionBoxesTableData>[];
+    if (!mounted) return;
+
     final boxNames = boxes
         .where((b) => boxIds.contains(b.id))
         .map((b) => b.name)
@@ -883,8 +883,6 @@ class _SavedItemDetailPanelState extends ConsumerState<SavedItemDetailPanel> {
       ),
     );
   }
-
-
 }
 
 class _InfoTile extends StatelessWidget {
@@ -1048,13 +1046,12 @@ class _EnrichmentStatusSection extends ConsumerWidget {
           ),
           GestureDetector(
             onTap: () async {
-              final controller =
-                  ref.read(savedItemActionsControllerProvider);
+              final controller = ref.read(savedItemActionsControllerProvider);
               final result = await controller.retryEnrichment(item.id);
               if (!context.mounted) return;
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text(result.message ?? '')),
-              );
+              ScaffoldMessenger.of(
+                context,
+              ).showSnackBar(SnackBar(content: Text(result.message ?? '')));
             },
             child: Row(
               mainAxisSize: MainAxisSize.min,
@@ -1150,8 +1147,9 @@ class _TagsSection extends ConsumerWidget {
                         final maxVisibleLabels = constraints.maxWidth < 260
                             ? 3
                             : 4;
-                        final visibleLabels =
-                            labels.take(maxVisibleLabels).toList();
+                        final visibleLabels = labels
+                            .take(maxVisibleLabels)
+                            .toList();
 
                         return Wrap(
                           spacing: AppSpacing.xs,
@@ -1170,9 +1168,7 @@ class _TagsSection extends ConsumerWidget {
                               icon: Icons.add_rounded,
                               onTap: () {
                                 ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text('标签功能稍后接入'),
-                                  ),
+                                  const SnackBar(content: Text('标签功能稍后接入')),
                                 );
                               },
                             ),
@@ -1280,14 +1276,15 @@ class _BoxSection extends ConsumerWidget {
 
                     return LayoutBuilder(
                       builder: (context, constraints) {
-                        final selectedBoxes = boxes.where(
-                          (box) => currentSet.contains(box.id),
-                        ).toList();
+                        final selectedBoxes = boxes
+                            .where((box) => currentSet.contains(box.id))
+                            .toList();
                         final maxVisibleItems = constraints.maxWidth < 260
                             ? 3
                             : 4;
-                        final visibleBoxes =
-                            selectedBoxes.take(maxVisibleItems).toList();
+                        final visibleBoxes = selectedBoxes
+                            .take(maxVisibleItems)
+                            .toList();
 
                         return Wrap(
                           spacing: AppSpacing.xs,
@@ -1309,10 +1306,7 @@ class _BoxSection extends ConsumerWidget {
                                     final controller = ref.read(
                                       savedItemActionsControllerProvider,
                                     );
-                                    controller.removeFromBox(
-                                      item.id,
-                                      box.id,
-                                    );
+                                    controller.removeFromBox(item.id, box.id);
                                   },
                                 ),
                             AppPillChip(
@@ -1376,5 +1370,4 @@ class _BoxSection extends ConsumerWidget {
       ref.invalidate(collectionBoxesProvider);
     });
   }
-
 }

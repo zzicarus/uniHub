@@ -291,6 +291,73 @@ for (final tableType in pluginTableTypes) {
 
 ---
 
+## Scenario: PluginRegistry 注册冲突检测
+
+### 1. Scope / Trigger
+
+- Trigger：新增插件时，重复的插件 ID、路由、导航入口或表声明会在 GoRouter、侧栏、数据库 schema 处造成隐性冲突。
+- 范围：`PluginRegistry.register()`、`UniHubPlugin.id/routes/navEntries/tables`、插件注册测试。
+
+### 2. Signatures
+
+| 位置 | 签名 / 字段 | 合同 |
+|------|-------------|------|
+| Registry | `void register(UniHubPlugin plugin)` | 注册前同步校验冲突；冲突时抛出 `StateError`，不修改 `_plugins` |
+| Plugin | `String get id` | 全局唯一，例如 `thoughts` / `collections` |
+| Plugin | `List<GoRoute> get routes` | `path` 与非空 `name` 在插件集合内唯一 |
+| Plugin | `List<NavEntry> get navEntries` | 顶层导航 `label` 与 `path + queryParams` 唯一 |
+| Plugin | `List<Type> get tables` | 同一 Drift Table Type 只能由一个插件声明 |
+
+### 3. Contracts
+
+- 生产启动：`main.dart` 注册所有生产插件，任一冲突应在启动早期暴露。
+- 测试夹具：如果需要注册多个 fake plugin，必须给它们不同的 id / route / nav / table，除非该测试专门验证冲突。
+- 导航冲突：`/thoughts` 与 `/thoughts?filter=archived` 可作为不同子入口；顶层插件导航不能复用同一目标。
+- 表冲突：同一表不能被多个插件同时声明；仅用于 schemaVersion 测试的插件如不拥有表，应返回空 `tables`。
+
+### 4. Validation & Error Matrix
+
+| 条件 | 处理 |
+|------|------|
+| `plugin.id` 已存在 | `StateError('Duplicate plugin id: ...')` |
+| route `path` 已存在 | `StateError('Duplicate route path: ...')` |
+| route `name` 已存在 | `StateError('Duplicate route name: ...')` |
+| nav `label` 已存在 | `StateError('Duplicate nav entry label: ...')` |
+| nav `path + queryParams` 已存在 | `StateError('Duplicate nav entry path: ...')` |
+| table `Type` 已存在 | `StateError('Duplicate table declaration: ...')` |
+
+### 5. Good/Base/Bad Cases
+
+- Good：`ThoughtsPlugin` 与 `CollectionsPlugin` 拥有不同 id、路由、导航入口和表声明，注册成功。
+- Base：插件内部可以有同一路由的不同子导航 query（如所有/归档），但顶层插件入口之间不得冲突。
+- Bad：两个测试插件都声明 `ThoughtsTable`，会在注册第二个插件时失败；schemaVersion 测试应让“只贡献版本”的插件 `tables => []`。
+
+### 6. Tests Required
+
+- Unit：`plugin_registry_test.dart` 覆盖成功注册、只读 plugin list、routes/nav merge。
+- Unit：覆盖重复 id / route path / route name / nav label / nav target / table 均抛 `StateError`。
+- Database：多插件 schemaVersion 测试使用不同表或空表，避免误触注册冲突。
+
+### 7. Wrong vs Correct
+
+#### Wrong
+
+```dart
+final registry = PluginRegistry()
+  ..register(_PluginA(tables: [ThoughtsTable]))
+  ..register(_PluginB(tables: [ThoughtsTable])); // 非 schema 拥有者重复声明表
+```
+
+#### Correct
+
+```dart
+final registry = PluginRegistry()
+  ..register(_PluginA(tables: [ThoughtsTable]))
+  ..register(_VersionOnlyPlugin(tables: const []));
+```
+
+---
+
 ## Enrichment + Logo 缓存数据流
 
 ```
@@ -309,8 +376,9 @@ _triggerEnrichmentQueue()
        ├─ WebsiteLogoCacheService.ensureLogoCached()
        │    ├─ 同 siteKey 去重：in-flight 映射表，并发场景仅一次网络请求
        │    ├─ 合法缓存判断：success + 未过期 + 本地文件存在 → 直接复用
+       │    ├─ failed 冷却判断：生产默认按 TTL 跳过；debug 日志开启时立即重试方便调试
        │    ├─ 下载 favicon（远程 URL 或 fallback /favicon.ico）
-       │    ├─ 协议限制：仅 http/https，data:/file: 等被拒绝
+       │    ├─ 协议限制：单个候选仅 http/https，data:/file: 等候选被拒绝后继续尝试安全 fallback
        │    ├─ MIME charset 处理：先 split(';') 再识别类型
        │    ├─ 保存到本地文件 {appCacheDir}/website_logos/{base64(siteKey)}.{ext}
        │    └─ 写入 website_logo_cache 表
@@ -334,7 +402,8 @@ UI 自动刷新
 | 文件存在验证 | success 缓存的 `localLogoPath` 文件不存在时视为无效，触发重抓 |
 | MIME 兼容 | MIME 类型先 `split(';').first` 剥离 charset 等参数再匹配 |
 | favicon 优先级 | 解析全部 `<link>` 标签后按优先级选：apple-touch-icon > .png > .webp > .ico > .svg |
-| TTL 管理 | 成功 30 天、失败 24 小时重试间隔 |
+| TTL 管理 | 成功 30 天、失败生产默认 24 小时重试间隔；debug 日志开启时 failed entry 不阻塞重试 |
+| 候选失败策略 | metadata 提供的 data:/file: 等非法 favicon URL 只让该候选失败，随后继续尝试 `https://host/favicon.ico` 等安全 fallback |
 
 ---
 

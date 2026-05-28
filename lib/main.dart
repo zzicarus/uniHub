@@ -11,7 +11,23 @@ void main() async {
   final registry = PluginRegistry();
   registry.register(ThoughtsPlugin());
   registry.register(CollectionsPlugin());
-  await registry.initAll();
+
+  Object? startupError;
+  StackTrace? startupStackTrace;
+  try {
+    await registry.initAll();
+  } catch (error, stackTrace) {
+    startupError = error;
+    startupStackTrace = stackTrace;
+    FlutterError.reportError(
+      FlutterErrorDetails(
+        exception: error,
+        stack: stackTrace,
+        library: 'unihub startup',
+        context: ErrorDescription('while initializing plugins'),
+      ),
+    );
+  }
 
   runApp(
     ProviderScope(
@@ -21,7 +37,10 @@ void main() async {
           return registry;
         }),
       ],
-      child: const UniHubApp(),
+      child: UniHubApp(
+        startupError: startupError,
+        startupStackTrace: startupStackTrace,
+      ),
     ),
   );
 }

@@ -163,8 +163,8 @@ List<int> _minimalIco() {
     0x01, 0x00, // ICO type
     0x01, 0x00, // 1 image
     0x01, 0x01, // width=1, height=1
-    0x00,       // palette
-    0x00,       // reserved
+    0x00, // palette
+    0x00, // reserved
     0x01, 0x00, // color planes
     0x20, 0x00, // 32 bpp
     0x2C, 0x00, 0x00, 0x00, // data size (44 bytes)
@@ -173,8 +173,8 @@ List<int> _minimalIco() {
     0x28, 0x00, 0x00, 0x00, // header size
     0x01, 0x00, 0x00, 0x00, // width
     0x01, 0x00, 0x00, 0x00, // height
-    0x01, 0x00,             // planes
-    0x20, 0x00,             // bpp
+    0x01, 0x00, // planes
+    0x20, 0x00, // bpp
     0x00, 0x00, 0x00, 0x00, // compression
     0x00, 0x00, 0x00, 0x00, // image size
     0x00, 0x00, 0x00, 0x00, // x pixels per meter
@@ -280,18 +280,20 @@ void main() {
       final file = File('${dir.path}/$fileName');
       await file.writeAsBytes(_minimalPng());
 
-      await env.dao.upsert(WebsiteLogoCacheTableCompanion(
-        siteKey: Value(key),
-        host: Value('example.com'),
-        remoteLogoUrl: const Value.absent(),
-        localLogoPath: Value(file.path),
-        mimeType: const Value('image/png'),
-        status: const Value('success'),
-        fetchedAt: Value(now),
-        expiresAt: Value(now.add(const Duration(days: 30))),
-        createdAt: Value(now),
-        updatedAt: Value(now),
-      ));
+      await env.dao.upsert(
+        WebsiteLogoCacheTableCompanion(
+          siteKey: Value(key),
+          host: Value('example.com'),
+          remoteLogoUrl: const Value.absent(),
+          localLogoPath: Value(file.path),
+          mimeType: const Value('image/png'),
+          status: const Value('success'),
+          fetchedAt: Value(now),
+          expiresAt: Value(now.add(const Duration(days: 30))),
+          createdAt: Value(now),
+          updatedAt: Value(now),
+        ),
+      );
 
       final result = await env.service.ensureLogoCached(
         pageUrl: 'https://example.com/article',
@@ -317,17 +319,19 @@ void main() {
       final file = File('${dir.path}/$fileName');
       await file.writeAsBytes(_minimalPng());
 
-      await env.dao.upsert(WebsiteLogoCacheTableCompanion(
-        siteKey: Value(key),
-        host: Value('example.com'),
-        localLogoPath: Value(file.path),
-        mimeType: const Value('image/png'),
-        status: const Value('success'),
-        fetchedAt: Value(now),
-        expiresAt: Value(now.subtract(const Duration(hours: 1))),
-        createdAt: Value(now),
-        updatedAt: Value(now),
-      ));
+      await env.dao.upsert(
+        WebsiteLogoCacheTableCompanion(
+          siteKey: Value(key),
+          host: Value('example.com'),
+          localLogoPath: Value(file.path),
+          mimeType: const Value('image/png'),
+          status: const Value('success'),
+          fetchedAt: Value(now),
+          expiresAt: Value(now.subtract(const Duration(hours: 1))),
+          createdAt: Value(now),
+          updatedAt: Value(now),
+        ),
+      );
 
       final result = await env.service.ensureLogoCached(
         pageUrl: 'https://example.com/article',
@@ -345,18 +349,20 @@ void main() {
       final env = await _createEnv((url) => _pngConfig());
       final now = DateTime.now();
 
-      await env.dao.upsert(WebsiteLogoCacheTableCompanion(
-        siteKey: Value('example.com'),
-        host: Value('example.com'),
-        remoteLogoUrl: const Value.absent(),
-        localLogoPath: Value('/nonexistent/path/logo.png'),
-        mimeType: const Value('image/png'),
-        status: const Value('success'),
-        fetchedAt: Value(now),
-        expiresAt: Value(now.add(const Duration(days: 30))),
-        createdAt: Value(now),
-        updatedAt: Value(now),
-      ));
+      await env.dao.upsert(
+        WebsiteLogoCacheTableCompanion(
+          siteKey: Value('example.com'),
+          host: Value('example.com'),
+          remoteLogoUrl: const Value.absent(),
+          localLogoPath: Value('/nonexistent/path/logo.png'),
+          mimeType: const Value('image/png'),
+          status: const Value('success'),
+          fetchedAt: Value(now),
+          expiresAt: Value(now.add(const Duration(days: 30))),
+          createdAt: Value(now),
+          updatedAt: Value(now),
+        ),
+      );
 
       final result = await env.service.ensureLogoCached(
         pageUrl: 'https://example.com/article',
@@ -370,53 +376,60 @@ void main() {
       await env.close();
     });
 
-    test('failed cache within 24h — does not re-fetch, returns failed entry', () async {
-      final env = await _createEnv((url) => _pngConfig());
-      final now = DateTime.now();
+    test(
+      'failed cache within debug cooldown — re-fetches during development',
+      () async {
+        final env = await _createEnv((url) => _pngConfig());
+        final now = DateTime.now();
 
-      await env.dao.upsert(WebsiteLogoCacheTableCompanion(
-        siteKey: Value('example.com'),
-        host: Value('example.com'),
-        remoteLogoUrl: const Value.absent(),
-        localLogoPath: const Value(null),
-        mimeType: const Value(null),
-        status: const Value('failed'),
-        lastError: const Value('Network error'),
-        expiresAt: Value(now.add(const Duration(hours: 23))),
-        createdAt: Value(now),
-        updatedAt: Value(now),
-      ));
+        await env.dao.upsert(
+          WebsiteLogoCacheTableCompanion(
+            siteKey: Value('example.com'),
+            host: Value('example.com'),
+            remoteLogoUrl: const Value.absent(),
+            localLogoPath: const Value(null),
+            mimeType: const Value(null),
+            status: const Value('failed'),
+            lastError: const Value('Network error'),
+            expiresAt: Value(now.add(const Duration(hours: 23))),
+            createdAt: Value(now),
+            updatedAt: Value(now),
+          ),
+        );
 
-      final result = await env.service.ensureLogoCached(
-        pageUrl: 'https://example.com/article',
-      );
+        final result = await env.service.ensureLogoCached(
+          pageUrl: 'https://example.com/article',
+        );
 
-      // Returns the failed entry (not null) — status tells the UI to show fallback.
-      expect(result, isNotNull);
-      expect(result!.status, 'failed');
-      expect(result.localLogoPath, isNull);
-      // No HTTP call was made
-      expect(env.mockClient.fetchedUrls, isEmpty);
+        // Debug logging is enabled by default, so failed entries retry immediately
+        // to make local favicon debugging fast.
+        expect(result, isNotNull);
+        expect(result!.status, 'success');
+        expect(result.localLogoPath, isNotNull);
+        expect(env.mockClient.fetchedUrls, isNotEmpty);
 
-      await env.close();
-    });
+        await env.close();
+      },
+    );
 
     test('failed cache expired — re-fetches', () async {
       final env = await _createEnv((url) => _pngConfig());
       final now = DateTime.now();
 
-      await env.dao.upsert(WebsiteLogoCacheTableCompanion(
-        siteKey: Value('example.com'),
-        host: Value('example.com'),
-        remoteLogoUrl: const Value.absent(),
-        localLogoPath: const Value(null),
-        mimeType: const Value(null),
-        status: const Value('failed'),
-        lastError: const Value('Network error'),
-        expiresAt: Value(now.subtract(const Duration(hours: 1))),
-        createdAt: Value(now),
-        updatedAt: Value(now),
-      ));
+      await env.dao.upsert(
+        WebsiteLogoCacheTableCompanion(
+          siteKey: Value('example.com'),
+          host: Value('example.com'),
+          remoteLogoUrl: const Value.absent(),
+          localLogoPath: const Value(null),
+          mimeType: const Value(null),
+          status: const Value('failed'),
+          lastError: const Value('Network error'),
+          expiresAt: Value(now.subtract(const Duration(hours: 1))),
+          createdAt: Value(now),
+          updatedAt: Value(now),
+        ),
+      );
 
       final result = await env.service.ensureLogoCached(
         pageUrl: 'https://example.com/article',
@@ -435,12 +448,8 @@ void main() {
 
       // Fire two concurrent requests for the same site
       final results = await Future.wait([
-        env.service.ensureLogoCached(
-          pageUrl: 'https://example.com/article',
-        ),
-        env.service.ensureLogoCached(
-          pageUrl: 'https://example.com/other',
-        ),
+        env.service.ensureLogoCached(pageUrl: 'https://example.com/article'),
+        env.service.ensureLogoCached(pageUrl: 'https://example.com/other'),
       ]);
 
       expect(results, hasLength(2));
@@ -461,12 +470,8 @@ void main() {
       });
 
       final results = await Future.wait([
-        env.service.ensureLogoCached(
-          pageUrl: 'https://example.com/article',
-        ),
-        env.service.ensureLogoCached(
-          pageUrl: 'https://other.org/page',
-        ),
+        env.service.ensureLogoCached(pageUrl: 'https://example.com/article'),
+        env.service.ensureLogoCached(pageUrl: 'https://other.org/page'),
       ]);
 
       expect(results, hasLength(2));
@@ -511,7 +516,7 @@ void main() {
   });
 
   group('URL scheme validation', () {
-    test('data: URL returns null (error caught internally)', () async {
+    test('data: remote favicon URL falls back to host candidates', () async {
       final env = await _createEnv((url) => _pngConfig());
 
       final result = await env.service.ensureLogoCached(
@@ -519,13 +524,18 @@ void main() {
         remoteFaviconUrl: 'data:image/png;base64,iVBOR',
       );
 
-      // Error is caught inside _ensureLogoCachedInternal and stored as failed
-      expect(result, isNull);
+      // The unsafe remote favicon candidate is rejected, then the service
+      // continues with safe https://host/favicon.* fallback candidates.
+      expect(result, isNotNull);
+      expect(result!.status, 'success');
+      expect(env.mockClient.fetchedUrls, [
+        'https://data-url.example/favicon.ico',
+      ]);
 
       await env.close();
     });
 
-    test('file: URL returns null (error caught internally)', () async {
+    test('file: remote favicon URL falls back to host candidates', () async {
       final env = await _createEnv((url) => _pngConfig());
 
       final result = await env.service.ensureLogoCached(
@@ -533,7 +543,11 @@ void main() {
         remoteFaviconUrl: 'file:///tmp/favicon.ico',
       );
 
-      expect(result, isNull);
+      expect(result, isNotNull);
+      expect(result!.status, 'success');
+      expect(env.mockClient.fetchedUrls, [
+        'https://file-url.example/favicon.ico',
+      ]);
 
       await env.close();
     });

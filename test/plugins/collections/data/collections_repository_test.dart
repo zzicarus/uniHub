@@ -93,10 +93,7 @@ void main() {
       await repository.setItemBoxes(matched.id, {box.id});
 
       final page = await repository.queryItems(
-        SavedItemsQuery(
-          view: CollectionView.all,
-          selectedBoxIds: {box.id},
-        ),
+        SavedItemsQuery(view: CollectionView.all, selectedBoxIds: {box.id}),
       );
 
       expect(page.items.map((item) => item.id), [matched.id]);
@@ -117,6 +114,34 @@ void main() {
       expect(updated.status, ConsumptionStatus.archived.value);
     });
 
+    test('clears archivedAt when restoring from archived status', () async {
+      final item = await repository.createSavedItem(
+        originalUrl: 'https://example.com/restore-archived',
+        normalizedUrl: 'https://example.com/restore-archived',
+      );
+
+      await repository.updateStatus(item.id, ConsumptionStatus.archived);
+      await repository.updateStatus(item.id, ConsumptionStatus.inProgress);
+
+      final updated = await repository.getSavedItem(item.id);
+      expect(updated!.status, ConsumptionStatus.inProgress.value);
+      expect(updated.archivedAt, isNull);
+    });
+
+    test('clears completedAt when status returns to unread', () async {
+      final item = await repository.createSavedItem(
+        originalUrl: 'https://example.com/restore-unread',
+        normalizedUrl: 'https://example.com/restore-unread',
+      );
+
+      await repository.updateStatus(item.id, ConsumptionStatus.done);
+      await repository.updateStatus(item.id, ConsumptionStatus.unread);
+
+      final updated = await repository.getSavedItem(item.id);
+      expect(updated!.status, ConsumptionStatus.unread.value);
+      expect(updated.completedAt, isNull);
+    });
+
     test('updateStatus does not modify isInInbox', () async {
       final item = await repository.createSavedItem(
         originalUrl: 'https://example.com/test-inbox',
@@ -130,6 +155,26 @@ void main() {
       expect(updated!.isInInbox, false);
       expect(updated.status, ConsumptionStatus.done.value);
       expect(updated.completedAt, isNotNull);
+    });
+
+    test('rejects invalid Box names in repository layer', () async {
+      await expectLater(
+        repository.createBox('   '),
+        throwsA(isA<ArgumentError>()),
+      );
+
+      await expectLater(
+        repository.createBox(
+          List.filled(CollectionsRepository.maxBoxNameLength + 1, '一').join(),
+        ),
+        throwsA(isA<ArgumentError>()),
+      );
+
+      await repository.createBox('重复收藏夹');
+      await expectLater(
+        repository.createBox(' 重复收藏夹 '),
+        throwsA(isA<StateError>()),
+      );
     });
 
     test('filters by Box ids using OR semantics', () async {

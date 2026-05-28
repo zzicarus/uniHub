@@ -7,6 +7,8 @@ import '../domain/saved_items_query.dart';
 class SavedItemsDao {
   SavedItemsDao(this._db);
 
+  static const _likeEscapeChar = r'\';
+
   final AppDatabase _db;
 
   Future<List<SavedItemsTableData>> getAll() {
@@ -82,8 +84,9 @@ class SavedItemsDao {
   }
 
   Future<int> deleteById(int id) {
-    return (_db.delete(_db.savedItemsTable)..where((t) => t.id.equals(id)))
-        .go();
+    return (_db.delete(
+      _db.savedItemsTable,
+    )..where((t) => t.id.equals(id))).go();
   }
 
   // ---------------------------------------------------------
@@ -103,9 +106,11 @@ class SavedItemsDao {
     // view filter
     switch (query.view) {
       case CollectionView.inbox:
-        q.where((t) =>
-            t.isInInbox.equals(true) &
-            t.status.equals(ConsumptionStatus.archived.value).not());
+        q.where(
+          (t) =>
+              t.isInInbox.equals(true) &
+              t.status.equals(ConsumptionStatus.archived.value).not(),
+        );
         break;
       case CollectionView.archived:
         q.where((t) => t.status.equals(ConsumptionStatus.archived.value));
@@ -141,27 +146,31 @@ class SavedItemsDao {
 
     // box filter (any-of semantics via EXISTS)
     if (query.selectedBoxIds.isNotEmpty) {
-      q.where((t) => existsQuery(
-        _db.selectOnly(_db.savedItemBoxesTable)
-          ..addColumns([_db.savedItemBoxesTable.itemId])
-          ..where(
-            _db.savedItemBoxesTable.itemId.equalsExp(t.id) &
-            _db.savedItemBoxesTable.boxId.isIn(query.selectedBoxIds),
-          ),
-      ));
+      q.where(
+        (t) => existsQuery(
+          _db.selectOnly(_db.savedItemBoxesTable)
+            ..addColumns([_db.savedItemBoxesTable.itemId])
+            ..where(
+              _db.savedItemBoxesTable.itemId.equalsExp(t.id) &
+                  _db.savedItemBoxesTable.boxId.isIn(query.selectedBoxIds),
+            ),
+        ),
+      );
     }
 
     // search filter
     final keyword = query.searchQuery.trim();
     if (keyword.isNotEmpty) {
-      final pattern = '%$keyword%';
-      q.where((t) =>
-          t.title.like(pattern) |
-          t.description.like(pattern) |
-          t.originalUrl.like(pattern) |
-          t.normalizedUrl.like(pattern) |
-          t.siteName.like(pattern) |
-          t.author.like(pattern));
+      final pattern = '%${_escapeLike(keyword)}%';
+      q.where(
+        (t) =>
+            t.title.like(pattern, escapeChar: _likeEscapeChar) |
+            t.description.like(pattern, escapeChar: _likeEscapeChar) |
+            t.originalUrl.like(pattern, escapeChar: _likeEscapeChar) |
+            t.normalizedUrl.like(pattern, escapeChar: _likeEscapeChar) |
+            t.siteName.like(pattern, escapeChar: _likeEscapeChar) |
+            t.author.like(pattern, escapeChar: _likeEscapeChar),
+      );
     }
 
     // sort
@@ -192,5 +201,12 @@ class SavedItemsDao {
     q.limit(query.limit, offset: query.offset);
 
     return q.get();
+  }
+
+  String _escapeLike(String input) {
+    return input
+        .replaceAll(r'\', r'\\')
+        .replaceAll('%', r'\%')
+        .replaceAll('_', r'\_');
   }
 }

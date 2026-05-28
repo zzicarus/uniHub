@@ -13,7 +13,7 @@
 | 层 | 技术 | 用途 |
 |----|------|------|
 | 框架 | Flutter + Dart 3 | 跨平台 UI |
-| 状态管理 | Riverpod (flutter_riverpod + riverpod_annotation) | Provider 体系 |
+| 状态管理 | Riverpod (flutter_riverpod) | Provider 体系 |
 | 路由 | GoRouter | 声明式路由 |
 | 数据库 | Drift (SQLite) | 本地持久化 |
 | 编辑器 | AppFlowy Editor (主) + flutter_quill (迁移遗留) | 富文本编辑 |
@@ -40,14 +40,14 @@ cd unihub
 # 安装依赖
 flutter pub get
 
-# 生成代码（Drift + Riverpod）
+# 生成代码（Drift）
 dart run build_runner build --delete-conflicting-outputs
 
 # 运行
 flutter run
 ```
 
-> 需要 Flutter >= 3.32 和 Dart >= 3.7。参考 [Flutter 安装指南](https://docs.flutter.dev/get-started/install)。
+> Dart SDK 版本要求以 `pubspec.yaml` 的 `environment.sdk` 为准（当前为 `^3.11.5`）。参考 [Flutter 安装指南](https://docs.flutter.dev/get-started/install)。
 
 ## 构建
 

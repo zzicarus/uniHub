@@ -21,6 +21,16 @@ class CollectionBoxesDao {
     )..where((t) => t.id.equals(id))).getSingleOrNull();
   }
 
+  Future<bool> existsByName(String name) async {
+    final row =
+        await (_db.selectOnly(_db.collectionBoxesTable)
+              ..addColumns([_db.collectionBoxesTable.id])
+              ..where(_db.collectionBoxesTable.name.equals(name))
+              ..limit(1))
+            .getSingleOrNull();
+    return row != null;
+  }
+
   Future<int> insert(CollectionBoxesTableCompanion entry) {
     return _db.into(_db.collectionBoxesTable).insert(entry);
   }
@@ -47,8 +57,9 @@ class CollectionBoxesDao {
 
   /// Remove a single box assignment for an item.
   Future<int> deleteItemBox(int itemId, int boxId) {
-    return (_db.delete(_db.savedItemBoxesTable)
-      ..where((t) => t.itemId.equals(itemId) & t.boxId.equals(boxId))).go();
+    return (_db.delete(
+      _db.savedItemBoxesTable,
+    )..where((t) => t.itemId.equals(itemId) & t.boxId.equals(boxId))).go();
   }
 
   Future<void> setItemBoxes(int itemId, Set<int> boxIds) async {
@@ -76,8 +87,9 @@ class CollectionBoxesDao {
   // ---------------------------------------------------------
 
   Future<int> deleteAllItemBoxes(int itemId) {
-    return (_db.delete(_db.savedItemBoxesTable)
-      ..where((t) => t.itemId.equals(itemId))).go();
+    return (_db.delete(
+      _db.savedItemBoxesTable,
+    )..where((t) => t.itemId.equals(itemId))).go();
   }
 
   /// Number of items per collection box.
@@ -91,9 +103,6 @@ class CollectionBoxesDao {
 
     final rows = await query.get();
 
-    return {
-      for (final row in rows)
-        row.read(boxId)!: row.read(countExp)!,
-    };
+    return {for (final row in rows) row.read(boxId)!: row.read(countExp)!};
   }
 }

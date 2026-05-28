@@ -58,8 +58,7 @@ class CollectionBulkActionBar extends ConsumerWidget {
                     vertical: 3,
                   ),
                   decoration: BoxDecoration(
-                    color:
-                        colorScheme.primaryContainer.withValues(alpha: 0.3),
+                    color: colorScheme.primaryContainer.withValues(alpha: 0.3),
                     borderRadius: BorderRadius.circular(AppRadius.xs),
                   ),
                   child: Text(
@@ -83,13 +82,13 @@ class CollectionBulkActionBar extends ConsumerWidget {
                           label: isCompact ? '已看' : '标记已看',
                           enabled: true,
                           onPressed: () async {
-                            final repository =
-                                ref.read(collectionsRepositoryProvider);
-                            await repository.updateStatus(
+                            final controller = ref.read(
+                              savedItemActionsControllerProvider,
+                            );
+                            await controller.updateStatus(
                               selectedId,
                               ConsumptionStatus.done,
                             );
-                            ref.invalidate(savedItemsListProvider);
                           },
                           colorScheme: colorScheme,
                         ),
@@ -100,15 +99,14 @@ class CollectionBulkActionBar extends ConsumerWidget {
                           label: '归档',
                           enabled: true,
                           onPressed: () async {
-                            final repository =
-                                ref.read(collectionsRepositoryProvider);
-                            await repository.updateStatus(
-                              selectedId,
-                              ConsumptionStatus.archived,
+                            final controller = ref.read(
+                              savedItemActionsControllerProvider,
                             );
-                            ref.read(selectedSavedItemIdProvider.notifier)
-                                .state = null;
-                            ref.invalidate(savedItemsListProvider);
+                            await controller.archiveItem(selectedId);
+                            ref
+                                    .read(selectedSavedItemIdProvider.notifier)
+                                    .state =
+                                null;
                           },
                           colorScheme: colorScheme,
                         ),
@@ -137,27 +135,34 @@ class CollectionBulkActionBar extends ConsumerWidget {
                           destructive: true,
                           colorScheme: colorScheme,
                           onPressed: () async {
-                            final prefsAsync =
-                                ref.read(deleteConfirmPrefsProvider);
+                            final prefsAsync = ref.read(
+                              deleteConfirmPrefsProvider,
+                            );
                             final prefs = prefsAsync.valueOrNull;
                             if (prefs == null) return;
 
-                            final repository =
-                                ref.read(collectionsRepositoryProvider);
-                            final item =
-                                await repository.getSavedItem(selectedId);
+                            final repository = ref.read(
+                              collectionsRepositoryProvider,
+                            );
+                            final item = await repository.getSavedItem(
+                              selectedId,
+                            );
                             if (item == null || !context.mounted) return;
 
                             final displayTitle = item.title.isEmpty
                                 ? item.normalizedUrl
                                 : item.title;
-                            final mediaType =
-                                MediaType.fromValue(item.mediaType);
-                            final platform =
-                                SourcePlatform.fromValue(item.sourcePlatform);
+                            final mediaType = MediaType.fromValue(
+                              item.mediaType,
+                            );
+                            final platform = SourcePlatform.fromValue(
+                              item.sourcePlatform,
+                            );
 
-                            final boxIds =
-                                await repository.getBoxIdsForItem(item.id);
+                            final boxIds = await repository.getBoxIdsForItem(
+                              item.id,
+                            );
+                            if (!context.mounted) return;
 
                             DeleteConfirmResult? result;
                             if (boxIds.length > 1) {
@@ -166,31 +171,28 @@ class CollectionBulkActionBar extends ConsumerWidget {
                                   .where((b) => boxIds.contains(b.id))
                                   .map((b) => b.name)
                                   .toList();
-                              result =
-                                  await DeleteConfirmDialog.showMultiBox(
+                              if (!context.mounted) return;
+                              result = await DeleteConfirmDialog.showMultiBox(
                                 context: context,
                                 title: displayTitle,
                                 source: item.siteName?.isNotEmpty == true
                                     ? item.siteName!
                                     : _domainOf(item.normalizedUrl),
                                 typeLabel: platform.label,
-                                relativeTime:
-                                    _relativeTime(item.createdAt),
+                                relativeTime: _relativeTime(item.createdAt),
                                 fallbackIcon: _iconFor(mediaType),
                                 boxNames: boxNames,
                                 prefs: prefs,
                               );
                             } else {
-                              result =
-                                  await DeleteConfirmDialog.showSingle(
+                              result = await DeleteConfirmDialog.showSingle(
                                 context: context,
                                 title: displayTitle,
                                 source: item.siteName?.isNotEmpty == true
                                     ? item.siteName!
                                     : _domainOf(item.normalizedUrl),
                                 typeLabel: platform.label,
-                                relativeTime:
-                                    _relativeTime(item.createdAt),
+                                relativeTime: _relativeTime(item.createdAt),
                                 fallbackIcon: _iconFor(mediaType),
                                 prefs: prefs,
                               );
@@ -204,9 +206,9 @@ class CollectionBulkActionBar extends ConsumerWidget {
 
                             if (result == DeleteConfirmResult.removeFromBox) {
                               if (boxIds.isNotEmpty) {
-                                final boxes =
-                                    await repository.getBoxes();
-                                final boxName = boxes
+                                final boxes = await repository.getBoxes();
+                                final boxName =
+                                    boxes
                                         .where((b) => b.id == boxIds.first)
                                         .map((b) => b.name)
                                         .firstOrNull ??
@@ -216,9 +218,7 @@ class CollectionBulkActionBar extends ConsumerWidget {
                                   boxIds.first,
                                 );
                                 ref.invalidate(savedItemsPageProvider);
-                                ref.invalidate(
-                                  collectionFolderCountsProvider,
-                                );
+                                ref.invalidate(collectionFolderCountsProvider);
                                 if (!context.mounted) return;
                                 _showUndoSnackBar(
                                   context,
@@ -226,17 +226,15 @@ class CollectionBulkActionBar extends ConsumerWidget {
                                   () async {
                                     final currentBoxIds = await repository
                                         .getBoxIdsForItem(item.id);
-                                    await repository.setItemBoxes(
-                                      item.id,
-                                      {...currentBoxIds, boxIds.first},
-                                    );
+                                    await repository.setItemBoxes(item.id, {
+                                      ...currentBoxIds,
+                                      boxIds.first,
+                                    });
                                     await repository.updateInboxState(
                                       item.id,
                                       false,
                                     );
-                                    ref.invalidate(
-                                      savedItemsPageProvider,
-                                    );
+                                    ref.invalidate(savedItemsPageProvider);
                                     ref.invalidate(
                                       collectionFolderCountsProvider,
                                     );
@@ -249,8 +247,9 @@ class CollectionBulkActionBar extends ConsumerWidget {
                             final undoBoxIds = List<int>.from(boxIds);
                             await repository.deleteSavedItem(item.id);
                             ref
-                                .read(selectedSavedItemIdProvider.notifier)
-                                .state = null;
+                                    .read(selectedSavedItemIdProvider.notifier)
+                                    .state =
+                                null;
                             ref.invalidate(savedItemsPageProvider);
                             ref.invalidate(collectionFolderCountsProvider);
                             if (!context.mounted) return;
@@ -258,15 +257,15 @@ class CollectionBulkActionBar extends ConsumerWidget {
                               context,
                               '已删除「$displayTitle」',
                               () async {
-                                final restored =
-                                    await repository.createSavedItem(
-                                  originalUrl: item.originalUrl,
-                                  normalizedUrl: item.normalizedUrl,
-                                  title: item.title,
-                                  mediaType: mediaType,
-                                  sourcePlatform: platform,
-                                  isInInbox: undoBoxIds.isEmpty,
-                                );
+                                final restored = await repository
+                                    .createSavedItem(
+                                      originalUrl: item.originalUrl,
+                                      normalizedUrl: item.normalizedUrl,
+                                      title: item.title,
+                                      mediaType: mediaType,
+                                      sourcePlatform: platform,
+                                      isInInbox: undoBoxIds.isEmpty,
+                                    );
                                 if (undoBoxIds.isNotEmpty) {
                                   await repository.setItemBoxes(
                                     restored.id,
@@ -278,9 +277,7 @@ class CollectionBulkActionBar extends ConsumerWidget {
                                   );
                                 }
                                 ref.invalidate(savedItemsPageProvider);
-                                ref.invalidate(
-                                  collectionFolderCountsProvider,
-                                );
+                                ref.invalidate(collectionFolderCountsProvider);
                               },
                             );
                           },
@@ -328,17 +325,15 @@ class _BulkActionPill extends StatelessWidget {
     final foregroundColor = !enabled
         ? colorScheme.onSurfaceVariant.withValues(alpha: 0.40)
         : destructive
-            ? colorScheme.error
-            : colorScheme.primary;
+        ? colorScheme.error
+        : colorScheme.primary;
 
     final borderRadius = BorderRadius.circular(AppRadius.full);
 
     return Material(
       type: MaterialType.transparency,
       child: Ink(
-        decoration: BoxDecoration(
-          borderRadius: borderRadius,
-        ),
+        decoration: BoxDecoration(borderRadius: borderRadius),
         child: InkWell(
           borderRadius: borderRadius,
           onTap: enabled ? onPressed : null,
@@ -350,11 +345,7 @@ class _BulkActionPill extends StatelessWidget {
                 mainAxisSize: MainAxisSize.min,
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(
-                    icon,
-                    size: iconSize,
-                    color: foregroundColor,
-                  ),
+                  Icon(icon, size: iconSize, color: foregroundColor),
                   const SizedBox(width: AppSpacing.xxs),
                   Text(
                     label,
@@ -419,10 +410,7 @@ void _showUndoSnackBar(
     SnackBar(
       content: Text(message),
       duration: const Duration(seconds: 5),
-      action: SnackBarAction(
-        label: '撤销',
-        onPressed: onUndo,
-      ),
+      action: SnackBarAction(label: '撤销', onPressed: onUndo),
     ),
   );
 }

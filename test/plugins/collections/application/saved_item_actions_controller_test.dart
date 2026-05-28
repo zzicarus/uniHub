@@ -1,4 +1,5 @@
 import 'package:drift/native.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:uni_hub/src/core/database/app_database.dart';
 import 'package:uni_hub/src/core/plugin/plugin_registry.dart';
@@ -19,6 +20,8 @@ import 'package:uni_hub/src/plugins/collections/services/enrichment_job_service.
 import 'package:uni_hub/src/plugins/collections/services/metadata_provider.dart';
 
 /// A stub metadata provider that returns default values without network I/O.
+const _urlLauncherChannel = MethodChannel('plugins.flutter.io/url_launcher');
+
 class _StubMetadataProvider implements MetadataProvider {
   @override
   Future<MetadataResult> fetchMetadata(String url) async {
@@ -30,11 +33,19 @@ class _StubMetadataProvider implements MetadataProvider {
 }
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+
   late AppDatabase db;
   late CollectionsRepository repository;
   late SavedItemActionsController controller;
 
   setUp(() {
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(_urlLauncherChannel, (call) async {
+          if (call.method == 'launch') return true;
+          return null;
+        });
+
     final registry = PluginRegistry()..register(CollectionsPlugin());
     db = AppDatabase(NativeDatabase.memory(), registry);
 
@@ -62,18 +73,22 @@ void main() {
   });
 
   tearDown(() async {
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(_urlLauncherChannel, null);
     await db.close();
   });
 
   group('SavedItemActionsController', () {
     Future<SavedItemsTableData> createTestItem({
       String? title,
+      String originalUrl = 'https://example.com/test',
+      String normalizedUrl = 'https://example.com/test',
       MediaType mediaType = MediaType.unknown,
       SourcePlatform sourcePlatform = SourcePlatform.unknown,
     }) async {
       return repository.createSavedItem(
-        originalUrl: 'https://example.com/test',
-        normalizedUrl: 'https://example.com/test',
+        originalUrl: originalUrl,
+        normalizedUrl: normalizedUrl,
         title: title,
         mediaType: mediaType,
         sourcePlatform: sourcePlatform,
@@ -99,10 +114,7 @@ void main() {
 
     test('SavedItemUndoSnapshot stores item and boxIds', () async {
       final item = await createTestItem(title: '快照测试');
-      final snapshot = SavedItemUndoSnapshot(
-        item: item,
-        boxIds: [1, 2, 3],
-      );
+      final snapshot = SavedItemUndoSnapshot(item: item, boxIds: [1, 2, 3]);
       expect(snapshot.item.id, item.id);
       expect(snapshot.boxIds, [1, 2, 3]);
     });
@@ -162,33 +174,29 @@ void main() {
       expect(restored.first.title, '删除后恢复');
     });
 
-    test(
-      'deleteItem with fullDelete undo restores box associations',
-      () async {
-        final item = await createTestItem(title: '带收藏夹恢复');
-        final boxId = await createBox('测试收藏夹');
-        await repository.setItemBoxes(item.id, {boxId});
+    test('deleteItem with fullDelete undo restores box associations', () async {
+      final item = await createTestItem(title: '带收藏夹恢复');
+      final boxId = await createBox('测试收藏夹');
+      await repository.setItemBoxes(item.id, {boxId});
 
-        final deleteResult = await controller.deleteItem(
-          item.id,
-          mode: DeleteMode.fullDelete,
-        );
-        expect(deleteResult.success, isTrue);
+      final deleteResult = await controller.deleteItem(
+        item.id,
+        mode: DeleteMode.fullDelete,
+      );
+      expect(deleteResult.success, isTrue);
 
-        // Execute the undo action which calls restoreDeletedItem internally
-        await deleteResult.undo!.execute();
+      // Execute the undo action which calls restoreDeletedItem internally
+      await deleteResult.undo!.execute();
 
-        final all = await repository.queryItems(
-          const SavedItemsQuery(view: CollectionView.all, limit: 500),
-        );
-        final restored = all.items.firstWhere(
-          (i) => i.normalizedUrl == item.normalizedUrl,
-        );
-        final restoredBoxIds =
-            await repository.getBoxIdsForItem(restored.id);
-        expect(restoredBoxIds, contains(boxId));
-      },
-    );
+      final all = await repository.queryItems(
+        const SavedItemsQuery(view: CollectionView.all, limit: 500),
+      );
+      final restored = all.items.firstWhere(
+        (i) => i.normalizedUrl == item.normalizedUrl,
+      );
+      final restoredBoxIds = await repository.getBoxIdsForItem(restored.id);
+      expect(restoredBoxIds, contains(boxId));
+    });
 
     test('deleteItem returns failure for non-existent item', () async {
       final result = await controller.deleteItem(999);
@@ -312,6 +320,36 @@ void main() {
       final result = await controller.openItem(999);
       expect(result.success, isFalse);
       expect(result.message, '收藏项不存在');
+    });
+
+    test('openItem does not mark invalid URL as opened', () async {
+      final item = await createTestItem(
+        originalUrl: 'not a valid url',
+        normalizedUrl: 'not-a-valid-url',
+      );
+
+      final result = await controller.openItem(item.id);
+      final updated = await repository.getSavedItem(item.id);
+
+      expect(result.success, isFalse);
+      expect(result.message, '无效的链接');
+      expect(updated!.lastOpenedAt, isNull);
+    });
+
+    test('openItem does not mark URL as opened when launcher fails', () async {
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(_urlLauncherChannel, (call) async {
+            if (call.method == 'launch') return false;
+            return null;
+          });
+      final item = await createTestItem();
+
+      final result = await controller.openItem(item.id);
+      final updated = await repository.getSavedItem(item.id);
+
+      expect(result.success, isFalse);
+      expect(result.message, '打开链接失败');
+      expect(updated!.lastOpenedAt, isNull);
     });
 
     // ---------------------------------------------------------
