@@ -854,3 +854,36 @@ font: AppFlowy 编辑器使用 Inter 字体 + 主题色; image V2: ThoughtImageB
 ### Next Steps
 
 - None - task complete
+
+
+## Session 23: 修复文档与低风险一致性问题
+
+**Date**: 2026-05-28
+**Task**: 修复文档与低风险一致性问题
+**Branch**: `main`
+
+### Summary
+
+修复 README/pubspec 文档不一致、插件初始化失败兜底、插件注册重复检测、收藏 LIKE 搜索转义、打开收藏流程顺序修复、updateStatus 状态清理、收藏夹名称 Repository 层校验等 8 个低风险一致性问题的修复与测试覆盖。
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `91dd221` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
