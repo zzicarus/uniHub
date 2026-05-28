@@ -15,6 +15,29 @@
 
 **当前代码中全部使用 `ConsumerWidget`**（参考 `HomePage`、`Sidebar`、`AppLayout` 等），即使在不需要读取 Provider 的场景也使用它——这保持了一致性，但以后可以灵活选择。
 
+### ConsumerStatefulWidget 的 State 复用陷阱
+
+`ConsumerStatefulWidget`（和 `StatefulWidget`）的 State 对象在父级重建传入
+不同 widget 配置时**会被复用**（Flutter 按 `Widget.key` + `Widget.runtimeType` 匹配
+已有 State）。这意味着：
+
+```dart
+// ❌ 危险：State 挂载时初始化一次，widget.entry 变化后永远不会更新
+class _DetailPanelState extends ConsumerState<DetailPanel> {
+  late final SavedItemsTableData item = widget.entry.item;
+  late final List<CollectionBoxesTableData> boxes = widget.entry.boxes;
+}
+
+// ✅ 正确：每次 build 都读取最新的 widget 数据
+class _DetailPanelState extends ConsumerState<DetailPanel> {
+  SavedItemsTableData get item => widget.entry.item;
+  List<CollectionBoxesTableData> get boxes => widget.entry.boxes;
+}
+```
+
+**规则**：`ConsumerState` 中如果字段派生自 `widget.*`，必须使用 getter
+（或通过 `didUpdateWidget` 更新），绝不能用 `late final` 一次初始化。
+
 ---
 
 ## Widget 结构
