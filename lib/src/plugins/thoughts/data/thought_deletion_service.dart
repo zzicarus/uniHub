@@ -1,3 +1,4 @@
+import 'thought_content_codec.dart';
 import 'thought_image_service.dart';
 import 'thoughts_repository.dart';
 
@@ -30,8 +31,12 @@ class ThoughtDeletionService {
   }) async {
     // 1. 读取 thought
     final thought = await _repository.getThought(id);
-    final imagePaths =
+    final legacyPaths =
         ThoughtImageService.decodeImagePaths(thought?.imagePaths);
+    // Also extract V2 image refs from the stored content (AppFlowy body).
+    final v2Paths =
+        ThoughtContentCodec.imagePathsFromStored(thought?.content ?? '');
+    final imagePaths = {...legacyPaths, ...v2Paths}.toList();
 
     // 2. 删除 DB 记录
     await _repository.deleteThought(id);

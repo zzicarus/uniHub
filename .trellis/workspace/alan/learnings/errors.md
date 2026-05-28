@@ -2,6 +2,44 @@
 
 > agent 在运行过程中遇到的错误记录于此，避免重复犯错。
 
+## 2026-05-28: 编辑器 P0 数据一致性 5 个 Bug 修复
+
+**场景**：Thoughts 插件从 Quill 迁移到 AppFlowy Editor 后，编辑器数据一致性存在 5 个 P0 缺陷。
+
+### Bug 1: 打开编辑器触发无意义 dirty / 自动保存
+
+- **根因**：`AppFlowyThoughtEditor` 初始化后通过 `addPostFrameCallback` 调用 `_emitCurrentValue()`，父组件的 `onChanged` → `updateDocument()` 不做差异判断，直接 `markDirty()`。用户仅打开详情页就污染 `updatedAt` 并可能触发自动保存。
+- **修复**：`updateDocument()` 添加 `DeepCollectionEquality` 差异判断 — 若 `documentJson` 和 `plainText` 均未变化则直接 `return`。
+
+### Bug 2: 标题只改 plainText，不改 documentJson
+
+- **根因**：标题栏 `_onTitleChanged()` 只修改 `ctrl.plainText` 第一行，没有通过 `editorController` 修改 AppFlowy 文档树。`save()` 时把旧的 `documentJson` 和新的 `plainText` 一起写入 `encodeAppFlowy()`，数据不一致。
+- **修复**：新增 `AppFlowyThoughtEditorController.updateFirstParagraphText()` 方法，通过 `Transaction.replaceText`/`insertText` 修改文档第一段。`_onTitleChanged` 改为调用此方法，编辑器 `onChanged` 自动原子同步 `documentJson` + `plainText`。
+
+### Bug 3: 删除想法时只删旧 images，不删 V2 AppFlowy 正文图片
+
+- **根因**：`ThoughtEditorController.delete()` 调用 `svc.deleteImages(images)`（旧版路径列表），未使用 `imageRefs`（从 AppFlowy 正文 image block 提取的新引用列表）。AppFlowy 正文插入的图片删除想法后留在本地。
+- **修复**：`delete()` 合并 `images` + `imageRefs` 两个来源；`ThoughtDeletionService` 同样从 content 提取 V2 imageRefs；`ThoughtContentCodec.imagePathsFromStored()` 从 stub 改为实际提取。
+
+### Bug 4: 图片插入失败时静默留下孤儿文件
+
+- **根因**：`AppFlowyThoughtEditorController.insertImageBlock()` 如果 `_editorState == null` 会 `return`（不抛错）。调用方 `insertImageIntoDocument()` 已先把图片保存到本地，只有 catch 到异常才会清理由。控制器未绑定时图片已保存但正文未插入，也不清理。
+- **修复**：`insertImageBlock()` 和 `removeImageBlock()` `_editorState == null` 改为 `throw StateError(...)`，调用方 catch 块能可靠回滚本地文件。
+
+### Bug 5: 删除单张图片后检查 imageRefs 存在异步时序问题
+
+- **根因**：`removeImageFromDocument()` 调用 `removeImageBlock()` 后立即检查 `imageRefs.any(...)`，但 `imageRefs` 通过 editor `onChanged` → `updateDocument()` 异步刷新，最坏情况下检查的是旧 `imageRefs`，导致文件不删。
+- **修复**：改为基于当前 `imageRefs` 同步计算预期新引用集合 (`where((r) => r.id != imageId)`)，不依赖 `onChanged` 回调是否已刷新。
+
+**避免**（强制检查清单）：
+1. editor 的 `onChanged` 回调入口必须做差异判断再 `markDirty()`，避免初始化 emission 触发误保存
+2. 编辑编辑器元数据（标题、属性）必须通过 `EditorState`/`Transaction` API 修改文档树，不能只改控制器本地的 `plainText` 副本
+3. 数据清理/删除操作必须覆盖新旧两种数据模型（legacy + V2）
+4. 会修改状态的 controller 方法 `_editorState == null` 时必须 `throw`，不能静默 `return`
+5. 依赖异步回调刷新的状态检查，应先用当前值同步计算预期结果，而非等异步回调
+
+---
+
 ## 2026-05-24: InkWell 在动画布局中触发的 RenderBox layout 断言失败
 
 **场景**：侧栏 `_NavItem` 和 `_UserTile` 使用 `Material` + `InkWell` 模式。`_ExpandableNavItem` 使用 `AnimatedCrossFade` + `AnimatedRotation` 实现展开/折叠动画。当用户在动画期间点击 `_NavItem`，InkWell 创建涟漪效果（`InkDecoration.paintFeature` → `RenderPhysicalModel.paint`），尝试绘制到子 `RenderPadding` 上，但子组件尚未完成布局 → `RenderBox was not laid out: RenderPadding#9a240 NEEDS-LAYOUT NEEDS-PAINT`。

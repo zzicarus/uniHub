@@ -321,15 +321,10 @@ class _MainEditorColumnState extends State<_MainEditorColumn> {
   }
 
   void _onTitleChanged(String value) {
-    // Update the first line of plainText.  The document JSON is managed
-    // by AppFlowyThoughtEditor below; updating plainText here keeps the
-    // title in sync for save / display purposes.
-    final lines = widget.ctrl.plainText.split('\n');
-    if (lines.isNotEmpty) {
-      lines[0] = value;
-      widget.ctrl.plainText = lines.join('\n');
-      widget.ctrl.markDirty();
-    }
+    // Sync the title to the AppFlowy document's first paragraph via the
+    // editor controller. The editor's onChanged will fire back and
+    // update ctrl.documentJson / ctrl.plainText atomically.
+    widget.ctrl.editorController?.updateFirstParagraphText(value);
   }
 
   @override

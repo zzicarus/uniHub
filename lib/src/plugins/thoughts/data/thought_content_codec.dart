@@ -6,6 +6,8 @@ import 'package:flutter_quill/quill_delta.dart' show Delta;
 
 import '../../../../src/shared/editor/appflowy_document_tools.dart';
 
+import 'thought_image_block_codec.dart';
+
 class ThoughtContentCodec {
   /// Current format identifier for AppFlowy JSON content.
   static const String format = 'unihub.appflowy_json.v1';
@@ -101,11 +103,16 @@ class ThoughtContentCodec {
 
   /// Returns image paths extracted from stored content.
   ///
-  /// Phase 1: Returns an empty list, because images are stored in an
-  /// independent [imagePaths] field and AppFlowy image block is not yet
-  /// implemented.
+  /// Extracts paths from AppFlowy image blocks in the document JSON.
+  /// Falls back to [ThoughtImageBlockCodec.extractImageRefs] for new
+  /// format content.
   static List<String> imagePathsFromStored(String stored) {
-    return const [];
+    final docJson = documentJsonFromStored(stored);
+    if (docJson == null) return const [];
+    return ThoughtImageBlockCodec
+        .extractImageRefs(docJson)
+        .map((e) => e.path)
+        .toList();
   }
 
   // ---------------------------------------------------------------------------

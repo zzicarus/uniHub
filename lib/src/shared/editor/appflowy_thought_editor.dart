@@ -72,7 +72,9 @@ class AppFlowyThoughtEditorController extends ChangeNotifier {
     String? caption,
   }) async {
     final editorState = _editorState;
-    if (editorState == null) return;
+    if (editorState == null) {
+      throw StateError('EditorState is not bound — cannot insert image block');
+    }
 
     final node = imageNode(url: path);
     node.attributes[imageIdKey] = id;
@@ -90,7 +92,9 @@ class AppFlowyThoughtEditorController extends ChangeNotifier {
   /// matches [imageId]. If found, it is deleted via [EditorState.transaction].
   Future<void> removeImageBlock(String imageId) async {
     final editorState = _editorState;
-    if (editorState == null) return;
+    if (editorState == null) {
+      throw StateError('EditorState is not bound — cannot remove image block');
+    }
 
     final root = editorState.document.root;
     for (int i = 0; i < root.children.length; i++) {
@@ -111,7 +115,9 @@ class AppFlowyThoughtEditorController extends ChangeNotifier {
   /// causes the editor to scroll it into view.
   Future<void> focusImageBlock(String imageId) async {
     final editorState = _editorState;
-    if (editorState == null) return;
+    if (editorState == null) {
+      throw StateError('EditorState is not bound — cannot focus image block');
+    }
 
     final root = editorState.document.root;
     for (int i = 0; i < root.children.length; i++) {
@@ -124,6 +130,38 @@ class AppFlowyThoughtEditorController extends ChangeNotifier {
           endOffset: 1,
         );
         return;
+      }
+    }
+  }
+
+  /// Replaces the text of the first paragraph node with [text].
+  ///
+  /// Used to sync the title input with the AppFlowy document. This
+  /// triggers the editor's [onChanged] callback so the parent's
+  /// [documentJson] and [plainText] are updated atomically.
+  Future<void> updateFirstParagraphText(String text) async {
+    final editorState = _editorState;
+    if (editorState == null) {
+      throw StateError(
+        'EditorState is not bound — cannot update first paragraph',
+      );
+    }
+
+    final root = editorState.document.root;
+    for (final child in root.children) {
+      if (child.type == 'paragraph') {
+        final delta = child.delta;
+        if (delta != null) {
+          final currentLength = delta.toPlainText().length;
+          final transaction = editorState.transaction;
+          if (currentLength > 0) {
+            transaction.replaceText(child, 0, currentLength, text);
+          } else {
+            transaction.insertText(child, 0, text);
+          }
+          await editorState.apply(transaction);
+          return;
+        }
       }
     }
   }

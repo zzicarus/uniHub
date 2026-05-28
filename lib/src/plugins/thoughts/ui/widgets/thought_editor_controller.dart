@@ -15,6 +15,7 @@ library;
 import 'dart:async';
 import 'dart:typed_data';
 
+import 'package:collection/collection.dart' show DeepCollectionEquality;
 import 'package:flutter/material.dart';
 import 'package:flutter_quill/flutter_quill.dart' show Document, QuillController;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -237,10 +238,20 @@ class ThoughtEditorController {
   ///
   /// 更新 [documentJson] 和 [plainText]，重新提取 imageRefs，
   /// 然后自动标记 dirty。
+  ///
+  /// 如果 [documentJson] 和 [plainText] 都没有变化（例如编辑器初始
+  /// emission），则跳过更新，避免打开编辑器就触发无意义的 dirty/自动保存。
   void updateDocument({
     required Map<String, dynamic> documentJson,
     required String plainText,
   }) {
+    // Diff guard: skip if nothing changed (prevents spurious dirty on init).
+    if (this.documentJson != null &&
+        const DeepCollectionEquality().equals(this.documentJson, documentJson) &&
+        this.plainText == plainText) {
+      return;
+    }
+
     this.documentJson = documentJson;
     this.plainText = plainText;
     imageRefs = ThoughtImageBlockCodec.extractImageRefs(documentJson);
@@ -276,7 +287,13 @@ class ThoughtEditorController {
 
     if (confirmed == true) {
       final svc = await ref.read(thoughtImageServiceProvider.future);
-      await svc.deleteImages(images);
+      // Merge legacy images and V2 imageRefs to ensure all local files
+      // are cleaned up regardless of which path they came from.
+      final allPaths = {
+        ...images,
+        ...imageRefs.map((e) => e.path),
+      };
+      await svc.deleteImages(allPaths.toList());
       await ref.read(thoughtsRepositoryProvider).deleteThought(thoughtId);
       ref.invalidate(allThoughtsProvider);
     }
@@ -447,8 +464,11 @@ class ThoughtEditorController {
   ///
   /// 流程：
   /// 1. 通过 [editorController.removeImageBlock] 删除 AppFlowy image block
-  /// 2. 编辑器的 onChanged 会触发 [updateDocument]，更新 imageRefs
-  /// 3. 如果本地文件不再被任何 block 引用，删除文件
+  /// 2. 计算预期新引用集合（基于当前 imageRefs 去除目标 id）
+  /// 3. 如果本地文件不再被任何剩余 block 引用，删除文件
+  ///
+  /// 注意：步骤 2 基于当前 imageRefs 同步计算，不依赖 onChanged 回调
+  /// 是否已刷新，避免异步时序导致文件漏删。
   Future<void> removeImageFromDocument(String imageId) async {
     // 查找对应的图片引用。
     final ref_ = imageRefs.where((r) => r.id == imageId).firstOrNull;
@@ -458,10 +478,11 @@ class ThoughtEditorController {
     // 删除 document image block。
     await editorController?.removeImageBlock(imageId);
 
-    // After deletion, onChanged fires → updateDocument → imageRefs updated.
-    // Check if the path is still referenced.
-    final stillReferenced =
-        imageRefs.any((r) => r.path == path);
+    // Compute expected next refs synchronously — do NOT rely on the
+    // asynchronous onChanged → updateDocument() chain which may not
+    // have refreshed imageRefs yet.
+    final nextRefs = imageRefs.where((r) => r.id != imageId).toList();
+    final stillReferenced = nextRefs.any((r) => r.path == path);
 
     if (!stillReferenced) {
       // No remaining references — safe to delete the local file.
