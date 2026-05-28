@@ -1,1 +1,4 @@
-{"_example": "Fill with {\"file\": \"<path>\", \"reason\": \"<why>\"}. Put spec/research files only — no code paths. Run `python3 .trellis/scripts/get_context.py --mode packages` to list available specs. Delete this line once real entries are added."}
+{"file": ".trellis/spec/architecture/editor-migration.md", "reason": "编辑器架构迁移上下文 — AppFlowy Editor 合约与遗留事项"}
+{"file": ".trellis/spec/backend/error-handling.md", "reason": "异常处理规范 — Bug #4 StateError throw 模式"}
+{"file": ".trellis/spec/frontend/state-management.md", "reason": "状态管理模式 — Controller/Provider 交互"}
+{"file": ".trellis/spec/backend/plugin-data-flow.md", "reason": "插件数据流规范 — Codec/DeletionService 数据层模式"}
