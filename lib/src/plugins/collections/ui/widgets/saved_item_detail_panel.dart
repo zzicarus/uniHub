@@ -42,8 +42,11 @@ class SavedItemDetailPanel extends ConsumerStatefulWidget {
 class _SavedItemDetailPanelState extends ConsumerState<SavedItemDetailPanel> {
   static const _inboxBoxValue = -1;
 
-  late final SavedItemsTableData item = widget.entry.item;
-  late final List<CollectionBoxesTableData> boxes = widget.entry.boxes;
+  /// 当前选中项的数据。使用 getter 而非 late final，
+  /// 确保每次 build 都读到最新的 widget.entry，
+  /// 避免点击不同卡片后右侧详情仍显示旧数据。
+  SavedItemsTableData get item => widget.entry.item;
+  List<CollectionBoxesTableData> get boxes => widget.entry.boxes;
 
   @override
   Widget build(BuildContext context) {
