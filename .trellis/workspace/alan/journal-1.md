@@ -820,3 +820,37 @@ font: AppFlowy 编辑器使用 Inter 字体 + 主题色; image V2: ThoughtImageB
 ### Next Steps
 
 - None - task complete
+
+
+## Session 22: 修复编辑器 P0 数据一致性 5 个 Bug + Spec 记录
+
+**Date**: 2026-05-28
+**Task**: 修复编辑器 P0 数据一致性 5 个 Bug + Spec 记录
+**Branch**: `main`
+
+### Summary
+
+修复了 Thoughts 编辑器 5 个 P0 数据一致性缺陷：(1) DeepCollectionEquality 差异判断防误 dirty (2) updateFirstParagraphText Transaction API 使 documentJson 与 plainText 原子同步 (3) 删除时合并 images + imageRefs (4) 控制器方法 _editorState==null 时 throw StateError (5) 删除图片基于当前 imageRefs 同步计算预期集合。将 5 条数据一致性约定更新到 spec。本会话做上下文策划、品质验证、spec 更新。
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `6c0c50e` | (see git log) |
+| `10b0c40` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
