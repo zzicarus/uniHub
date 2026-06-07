@@ -1,0 +1,2 @@
+{"file": ".trellis/spec/backend/database-guidelines.md", "reason": "Repository 模式、DAO/Repository 分层、Provider 集成、mutation 事务边界"}
+{"file": ".trellis/spec/frontend/state-management.md", "reason": "Provider 模式、AutoDisposeAsyncNotifier 生命周期、ref.listen 模式"}

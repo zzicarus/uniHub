@@ -1,0 +1,2 @@
+{"file": ".trellis/spec/frontend/component-guidelines.md", "reason": "ConsumerStatefulWidget State复用陷阱、Widget 结构规范"}
+{"file": ".trellis/spec/frontend/state-management.md", "reason": "Provider 层级依赖、FutureProvider.family 模式、AsyncValue 三态处理"}

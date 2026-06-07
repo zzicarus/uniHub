@@ -1,0 +1,2 @@
+{"file": ".trellis/spec/frontend/quality-guidelines.md", "reason": "质量门禁：flutter analyze + flutter test 要求、禁止类型抑制"}
+{"file": ".trellis/spec/frontend/state-management.md", "reason": "Provider 生命周期验证、跨层数据流一致性"}

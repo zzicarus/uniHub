@@ -1,0 +1,1 @@
+{"file": ".trellis/spec/frontend/quality-guidelines.md", "reason": "质量门禁：flutter analyze + flutter test 要求、禁止类型抑制"}
