@@ -32,8 +32,7 @@ void main() {
   EnrichmentQueueController createController() {
     return EnrichmentQueueController(
       jobService: jobService,
-      // ref is null in unit tests; runOnce/drainPending still work via
-      // _jobService directly; retryItem will fail cleanly when _ref is null.
+      jobsDao: jobsDao,
     );
   }
 

@@ -7,9 +7,12 @@ import 'package:uni_hub/src/core/database/database_provider.dart';
 import 'package:uni_hub/src/core/storage/providers/storage_providers.dart';
 
 import '../application/collections_list_controller.dart';
+import '../application/collections_mutation_notifier.dart';
+import '../application/collections_refresh_coordinator.dart';
 import '../application/enrichment_queue_controller.dart';
 import '../application/saved_item_actions_controller.dart';
 import '../application/saved_item_detail_vm.dart';
+import '../application/saved_item_entry_factory.dart';
 import '../application/saved_item_list_entry.dart';
 import '../data/collection_boxes_dao.dart';
 import '../data/collections_repository.dart';
@@ -84,7 +87,8 @@ final enrichmentQueueControllerProvider =
     Provider<EnrichmentQueueController>((ref) {
   return EnrichmentQueueController(
     jobService: ref.watch(enrichmentJobServiceProvider),
-    ref: ref,
+    jobsDao: ref.watch(enrichmentJobsDaoProvider),
+    refreshCoordinator: ref.watch(collectionsRefreshCoordinatorProvider),
   );
 });
 
@@ -107,7 +111,8 @@ final savedItemActionsControllerProvider =
   return SavedItemActionsController(
     repository: ref.watch(collectionsRepositoryProvider),
     enrichmentJobService: ref.watch(enrichmentJobServiceProvider),
-    ref: ref,
+    refreshCoordinator: ref.watch(collectionsRefreshCoordinatorProvider),
+    enrichmentQueueController: ref.watch(enrichmentQueueControllerProvider),
   );
 });
 
@@ -381,6 +386,25 @@ final selectedSavedItemDetailProvider =
 // ---------------------------------------------------------------------------
 // Collections List Controller
 // ---------------------------------------------------------------------------
+
+// ---------------------------------------------------------------------------
+// Collections Mutation Pipeline
+// ---------------------------------------------------------------------------
+
+final collectionsMutationProvider =
+    StateNotifierProvider<CollectionsMutationNotifier,
+        CollectionsMutationState>((ref) {
+  return CollectionsMutationNotifier();
+});
+
+final collectionsRefreshCoordinatorProvider =
+    Provider<CollectionsRefreshCoordinator>((ref) {
+  return CollectionsRefreshCoordinator(ref);
+});
+
+final savedItemEntryFactoryProvider = Provider<SavedItemEntryFactory>((ref) {
+  return SavedItemEntryFactory(ref);
+});
 
 final collectionsListControllerProvider =
     AutoDisposeAsyncNotifierProvider<CollectionsListController,

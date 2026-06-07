@@ -1,14 +1,14 @@
 import 'dart:async';
 
-import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uni_hub/src/plugins/collections/data/collections_repository.dart';
 import 'package:uni_hub/src/plugins/collections/domain/consumption_status.dart';
-import 'package:uni_hub/src/plugins/collections/providers/collections_providers.dart';
 import 'package:uni_hub/src/plugins/collections/services/enrichment_job_service.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import 'collections_mutation_event.dart';
+import 'collections_refresh_coordinator.dart';
+import 'enrichment_queue_controller.dart';
 import 'saved_item_action_result.dart';
 import 'saved_item_undo_snapshot.dart';
 
@@ -19,41 +19,26 @@ import 'saved_item_undo_snapshot.dart';
 /// mutation method returns [SavedItemActionResult] so the UI can display
 /// status messages and offer undo actions without knowing the underlying
 /// data layer.
+///
+/// After each mutation the controller delegates UI refresh to
+/// [CollectionsRefreshCoordinator], which emits typed mutation events
+/// and invalidates only the affected providers — eliminating the need
+/// for full-page reloads.
 class SavedItemActionsController {
   SavedItemActionsController({
     required CollectionsRepository repository,
     required EnrichmentJobService enrichmentJobService,
-    Ref? ref,
-  }) : _repository = repository,
-       _enrichmentJobService = enrichmentJobService,
-       _ref = ref;
+    CollectionsRefreshCoordinator? refreshCoordinator,
+    EnrichmentQueueController? enrichmentQueueController,
+  })  : _repository = repository,
+        _enrichmentJobService = enrichmentJobService,
+        _refreshCoordinator = refreshCoordinator,
+        _enrichmentQueueController = enrichmentQueueController;
 
   final CollectionsRepository _repository;
   final EnrichmentJobService _enrichmentJobService;
-  final Ref? _ref;
-
-  // ------------------------------------------------------------------
-  // Invalidation helpers
-  //
-  // These are overridable in subclasses (e.g. for tests) to replace
-  // Riverpod invalidation with test-friendly callbacks.
-  // ------------------------------------------------------------------
-
-  @protected
-  void invalidateLists() {
-    _ref?.invalidate(savedItemsPageProvider);
-  }
-
-  @protected
-  void invalidateCounts() {
-    _ref?.invalidate(collectionFolderCountsProvider);
-  }
-
-  @protected
-  void invalidateAll() {
-    invalidateLists();
-    invalidateCounts();
-  }
+  final CollectionsRefreshCoordinator? _refreshCoordinator;
+  final EnrichmentQueueController? _enrichmentQueueController;
 
   // ------------------------------------------------------------------
   // Actions
@@ -82,7 +67,10 @@ class SavedItemActionsController {
       }
 
       await _repository.markOpened(itemId);
-      invalidateLists();
+      _refreshCoordinator?.itemChanged(
+        itemId,
+        reason: SavedItemMutationReason.opened,
+      );
       return const SavedItemActionResult(success: true, message: '已打开');
     } catch (e) {
       return SavedItemActionResult(success: false, message: '打开链接失败', error: e);
@@ -107,7 +95,12 @@ class SavedItemActionsController {
   ) async {
     try {
       await _repository.updateStatus(itemId, status);
-      invalidateAll();
+      _refreshCoordinator?.itemChanged(
+        itemId,
+        reason: status == ConsumptionStatus.archived
+            ? SavedItemMutationReason.archive
+            : SavedItemMutationReason.status,
+      );
       return SavedItemActionResult(
         success: true,
         message: '状态已更新为「${status.label}」',
@@ -132,12 +125,10 @@ class SavedItemActionsController {
       await _repository.setItemBoxes(itemId, boxIds);
       await _repository.updateInboxState(itemId, boxIds.isEmpty);
 
-      // Defer invalidation to next frame for safe UI rebuild
-      if (_ref != null) {
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          invalidateAll();
-        });
-      }
+      _refreshCoordinator?.itemChanged(
+        itemId,
+        reason: SavedItemMutationReason.boxes,
+      );
 
       return const SavedItemActionResult(success: true);
     } catch (e) {
@@ -155,12 +146,12 @@ class SavedItemActionsController {
   Future<SavedItemActionResult> removeFromBox(int itemId, int boxId) async {
     try {
       await _repository.removeItemFromBox(itemId, boxId);
-      // Defer invalidation to next frame for safe UI rebuild
-      if (_ref != null) {
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          invalidateAll();
-        });
-      }
+
+      _refreshCoordinator?.itemChanged(
+        itemId,
+        reason: SavedItemMutationReason.boxes,
+      );
+
       return const SavedItemActionResult(success: true);
     } catch (e) {
       return SavedItemActionResult(
@@ -194,8 +185,7 @@ class SavedItemActionsController {
     switch (mode) {
       case DeleteMode.fullDelete:
         await _repository.deleteSavedItem(itemId);
-        _ref?.read(selectedSavedItemIdProvider.notifier).state = null;
-        invalidateAll();
+        _refreshCoordinator?.itemDeleted(itemId);
 
         final displayTitle = item.title.isEmpty
             ? item.normalizedUrl
@@ -219,9 +209,12 @@ class SavedItemActionsController {
         }
         await _repository.removeItemFromBox(itemId, boxId);
 
-        final currentBoxName = boxName ?? '收藏夹';
-        invalidateAll();
+        _refreshCoordinator?.itemChanged(
+          itemId,
+          reason: SavedItemMutationReason.boxes,
+        );
 
+        final currentBoxName = boxName ?? '收藏夹';
         return SavedItemActionResult(
           success: true,
           message: '已从「$currentBoxName」中移除',
@@ -231,7 +224,10 @@ class SavedItemActionsController {
               final currentIds = await _repository.getBoxIdsForItem(itemId);
               await _repository.setItemBoxes(itemId, {...currentIds, boxId});
               await _repository.updateInboxState(itemId, false);
-              invalidateAll();
+              _refreshCoordinator?.itemChanged(
+                itemId,
+                reason: SavedItemMutationReason.boxes,
+              );
             },
           ),
         );
@@ -250,7 +246,7 @@ class SavedItemActionsController {
         snapshot.item,
         snapshot.boxIds,
       );
-      invalidateAll();
+      _refreshCoordinator?.itemRestored(restored.id);
       final displayTitle = restored.title.isEmpty
           ? restored.originalUrl
           : restored.title;
@@ -269,21 +265,13 @@ class SavedItemActionsController {
 
   /// Retry enrichment for a saved item.
   ///
-  /// Delegates to [EnrichmentQueueController.retryItem] when [_ref] is
-  /// available (production). Falls back to the direct repository +
-  /// enrichment service path in tests where [_ref] may be null.
+  /// Delegates to [EnrichmentQueueController.retryItem] when available
+  /// (production), falling back to a direct repository + service path
+  /// for tests where the controller may not be provided.
   Future<SavedItemActionResult> retryEnrichment(int itemId) async {
-    if (_ref != null) {
-      try {
-        final queueController = _ref.read(enrichmentQueueControllerProvider);
-        return queueController.retryItem(itemId);
-      } catch (e) {
-        return SavedItemActionResult(
-          success: false,
-          message: '重试失败：${e.toString()}',
-          error: e,
-        );
-      }
+    final queueController = _enrichmentQueueController;
+    if (queueController != null) {
+      return queueController.retryItem(itemId);
     }
     // Fallback for tests
     try {

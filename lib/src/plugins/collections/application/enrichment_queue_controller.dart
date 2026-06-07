@@ -1,9 +1,10 @@
 import 'dart:async';
 
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:uni_hub/src/plugins/collections/providers/collections_providers.dart';
+import 'package:uni_hub/src/plugins/collections/data/enrichment_jobs_dao.dart';
 import 'package:uni_hub/src/plugins/collections/services/enrichment_job_service.dart';
 
+import 'collections_mutation_event.dart';
+import 'collections_refresh_coordinator.dart';
 import 'saved_item_action_result.dart';
 
 /// 增强 Enrichment 队列恢复能力控制器。
@@ -17,18 +18,16 @@ import 'saved_item_action_result.dart';
 class EnrichmentQueueController {
   EnrichmentQueueController({
     required EnrichmentJobService jobService,
-    Ref? ref,
+    required EnrichmentJobsDao jobsDao,
+    CollectionsRefreshCoordinator? refreshCoordinator,
   })  : _jobService = jobService,
-        _ref = ref;
+        _jobsDao = jobsDao,
+        _refreshCoordinator = refreshCoordinator;
 
   final EnrichmentJobService _jobService;
-  final Ref? _ref;
+  final EnrichmentJobsDao _jobsDao;
+  final CollectionsRefreshCoordinator? _refreshCoordinator;
   bool _isRunning = false;
-
-  void _invalidateLists() {
-    _ref?.invalidate(savedItemsPageProvider);
-    _ref?.read(websiteLogoRefreshProvider.notifier).state++;
-  }
 
   /// Run one batch of pending jobs.
   ///
@@ -63,7 +62,7 @@ class EnrichmentQueueController {
       return totalProcessed;
     } finally {
       _isRunning = false;
-      _invalidateLists();
+      _refreshCoordinator?.hardReload('enrichment drain completed');
     }
   }
 
@@ -74,23 +73,16 @@ class EnrichmentQueueController {
   /// consumption.
   Future<SavedItemActionResult> retryItem(int itemId) async {
     try {
-      final jobsDao = _ref?.read(enrichmentJobsDaoProvider);
-      if (jobsDao == null) {
-        return const SavedItemActionResult(
-          success: false,
-          message: 'EnrichmentQueueController 未初始化',
-        );
-      }
-      final existing = await jobsDao.getPendingForItem(itemId);
+      final existing = await _jobsDao.getPendingForItem(itemId);
       if (existing != null) {
         return const SavedItemActionResult(
           success: true,
           message: '该收藏已在抓取队列中',
         );
       }
-      await jobsDao.enqueue(itemId);
+      await _jobsDao.enqueue(itemId);
       // Process this immediately in the background
-      unawaited(_drainAfterRetry());
+      unawaited(_drainAfterRetry(itemId));
       return const SavedItemActionResult(
         success: true,
         message: '已重新加入抓取队列',
@@ -104,9 +96,19 @@ class EnrichmentQueueController {
     }
   }
 
-  Future<void> _drainAfterRetry() async {
-    // Small delay so the UI can show the updated state
+  /// Drain pending jobs and then patch the enriched item.
+  ///
+  /// After enrichment completes we emit a [SavedItemChanged] event so the
+  /// list controller can soft-patch the enriched metadata (title, site,
+  /// mediaType, etc.).
+  Future<void> _drainAfterRetry(int itemId) async {
     await Future.delayed(const Duration(milliseconds: 100));
     await drainPending(maxBatches: 3);
+    // After drain, emit an enrichment mutation so the list controller
+    // soft-patches this item's metadata and logo.
+    _refreshCoordinator?.itemChanged(
+      itemId,
+      reason: SavedItemMutationReason.enrichment,
+    );
   }
 }

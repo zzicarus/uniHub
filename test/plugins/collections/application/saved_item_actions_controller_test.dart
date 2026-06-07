@@ -68,7 +68,6 @@ void main() {
     controller = SavedItemActionsController(
       repository: repository,
       enrichmentJobService: enrichmentJobService,
-      // ref: null — invalidation callbacks are no-ops in tests
     );
   });
 
