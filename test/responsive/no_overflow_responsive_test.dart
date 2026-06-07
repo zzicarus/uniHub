@@ -9,7 +9,6 @@ import 'package:uni_hub/src/core/database/database_provider.dart';
 import 'package:uni_hub/src/core/plugin/plugin_registry.dart';
 import 'package:uni_hub/src/plugins/collections/collections_plugin.dart';
 import 'package:uni_hub/src/plugins/collections/ui/layouts/collections_desktop_layout.dart';
-import 'package:uni_hub/src/plugins/thoughts/thoughts_plugin.dart';
 
 void main() {
   // ─── Collections Layout: detail panel visibility at various widths ───
@@ -26,7 +25,7 @@ void main() {
 
       final registry = PluginRegistry()..register(CollectionsPlugin());
       final db = AppDatabase(NativeDatabase.memory(), registry);
-      addTearDown(() => db.close());
+      addTearDown(db.close);
 
       await tester.pumpWidget(
         ProviderScope(
