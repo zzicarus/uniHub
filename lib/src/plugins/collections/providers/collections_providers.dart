@@ -268,6 +268,18 @@ final websiteLogoForUrlProvider =
   );
 });
 
+/// 优先使用 normalizedUrl 查询 logo siteKey，避免 originalUrl 与 normalizedUrl
+/// host 不一致时左侧列表无法命中缓存的问题。
+///
+/// 例如：用户保存了一个 Google 搜索页面，originalUrl 是 google.com/url?... 的跳转链接，
+/// 而 normalizedUrl 已被规约为 google.com。此时用 originalUrl 生成的 siteKey 可能是
+/// 跳转源的域名，缓存中不存在对应的 logo。
+String _logoLookupUrlForSavedItem(SavedItemsTableData item) {
+  return item.normalizedUrl.trim().isNotEmpty
+      ? item.normalizedUrl
+      : item.originalUrl;
+}
+
 // ---------------------------------------------------------------------------
 // ViewModel list
 // ---------------------------------------------------------------------------
@@ -290,7 +302,7 @@ final savedItemListEntriesProvider =
   // Batch load logos
   final logoDao = ref.watch(websiteLogoCacheDaoProvider);
   final siteKeys = items
-      .map((item) => WebsiteLogoCacheService.siteKey(item.originalUrl));
+      .map((item) => WebsiteLogoCacheService.siteKey(_logoLookupUrlForSavedItem(item)));
   final logoRows = await logoDao.getLogosBySiteKeys(siteKeys);
   final logos = <String, WebsiteLogoCacheEntry?>{};
   for (final entry in logoRows.entries) {
@@ -312,7 +324,7 @@ final savedItemListEntriesProvider =
           for (final boxId in boxIdsMap[item.id] ?? const <int>[])
             if (boxById[boxId] != null) boxById[boxId]!,
         ],
-        logo: logos[WebsiteLogoCacheService.siteKey(item.originalUrl)],
+        logo: logos[WebsiteLogoCacheService.siteKey(_logoLookupUrlForSavedItem(item))],
         selected: false,
       ),
   ];
@@ -348,18 +360,16 @@ final selectedSavedItemDetailProvider =
   final allBoxes = await boxesDao.getAll();
   final boxes = allBoxes.where((b) => boxIds.contains(b.id)).toList();
 
-  final host = Uri.tryParse(item.normalizedUrl)?.host;
-  WebsiteLogoCacheEntry? logo;
-  if (host != null && host.isNotEmpty) {
-    final row = await logoDao.getByHost(host);
-    if (row != null) {
-      logo = WebsiteLogoCacheEntry(
-        siteKey: row.siteKey,
-        localLogoPath: row.localLogoPath,
-        status: row.status,
-      );
-    }
-  }
+  final lookupUrl = _logoLookupUrlForSavedItem(item);
+  final siteKey = WebsiteLogoCacheService.siteKey(lookupUrl);
+  final row = await logoDao.getBySiteKey(siteKey);
+  final WebsiteLogoCacheEntry? logo = row != null
+      ? WebsiteLogoCacheEntry(
+          siteKey: row.siteKey,
+          localLogoPath: row.localLogoPath,
+          status: row.status,
+        )
+      : null;
 
   return SavedItemDetailVm(
     item: item,
