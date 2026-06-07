@@ -8,7 +8,7 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-1.md`
-- **Total Sessions**: 26
+- **Total Sessions**: 27
 - **Last Active**: 2026-06-07
 <!-- @@@/auto:current-status -->
 
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-1.md` | ~1059 | Active |
+| `journal-1.md` | ~1093 | Active |
 <!-- @@@/auto:active-documents -->
 
 ---
@@ -29,6 +29,7 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 27 | 2026-06-07 | Batch A-D 架构收敛（CRUD CrudResult sealed CrudSideEffect captureUrl pipeline） | `caa7066`, `8f75f90` | `main` |
 | 26 | 2026-06-07 | 全局 CRUD 边界条件与反馈系统 | `dd87987`, `8bfe9ca`, `bf6f5db` | `main` |
 | 25 | 2026-06-07 | P1/P2 产品体验、架构与工程质量优化 | `175e02b` | `main` |
 | 24 | 2026-05-28 | 修复收藏模块运行时体验与架构一致性 15 项问题 | `42a1ab2` | `main` |

@@ -1057,3 +1057,37 @@ CollectionsDesktopLayout 的 `listenManual(savedItemListEntriesProvider, ...)` �
 ### Next Steps
 
 - None - task complete
+
+
+## Session 27: Batch A-D 架构收敛（CRUD CrudResult sealed CrudSideEffect captureUrl pipeline）
+
+**Date**: 2026-06-07
+**Task**: Batch A-D 架构收敛（CRUD CrudResult sealed CrudSideEffect captureUrl pipeline）
+**Branch**: `main`
+
+### Summary
+
+完成 P0-P1 四项架构收敛：Batch A box 分配统一 mutation pipeline；Batch B _loadPage 改用 SavedItemEntryFactory + 版本控制 + 搜索 debounce 归一；Batch C SavedItemDetailPanel itemId 驱动；Batch D CrudSideEffect sealed class + CollectionBoxActionsController + captureUrl 返回 CrudResult。补充 spec 文档（error-handling.md CrudSideEffect 规范 + state-management.md 容器 Widget 模式）。
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `caa7066` | (see git log) |
+| `8f75f90` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
