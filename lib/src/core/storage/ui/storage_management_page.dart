@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -10,6 +11,7 @@ import 'package:uni_hub/src/core/storage/storage_area_report.dart';
 import 'package:uni_hub/src/core/storage/storage_size_utils.dart';
 import 'package:uni_hub/src/core/theme/app_theme_tokens.dart';
 import 'package:uni_hub/src/core/theme/app_tokens.dart';
+import 'package:uni_hub/src/shared/widgets/app_confirm_dialog.dart';
 import 'package:uni_hub/src/shared/widgets/app_toast.dart';
 
 class StorageManagementPage extends ConsumerStatefulWidget {
@@ -20,8 +22,7 @@ class StorageManagementPage extends ConsumerStatefulWidget {
       _StorageManagementPageState();
 }
 
-class _StorageManagementPageState
-    extends ConsumerState<StorageManagementPage> {
+class _StorageManagementPageState extends ConsumerState<StorageManagementPage> {
   bool _scanning = false;
   AppStorageReport? _report;
   String? _error;
@@ -96,11 +97,7 @@ class _StorageManagementPageState
 
     return Row(
       children: [
-        Icon(
-          Icons.storage_outlined,
-          size: 34,
-          color: colorScheme.onSurface,
-        ),
+        Icon(Icons.storage_outlined, size: 34, color: colorScheme.onSurface),
         const SizedBox(width: AppSpacing.md),
         Expanded(
           child: Column(
@@ -112,10 +109,7 @@ class _StorageManagementPageState
                   fontWeight: AppFontTokens.extraBold,
                 ),
               ),
-              Text(
-                '查看和管理应用存储空间',
-                style: theme.textTheme.bodyLarge,
-              ),
+              Text('查看和管理应用存储空间', style: theme.textTheme.bodyLarge),
             ],
           ),
         ),
@@ -280,10 +274,7 @@ class _StorageManagementPageState
     if (_report == null) return [];
     final groups = _groupByType(_report!.areas);
     return groups.entries.map((entry) {
-      return _buildAreaGroup(
-        title: _typeLabel(entry.key),
-        areas: entry.value,
-      );
+      return _buildAreaGroup(title: _typeLabel(entry.key), areas: entry.value);
     }).toList();
   }
 
@@ -341,11 +332,7 @@ class _StorageManagementPageState
           // Row 1: icon + name + size + actions
           Row(
             children: [
-              Icon(
-                _areaIcon(area.type),
-                color: colorScheme.primary,
-                size: 20,
-              ),
+              Icon(_areaIcon(area.type), color: colorScheme.primary, size: 20),
               const SizedBox(width: AppSpacing.sm),
               Expanded(
                 child: Text(
@@ -392,11 +379,7 @@ class _StorageManagementPageState
           // Row 3: path + file count
           Row(
             children: [
-              Icon(
-                Icons.folder_outlined,
-                size: 14,
-                color: colorScheme.outline,
-              ),
+              Icon(Icons.folder_outlined, size: 14, color: colorScheme.outline),
               const SizedBox(width: AppSpacing.xxs),
               Expanded(
                 child: Text(
@@ -428,12 +411,12 @@ class _StorageManagementPageState
     return SizedBox(
       height: 32,
       child: OutlinedButton(
-        onPressed: () => _clearSingleArea(area),
+        onPressed: () => unawaited(_clearSingleArea(area)),
         style: OutlinedButton.styleFrom(
           padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
           visualDensity: VisualDensity.compact,
         ),
-        child: const Text('清除', style: TextStyle(fontSize: 12)),
+        child: Text('清除', style: Theme.of(context).textTheme.labelSmall),
       ),
     );
   }
@@ -513,9 +496,7 @@ class _StorageManagementPageState
       decoration: BoxDecoration(
         color: colorScheme.errorContainer.withValues(alpha: 0.3),
         borderRadius: BorderRadius.circular(AppRadius.lg),
-        border: Border.all(
-          color: colorScheme.error.withValues(alpha: 0.3),
-        ),
+        border: Border.all(color: colorScheme.error.withValues(alpha: 0.3)),
       ),
       padding: const EdgeInsets.all(AppSpacing.lg),
       child: Column(
@@ -564,82 +545,104 @@ class _StorageManagementPageState
   // Dialogs
   // ------------------------------------------------------------------
 
-  void _showClearCacheDialog() {
-    showDialog(
+  Future<void> _showClearCacheDialog() async {
+    final confirmed = await AppConfirmDialog.show(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('清除可再生缓存'),
-        content: const Text(
+      title: '清除可再生缓存',
+      message:
           '将删除网站 Logo、网页缩略图和临时文件。\n'
           '收藏、想法、标签和图片附件不会被删除。\n'
           '需要时应用会重新生成这些缓存。',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('取消'),
-          ),
-          FilledButton(
-            onPressed: () {
-              Navigator.pop(ctx);
-              _clearCache();
-            },
-            child: const Text('清除缓存'),
-          ),
-        ],
-      ),
+      confirmLabel: '清除缓存',
+      destructive: true,
+      icon: Icons.delete_sweep_outlined,
     );
+    if (confirmed) await _clearCache();
   }
 
   void _showResetDialog() {
-    final colorScheme = Theme.of(context).colorScheme;
     final controller = TextEditingController();
 
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('重置应用数据'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              '这会删除全部想法、收藏、标签、图片附件和缓存。此操作不可恢复。',
+    unawaited(
+      showDialog<void>(
+        context: context,
+        builder: (ctx) {
+          final theme = Theme.of(ctx);
+          final colorScheme = theme.colorScheme;
+          return Dialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(AppRadius.xl),
             ),
-            const SizedBox(height: AppSpacing.md),
-            const Text(
-              '输入 RESET 确认重置',
-              style: TextStyle(fontWeight: AppFontTokens.semiBold),
-            ),
-            const SizedBox(height: AppSpacing.sm),
-            TextField(
-              controller: controller,
-              decoration: const InputDecoration(
-                hintText: 'RESET',
-                border: OutlineInputBorder(),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 420),
+              child: Padding(
+                padding: const EdgeInsets.all(AppSpacing.xl),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '重置应用数据',
+                      style: theme.textTheme.titleLarge?.copyWith(
+                        color: colorScheme.onSurface,
+                        fontWeight: AppFontTokens.bold,
+                      ),
+                    ),
+                    const SizedBox(height: AppSpacing.md),
+                    Text(
+                      '这会删除全部想法、收藏、标签、图片附件和缓存。此操作不可恢复。',
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                    const SizedBox(height: AppSpacing.md),
+                    Text(
+                      '输入 RESET 确认重置',
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        fontWeight: AppFontTokens.semiBold,
+                      ),
+                    ),
+                    const SizedBox(height: AppSpacing.sm),
+                    TextField(
+                      controller: controller,
+                      decoration: const InputDecoration(
+                        hintText: 'RESET',
+                        border: OutlineInputBorder(),
+                      ),
+                    ),
+                    const SizedBox(height: AppSpacing.xl),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        TextButton(
+                          onPressed: () => Navigator.pop(ctx),
+                          child: const Text('取消'),
+                        ),
+                        const SizedBox(width: AppSpacing.sm),
+                        TextButton(
+                          onPressed: () {
+                            if (controller.text.trim() == 'RESET') {
+                              Navigator.pop(ctx);
+                              unawaited(_performReset());
+                            }
+                          },
+                          child: Text(
+                            '确认重置',
+                            style: theme.textTheme.labelLarge?.copyWith(
+                              color: colorScheme.error,
+                              fontWeight: AppFontTokens.semiBold,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
             ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('取消'),
-          ),
-          TextButton(
-            onPressed: () {
-              if (controller.text.trim() == 'RESET') {
-                Navigator.pop(ctx);
-                _performReset();
-              }
-            },
-            child: Text(
-              '确认重置',
-              style: TextStyle(color: colorScheme.error),
-            ),
-          ),
-        ],
-      ),
+          );
+        },
+      ).whenComplete(controller.dispose),
     );
   }
 
@@ -654,7 +657,7 @@ class _StorageManagementPageState
       final result = await action();
       if (mounted) {
         setState(() => _scanning = false);
-        _showSnackBar(
+        _showToast(
           '已清除 ${result.deletedFiles} 个文件，释放 ${StorageSizeUtils.format(result.freedBytes)}',
         );
         await _scan();
@@ -662,7 +665,7 @@ class _StorageManagementPageState
     } catch (e) {
       if (mounted) {
         setState(() => _scanning = false);
-        _showSnackBar('清除缓存失败：$e');
+        _showToast('清除缓存失败：$e');
       }
     }
   }
@@ -674,7 +677,7 @@ class _StorageManagementPageState
       final result = await manager.clearStorageArea(area.id);
       if (mounted) {
         setState(() => _scanning = false);
-        _showSnackBar(
+        _showToast(
           '已清除「${area.name}」，释放 ${StorageSizeUtils.format(result.freedBytes)}',
         );
         await _scan();
@@ -682,7 +685,7 @@ class _StorageManagementPageState
     } catch (e) {
       if (mounted) {
         setState(() => _scanning = false);
-        _showSnackBar('清除失败：$e');
+        _showToast('清除失败：$e');
       }
     }
   }
@@ -694,7 +697,7 @@ class _StorageManagementPageState
       if (mounted) setState(() => _scanning = false);
 
       if (orphaned.isEmpty) {
-        if (mounted) _showSnackBar('没有发现孤儿文件');
+        if (mounted) _showToast('没有发现孤儿文件');
         return;
       }
 
@@ -707,7 +710,7 @@ class _StorageManagementPageState
       final result = await action();
       if (mounted) {
         setState(() => _scanning = false);
-        _showSnackBar(
+        _showToast(
           '已清理 ${result.deletedFiles} 个孤儿文件，释放 ${StorageSizeUtils.format(result.freedBytes)}',
         );
         await _scan();
@@ -715,39 +718,26 @@ class _StorageManagementPageState
     } catch (e) {
       if (mounted) {
         setState(() => _scanning = false);
-        _showSnackBar('清理孤儿文件失败：$e');
+        _showToast('清理孤儿文件失败：$e');
       }
     }
   }
 
-  Future<bool?> _showOrphanConfirmDialog(
-    List<dynamic> orphaned,
-  ) {
+  Future<bool> _showOrphanConfirmDialog(List<dynamic> orphaned) {
     final totalBytes = orphaned.fold<int>(
       0,
       (sum, f) => sum + (f.sizeBytes as int),
     );
 
-    return showDialog<bool>(
+    return AppConfirmDialog.show(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('清理孤儿文件'),
-        content: Text(
+      title: '清理孤儿文件',
+      message:
           '发现 ${orphaned.length} 个不再被引用的文件'
-          '（${StorageSizeUtils.format(totalBytes)}），'
-          '是否删除？',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('取消'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('删除'),
-          ),
-        ],
-      ),
+          '（${StorageSizeUtils.format(totalBytes)}），是否删除？',
+      confirmLabel: '删除',
+      destructive: true,
+      icon: Icons.delete_outline_rounded,
     );
   }
 
@@ -760,15 +750,13 @@ class _StorageManagementPageState
 
       if (mounted) {
         setState(() => _scanning = false);
-        _showSnackBar(
-          '缓存已清除。数据库和附件需要删除应用数据目录后重启应用。',
-        );
+        _showToast('缓存已清除。数据库和附件需要删除应用数据目录后重启应用。');
         await _scan();
       }
     } catch (e) {
       if (mounted) {
         setState(() => _scanning = false);
-        _showSnackBar('重置失败：$e');
+        _showToast('重置失败：$e');
       }
     }
   }
@@ -784,17 +772,14 @@ class _StorageManagementPageState
       }
     } catch (_) {
       if (mounted) {
-        _showSnackBar('当前平台不支持打开目录');
+        _showToast('当前平台不支持打开目录');
       }
     }
   }
 
-  void _showSnackBar(String message) {
+  void _showToast(String message) {
     if (!mounted) return;
-    AppToast.show(
-      context,
-      message: message,
-    );
+    AppToast.show(context, message: message);
   }
 
   // ------------------------------------------------------------------
@@ -802,8 +787,7 @@ class _StorageManagementPageState
   // ------------------------------------------------------------------
 
   /// Whether the current platform supports opening directories.
-  bool get _canOpenDirectory =>
-      !Platform.isAndroid && !Platform.isIOS;
+  bool get _canOpenDirectory => !Platform.isAndroid && !Platform.isIOS;
 
   String _typeLabel(StorageAreaType type) {
     return switch (type) {
@@ -860,10 +844,7 @@ class _CategoryChip extends StatelessWidget {
           Container(
             width: 8,
             height: 8,
-            decoration: BoxDecoration(
-              color: color,
-              shape: BoxShape.circle,
-            ),
+            decoration: BoxDecoration(color: color, shape: BoxShape.circle),
           ),
           const SizedBox(width: AppSpacing.xs),
           Text(

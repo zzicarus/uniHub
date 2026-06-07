@@ -11,6 +11,8 @@ import 'package:uni_hub/src/plugins/collections/domain/enrichment_status.dart';
 import 'package:uni_hub/src/plugins/collections/domain/media_type.dart';
 import 'package:uni_hub/src/plugins/collections/domain/source_platform.dart';
 import 'package:uni_hub/src/plugins/collections/providers/collections_providers.dart';
+import 'package:uni_hub/src/plugins/collections/ui/widgets/create_collection_folder_dialog.dart';
+import 'package:uni_hub/src/shared/crud/crud.dart';
 import 'package:uni_hub/src/shared/preferences/delete_confirm_prefs_provider.dart';
 import 'package:uni_hub/src/shared/widgets/app_pill_chip.dart';
 import 'package:uni_hub/src/shared/widgets/app_toast.dart';
@@ -181,7 +183,7 @@ class _SavedItemDetailPanelState extends ConsumerState<SavedItemDetailPanel> {
                     tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                     foregroundColor: colorScheme.tertiary,
                   ),
-                  onPressed: () => _showSnackBar('星标功能稍后接入'),
+                  onPressed: () => _showToast('星标功能稍后接入'),
                 ),
               ),
               SizedBox(
@@ -261,7 +263,7 @@ class _SavedItemDetailPanelState extends ConsumerState<SavedItemDetailPanel> {
                       borderRadius: BorderRadius.circular(AppRadius.full),
                     ),
                   ),
-                  onPressed: () => _showSnackBar('星标功能稍后接入'),
+                  onPressed: () => _showToast('星标功能稍后接入'),
                 ),
               ),
             ],
@@ -357,7 +359,7 @@ class _SavedItemDetailPanelState extends ConsumerState<SavedItemDetailPanel> {
                 foregroundColor: colorScheme.onSurfaceVariant,
               ),
               onPressed: () {
-                _copyLink(item.id);
+                unawaited(_copyLink(item.id));
               },
             ),
           ),
@@ -541,7 +543,7 @@ class _SavedItemDetailPanelState extends ConsumerState<SavedItemDetailPanel> {
                 child: _QuickActionTile(
                   icon: Icons.share_outlined,
                   label: '分享',
-                  onTap: () => _showSnackBar('分享功能稍后接入'),
+                  onTap: () => _showToast('分享功能稍后接入'),
                 ),
               ),
               const SizedBox(width: AppSpacing.xs),
@@ -641,16 +643,14 @@ class _SavedItemDetailPanelState extends ConsumerState<SavedItemDetailPanel> {
     final controller = ref.read(savedItemActionsControllerProvider);
     final result = await controller.openItem(item.id);
     if (!mounted) return;
-    if (!result.success && result.message != null) {
-      _showSnackBar(result.message!);
-    }
+    ref.read(crudFeedbackCoordinatorProvider).handle(context, result);
   }
 
   Future<void> _copyLink(int itemId) async {
     final controller = ref.read(savedItemActionsControllerProvider);
     final result = await controller.copyUrl(itemId);
     if (!mounted) return;
-    _showSnackBar(result.message ?? '已复制链接');
+    ref.read(crudFeedbackCoordinatorProvider).handle(context, result);
   }
 
   Future<void> _deleteItem(int itemId) async {
@@ -709,8 +709,6 @@ class _SavedItemDetailPanelState extends ConsumerState<SavedItemDetailPanel> {
       return;
     }
 
-    final displayTitle = item.title.isEmpty ? item.normalizedUrl : item.title;
-
     if (result == DeleteConfirmResult.removeFromBox) {
       if (boxIds.isNotEmpty) {
         final currentBoxName = boxNames.isNotEmpty ? boxNames.first : '收藏夹';
@@ -721,33 +719,15 @@ class _SavedItemDetailPanelState extends ConsumerState<SavedItemDetailPanel> {
           boxName: currentBoxName,
         );
         if (!mounted) return;
-        if (deleteResult.undo != null) {
-          _showUndoSnackBar(
-            context,
-            deleteResult.message ?? '已从「$currentBoxName」中移除',
-            () async {
-              await deleteResult.undo!.execute();
-            },
-          );
-        }
+        ref.read(crudFeedbackCoordinatorProvider).handle(context, deleteResult);
       }
       return;
     }
 
     // Full delete
-    final deleteResult = await controller.deleteItem(
-      itemId,
-    );
+    final deleteResult = await controller.deleteItem(itemId);
     if (!mounted) return;
-    if (deleteResult.undo != null) {
-      _showUndoSnackBar(
-        context,
-        deleteResult.message ?? '已删除「$displayTitle」',
-        () async {
-          await deleteResult.undo!.execute();
-        },
-      );
-    }
+    ref.read(crudFeedbackCoordinatorProvider).handle(context, deleteResult);
   }
 
   String _domainOf(String url) {
@@ -760,9 +740,7 @@ class _SavedItemDetailPanelState extends ConsumerState<SavedItemDetailPanel> {
     final controller = ref.read(savedItemActionsControllerProvider);
     final result = await controller.archiveItem(itemId);
     if (!mounted) return;
-    if (result.message != null) {
-      _showSnackBar(result.message!);
-    }
+    ref.read(crudFeedbackCoordinatorProvider).handle(context, result);
   }
 
   Future<void> _showBoxMenu(int itemId) async {
@@ -821,24 +799,8 @@ class _SavedItemDetailPanelState extends ConsumerState<SavedItemDetailPanel> {
     }
   }
 
-  void _showSnackBar(String message) {
-    AppToast.show(
-      context,
-      message: message,
-    );
-  }
-
-  /// Show a 5-second undo Toast with AppToast.
-  static void _showUndoSnackBar(
-    BuildContext context,
-    String message,
-    FutureOr<void> Function() onUndo,
-  ) {
-    AppToast.undo(
-      context,
-      message: message,
-      onUndo: onUndo,
-    );
+  void _showToast(String message) {
+    AppToast.show(context, message: message);
   }
 }
 
@@ -1006,10 +968,7 @@ class _EnrichmentStatusSection extends ConsumerWidget {
               final controller = ref.read(savedItemActionsControllerProvider);
               final result = await controller.retryEnrichment(item.id);
               if (!context.mounted) return;
-              AppToast.show(
-                context,
-                message: result.message ?? '',
-              );
+              AppToast.show(context, message: result.message ?? '');
             },
             child: Row(
               mainAxisSize: MainAxisSize.min,
@@ -1095,9 +1054,7 @@ class _TagsSection extends ConsumerWidget {
 
                 return LayoutBuilder(
                   builder: (context, constraints) {
-                    final maxVisibleLabels = constraints.maxWidth < 260
-                        ? 3
-                        : 4;
+                    final maxVisibleLabels = constraints.maxWidth < 260 ? 3 : 4;
                     final visibleLabels = labels
                         .take(maxVisibleLabels)
                         .toList();
@@ -1118,10 +1075,7 @@ class _TagsSection extends ConsumerWidget {
                           compact: true,
                           icon: Icons.add_rounded,
                           onTap: () {
-                            AppToast.show(
-                              context,
-                              message: '标签功能稍后接入',
-                            );
+                            AppToast.show(context, message: '标签功能稍后接入');
                           },
                         ),
                       ],
@@ -1209,9 +1163,7 @@ class _BoxSection extends ConsumerWidget {
                     final selectedBoxes = boxes
                         .where((box) => currentBoxIds.contains(box.id))
                         .toList();
-                    final maxVisibleItems = constraints.maxWidth < 260
-                        ? 3
-                        : 4;
+                    final maxVisibleItems = constraints.maxWidth < 260 ? 3 : 4;
                     final visibleBoxes = selectedBoxes
                         .take(maxVisibleItems)
                         .toList();
@@ -1236,7 +1188,9 @@ class _BoxSection extends ConsumerWidget {
                                 final controller = ref.read(
                                   savedItemActionsControllerProvider,
                                 );
-                                controller.removeFromBox(item.id, box.id);
+                                unawaited(
+                                  controller.removeFromBox(item.id, box.id),
+                                );
                               },
                             ),
                         AppPillChip(
@@ -1254,7 +1208,9 @@ class _BoxSection extends ConsumerWidget {
               loading: () => const LinearProgressIndicator(minHeight: 2),
               error: (e, _) => Text(
                 '加载收藏夹失败：$e',
-                style: TextStyle(color: colorScheme.error),
+                style: Theme.of(
+                  context,
+                ).textTheme.bodySmall?.copyWith(color: colorScheme.error),
               ),
             ),
           ),
@@ -1264,28 +1220,11 @@ class _BoxSection extends ConsumerWidget {
   }
 
   Future<void> _createBox(BuildContext context, WidgetRef ref) async {
-    final controller = TextEditingController();
+    final boxes = ref.read(collectionBoxesProvider).valueOrNull ?? const [];
     final name = await showDialog<String>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('新建收藏夹'),
-        content: TextField(
-          controller: controller,
-          autofocus: true,
-          decoration: const InputDecoration(hintText: '收藏夹名称'),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('取消'),
-          ),
-          FilledButton(
-            onPressed: () {
-              Navigator.pop(ctx, controller.text.trim());
-            },
-            child: const Text('创建'),
-          ),
-        ],
+      builder: (ctx) => CreateCollectionFolderDialog(
+        existingNames: boxes.map((box) => box.name),
       ),
     );
     if (name == null || name.isEmpty) return;

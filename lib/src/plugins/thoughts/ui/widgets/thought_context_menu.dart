@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uni_hub/src/core/theme/app_tokens.dart';
+import 'package:uni_hub/src/shared/tags/tag_codec.dart';
+import 'package:uni_hub/src/shared/widgets/app_confirm_dialog.dart';
 import 'package:uni_hub/src/shared/widgets/app_toast.dart';
 import '../../providers/thoughts_providers.dart';
 
@@ -111,38 +113,21 @@ Future<void> showThoughtTagDialog({
         .updateTags(thoughtId, tagsString);
     ref.invalidate(allThoughtsProvider);
     if (context.mounted) {
-      AppToast.show(
-        context,
-        message: '标签已更新',
-        type: AppToastType.success,
-      );
+      AppToast.show(context, message: '标签已更新', type: AppToastType.success);
     }
   }
 }
 
 /// Shows a delete confirmation dialog. Returns true if confirmed.
-Future<bool> showThoughtDeleteDialog(BuildContext context) async {
-  final confirmed = await showDialog<bool>(
+Future<bool> showThoughtDeleteDialog(BuildContext context) {
+  return AppConfirmDialog.show(
     context: context,
-    builder: (ctx) => AlertDialog(
-      title: const Text('删除想法'),
-      content: const Text('确定要删除这个想法吗？此操作不可撤销。'),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.of(ctx).pop(false),
-          child: const Text('取消'),
-        ),
-        FilledButton(
-          onPressed: () => Navigator.of(ctx).pop(true),
-          style: FilledButton.styleFrom(
-            backgroundColor: Theme.of(ctx).colorScheme.error,
-          ),
-          child: const Text('删除'),
-        ),
-      ],
-    ),
+    title: '删除想法',
+    message: '确定要删除这个想法吗？此操作不可撤销。',
+    confirmLabel: '删除',
+    destructive: true,
+    icon: Icons.delete_outline_rounded,
   );
-  return confirmed ?? false;
 }
 
 class _MenuItem extends StatelessWidget {
@@ -173,7 +158,7 @@ class _MenuItem extends StatelessWidget {
         const SizedBox(width: AppSpacing.sm),
         Text(
           label,
-          style: TextStyle(
+          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
             color: isError ? colorScheme.error : colorScheme.onSurface,
           ),
         ),
@@ -194,6 +179,7 @@ class _TagDialog extends StatefulWidget {
 
 class _TagDialogState extends State<_TagDialog> {
   late List<String> _tags;
+  String? _errorText;
 
   @override
   void initState() {
@@ -210,10 +196,15 @@ class _TagDialogState extends State<_TagDialog> {
     if (input.isNotEmpty) {
       final added = input
           .split(RegExp(r'[,\s]+'))
-          .map((s) => s.trim())
+          .map(TagCodec.normalize)
           .where((s) => s.isNotEmpty)
           .toList();
       for (final tag in added) {
+        final validation = TagCodec.validate(tag);
+        if (!validation.isValid) {
+          setState(() => _errorText = validation.message);
+          return;
+        }
         if (!_tags.contains(tag)) {
           _tags.add(tag);
         }
@@ -224,48 +215,76 @@ class _TagDialogState extends State<_TagDialog> {
 
   @override
   Widget build(BuildContext context) {
-    return AlertDialog(
-      title: const Text('添加标签'),
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          if (_tags.isNotEmpty) ...[
-            Text('当前标签', style: Theme.of(context).textTheme.labelMedium),
-            const SizedBox(height: AppSpacing.xs),
-            Wrap(
-              spacing: AppSpacing.xxs,
-              runSpacing: AppSpacing.xxs,
-              children: _tags.map((tag) {
-                return Chip(
-                  label: Text(tag),
-                  deleteIcon: const Icon(Icons.close, size: 14),
-                  onDeleted: () => _removeTag(tag),
-                  materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                  visualDensity: VisualDensity.compact,
-                );
-              }).toList(),
-            ),
-            const SizedBox(height: AppSpacing.md),
-          ],
-          TextField(
-            controller: widget.controller,
-            decoration: const InputDecoration(
-              hintText: '输入新标签（空格/逗号分隔）',
-              isDense: true,
-            ),
-            autofocus: true,
-            onSubmitted: (_) => _save(),
-          ),
-        ],
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    return Dialog(
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(AppRadius.xl),
       ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.of(context).pop(),
-          child: const Text('取消'),
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 420),
+        child: Padding(
+          padding: const EdgeInsets.all(AppSpacing.xl),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                '添加标签',
+                style: theme.textTheme.titleLarge?.copyWith(
+                  color: colorScheme.onSurface,
+                  fontWeight: AppFontTokens.bold,
+                ),
+              ),
+              const SizedBox(height: AppSpacing.md),
+              if (_tags.isNotEmpty) ...[
+                Text('当前标签', style: Theme.of(context).textTheme.labelMedium),
+                const SizedBox(height: AppSpacing.xs),
+                Wrap(
+                  spacing: AppSpacing.xxs,
+                  runSpacing: AppSpacing.xxs,
+                  children: _tags.map((tag) {
+                    return Chip(
+                      label: Text(tag),
+                      deleteIcon: const Icon(Icons.close, size: 14),
+                      onDeleted: () => _removeTag(tag),
+                      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      visualDensity: VisualDensity.compact,
+                    );
+                  }).toList(),
+                ),
+                const SizedBox(height: AppSpacing.md),
+              ],
+              TextField(
+                controller: widget.controller,
+                decoration: InputDecoration(
+                  hintText: '输入新标签（空格/逗号分隔）',
+                  helperText: '最多 24 个字符，仅支持中文、英文、数字、-、_',
+                  errorText: _errorText,
+                  isDense: true,
+                ),
+                autofocus: true,
+                onChanged: (_) {
+                  if (_errorText != null) setState(() => _errorText = null);
+                },
+                onSubmitted: (_) => _save(),
+              ),
+              const SizedBox(height: AppSpacing.xl),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  TextButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    child: const Text('取消'),
+                  ),
+                  const SizedBox(width: AppSpacing.sm),
+                  FilledButton(onPressed: _save, child: const Text('保存')),
+                ],
+              ),
+            ],
+          ),
         ),
-        FilledButton(onPressed: _save, child: const Text('保存')),
-      ],
+      ),
     );
   }
 }

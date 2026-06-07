@@ -1,5 +1,6 @@
 import 'package:drift/drift.dart';
 import 'package:uni_hub/src/core/database/app_database.dart';
+import 'package:uni_hub/src/shared/crud/crud.dart';
 
 import '../domain/collection_folder_counts.dart';
 import '../domain/consumption_status.dart';
@@ -243,16 +244,18 @@ class CollectionsRepository {
   }
 
   Future<CollectionBoxesTableData> createBox(String name) async {
-    final trimmed = name.trim();
-    if (trimmed.isEmpty) {
-      throw ArgumentError('收藏夹名称不能为空');
+    final existingBoxes = await _collectionBoxesDao.getAll();
+    final failure = NameNormalizer.validateCollectionBoxName(
+      name,
+      siblingNames: existingBoxes.map((box) => box.name),
+    );
+    if (failure != null) {
+      if (failure.code == AppFailureCode.duplicate) {
+        throw StateError(failure.message);
+      }
+      throw ArgumentError(failure.message);
     }
-    if (trimmed.length > maxBoxNameLength) {
-      throw ArgumentError('收藏夹名称过长，最多 $maxBoxNameLength 个字符');
-    }
-    if (await _collectionBoxesDao.existsByName(trimmed)) {
-      throw StateError('收藏夹已存在：$trimmed');
-    }
+    final trimmed = NameNormalizer.normalize(name);
 
     final now = DateTime.now();
     final id = await _collectionBoxesDao.insert(

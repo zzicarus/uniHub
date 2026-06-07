@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uni_hub/src/plugins/collections/providers/collections_providers.dart';
+import 'package:uni_hub/src/shared/crud/crud.dart';
 
 import 'collections_mutation_event.dart';
 
@@ -25,8 +26,18 @@ class CollectionsRefreshCoordinator {
 
   /// A saved item's mutable properties changed (status, boxes, metadata, etc.).
   void itemChanged(int itemId, {required SavedItemMutationReason reason}) {
-    ref.read(collectionsMutationProvider.notifier).emit(
-          SavedItemChanged(itemId: itemId, reason: reason),
+    ref
+        .read(collectionsMutationProvider.notifier)
+        .emit(SavedItemChanged(itemId: itemId, reason: reason));
+    ref
+        .read(crudMutationProvider.notifier)
+        .emit(
+          CrudMutationEvent(
+            type: CrudMutationType.changed,
+            entityType: CrudEntityType.savedItem,
+            entityId: itemId,
+            reason: reason.name,
+          ),
         );
     ref.invalidate(selectedSavedItemDetailProvider(itemId));
     ref.invalidate(collectionFolderCountsProvider);
@@ -34,8 +45,17 @@ class CollectionsRefreshCoordinator {
 
   /// A saved item was permanently deleted.
   void itemDeleted(int itemId) {
-    ref.read(collectionsMutationProvider.notifier).emit(
-          SavedItemDeleted(itemId: itemId),
+    ref
+        .read(collectionsMutationProvider.notifier)
+        .emit(SavedItemDeleted(itemId: itemId));
+    ref
+        .read(crudMutationProvider.notifier)
+        .emit(
+          CrudMutationEvent(
+            type: CrudMutationType.deleted,
+            entityType: CrudEntityType.savedItem,
+            entityId: itemId,
+          ),
         );
     ref.invalidate(selectedSavedItemDetailProvider(itemId));
     ref.invalidate(collectionFolderCountsProvider);
@@ -43,8 +63,17 @@ class CollectionsRefreshCoordinator {
 
   /// A previously deleted saved item was restored.
   void itemRestored(int itemId) {
-    ref.read(collectionsMutationProvider.notifier).emit(
-          SavedItemRestored(itemId: itemId),
+    ref
+        .read(collectionsMutationProvider.notifier)
+        .emit(SavedItemRestored(itemId: itemId));
+    ref
+        .read(crudMutationProvider.notifier)
+        .emit(
+          CrudMutationEvent(
+            type: CrudMutationType.restored,
+            entityType: CrudEntityType.savedItem,
+            entityId: itemId,
+          ),
         );
     ref.invalidate(collectionFolderCountsProvider);
   }
@@ -56,17 +85,17 @@ class CollectionsRefreshCoordinator {
   /// controller can patch just the logo field instead of rebuilding the
   /// entire entry.
   void logoChanged(int itemId) {
-    ref.read(collectionsMutationProvider.notifier).emit(
-          SavedItemLogoChanged(itemId: itemId),
-        );
+    ref
+        .read(collectionsMutationProvider.notifier)
+        .emit(SavedItemLogoChanged(itemId: itemId));
     ref.read(websiteLogoRefreshProvider.notifier).state++;
   }
 
   /// Full list reload — e.g. after filter/sort/view changes.
   void hardReload(String reason) {
-    ref.read(collectionsMutationProvider.notifier).emit(
-          CollectionsReloadRequested(reason: reason),
-        );
+    ref
+        .read(collectionsMutationProvider.notifier)
+        .emit(CollectionsReloadRequested(reason: reason));
     ref.invalidate(collectionFolderCountsProvider);
   }
 }

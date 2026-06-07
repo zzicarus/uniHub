@@ -4,66 +4,54 @@ import 'package:flutter/services.dart';
 import 'package:uni_hub/src/plugins/collections/data/collections_repository.dart';
 import 'package:uni_hub/src/plugins/collections/domain/consumption_status.dart';
 import 'package:uni_hub/src/plugins/collections/services/enrichment_job_service.dart';
+import 'package:uni_hub/src/shared/crud/crud.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import 'collections_mutation_event.dart';
 import 'collections_refresh_coordinator.dart';
 import 'enrichment_queue_controller.dart';
-import 'saved_item_action_result.dart';
 import 'saved_item_undo_snapshot.dart';
 
 /// Unified controller for saved item operations.
 ///
 /// UI components call these methods instead of directly accessing the
-/// repository or composing delete/undo/archive flows inline. Every
-/// mutation method returns [SavedItemActionResult] so the UI can display
-/// status messages and offer undo actions without knowing the underlying
-/// data layer.
-///
-/// After each mutation the controller delegates UI refresh to
-/// [CollectionsRefreshCoordinator], which emits typed mutation events
-/// and invalidates only the affected providers — eliminating the need
-/// for full-page reloads.
+/// repository or composing delete/undo/archive flows inline. Every mutation
+/// method returns [CrudResult] so the UI can display status messages and offer
+/// undo actions without knowing the underlying data layer.
 class SavedItemActionsController {
   SavedItemActionsController({
     required CollectionsRepository repository,
     required EnrichmentJobService enrichmentJobService,
     CollectionsRefreshCoordinator? refreshCoordinator,
     EnrichmentQueueController? enrichmentQueueController,
-  })  : _repository = repository,
-        _enrichmentJobService = enrichmentJobService,
-        _refreshCoordinator = refreshCoordinator,
-        _enrichmentQueueController = enrichmentQueueController;
+  }) : _repository = repository,
+       _enrichmentJobService = enrichmentJobService,
+       _refreshCoordinator = refreshCoordinator,
+       _enrichmentQueueController = enrichmentQueueController;
 
   final CollectionsRepository _repository;
   final EnrichmentJobService _enrichmentJobService;
   final CollectionsRefreshCoordinator? _refreshCoordinator;
   final EnrichmentQueueController? _enrichmentQueueController;
 
-  // ------------------------------------------------------------------
-  // Actions
-  // ------------------------------------------------------------------
-
-  /// Launch the item's URL in an external browser and mark it opened only
-  /// after the launcher reports success.
-  Future<SavedItemActionResult> openItem(int itemId) async {
-    final item = await _repository.getSavedItem(itemId);
-    if (item == null) {
-      return const SavedItemActionResult(success: false, message: '收藏项不存在');
-    }
-
-    final uri = Uri.tryParse(item.originalUrl);
-    if (uri == null || !uri.hasScheme || !uri.hasAuthority) {
-      return const SavedItemActionResult(success: false, message: '无效的链接');
-    }
-
+  Future<CrudResult<void>> openItem(int itemId) async {
     try {
+      final item = await _repository.getSavedItem(itemId);
+      if (item == null) {
+        return _failure('收藏项不存在', AppFailureCode.notFound);
+      }
+
+      final uri = Uri.tryParse(item.originalUrl);
+      if (uri == null || !uri.hasScheme || !uri.hasAuthority) {
+        return _failure('无效的链接', AppFailureCode.validation);
+      }
+
       final launched = await launchUrl(
         uri,
         mode: LaunchMode.externalApplication,
       );
       if (!launched) {
-        return const SavedItemActionResult(success: false, message: '打开链接失败');
+        return _failure('打开链接失败', AppFailureCode.unknown);
       }
 
       await _repository.markOpened(itemId);
@@ -71,25 +59,40 @@ class SavedItemActionsController {
         itemId,
         reason: SavedItemMutationReason.opened,
       );
-      return const SavedItemActionResult(success: true, message: '已打开');
-    } catch (e) {
-      return SavedItemActionResult(success: false, message: '打开链接失败', error: e);
+      return const CrudResult<void>.success(
+        message: '已打开',
+        suppressFeedback: true,
+      );
+    } catch (error, stackTrace) {
+      return _failure(
+        '打开链接失败',
+        AppFailureCode.unknown,
+        cause: error,
+        stackTrace: stackTrace,
+      );
     }
   }
 
-  /// Copy the item's original URL to the system clipboard.
-  Future<SavedItemActionResult> copyUrl(int itemId) async {
-    final item = await _repository.getSavedItem(itemId);
-    if (item == null) {
-      return const SavedItemActionResult(success: false, message: '收藏项不存在');
-    }
+  Future<CrudResult<void>> copyUrl(int itemId) async {
+    try {
+      final item = await _repository.getSavedItem(itemId);
+      if (item == null) {
+        return _failure('收藏项不存在', AppFailureCode.notFound);
+      }
 
-    await Clipboard.setData(ClipboardData(text: item.originalUrl));
-    return const SavedItemActionResult(success: true, message: '链接已复制到剪贴板');
+      await Clipboard.setData(ClipboardData(text: item.originalUrl));
+      return const CrudResult<void>.success(message: '链接已复制到剪贴板');
+    } catch (error, stackTrace) {
+      return _failure(
+        '复制链接失败',
+        AppFailureCode.unknown,
+        cause: error,
+        stackTrace: stackTrace,
+      );
+    }
   }
 
-  /// Update the consumption status of a saved item.
-  Future<SavedItemActionResult> updateStatus(
+  Future<CrudResult<void>> updateStatus(
     int itemId,
     ConsumptionStatus status,
   ) async {
@@ -101,144 +104,131 @@ class SavedItemActionsController {
             ? SavedItemMutationReason.archive
             : SavedItemMutationReason.status,
       );
-      return SavedItemActionResult(
-        success: true,
+      return CrudResult<void>.success(
         message: '状态已更新为「${status.label}」',
+        suppressFeedback: status != ConsumptionStatus.archived,
       );
-    } catch (e) {
-      return SavedItemActionResult(success: false, message: '状态更新失败', error: e);
+    } catch (error, stackTrace) {
+      return _failure(
+        '状态更新失败',
+        AppFailureCode.database,
+        cause: error,
+        stackTrace: stackTrace,
+      );
     }
   }
 
-  /// Convenience method to archive an item.
-  Future<SavedItemActionResult> archiveItem(int itemId) async {
+  Future<CrudResult<void>> archiveItem(int itemId) {
     return updateStatus(itemId, ConsumptionStatus.archived);
   }
 
-  /// Assign a set of box IDs to an item, replacing any existing assignments.
-  ///
-  /// Flips [isInInbox] based solely on whether [boxIds] is non-empty,
-  /// regardless of prior state — this ensures inbox stays consistent
-  /// with box assignments even if the DB was previously out of sync.
-  Future<SavedItemActionResult> assignBoxes(int itemId, Set<int> boxIds) async {
+  Future<CrudResult<void>> assignBoxes(int itemId, Set<int> boxIds) async {
     try {
       await _repository.setItemBoxes(itemId, boxIds);
       await _repository.updateInboxState(itemId, boxIds.isEmpty);
-
       _refreshCoordinator?.itemChanged(
         itemId,
         reason: SavedItemMutationReason.boxes,
       );
-
-      return const SavedItemActionResult(success: true);
-    } catch (e) {
-      return SavedItemActionResult(
-        success: false,
-        message: '收藏夹分配失败',
-        error: e,
+      return const CrudResult<void>.success(suppressFeedback: true);
+    } catch (error, stackTrace) {
+      return _failure(
+        '收藏夹分配失败',
+        AppFailureCode.database,
+        cause: error,
+        stackTrace: stackTrace,
       );
     }
   }
 
-  /// Remove an item from a single collection box.
-  ///
-  /// If this was the last box, the item returns to Inbox.
-  Future<SavedItemActionResult> removeFromBox(int itemId, int boxId) async {
+  Future<CrudResult<void>> removeFromBox(int itemId, int boxId) async {
     try {
       await _repository.removeItemFromBox(itemId, boxId);
-
       _refreshCoordinator?.itemChanged(
         itemId,
         reason: SavedItemMutationReason.boxes,
       );
-
-      return const SavedItemActionResult(success: true);
-    } catch (e) {
-      return SavedItemActionResult(
-        success: false,
-        message: '从收藏夹移除失败',
-        error: e,
+      return const CrudResult<void>.success(suppressFeedback: true);
+    } catch (error, stackTrace) {
+      return _failure(
+        '从收藏夹移除失败',
+        AppFailureCode.database,
+        cause: error,
+        stackTrace: stackTrace,
       );
     }
   }
 
-  /// Delete a saved item, optionally only removing it from a specific box.
-  ///
-  /// Returns an undo snapshot so the UI can offer an undo action.
-  Future<SavedItemActionResult> deleteItem(
+  Future<CrudResult<void>> deleteItem(
     int itemId, {
     DeleteMode mode = DeleteMode.fullDelete,
     int? boxId,
     String? boxName,
   }) async {
-    final item = await _repository.getSavedItem(itemId);
-    if (item == null) {
-      return const SavedItemActionResult(success: false, message: '收藏项不存在');
-    }
+    try {
+      final item = await _repository.getSavedItem(itemId);
+      if (item == null) {
+        return _failure('收藏项不存在', AppFailureCode.notFound);
+      }
 
-    final boxIds = await _repository.getBoxIdsForItem(itemId);
-    final snapshot = SavedItemUndoSnapshot(
-      item: item,
-      boxIds: List<int>.from(boxIds),
-    );
+      final boxIds = await _repository.getBoxIdsForItem(itemId);
+      final snapshot = SavedItemUndoSnapshot(
+        item: item,
+        boxIds: List<int>.from(boxIds),
+      );
 
-    switch (mode) {
-      case DeleteMode.fullDelete:
-        await _repository.deleteSavedItem(itemId);
-        _refreshCoordinator?.itemDeleted(itemId);
-
-        final displayTitle = item.title.isEmpty
-            ? item.normalizedUrl
-            : item.title;
-
-        return SavedItemActionResult(
-          success: true,
-          message: '已删除「$displayTitle」',
-          undo: SavedItemUndoAction(
-            label: '撤销',
-            execute: () => restoreDeletedItem(snapshot),
-          ),
-        );
-
-      case DeleteMode.removeFromBox:
-        if (boxId == null) {
-          return const SavedItemActionResult(
-            success: false,
-            message: '请指定要移除的收藏夹',
+      switch (mode) {
+        case DeleteMode.fullDelete:
+          await _repository.deleteSavedItem(itemId);
+          _refreshCoordinator?.itemDeleted(itemId);
+          final displayTitle = item.title.isEmpty
+              ? item.normalizedUrl
+              : item.title;
+          return CrudResult<void>.success(
+            message: '已删除「$displayTitle」',
+            undo: CrudUndoAction(
+              execute: () async {
+                await restoreDeletedItem(snapshot);
+              },
+            ),
           );
-        }
-        await _repository.removeItemFromBox(itemId, boxId);
 
-        _refreshCoordinator?.itemChanged(
-          itemId,
-          reason: SavedItemMutationReason.boxes,
-        );
-
-        final currentBoxName = boxName ?? '收藏夹';
-        return SavedItemActionResult(
-          success: true,
-          message: '已从「$currentBoxName」中移除',
-          undo: SavedItemUndoAction(
-            label: '撤销',
-            execute: () async {
-              final currentIds = await _repository.getBoxIdsForItem(itemId);
-              await _repository.setItemBoxes(itemId, {...currentIds, boxId});
-              await _repository.updateInboxState(itemId, false);
-              _refreshCoordinator?.itemChanged(
-                itemId,
-                reason: SavedItemMutationReason.boxes,
-              );
-            },
-          ),
-        );
+        case DeleteMode.removeFromBox:
+          if (boxId == null) {
+            return _failure('请指定要移除的收藏夹', AppFailureCode.validation);
+          }
+          await _repository.removeItemFromBox(itemId, boxId);
+          _refreshCoordinator?.itemChanged(
+            itemId,
+            reason: SavedItemMutationReason.boxes,
+          );
+          final currentBoxName = boxName ?? '收藏夹';
+          return CrudResult<void>.success(
+            message: '已从「$currentBoxName」中移除',
+            undo: CrudUndoAction(
+              execute: () async {
+                final currentIds = await _repository.getBoxIdsForItem(itemId);
+                await _repository.setItemBoxes(itemId, {...currentIds, boxId});
+                await _repository.updateInboxState(itemId, false);
+                _refreshCoordinator?.itemChanged(
+                  itemId,
+                  reason: SavedItemMutationReason.boxes,
+                );
+              },
+            ),
+          );
+      }
+    } catch (error, stackTrace) {
+      return _failure(
+        '删除收藏项失败',
+        AppFailureCode.database,
+        cause: error,
+        stackTrace: stackTrace,
+      );
     }
   }
 
-  /// Restore a previously deleted item from its snapshot.
-  ///
-  /// Creates a new saved item with all original fields and restores
-  /// its box associations.
-  Future<SavedItemActionResult> restoreDeletedItem(
+  Future<CrudResult<void>> restoreDeletedItem(
     SavedItemUndoSnapshot snapshot,
   ) async {
     try {
@@ -250,41 +240,54 @@ class SavedItemActionsController {
       final displayTitle = restored.title.isEmpty
           ? restored.originalUrl
           : restored.title;
-      return SavedItemActionResult(
-        success: true,
-        message: '已恢复「$displayTitle」',
-      );
-    } catch (e) {
-      return SavedItemActionResult(
-        success: false,
-        message: '恢复收藏项失败',
-        error: e,
+      return CrudResult<void>.success(message: '已恢复「$displayTitle」');
+    } catch (error, stackTrace) {
+      return _failure(
+        '恢复收藏项失败',
+        AppFailureCode.database,
+        cause: error,
+        stackTrace: stackTrace,
       );
     }
   }
 
-  /// Retry enrichment for a saved item.
-  ///
-  /// Delegates to [EnrichmentQueueController.retryItem] when available
-  /// (production), falling back to a direct repository + service path
-  /// for tests where the controller may not be provided.
-  Future<SavedItemActionResult> retryEnrichment(int itemId) async {
+  Future<CrudResult<void>> retryEnrichment(int itemId) async {
     final queueController = _enrichmentQueueController;
     if (queueController != null) {
       return queueController.retryItem(itemId);
     }
-    // Fallback for tests
+
     try {
       await _repository.enqueueEnrichmentJob(itemId);
       unawaited(_enrichmentJobService.runPendingJobs());
-      return const SavedItemActionResult(success: true, message: '已重新加入抓取队列');
-    } catch (e) {
-      return SavedItemActionResult(success: false, message: '重试抓取失败', error: e);
+      return const CrudResult<void>.success(message: '已重新加入抓取队列');
+    } catch (error, stackTrace) {
+      return _failure(
+        '重试抓取失败',
+        AppFailureCode.database,
+        cause: error,
+        stackTrace: stackTrace,
+      );
     }
   }
 
-  /// Toggle favorite status for an item (not yet supported).
-  Future<SavedItemActionResult> toggleFavorite(int itemId) async {
-    return const SavedItemActionResult(success: false, message: '星标功能稍后接入');
+  Future<CrudResult<void>> toggleFavorite(int itemId) async {
+    return _failure('星标功能稍后接入', AppFailureCode.cancelled);
+  }
+
+  CrudResult<void> _failure(
+    String message,
+    AppFailureCode code, {
+    Object? cause,
+    StackTrace? stackTrace,
+  }) {
+    return CrudResult<void>.failure(
+      failure: AppFailure(
+        code: code,
+        message: message,
+        cause: cause,
+        stackTrace: stackTrace,
+      ),
+    );
   }
 }

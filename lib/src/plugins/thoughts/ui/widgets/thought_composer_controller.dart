@@ -1,8 +1,10 @@
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
-import 'package:flutter_quill/flutter_quill.dart' show Document, QuillController;
+import 'package:flutter_quill/flutter_quill.dart'
+    show Document, QuillController;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:uni_hub/src/shared/crud/crud.dart';
 import 'package:uni_hub/src/shared/editor/appflowy_document_tools.dart';
 import 'package:uni_hub/src/shared/tags/tag_codec.dart';
 
@@ -135,8 +137,9 @@ class ThoughtComposerController extends ChangeNotifier {
 
     try {
       // Build the AppFlowy document JSON.
-      final documentJson =
-          AppFlowyDocumentTools.documentJsonFromPlainText(text);
+      final documentJson = AppFlowyDocumentTools.documentJsonFromPlainText(
+        text,
+      );
       final encoded = ThoughtContentCodec.encodeAppFlowy(
         document: documentJson,
         plainText: text,
@@ -149,17 +152,25 @@ class ThoughtComposerController extends ChangeNotifier {
       final tags = TagCodec.encodeCommaSeparated(_tags);
 
       // Merge pending image paths.
-      final mergedPaths =
-          _pendingImagePaths.where(svc.existsSync).toList();
+      final mergedPaths = _pendingImagePaths.where(svc.existsSync).toList();
       final imagePaths = ThoughtImageService.encodeImagePaths(mergedPaths);
 
-      await repo.createThought(
+      final created = await repo.createThought(
         content: encoded,
         tags: tags,
         isPinned: _isPinned,
         imagePaths: imagePaths,
       );
 
+      ref
+          .read(crudMutationProvider.notifier)
+          .emit(
+            CrudMutationEvent(
+              type: CrudMutationType.created,
+              entityType: CrudEntityType.thought,
+              entityId: created.id,
+            ),
+          );
       ref.invalidate(allThoughtsProvider);
       clear();
     } finally {

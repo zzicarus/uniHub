@@ -1,14 +1,13 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uni_hub/src/core/theme/app_tokens.dart';
+import 'package:uni_hub/src/plugins/collections/application/saved_item_undo_snapshot.dart';
 import 'package:uni_hub/src/plugins/collections/domain/consumption_status.dart';
 import 'package:uni_hub/src/plugins/collections/domain/media_type.dart';
 import 'package:uni_hub/src/plugins/collections/domain/source_platform.dart';
 import 'package:uni_hub/src/plugins/collections/providers/collections_providers.dart';
+import 'package:uni_hub/src/shared/crud/crud.dart';
 import 'package:uni_hub/src/shared/preferences/delete_confirm_prefs_provider.dart';
-import 'package:uni_hub/src/shared/widgets/app_toast.dart';
 import 'package:uni_hub/src/shared/widgets/delete_confirm_dialog.dart';
 
 /// A floating toolbar-style bulk action bar shown below the item list.
@@ -88,10 +87,14 @@ class CollectionBulkActionBar extends ConsumerWidget {
                             final controller = ref.read(
                               savedItemActionsControllerProvider,
                             );
-                            await controller.updateStatus(
+                            final result = await controller.updateStatus(
                               selectedId,
                               ConsumptionStatus.done,
                             );
+                            if (!context.mounted) return;
+                            ref
+                                .read(crudFeedbackCoordinatorProvider)
+                                .handle(context, result);
                           },
                           colorScheme: colorScheme,
                         ),
@@ -105,7 +108,13 @@ class CollectionBulkActionBar extends ConsumerWidget {
                             final controller = ref.read(
                               savedItemActionsControllerProvider,
                             );
-                            await controller.archiveItem(selectedId);
+                            final result = await controller.archiveItem(
+                              selectedId,
+                            );
+                            if (!context.mounted) return;
+                            ref
+                                .read(crudFeedbackCoordinatorProvider)
+                                .handle(context, result);
                             ref
                                     .read(selectedSavedItemIdProvider.notifier)
                                     .state =
@@ -146,6 +155,9 @@ class CollectionBulkActionBar extends ConsumerWidget {
 
                             final repository = ref.read(
                               collectionsRepositoryProvider,
+                            );
+                            final controller = ref.read(
+                              savedItemActionsControllerProvider,
                             );
                             final item = await repository.getSavedItem(
                               selectedId,
@@ -216,73 +228,32 @@ class CollectionBulkActionBar extends ConsumerWidget {
                                         .map((b) => b.name)
                                         .firstOrNull ??
                                     '收藏夹';
-                                await repository.removeItemFromBox(
-                                  item.id,
-                                  boxIds.first,
-                                );
-                                ref.invalidate(savedItemsPageProvider);
-                                ref.invalidate(collectionFolderCountsProvider);
-                                if (!context.mounted) return;
-                                _showUndoSnackBar(
-                                  context,
-                                  '已从「$boxName」中移除',
-                                  () async {
-                                    final currentBoxIds = await repository
-                                        .getBoxIdsForItem(item.id);
-                                    await repository.setItemBoxes(item.id, {
-                                      ...currentBoxIds,
-                                      boxIds.first,
-                                    });
-                                    await repository.updateInboxState(
+                                final deleteResult = await controller
+                                    .deleteItem(
                                       item.id,
-                                      false,
+                                      mode: DeleteMode.removeFromBox,
+                                      boxId: boxIds.first,
+                                      boxName: boxName,
                                     );
-                                    ref.invalidate(savedItemsPageProvider);
-                                    ref.invalidate(
-                                      collectionFolderCountsProvider,
-                                    );
-                                  },
-                                );
+                                if (!context.mounted) return;
+                                ref
+                                    .read(crudFeedbackCoordinatorProvider)
+                                    .handle(context, deleteResult);
                               }
                               return;
                             }
 
-                            final undoBoxIds = List<int>.from(boxIds);
-                            await repository.deleteSavedItem(item.id);
+                            final deleteResult = await controller.deleteItem(
+                              item.id,
+                            );
                             ref
                                     .read(selectedSavedItemIdProvider.notifier)
                                     .state =
                                 null;
-                            ref.invalidate(savedItemsPageProvider);
-                            ref.invalidate(collectionFolderCountsProvider);
                             if (!context.mounted) return;
-                            _showUndoSnackBar(
-                              context,
-                              '已删除「$displayTitle」',
-                              () async {
-                                final restored = await repository
-                                    .createSavedItem(
-                                      originalUrl: item.originalUrl,
-                                      normalizedUrl: item.normalizedUrl,
-                                      title: item.title,
-                                      mediaType: mediaType,
-                                      sourcePlatform: platform,
-                                      isInInbox: undoBoxIds.isEmpty,
-                                    );
-                                if (undoBoxIds.isNotEmpty) {
-                                  await repository.setItemBoxes(
-                                    restored.id,
-                                    undoBoxIds.toSet(),
-                                  );
-                                  await repository.updateInboxState(
-                                    restored.id,
-                                    false,
-                                  );
-                                }
-                                ref.invalidate(savedItemsPageProvider);
-                                ref.invalidate(collectionFolderCountsProvider);
-                              },
-                            );
+                            ref
+                                .read(crudFeedbackCoordinatorProvider)
+                                .handle(context, deleteResult);
                           },
                         ),
                       ],
@@ -323,7 +294,6 @@ class _BulkActionPill extends StatelessWidget {
     const double height = 30.0;
     const double hPadding = 10.0;
     const double iconSize = 15.0;
-    const double fontSize = 12.5;
 
     final foregroundColor = !enabled
         ? colorScheme.onSurfaceVariant.withValues(alpha: 0.40)
@@ -352,9 +322,7 @@ class _BulkActionPill extends StatelessWidget {
                   const SizedBox(width: AppSpacing.xxs),
                   Text(
                     label,
-                    style: TextStyle(
-                      fontSize: fontSize,
-                      height: 1.15,
+                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
                       fontWeight: AppFontTokens.medium,
                       color: foregroundColor,
                     ),
@@ -402,16 +370,4 @@ IconData _iconFor(MediaType mediaType) {
     MediaType.document => Icons.description_outlined,
     MediaType.unknown => Icons.link_rounded,
   };
-}
-
-void _showUndoSnackBar(
-  BuildContext context,
-  String message,
-  FutureOr<void> Function() onUndo,
-) {
-  AppToast.undo(
-    context,
-    message: message,
-    onUndo: onUndo,
-  );
 }

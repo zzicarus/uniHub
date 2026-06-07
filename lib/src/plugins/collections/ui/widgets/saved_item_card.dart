@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uni_hub/src/core/database/app_database.dart';
@@ -11,6 +9,7 @@ import 'package:uni_hub/src/plugins/collections/domain/enrichment_status.dart';
 import 'package:uni_hub/src/plugins/collections/domain/media_type.dart';
 import 'package:uni_hub/src/plugins/collections/domain/source_platform.dart';
 import 'package:uni_hub/src/plugins/collections/providers/collections_providers.dart';
+import 'package:uni_hub/src/shared/crud/crud.dart';
 import 'package:uni_hub/src/shared/preferences/delete_confirm_prefs_provider.dart';
 import 'package:uni_hub/src/shared/widgets/app_toast.dart';
 import 'package:uni_hub/src/shared/widgets/delete_confirm_dialog.dart';
@@ -201,8 +200,7 @@ class SavedItemCard extends ConsumerWidget {
               const SizedBox(width: AppSpacing.xxs),
               Text(
                 '+${boxes.length - 2}',
-                style: TextStyle(
-                  fontSize: AppFontTokens.mini,
+                style: theme.textTheme.labelSmall?.copyWith(
                   color: colorScheme.onSurfaceVariant,
                 ),
               ),
@@ -220,10 +218,9 @@ class SavedItemCard extends ConsumerWidget {
                   );
                   final result = await controller.retryEnrichment(item.id);
                   if (context.mounted) {
-                    AppToast.show(
-                        context,
-                        message: result.message ?? '',
-                      );
+                    ref
+                        .read(crudFeedbackCoordinatorProvider)
+                        .handle(context, result);
                   }
                 },
               ),
@@ -281,15 +278,16 @@ class SavedItemCard extends ConsumerWidget {
       child: GestureDetector(
         onTap: onTap,
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.xs,
+            vertical: AppSpacing.xxs,
+          ),
           child: Text(
             label,
             style: theme.textTheme.labelSmall?.copyWith(
               color: isError
                   ? colorScheme.onErrorContainer
                   : colorScheme.onSurfaceVariant,
-              fontSize: AppFontTokens.mini,
-              height: 1.4,
             ),
           ),
         ),
@@ -349,7 +347,6 @@ class SavedItemCard extends ConsumerWidget {
                 style: theme.textTheme.labelSmall?.copyWith(
                   color: _statusColor(status, colorScheme),
                   fontWeight: AppFontTokens.medium,
-                  fontSize: AppFontTokens.caption,
                 ),
               ),
             ),
@@ -373,10 +370,7 @@ class SavedItemCard extends ConsumerWidget {
                   foregroundColor: colorScheme.onSurfaceVariant,
                 ),
                 onPressed: () {
-                  AppToast.show(
-                    context,
-                    message: '星标功能稍后接入',
-                  );
+                  AppToast.show(context, message: '星标功能稍后接入');
                 },
               ),
             ),
@@ -447,27 +441,22 @@ class _CardMoreMenu extends ConsumerWidget {
             case _CardAction.open:
               final controller = ref.read(savedItemActionsControllerProvider);
               final result = await controller.openItem(item.id);
-              if (!context.mounted || result.message == null) return;
-              AppToast.show(
-                context,
-                message: result.message!,
-              );
+              if (!context.mounted) return;
+              ref.read(crudFeedbackCoordinatorProvider).handle(context, result);
             case _CardAction.copy:
               final controller = ref.read(savedItemActionsControllerProvider);
-              await controller.copyUrl(item.id);
+              final result = await controller.copyUrl(item.id);
               if (!context.mounted) return;
-              AppToast.show(
-                context,
-                message: '链接已复制到剪贴板',
-                type: AppToastType.success,
-              );
+              ref.read(crudFeedbackCoordinatorProvider).handle(context, result);
             case _CardAction.folder:
               await _CompactBoxButton(
                 itemId: item.id,
               )._showBoxMenu(context, ref);
             case _CardAction.archive:
               final ctrl = ref.read(savedItemActionsControllerProvider);
-              await ctrl.archiveItem(item.id);
+              final result = await ctrl.archiveItem(item.id);
+              if (!context.mounted) return;
+              ref.read(crudFeedbackCoordinatorProvider).handle(context, result);
             case _CardAction.delete:
               await _handleDelete(context, ref, item);
           }
@@ -480,7 +469,12 @@ class _CardMoreMenu extends ConsumerWidget {
           const PopupMenuDivider(),
           PopupMenuItem(
             value: _CardAction.delete,
-            child: Text('删除', style: TextStyle(color: colorScheme.error)),
+            child: Text(
+              '删除',
+              style: Theme.of(
+                context,
+              ).textTheme.bodyMedium?.copyWith(color: colorScheme.error),
+            ),
           ),
         ],
       ),
@@ -561,33 +555,15 @@ class _CardMoreMenu extends ConsumerWidget {
           boxName: boxName,
         );
         if (!context.mounted) return;
-        if (deleteResult.undo != null) {
-          _showUndoSnackBar(
-            context,
-            deleteResult.message ?? '已从「$boxName」中移除',
-            () async {
-              await deleteResult.undo!.execute();
-            },
-          );
-        }
+        ref.read(crudFeedbackCoordinatorProvider).handle(context, deleteResult);
       }
       return;
     }
 
     // Full delete
-    final deleteResult = await controller.deleteItem(
-      item.id,
-    );
+    final deleteResult = await controller.deleteItem(item.id);
     if (!context.mounted) return;
-    if (deleteResult.undo != null) {
-      _showUndoSnackBar(
-        context,
-        deleteResult.message ?? '已删除「$displayTitle」',
-        () async {
-          await deleteResult.undo!.execute();
-        },
-      );
-    }
+    ref.read(crudFeedbackCoordinatorProvider).handle(context, deleteResult);
   }
 
   // --- Helpers (duplicated from SavedItemCard for standalone access) ---
@@ -621,18 +597,6 @@ class _CardMoreMenu extends ConsumerWidget {
       MediaType.document => Icons.description_outlined,
       MediaType.unknown => Icons.link_rounded,
     };
-  }
-
-  static void _showUndoSnackBar(
-    BuildContext context,
-    String message,
-    FutureOr<void> Function() onUndo,
-  ) {
-    AppToast.undo(
-      context,
-      message: message,
-      onUndo: onUndo,
-    );
   }
 }
 
@@ -743,19 +707,21 @@ class _BoxMiniChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.xs,
+        vertical: AppSpacing.xxs,
+      ),
       decoration: BoxDecoration(
         color: colorScheme.primaryContainer.withValues(alpha: 0.35),
         borderRadius: BorderRadius.circular(AppRadius.xs),
       ),
       child: Text(
         label,
-        style: TextStyle(
-          fontSize: AppFontTokens.mini,
+        style: theme.textTheme.labelSmall?.copyWith(
           color: colorScheme.onPrimaryContainer,
-          height: 1.4,
         ),
       ),
     );

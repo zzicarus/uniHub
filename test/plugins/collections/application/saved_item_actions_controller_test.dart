@@ -3,7 +3,6 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:uni_hub/src/core/database/app_database.dart';
 import 'package:uni_hub/src/core/plugin/plugin_registry.dart';
-import 'package:uni_hub/src/plugins/collections/application/saved_item_action_result.dart';
 import 'package:uni_hub/src/plugins/collections/application/saved_item_actions_controller.dart';
 import 'package:uni_hub/src/plugins/collections/application/saved_item_undo_snapshot.dart';
 import 'package:uni_hub/src/plugins/collections/collections_plugin.dart';
@@ -18,6 +17,7 @@ import 'package:uni_hub/src/plugins/collections/domain/saved_items_query.dart';
 import 'package:uni_hub/src/plugins/collections/domain/source_platform.dart';
 import 'package:uni_hub/src/plugins/collections/services/enrichment_job_service.dart';
 import 'package:uni_hub/src/plugins/collections/services/metadata_provider.dart';
+import 'package:uni_hub/src/shared/crud/crud.dart';
 
 /// A stub metadata provider that returns default values without network I/O.
 const _urlLauncherChannel = MethodChannel('plugins.flutter.io/url_launcher');
@@ -103,12 +103,12 @@ void main() {
     // Action Result / Undo Snapshot basics
     // ---------------------------------------------------------
 
-    test('SavedItemActionResult stores success and message', () {
-      const result = SavedItemActionResult(success: true, message: '测试成功');
+    test('CrudResult stores success and message', () {
+      const result = CrudResult<void>.success(message: '测试成功');
       expect(result.success, isTrue);
       expect(result.message, '测试成功');
       expect(result.undo, isNull);
-      expect(result.error, isNull);
+      expect(result.failure, isNull);
     });
 
     test('SavedItemUndoSnapshot stores item and boxIds', () async {
@@ -118,10 +118,9 @@ void main() {
       expect(snapshot.boxIds, [1, 2, 3]);
     });
 
-    test('SavedItemUndoAction can be constructed and executed', () async {
+    test('CrudUndoAction can be constructed and executed', () async {
       var executed = false;
-      final action = SavedItemUndoAction(
-        label: '撤销',
+      final action = CrudUndoAction(
         execute: () async {
           executed = true;
         },
@@ -139,9 +138,7 @@ void main() {
       final item = await createTestItem(title: '待删除');
 
       expect(await repository.getSavedItem(item.id), isNotNull);
-      final result = await controller.deleteItem(
-        item.id,
-      );
+      final result = await controller.deleteItem(item.id);
 
       expect(result.success, isTrue);
       expect(result.message, contains('待删除'));
@@ -152,9 +149,7 @@ void main() {
     test('deleteItem with fullDelete undo restores item', () async {
       final item = await createTestItem(title: '删除后恢复');
 
-      final deleteResult = await controller.deleteItem(
-        item.id,
-      );
+      final deleteResult = await controller.deleteItem(item.id);
       expect(deleteResult.success, isTrue);
 
       // Execute the undo action which calls restoreDeletedItem internally
@@ -176,9 +171,7 @@ void main() {
       final boxId = await createBox('测试收藏夹');
       await repository.setItemBoxes(item.id, {boxId});
 
-      final deleteResult = await controller.deleteItem(
-        item.id,
-      );
+      final deleteResult = await controller.deleteItem(item.id);
       expect(deleteResult.success, isTrue);
 
       // Execute the undo action which calls restoreDeletedItem internally
@@ -197,7 +190,7 @@ void main() {
     test('deleteItem returns failure for non-existent item', () async {
       final result = await controller.deleteItem(999);
       expect(result.success, isFalse);
-      expect(result.message, '收藏项不存在');
+      expect(result.userMessage, '收藏项不存在');
     });
 
     // ---------------------------------------------------------
@@ -309,13 +302,13 @@ void main() {
     test('copyUrl returns failure for non-existent item', () async {
       final result = await controller.copyUrl(999);
       expect(result.success, isFalse);
-      expect(result.message, '收藏项不存在');
+      expect(result.userMessage, '收藏项不存在');
     });
 
     test('openItem returns failure for non-existent item', () async {
       final result = await controller.openItem(999);
       expect(result.success, isFalse);
-      expect(result.message, '收藏项不存在');
+      expect(result.userMessage, '收藏项不存在');
     });
 
     test('openItem does not mark invalid URL as opened', () async {
@@ -328,7 +321,7 @@ void main() {
       final updated = await repository.getSavedItem(item.id);
 
       expect(result.success, isFalse);
-      expect(result.message, '无效的链接');
+      expect(result.userMessage, '无效的链接');
       expect(updated!.lastOpenedAt, isNull);
     });
 
@@ -344,7 +337,7 @@ void main() {
       final updated = await repository.getSavedItem(item.id);
 
       expect(result.success, isFalse);
-      expect(result.message, '打开链接失败');
+      expect(result.userMessage, '打开链接失败');
       expect(updated!.lastOpenedAt, isNull);
     });
 
@@ -367,7 +360,7 @@ void main() {
       final item = await createTestItem();
       final result = await controller.toggleFavorite(item.id);
       expect(result.success, isFalse);
-      expect(result.message, contains('星标'));
+      expect(result.userMessage, contains('星标'));
     });
   });
 }

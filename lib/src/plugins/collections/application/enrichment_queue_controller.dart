@@ -3,9 +3,10 @@ import 'dart:async';
 import 'package:uni_hub/src/plugins/collections/data/enrichment_jobs_dao.dart';
 import 'package:uni_hub/src/plugins/collections/services/enrichment_job_service.dart';
 
+import 'package:uni_hub/src/shared/crud/crud.dart';
+
 import 'collections_mutation_event.dart';
 import 'collections_refresh_coordinator.dart';
-import 'saved_item_action_result.dart';
 
 /// 增强 Enrichment 队列恢复能力控制器。
 ///
@@ -20,9 +21,9 @@ class EnrichmentQueueController {
     required EnrichmentJobService jobService,
     required EnrichmentJobsDao jobsDao,
     CollectionsRefreshCoordinator? refreshCoordinator,
-  })  : _jobService = jobService,
-        _jobsDao = jobsDao,
-        _refreshCoordinator = refreshCoordinator;
+  }) : _jobService = jobService,
+       _jobsDao = jobsDao,
+       _refreshCoordinator = refreshCoordinator;
 
   final EnrichmentJobService _jobService;
   final EnrichmentJobsDao _jobsDao;
@@ -46,10 +47,7 @@ class EnrichmentQueueController {
   /// or [maxBatches] is reached.
   ///
   /// Returns the total number of jobs processed across all batches.
-  Future<int> drainPending({
-    int batchSize = 5,
-    int maxBatches = 5,
-  }) async {
+  Future<int> drainPending({int batchSize = 5, int maxBatches = 5}) async {
     if (_isRunning) return 0;
     _isRunning = true;
     var totalProcessed = 0;
@@ -71,27 +69,23 @@ class EnrichmentQueueController {
   /// If the item already has a pending or running job, returns immediately
   /// with a message. Otherwise, enqueues a new job and triggers immediate
   /// consumption.
-  Future<SavedItemActionResult> retryItem(int itemId) async {
+  Future<CrudResult<void>> retryItem(int itemId) async {
     try {
       final existing = await _jobsDao.getPendingForItem(itemId);
       if (existing != null) {
-        return const SavedItemActionResult(
-          success: true,
-          message: '该收藏已在抓取队列中',
-        );
+        return const CrudResult<void>.success(message: '该收藏已在抓取队列中');
       }
       await _jobsDao.enqueue(itemId);
       // Process this immediately in the background
       unawaited(_drainAfterRetry(itemId));
-      return const SavedItemActionResult(
-        success: true,
-        message: '已重新加入抓取队列',
-      );
+      return const CrudResult<void>.success(message: '已重新加入抓取队列');
     } catch (e) {
-      return SavedItemActionResult(
-        success: false,
-        message: '重试失败：${e.toString()}',
-        error: e,
+      return CrudResult<void>.failure(
+        failure: AppFailure(
+          code: AppFailureCode.database,
+          message: '重试失败',
+          cause: e,
+        ),
       );
     }
   }

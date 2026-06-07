@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uni_hub/src/core/theme/app_tokens.dart';
 import 'package:uni_hub/src/plugins/collections/providers/collections_providers.dart';
 import 'package:uni_hub/src/plugins/collections/ui/widgets/create_collection_folder_dialog.dart';
+import 'package:uni_hub/src/shared/crud/crud.dart';
 
 /// A box filter bar with label "Box", multi-select [FilterChip]s for each
 /// available collection box, and an ActionChip to create a new box.
@@ -24,7 +25,11 @@ class CollectionBoxBar extends ConsumerWidget {
         if (boxes.isEmpty) {
           return Row(
             children: [
-              Icon(Icons.folder_outlined, size: 16, color: colorScheme.onSurfaceVariant),
+              Icon(
+                Icons.folder_outlined,
+                size: 16,
+                color: colorScheme.onSurfaceVariant,
+              ),
               const SizedBox(width: AppSpacing.xxs),
               Text(
                 '收藏夹：暂无收藏夹，点击新建开始整理收藏。',
@@ -60,9 +65,8 @@ class CollectionBoxBar extends ConsumerWidget {
                   } else {
                     next.remove(box.id);
                   }
-                  ref
-                      .read(selectedCollectionBoxIdsProvider.notifier)
-                      .state = next;
+                  ref.read(selectedCollectionBoxIdsProvider.notifier).state =
+                      next;
                 },
                 visualDensity: VisualDensity.compact,
               ),
@@ -77,18 +81,18 @@ class CollectionBoxBar extends ConsumerWidget {
       loading: () => const LinearProgressIndicator(minHeight: 2),
       error: (e, _) => Text(
         '加载失败：$e',
-        style: TextStyle(color: colorScheme.error),
+        style: theme.textTheme.bodySmall?.copyWith(color: colorScheme.error),
       ),
     );
   }
 
-  Future<void> _showCreateBoxDialog(
-    BuildContext context,
-    WidgetRef ref,
-  ) async {
+  Future<void> _showCreateBoxDialog(BuildContext context, WidgetRef ref) async {
+    final boxes = ref.read(collectionBoxesProvider).valueOrNull ?? const [];
     final name = await showDialog<String>(
       context: context,
-      builder: (_) => const CreateCollectionFolderDialog(),
+      builder: (_) => CreateCollectionFolderDialog(
+        existingNames: boxes.map((box) => box.name),
+      ),
     );
     if (name == null || name.isEmpty) return;
 
@@ -96,7 +100,43 @@ class CollectionBoxBar extends ConsumerWidget {
     // InputDecorator tickers) are fully torn down before touching providers.
     await WidgetsBinding.instance.endOfFrame;
 
-    await ref.read(collectionsRepositoryProvider).createBox(name);
-    ref.invalidate(collectionBoxesProvider);
+    try {
+      await ref.read(collectionsRepositoryProvider).createBox(name);
+      ref.invalidate(collectionBoxesProvider);
+      if (!context.mounted) return;
+      ref
+          .read(crudFeedbackCoordinatorProvider)
+          .handle(context, CrudResult<void>.success(message: '已创建收藏夹「$name」'));
+    } on ArgumentError catch (error) {
+      if (!context.mounted) return;
+      ref
+          .read(crudFeedbackCoordinatorProvider)
+          .handle(
+            context,
+            CrudResult<void>.failure(
+              failure: AppFailure(
+                code: AppFailureCode.validation,
+                message: error.message.toString(),
+                field: 'name',
+                cause: error,
+              ),
+            ),
+          );
+    } on StateError catch (error) {
+      if (!context.mounted) return;
+      ref
+          .read(crudFeedbackCoordinatorProvider)
+          .handle(
+            context,
+            CrudResult<void>.failure(
+              failure: AppFailure(
+                code: AppFailureCode.duplicate,
+                message: error.message,
+                field: 'name',
+                cause: error,
+              ),
+            ),
+          );
+    }
   }
 }

@@ -25,7 +25,7 @@ collections/
 - **QueueController** — 统一调度异步后台任务（Enrichment 队列恢复），支持启动恢复、页面进入触发、手动重试
 
 **原则**：
-- Controller 返回 `SavedItemActionResult`（含 message + undo），不直接依赖 `BuildContext`
+- Controller 返回共享 `CrudResult`（含 message + undo + AppFailure），不直接依赖 `BuildContext`
 - ViewModel 在 Provider 中批量聚合数据，不在每个 Widget 中独立查询
 - QueueController 内部使用 `_isRunning` 防止并发执行
 
@@ -64,18 +64,8 @@ collections/
 // UI 中调用
 final result = await ref.read(savedItemActionsControllerProvider).deleteItem(item.id);
 
-if (context.mounted && result.message != null) {
-  ScaffoldMessenger.of(context).showSnackBar(
-    SnackBar(
-      content: Text(result.message!),
-      action: result.undo == null
-          ? null
-          : SnackBarAction(
-              label: result.undo!.label,
-              onPressed: () => unawaited(result.undo!.execute()),
-            ),
-    ),
-  );
+if (context.mounted) {
+  ref.read(crudFeedbackCoordinatorProvider).handle(context, result);
 }
 ```
 

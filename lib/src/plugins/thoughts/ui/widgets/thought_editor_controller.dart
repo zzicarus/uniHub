@@ -17,11 +17,14 @@ import 'dart:typed_data';
 
 import 'package:collection/collection.dart' show DeepCollectionEquality;
 import 'package:flutter/material.dart';
-import 'package:flutter_quill/flutter_quill.dart' show Document, QuillController;
+import 'package:flutter_quill/flutter_quill.dart'
+    show Document, QuillController;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:uni_hub/src/shared/crud/crud.dart';
 import 'package:uni_hub/src/shared/editor/appflowy_document_tools.dart';
 import 'package:uni_hub/src/shared/editor/appflowy_thought_editor.dart';
 import 'package:uni_hub/src/shared/tags/tag_codec.dart';
+import 'package:uni_hub/src/shared/widgets/app_confirm_dialog.dart';
 
 import '../../data/thought_content_codec.dart';
 import '../../data/thought_image_block_codec.dart';
@@ -176,8 +179,7 @@ class ThoughtEditorController {
     if (thought == null || isLoaded) return;
 
     // 加载 AppFlowy document 状态。
-    documentJson =
-        ThoughtContentCodec.documentJsonFromStored(thought.content);
+    documentJson = ThoughtContentCodec.documentJsonFromStored(thought.content);
     plainText = ThoughtContentCodec.plainTextFromStored(thought.content);
     documentJson ??= AppFlowyDocumentTools.emptyDocumentJson();
 
@@ -188,8 +190,9 @@ class ThoughtEditorController {
     imageRefs = ThoughtImageBlockCodec.extractImageRefs(documentJson!);
 
     // 已废弃 — 为旧 widget 兼容保留 images 列表。
-    final storedImagePaths =
-        ThoughtImageService.decodeImagePaths(thought.imagePaths);
+    final storedImagePaths = ThoughtImageService.decodeImagePaths(
+      thought.imagePaths,
+    );
     images.addAll(storedImagePaths);
 
     selectedColor = thought.color;
@@ -209,8 +212,7 @@ class ThoughtEditorController {
     final tags = TagCodec.encodeCommaSeparated(_tags);
 
     // imagePaths 从 imageRefs（文档中的 image block）派生。
-    final paths =
-        imageRefs.map((e) => e.path).toList();
+    final paths = imageRefs.map((e) => e.path).toList();
 
     await repo.updateThought(
       thoughtId,
@@ -247,7 +249,10 @@ class ThoughtEditorController {
   }) {
     // Diff guard: skip if nothing changed (prevents spurious dirty on init).
     if (this.documentJson != null &&
-        const DeepCollectionEquality().equals(this.documentJson, documentJson) &&
+        const DeepCollectionEquality().equals(
+          this.documentJson,
+          documentJson,
+        ) &&
         this.plainText == plainText) {
       return;
     }
@@ -264,37 +269,31 @@ class ThoughtEditorController {
 
   /// 删除当前 thought（含确认弹窗）。
   Future<void> delete(BuildContext context) async {
-    final confirmed = await showDialog<bool>(
+    final confirmed = await AppConfirmDialog.show(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('删除想法'),
-        content: const Text('确定要删除这条想法吗？此操作不可撤销。'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('取消'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            style: FilledButton.styleFrom(
-              backgroundColor: Theme.of(context).colorScheme.error,
-            ),
-            child: const Text('删除'),
-          ),
-        ],
-      ),
+      title: '删除想法',
+      message: '确定要删除这条想法吗？此操作不可撤销。',
+      confirmLabel: '删除',
+      destructive: true,
+      icon: Icons.delete_outline_rounded,
     );
 
-    if (confirmed == true) {
+    if (confirmed) {
       final svc = await ref.read(thoughtImageServiceProvider.future);
       // Merge legacy images and V2 imageRefs to ensure all local files
       // are cleaned up regardless of which path they came from.
-      final allPaths = {
-        ...images,
-        ...imageRefs.map((e) => e.path),
-      };
+      final allPaths = {...images, ...imageRefs.map((e) => e.path)};
       await svc.deleteImages(allPaths.toList());
       await ref.read(thoughtsRepositoryProvider).deleteThought(thoughtId);
+      ref
+          .read(crudMutationProvider.notifier)
+          .emit(
+            CrudMutationEvent(
+              type: CrudMutationType.deleted,
+              entityType: CrudEntityType.thought,
+              entityId: thoughtId,
+            ),
+          );
       ref.invalidate(allThoughtsProvider);
     }
   }
@@ -303,6 +302,16 @@ class ThoughtEditorController {
   Future<void> archive() async {
     final repo = ref.read(thoughtsRepositoryProvider);
     await repo.archiveThought(thoughtId);
+    ref
+        .read(crudMutationProvider.notifier)
+        .emit(
+          CrudMutationEvent(
+            type: CrudMutationType.changed,
+            entityType: CrudEntityType.thought,
+            entityId: thoughtId,
+            reason: 'archive',
+          ),
+        );
     ref.invalidate(allThoughtsProvider);
   }
 
@@ -310,6 +319,15 @@ class ThoughtEditorController {
   Future<void> restore() async {
     final repo = ref.read(thoughtsRepositoryProvider);
     await repo.restoreThought(thoughtId);
+    ref
+        .read(crudMutationProvider.notifier)
+        .emit(
+          CrudMutationEvent(
+            type: CrudMutationType.restored,
+            entityType: CrudEntityType.thought,
+            entityId: thoughtId,
+          ),
+        );
     ref.invalidate(allThoughtsProvider);
     isArchived = false;
     isDirty = false;
@@ -447,10 +465,7 @@ class ThoughtEditorController {
     final imageId = ThoughtImageBlockCodec.generateImageId();
 
     try {
-      await editorController?.insertImageBlock(
-        id: imageId,
-        path: path,
-      );
+      await editorController?.insertImageBlock(id: imageId, path: path);
       // After this, onChanged fires → updateDocument → imageRefs updated.
     } catch (e) {
       // Insert failed — clean up the orphan file.
