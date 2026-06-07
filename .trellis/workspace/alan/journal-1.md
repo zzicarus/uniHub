@@ -1022,3 +1022,38 @@ CollectionsDesktopLayout 的 `listenManual(savedItemListEntriesProvider, ...)` �
 - `flutter test` — 711/711 passed
 - `dart fix --dry-run` — Nothing to fix
 - 全仓库无业务代码直接 `new SnackBar(content: Text(...))`
+
+
+## Session 26: 全局 CRUD 边界条件与反馈系统
+
+**Date**: 2026-06-07
+**Task**: 全局 CRUD 边界条件与反馈系统
+**Branch**: `main`
+
+### Summary
+
+完成全局 CRUD 边界条件与反馈系统：新增 CrudResult/AppFailure/CrudFeedbackCoordinator 共享模型、迁移 Collections/Thoughts 全部 CRUD 流程到 CrudResult 与统一反馈、清零业务层 SnackBar 使用、新增 AppConfirmDialog/AppConflictDialog、标签长度统一为24字符、更新开发规范
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `dd87987` | (see git log) |
+| `8bfe9ca` | (see git log) |
+| `bf6f5db` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
