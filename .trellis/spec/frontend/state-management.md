@@ -194,4 +194,102 @@ void initState() {
 | 在 `FutureProvider` 异步体内 `watch` UI-only 的 `StateProvider`（如 `selectedId`） | 纯 UI 状态（如选中项 ID）放在 `FutureProvider` 的 `async` 函数体内 `watch`，会导致每次选中变化时 **整个异步 Provider 重新执行**（重新查询 DB、重新聚合数据），造成页面「刷新」闪烁和多余 I/O。**正确做法**：`FutureProvider` 只负责数据聚合，`selected` 等 UI 状态由 Widget 层通过 `copyWith` 在列表 `itemBuilder` 中合成。 |
 | CRUD 后 invalidate 中间层 Provider 而非最上游数据 Provider | 如 `invalidate(savedItemsListProvider)` 但 UI 实际 watch `savedItemListEntriesProvider`（二者都依赖 `savedItemsPageProvider`）。invalidate 中间层不会反向传播到上游 Provider，下游仍读到上游缓存的旧数据。**正确做法**：始终 invalidate 最上游的异步数据 Provider（如 `savedItemsPageProvider`），通过 Riverpod 级联使整个依赖链刷新。 |
 | 已存在 URL 重新收藏时忽略 `boxId` | `captureUrl()` 发现 URL 已存在时直接 return，丢弃传入的 `boxId`，导致用户在当前收藏夹下收藏已存在链接时不会加入该收藏夹。**正确做法**：`existing != null` 时也要检查 `boxId`，读取已有 boxIds 追加进去，同步更新 `isInInbox`。 |
-| `inbox` 同步依赖历史状态而非当前事实 | `assignBoxes()` 仅当 `currentSet.isEmpty && boxIds.isNotEmpty` 或 `boxIds.isEmpty && currentSet.isNotEmpty` 时才更新 `isInInbox`，无法修复 DB 中已存在的不一致（如有 box 但 `isInInbox` 仍为 true）。**正确做法**：使用无状态规则 `isInInbox = boxIds.isEmpty`，不依赖历史状态。
+| `inbox` 同步依赖历史状态而非当前事实 | `assignBoxes()` 仅当 `currentSet.isEmpty && boxIds.isNotEmpty` 或 `boxIds.isEmpty && currentSet.isNotEmpty` 时才更新 `isInInbox`，无法修复 DB 中已存在的不一致（如有 box 但 `isInInbox` 仍为 true）。**正确做法**：使用无状态规则 `isInInbox = boxIds.isEmpty`，不依赖历史状态。 |
+
+## 容器 Widget 内部 Watch Provider 模式
+
+> 参考实现：`SavedItemDetailPanel`（2026-06-07 重构）
+
+接受实体 ID 而非预聚合 ViewModel 作为 Widget 参数，内部 watch 对应的 Provider。
+
+### 声明
+
+```dart
+class SavedItemDetailPanel extends ConsumerStatefulWidget {
+  const SavedItemDetailPanel({required this.itemId, super.key});
+  final int itemId;
+
+  @override
+  ConsumerState<SavedItemDetailPanel> createState() => _State();
+}
+
+class _State extends ConsumerState<SavedItemDetailPanel> {
+  @override
+  Widget build(BuildContext context) {
+    final detailAsync = ref.watch(selectedSavedItemDetailProvider(widget.itemId));
+    return detailAsync.when(
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (err, _) => Center(child: Text('无法加载详情')),
+      data: (detail) => _buildDetail(context, ref, detail),
+    );
+  }
+}
+```
+
+**优势**：底部抽屉和桌面详情面板使用同一组件，底部抽屉打开后
+状态/box/metadata 变更自动同步刷新。
+
+## 搜索 Debounce 归 Controller 管理
+
+> 参考实现：`CollectionsListController._searchDebounceTimer`（2026-06-07）
+
+搜索 debounce 不应分散在 UI + Provider + Controller 三处。
+Controller 内部用 Timer 管理 debounce：
+
+```dart
+class Controller extends AutoDisposeAsyncNotifier<State> {
+  Timer? _searchDebounceTimer;
+  String _debouncedSearchQuery = '';
+
+  @override
+  Future<State> build() async {
+    ref.listen<String>(searchQueryProvider, (_, next) {
+      _searchDebounceTimer?.cancel();
+      _searchDebounceTimer = Timer(
+        const Duration(milliseconds: 250),
+        () {
+          _debouncedSearchQuery = next.trim();
+          unawaited(refresh());
+        },
+      );
+    });
+    return _loadPage(0);
+  }
+
+  SavedItemsQuery _buildQuery(int offset) {
+    return SavedItemsQuery(
+      searchQuery: _debouncedSearchQuery,
+      // ...
+    );
+  }
+}
+```
+
+UI 层不再监听搜索 query 触发 refresh，全由 Controller 内部 `ref.listen` 接管。
+
+## Async Mutation 版本控制
+
+> 参考实现：`CollectionsListController._mutationSeqByItemId`（2026-06-07）
+
+`unawaited` 的异步 patch 方法存在竞态风险：慢的旧 patch 可能用旧数据覆盖新的。
+使用单调递增序列号防止：
+
+```dart
+final _mutationSeqByItemId = <int, int>{};
+
+Future<void> _patchChangedItem(int itemId) async {
+  final seq = (_mutationSeqByItemId[itemId] ?? 0) + 1;
+  _mutationSeqByItemId[itemId] = seq;
+
+  final item = await repository.getSavedItem(itemId);
+  if (_mutationSeqByItemId[itemId] != seq) return; // ❌ 旧 patch，丢弃
+
+  final boxIds = await repository.getBoxIdsForItem(itemId);
+  if (_mutationSeqByItemId[itemId] != seq) return; // ❌ 旧 patch，丢弃
+
+  // ... update state
+  if (_mutationSeqByItemId[itemId] != seq) return; // ❌ 最终检查
+}
+```
+
+**规则**：每次 async 边界后检查版本号，失序则直接 return。

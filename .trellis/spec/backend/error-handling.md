@@ -200,6 +200,74 @@ if (!context.mounted) return;
 ref.read(crudFeedbackCoordinatorProvider).handle(context, result);
 ```
 
+### CrudSideEffect sealed class（2026-06-07 更新）
+
+CrudSideEffect 从普通 enum 改为 sealed class，可以携带 entityType/entityId 等 payload。
+
+```dart
+sealed class CrudSideEffect {
+  const CrudSideEffect();
+}
+
+class SelectEntityEffect extends CrudSideEffect {
+  const SelectEntityEffect(this.entityType, this.entityId);
+  final CrudEntityType entityType;
+  final Object entityId;
+}
+
+class CloseDetailEffect extends CrudSideEffect {
+  const CloseDetailEffect();
+}
+
+class ClearSelectionEffect extends CrudSideEffect {
+  const ClearSelectionEffect();
+}
+
+class RefreshListEffect extends CrudSideEffect {
+  const RefreshListEffect([this.entityType]);
+  final CrudEntityType? entityType;
+}
+
+class RetryEffect extends CrudSideEffect {
+  const RetryEffect();
+}
+
+class ViewExistingEffect extends CrudSideEffect {
+  const ViewExistingEffect(this.entityType, this.entityId);
+  final CrudEntityType entityType;
+  final Object entityId;
+}
+```
+
+使用方式：
+
+```dart
+// CrudResult 创建时附带 side effect
+return CrudResult<CaptureResult>.success(
+  data: CaptureResult(itemId: existing.id, wasCreated: false),
+  message: '已存在，已定位到该收藏',
+  sideEffects: [
+    ViewExistingEffect(CrudEntityType.savedItem, existing.id),
+  ],
+);
+```
+
+### Action Label 传递
+
+`CrudUndoAction` 的 `label` 字段会被 `CrudFeedbackCoordinator.handle()` 自动传递给
+`AppToast.undo(actionLabel: undo.label)`。UI 层无需手动处理。
+
+```dart
+// Controller 中自定义 action label
+return CrudResult<void>.success(
+  message: '已从收藏夹中移除',
+  undo: CrudUndoAction(
+    label: '恢复',
+    execute: () async { /* ... */ },
+  ),
+);
+```
+
 ### CrudFeedbackCoordinator 反馈规则
 
 | result 条件 | 反馈行为 |
