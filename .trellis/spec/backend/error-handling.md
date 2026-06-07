@@ -111,11 +111,115 @@ Widget _buildError(BuildContext context, Object error) {
 ## 用户可见错误处理
 
 - **数据加载失败**：显示 error icon + 错误描述 + 重试按钮
-- **操作失败**：使用 `SnackBar` 提示（不超过 4 秒自动消失）
+- **CRUD 操作反馈**：通过 `CrudFeedbackCoordinator` 统一处理（见下方 CRUD 结果模型）
+  - 成功 + 可撤销 → `AppToast.undo()`
+  - 成功 + 需提示 → `AppToast.show(type: success)`
+  - 字段验证错误 → Inline Field Error（表单已处理时静默）
+  - 冲突/关联数据 → `AppToast.show(type: warning)`
+  - 数据库/网络/文件系统错误 → `AppToast.show(type: error)`
+- **删除/操作确认**：使用 `AppConfirmDialog` / `AppConflictDialog`
 - **网络/图片加载**：显示占位图 + 可选重试
-- **严重错误**：TODO — 未来可引入集中错误报告
+- 业务代码**禁止**直接创建 `SnackBar`、调用 `ScaffoldMessenger.showSnackBar` 或直接创建原生 `AlertDialog`
+- 所有临时提示必须通过 `AppToast.show` / `AppToast.undo`
+- 所有确认对话框必须通过 `AppConfirmDialog.show` / `AppConflictDialog.show`
 
 ---
+
+## CRUD 操作结构化结果模型（CrudResult / AppFailure）
+
+自 2026-06-07 起，所有 CRUD 操作统一使用 `CrudResult<T>` 作为返回类型，替代裸异常或私有 ActionResult 模型。
+
+### 核心类型
+
+```dart
+// 结构化失败信息
+class AppFailure {
+  final AppFailureCode code;    // validation / duplicate / notFound / conflict / referenced / database / network / ...
+  final String message;         // 用户可见文案
+  final String? field;          // 关联的表单字段（用于 inline error）
+  final Object? cause;          // 技术异常（仅用于调试）
+  final StackTrace? stackTrace;
+}
+
+// 统一返回类型
+class CrudResult<T> {
+  final bool success;
+  final T? data;
+  final String? message;              // 用户可见成功/失败文案
+  final AppFailure? failure;          // 失败详情
+  final CrudUndoAction? undo;         // 可撤销操作
+  final List<CrudSideEffect> sideEffects; // 页面副作用（选中、关闭详情等）
+  final bool suppressFeedback;        // 静默模式
+  final bool fieldErrorHandled;       // 表单字段错误已就地处理
+}
+
+// 批量操作结果
+class BatchCrudResult<T> {
+  final List<CrudResult<T>> results;
+  BatchCrudStatus get status;  // allSucceeded / allFailed / partialSucceeded
+  String get summaryMessage;
+}
+```
+
+### 分层责任
+
+| 层 | 责任 | 错误处理方式 |
+|----|------|-------------|
+| DAO | 数据库访问 | 让 Drift 异常自然传播 |
+| Repository | 业务一致性（重名、引用、唯一约束） | 抛出 `ArgumentError` / `StateError` 等明确异常 |
+| Controller | 将业务异常/技术异常转为 `CrudResult` | `try-catch` → `CrudResult.failure(...)` |
+| UI | 展示表单错误 + 调用 coordinator | `ref.read(crudFeedbackCoordinatorProvider).handle(context, result)` |
+
+### Controller 模式
+
+```dart
+// ✅ 正确：Controller 将异常转为 CrudResult
+Future<CrudResult<void>> deleteItem(int itemId) async {
+  try {
+    final item = await _repository.getSavedItem(itemId);
+    if (item == null) {
+      return _failure('收藏项不存在', AppFailureCode.notFound);
+    }
+    await _repository.deleteSavedItem(itemId);
+    return CrudResult<void>.success(
+      message: '已删除「$title」',
+      undo: CrudUndoAction(execute: () => restoreDeletedItem(snapshot)),
+    );
+  } catch (error, stackTrace) {
+    return _failure('删除失败', AppFailureCode.database, cause: error, stackTrace: stackTrace);
+  }
+}
+```
+
+### UI 使用模式
+
+```dart
+// ✅ UI 层不拼接错误文案，不直接创建 SnackBar
+final result = await controller.deleteItem(item.id);
+if (!context.mounted) return;
+ref.read(crudFeedbackCoordinatorProvider).handle(context, result);
+```
+
+### CrudFeedbackCoordinator 反馈规则
+
+| result 条件 | 反馈行为 |
+|-------------|---------|
+| success + undo | `AppToast.undo(message, onUndo)` |
+| success + message | `AppToast.show(message, type: success)` |
+| validation / duplicate + fieldErrorHandled | 静默（表单已处理） |
+| conflict / referenced | `AppToast.show(message, type: warning)` |
+| database / network / permission / notFound / unknown | `AppToast.show(message, type: error)` |
+| cancelled | info toast |
+| suppressFeedback | 完全静默 |
+
+### 禁止模式
+
+| 禁止 | 原因 | 正确做法 |
+|------|------|---------|
+| UI 层直接调用 `ScaffoldMessenger.showSnackBar` | 反馈不统一，无法撤销 | 使用 `CrudFeedbackCoordinator` |
+| Controller 返回 `SavedItemActionResult` 等私有类型 | 每个插件都要重复实现 | 统一使用 `CrudResult<T>` |
+| 业务代码展示技术异常信息 | 用户无法理解 | 使用 `AppFailure.message`（用户友好文案） |
+| Repository 返回 `CrudResult` | 分层混乱 | Repository 抛异常，Controller 转为 `CrudResult` |
 
 ## 调试建议
 

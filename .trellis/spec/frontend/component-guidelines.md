@@ -123,6 +123,90 @@ AppToast.undo(context, message: '已删除「文档」', onUndo: () async {
 - 删除/移除等可撤销操作使用 `AppToast.undo`（type 自动设为 `destructive`）
 - 默认持续 5 秒
 
+### AppToast.show 支持 Action
+
+自 2026-06-07 起，`AppToast.show()` 支持最多 1 个 action 按钮：
+
+```dart
+AppToast.show(
+  context,
+  message: 'URL 已存在',
+  actionLabel: '查看',
+  onAction: () => _selectExistingItem(),
+);
+```
+
+`actionLabel` 和 `onAction` 必须同时提供或同时为 null。
+
+### AppConfirmDialog 确认对话框
+
+统一危险操作确认对话框（永久删除、批量操作、覆盖、合并等）。
+
+**文件**：`lib/src/shared/widgets/app_confirm_dialog.dart`
+
+```dart
+final confirmed = await AppConfirmDialog.show(
+  context: context,
+  title: '删除收藏夹',
+  message: '删除收藏夹不会删除内容，内容会回到待整理。',
+  confirmLabel: '删除',
+  destructive: true,
+  icon: Icons.delete_outline_rounded,
+);
+if (confirmed) { /* 执行删除 */ }
+```
+
+**参数**：
+| 参数 | 类型 | 说明 |
+|------|------|------|
+| `title` | `String` | 对话框标题 |
+| `message` | `String` | 对话框说明文字 |
+| `confirmLabel` | `String`（默认「确认」）| 确认按钮文案 |
+| `cancelLabel` | `String`（默认「取消」）| 取消按钮文案 |
+| `destructive` | `bool` | 是否危险操作（红色按钮） |
+| `icon` | `IconData?` | 可选图标 |
+
+**约束**：
+- 永久删除、清空回收站、批量删除、合并、覆盖等操作必须使用 `AppConfirmDialog`
+- `destructive: true` 时确认按钮使用 `colorScheme.error` 背景
+- 返回值 `false` 表示取消（对话框关闭或返回的 `null` 自动转为 `false`）
+- 业务代码禁止直接创建 `AlertDialog`
+
+### AppConflictDialog 冲突对话框
+
+用于重复名称、覆盖冲突、删除引用关系、合并等需要用户选择操作的场景。
+
+**文件**：`lib/src/shared/widgets/app_conflict_dialog.dart`
+
+```dart
+enum _MergeAction { cancel, merge, remove }
+
+final action = await AppConflictDialog.show<_MergeAction>(
+  context: context,
+  title: '标签冲突',
+  message: '该标签在 3 条想法中被使用，如何处理？',
+  actions: [
+    AppConflictAction(
+      value: _MergeAction.merge,
+      label: '合并标签',
+      description: '将所有引用合并到新标签',
+    ),
+    AppConflictAction(
+      value: _MergeAction.remove,
+      label: '移除标签',
+      description: '从所有想法中删除标签',
+      destructive: true,
+    ),
+  ],
+);
+```
+
+**约束**：
+- 提供 2-4 个 `AppConflictAction` 选项
+- `destructive` 选项显示为红色字
+- 底部固定「取消」按钮
+- 不强制选择（可取消返回 `null`）
+
 ---
 
 ## Props 约定
