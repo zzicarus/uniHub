@@ -11,6 +11,11 @@ import 'package:uni_hub/src/core/theme/app_tokens.dart';
 ///
 /// All image operations are delegated to the caller via callbacks,
 /// making this widget independent of any plugin-specific image service.
+///
+/// ⚠️ Deprecated: New editor UI should use [AppFlowyThoughtEditor] instead.
+/// This widget is kept for backward compatibility with un-migrated edit paths.
+/// See `.trellis/spec/architecture/editor-migration.md` for migration status.
+@Deprecated('Use AppFlowyThoughEditor instead')
 class RichTextEditor extends StatefulWidget {
   final QuillController controller;
 
@@ -82,14 +87,14 @@ class _RichTextEditorState extends State<RichTextEditor> {
   void didUpdateWidget(covariant RichTextEditor oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.controller != widget.controller) {
-      _changes?.cancel();
+      unawaited(_changes?.cancel());
       _listenToController();
     }
   }
 
   @override
   void dispose() {
-    _changes?.cancel();
+    unawaited(_changes?.cancel());
     super.dispose();
   }
 
@@ -183,16 +188,13 @@ class _RichTextEditorState extends State<RichTextEditor> {
         multiRowsDisplay: false,
         showFontFamily: false,
         showFontSize: false,
-        showSmallButton: false,
         showUnderLineButton: false,
         showStrikeThrough: false,
         showInlineCode: false,
         showColorButton: false,
         showBackgroundColorButton: false,
-        showAlignmentButtons: false,
         showSubscript: false,
         showSuperscript: false,
-        showDirection: false,
         showSearchButton: false,
         showLink: false,
         showIndent: false,
@@ -239,9 +241,7 @@ class _RichTextEditorState extends State<RichTextEditor> {
                   controller: widget.controller,
                   config: QuillEditorConfig(
                     placeholder: widget.placeholder,
-                    autoFocus: false,
                     expands: true,
-                    padding: EdgeInsets.zero,
                     embedBuilders: FlutterQuillEmbeds.editorBuilders(
                       videoEmbedConfig: null,
                     ),
@@ -257,9 +257,6 @@ class _RichTextEditorState extends State<RichTextEditor> {
                 controller: widget.controller,
                 config: QuillEditorConfig(
                   placeholder: widget.placeholder,
-                  autoFocus: false,
-                  expands: false,
-                  padding: EdgeInsets.zero,
                   embedBuilders: FlutterQuillEmbeds.editorBuilders(
                     videoEmbedConfig: null,
                   ),

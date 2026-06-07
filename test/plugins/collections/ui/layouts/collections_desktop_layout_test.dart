@@ -21,7 +21,7 @@ void main() {
 
     final registry = PluginRegistry()..register(CollectionsPlugin());
     final db = AppDatabase(NativeDatabase.memory(), registry);
-    addTearDown(() => db.close());
+    addTearDown(db.close);
 
     await tester.pumpWidget(
       ProviderScope(
@@ -37,7 +37,7 @@ void main() {
 
     await tester.pumpAndSettle();
 
-    expect(find.text('内容收藏'), findsOneWidget);
+    expect(find.text('内容库'), findsOneWidget);
     expect(find.text('收藏夹'), findsOneWidget);
     expect(find.text('全部收藏'), findsOneWidget);
     expect(find.text('排序：最新收藏'), findsOneWidget);

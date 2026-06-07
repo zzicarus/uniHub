@@ -51,17 +51,15 @@ class UniPanel extends StatelessWidget {
 
 @Preview(name: 'UniPanel with text', group: 'Shared')
 Widget uniPanelTextPreview() => const UniPanel(
-      padding: EdgeInsets.all(16),
       child: Text('面板内容示例，展示 UniPanel 的基础外观。'),
     );
 
 @Preview(name: 'UniPanel with column', group: 'Shared')
-Widget uniPanelColumnPreview() => UniPanel(
-      padding: const EdgeInsets.all(16),
+Widget uniPanelColumnPreview() => const UniPanel(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
-        children: const [
+        children: [
           Text('标题', style: TextStyle(fontWeight: AppFontTokens.bold)),
           SizedBox(height: 8),
           Text('这里是面板内容，支持任意子组件。'),

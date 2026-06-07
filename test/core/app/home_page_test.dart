@@ -2,8 +2,8 @@ import 'dart:convert';
 import 'dart:ui' as ui;
 
 import 'package:drift/native.dart';
-import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_test/flutter_test.dart';
 import 'package:uni_hub/src/core/app/app.dart';
 import 'package:uni_hub/src/core/database/app_database.dart';
 import 'package:uni_hub/src/core/database/database_provider.dart';
@@ -33,7 +33,7 @@ String _makeAppFlowyContent(String text) {
 }
 
 void main() {
-  testWidgets('HomePage shows — for metrics without plugin data', (
+  testWidgets('HomePage shows greeting and quick capture without fake data', (
     tester,
   ) async {
     tester.view.physicalSize = const ui.Size(1440, 900);
@@ -44,7 +44,7 @@ void main() {
     final registry = PluginRegistry();
     registry.register(ThoughtsPlugin());
     final testDb = AppDatabase(NativeDatabase.memory(), registry);
-    addTearDown(() => testDb.close());
+    addTearDown(testDb.close);
 
     await tester.pumpWidget(
       ProviderScope(
@@ -57,17 +57,18 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    // Metric cards should be present (may appear in sidebar too)
-    expect(find.text('今日待办'), findsWidgets);
-    expect(find.text('想法总数'), findsOneWidget);
-    expect(find.text('本周笔记'), findsOneWidget);
-    expect(find.text('纪念日'), findsOneWidget);
+    // PRD 2.3: Hardcoded user name removed — greeting should not contain Alex
+    expect(find.textContaining('Alex'), findsNothing);
 
-    // Without plugins providing these, they show —
-    expect(find.text('—'), findsWidgets);
+    // PRD 2.4: Fake metric cards (今日待办 —, 本周笔记 —, 纪念日 —) removed
+    expect(find.text('—'), findsNothing);
+
+    // Core path: quick capture + recent thoughts
+    expect(find.text('快捷入口'), findsWidgets);
+    expect(find.text('最近想法'), findsWidgets);
   });
 
-  testWidgets('HomePage shows dashboard todo items in work grid', (
+  testWidgets('HomePage shows quick capture and recent thoughts', (
     tester,
   ) async {
     tester.view.physicalSize = const ui.Size(1440, 900);
@@ -78,7 +79,7 @@ void main() {
     final registry = PluginRegistry();
     registry.register(ThoughtsPlugin());
     final testDb = AppDatabase(NativeDatabase.memory(), registry);
-    addTearDown(() => testDb.close());
+    addTearDown(testDb.close);
 
     await tester.pumpWidget(
       ProviderScope(
@@ -91,9 +92,12 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    // Desktop work grid uses dashboard-style placeholder items.
-    expect(find.text('整理 Dashboard 改造清单'), findsOneWidget);
-    expect(find.text('最近活动'), findsWidgets);
+    // PRD 2.4: Home shows real data sections, not fake todo/activity items.
+    expect(find.text('快捷入口'), findsWidgets);
+    expect(find.text('最近想法'), findsWidgets);
+
+    // _TodoPanel / _ActivityPanel removed — no longer show hardcoded todos
+    expect(find.text('整理 Dashboard 改造清单'), findsNothing);
   });
 
   testWidgets('HomePage shows today overview rail with metrics', (
@@ -108,7 +112,7 @@ void main() {
     final registry = PluginRegistry();
     registry.register(ThoughtsPlugin());
     final testDb = AppDatabase(NativeDatabase.memory(), registry);
-    addTearDown(() => testDb.close());
+    addTearDown(testDb.close);
 
     await tester.pumpWidget(
       ProviderScope(
@@ -142,7 +146,7 @@ void main() {
 
     final registry = PluginRegistry()..register(ThoughtsPlugin());
     final testDb = AppDatabase(NativeDatabase.memory(), registry);
-    addTearDown(() => testDb.close());
+    addTearDown(testDb.close);
 
     await testDb
         .into(testDb.thoughtsTable)
@@ -185,7 +189,7 @@ void main() {
     final registry = PluginRegistry();
     registry.register(ThoughtsPlugin());
     final testDb = AppDatabase(NativeDatabase.memory(), registry);
-    addTearDown(() => testDb.close());
+    addTearDown(testDb.close);
 
     await tester.pumpWidget(
       ProviderScope(
@@ -213,7 +217,7 @@ void main() {
     final registry = PluginRegistry();
     registry.register(ThoughtsPlugin());
     final testDb = AppDatabase(NativeDatabase.memory(), registry);
-    addTearDown(() => testDb.close());
+    addTearDown(testDb.close);
 
     await tester.pumpWidget(
       ProviderScope(

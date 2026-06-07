@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../../../core/theme/app_tokens.dart';
 import '../../../core/theme/app_theme_tokens.dart';
+import '../../../core/theme/app_tokens.dart';
 import '../../tags/tag_models.dart';
 import 'app_tag_chip.dart';
 
@@ -70,7 +70,6 @@ class AppTagFilterBar extends StatelessWidget {
     final isEmpty = tags.isEmpty;
 
     return Row(
-      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         Text(
           label,

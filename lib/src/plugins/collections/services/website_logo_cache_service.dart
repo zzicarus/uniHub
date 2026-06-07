@@ -150,7 +150,6 @@ class WebsiteLogoCacheService {
         );
         return WebsiteLogoCacheEntry(
           siteKey: row.siteKey,
-          localLogoPath: null,
           status: row.status,
         );
       }

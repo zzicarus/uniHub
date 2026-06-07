@@ -1,7 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:uni_hub/src/plugins/collections/application/saved_item_list_entry.dart';
 import 'package:uni_hub/src/plugins/collections/domain/saved_items_query.dart';
 import 'package:uni_hub/src/plugins/collections/providers/collections_providers.dart';
-import 'package:uni_hub/src/plugins/collections/application/saved_item_list_entry.dart';
 import 'package:uni_hub/src/plugins/collections/services/website_logo_cache_service.dart';
 
 /// Immutable state for the collections list view.
@@ -79,7 +79,6 @@ class CollectionsListController
       searchQuery:
           ref.read(collectionDebouncedSearchQueryProvider).valueOrNull ?? '',
       sort: ref.read(collectionSortProvider),
-      limit: 50,
       offset: offset,
     );
   }

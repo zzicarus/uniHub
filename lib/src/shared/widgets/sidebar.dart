@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+
 import '../../core/plugin/plugin_interface.dart';
 import '../../core/plugin/plugin_registry.dart';
 import '../../core/router/route_names.dart';
-import '../../core/theme/app_tokens.dart';
 import '../../core/theme/app_theme_tokens.dart';
+import '../../core/theme/app_tokens.dart';
 
 class Sidebar extends ConsumerWidget {
   const Sidebar({super.key});
@@ -97,12 +98,6 @@ class Sidebar extends ConsumerWidget {
                   isSelected: location == '/calendar',
                   onTap: () => context.goNamed(RouteNames.calendar),
                 ),
-                _NavItem(
-                  icon: Icons.star_border_rounded,
-                  label: '收藏',
-                  isSelected: location == '/favorites',
-                  onTap: () => context.goNamed(RouteNames.favorites),
-                ),
                 const SizedBox(height: AppSpacing.lg),
                 const Padding(
                   padding: EdgeInsets.symmetric(horizontal: AppSpacing.xl),
@@ -124,14 +119,14 @@ class Sidebar extends ConsumerWidget {
               ],
             ),
           ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(
+          const Padding(
+            padding: EdgeInsets.fromLTRB(
               AppSpacing.lg,
               0,
               AppSpacing.lg,
               AppSpacing.xl,
             ),
-            child: const _UserTile(),
+            child: _UserTile(),
           ),
         ],
       ),
@@ -159,7 +154,7 @@ class _LogoMark extends StatelessWidget {
           ),
         ],
       ),
-      child: Center(
+      child: const Center(
         child: Text(
           'U',
           style: TextStyle(
@@ -197,7 +192,7 @@ class _UserTile extends StatelessWidget {
               radius: 18,
               backgroundColor: appColors.primarySoft,
               child: Text(
-                'A',
+                'U',
                 style: theme.textTheme.titleSmall?.copyWith(
                   color: appColors.primary,
                   fontSize: AppFontTokens.titleLg,
@@ -210,9 +205,10 @@ class _UserTile extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Alex', style: theme.textTheme.titleSmall),
+                  // TODO(profile): Replace neutral copy with profileProvider.
+                  Text('uniHub', style: theme.textTheme.titleSmall),
                   Text(
-                    '专注记录 · 持续进步',
+                    '本地优先的个人信息工具箱',
                     style: theme.textTheme.bodySmall,
                     overflow: TextOverflow.ellipsis,
                   ),

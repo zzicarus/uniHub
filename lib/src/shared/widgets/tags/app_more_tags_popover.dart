@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../../../core/theme/app_tokens.dart';
 import '../../../core/theme/app_theme_tokens.dart';
+import '../../../core/theme/app_tokens.dart';
 import '../../tags/tag_models.dart';
 import 'app_tag_chip.dart';
 
@@ -29,7 +29,6 @@ Future<void> showAppMoreTagsPopover({
 }) {
   return showDialog<void>(
     context: context,
-    barrierDismissible: true,
     builder: (dialogContext) {
       return Dialog(
         insetPadding: const EdgeInsets.symmetric(

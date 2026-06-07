@@ -1,4 +1,5 @@
 {
+  "theme": "unihub-theme",
   "enableSkillCommands": true,
   "extensions": [
     "./extensions/trellis/index.ts"

@@ -3,7 +3,6 @@ import 'dart:convert';
 import 'dart:io';
 
 import '../../domain/collection_models.dart';
-import '../../domain/enrichment_status.dart';
 import '../../services/html_metadata_parser.dart';
 import '../../services/platform_metadata_adapter.dart';
 
@@ -56,7 +55,6 @@ class GitHubMetadataAdapter implements PlatformMetadataAdapter {
             'type': typeInfo,
             'note': '404',
           }),
-          status: EnrichmentStatus.success,
         ),
         source: 'github_adapter',
       );
@@ -93,7 +91,6 @@ class GitHubMetadataAdapter implements PlatformMetadataAdapter {
           'owner': segments.isNotEmpty ? segments[0] : null,
           'repo': segments.length > 1 ? segments[1] : null,
         }),
-        status: EnrichmentStatus.success,
       ),
       source: 'github_adapter',
     );

@@ -71,7 +71,6 @@ class SavedItemCard extends ConsumerWidget {
                 AppSpacing.sm,
               ),
               child: Row(
-                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   _iconColumn(
                     colorScheme,
@@ -146,8 +145,6 @@ class SavedItemCard extends ConsumerWidget {
         WebsiteLogo(
           localPath: localLogoPath,
           fallbackIcon: _iconFor(mediaType),
-          size: 48,
-          iconSize: 24,
         ),
         if (enrichmentStatus == EnrichmentStatus.failed)
           Positioned(
@@ -339,7 +336,6 @@ class SavedItemCard extends ConsumerWidget {
                     status,
                     colorScheme,
                   ).withValues(alpha: 0.3),
-                  width: 1,
                 ),
               ),
               child: Text(
@@ -573,7 +569,6 @@ class _CardMoreMenu extends ConsumerWidget {
     // Full delete
     final deleteResult = await controller.deleteItem(
       item.id,
-      mode: DeleteMode.fullDelete,
     );
     if (!context.mounted) return;
     if (deleteResult.undo != null) {
@@ -677,7 +672,7 @@ class _CompactBoxButton extends ConsumerWidget {
 
     final selection = await showMenu<int>(
       context: context,
-      position: RelativeRect.fromLTRB(1000, 80, 1000, 80),
+      position: const RelativeRect.fromLTRB(1000, 80, 1000, 80),
       items: [
         PopupMenuItem<int>(
           value: _inboxValue,

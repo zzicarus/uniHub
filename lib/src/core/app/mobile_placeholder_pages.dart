@@ -12,7 +12,7 @@ class TodosPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return _PlaceholderPage(
+    return const _PlaceholderPage(
       title: '待办',
       icon: Icons.check_box_outlined,
     );
@@ -24,7 +24,7 @@ class NotesPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return _PlaceholderPage(
+    return const _PlaceholderPage(
       title: '笔记',
       icon: Icons.description_outlined,
     );
@@ -36,7 +36,7 @@ class CalendarPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return _PlaceholderPage(
+    return const _PlaceholderPage(
       title: '日历',
       icon: Icons.calendar_month_outlined,
     );
@@ -48,7 +48,7 @@ class FavoritesPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return _PlaceholderPage(
+    return const _PlaceholderPage(
       title: '收藏',
       icon: Icons.bookmark_outlined,
     );
@@ -60,7 +60,7 @@ class SearchPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return _PlaceholderPage(
+    return const _PlaceholderPage(
       title: '搜索',
       icon: Icons.search_rounded,
     );

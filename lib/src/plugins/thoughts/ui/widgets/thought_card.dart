@@ -54,7 +54,6 @@ class _ThoughtCardState extends ConsumerState<ThoughtCard> {
     return Material(
       color: colorScheme.surface,
       borderRadius: BorderRadius.circular(AppRadius.lg),
-      elevation: 0,
       child: InkWell(
         borderRadius: BorderRadius.circular(AppRadius.lg),
         onTap: widget.onTap,

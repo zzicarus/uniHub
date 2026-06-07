@@ -20,8 +20,8 @@ library;
 
 import 'package:flutter/material.dart';
 
-import '../../../core/theme/app_tokens.dart';
 import '../../../core/theme/app_theme_tokens.dart';
+import '../../../core/theme/app_tokens.dart';
 import '../../tags/tag_codec.dart';
 import 'app_tag_chip.dart';
 
@@ -267,9 +267,9 @@ class AppTagInputState extends State<AppTagInput> {
               vertical: 6,
             ),
           ),
-          style: TextStyle(fontSize: AppFontTokens.bodyMd),
+          style: const TextStyle(fontSize: AppFontTokens.bodyMd),
           onChanged: _textFieldValueChanged,
-          onSubmitted: (value) => _commitInput(value),
+          onSubmitted: _commitInput,
         ),
 
         // Error text

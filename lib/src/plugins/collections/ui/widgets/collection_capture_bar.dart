@@ -38,7 +38,6 @@ class _CollectionCaptureBarState extends ConsumerState<CollectionCaptureBar> {
       ref.invalidate(collectionFolderCountsProvider);
       if (result.wasCreated) {
         unawaited(ref.read(enrichmentQueueControllerProvider).drainPending(
-          batchSize: 5,
           maxBatches: 3,
         ));
       }

@@ -19,14 +19,14 @@ import 'package:collection/collection.dart' show DeepCollectionEquality;
 import 'package:flutter/material.dart';
 import 'package:flutter_quill/flutter_quill.dart' show Document, QuillController;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:uni_hub/src/shared/editor/appflowy_document_tools.dart';
+import 'package:uni_hub/src/shared/editor/appflowy_thought_editor.dart';
+import 'package:uni_hub/src/shared/tags/tag_codec.dart';
 
 import '../../data/thought_content_codec.dart';
 import '../../data/thought_image_block_codec.dart';
 import '../../data/thought_image_service.dart';
 import '../../providers/thoughts_providers.dart';
-import 'package:uni_hub/src/shared/editor/appflowy_document_tools.dart';
-import 'package:uni_hub/src/shared/editor/appflowy_thought_editor.dart';
-import 'package:uni_hub/src/shared/tags/tag_codec.dart';
 
 class ThoughtEditorController {
   final WidgetRef ref;

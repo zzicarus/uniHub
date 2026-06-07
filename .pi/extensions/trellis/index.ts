@@ -1070,9 +1070,9 @@ export default function trellisExtension(pi: {
   };
 
   pi.registerTool?.({
-    name: "subagent",
-    label: "Subagent",
-    description: "Run a Trellis project sub-agent with active task context.",
+    name: "trellis-subagent",
+    label: "Trellis Subagent",
+    description: "[Trellis alternative] Run a Trellis project sub-agent with active task context. Prefer pi-subagents' `subagent` tool for live status and TUI progress. Use this when you need direct Trellis context injection without pi-subagents.",
     promptSnippet: SUBAGENT_DISPATCH_PROTOCOL,
     promptGuidelines: SUBAGENT_DISPATCH_PROTOCOL,
     parameters: {

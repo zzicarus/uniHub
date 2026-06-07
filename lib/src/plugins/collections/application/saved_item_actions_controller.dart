@@ -3,12 +3,11 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:url_launcher/url_launcher.dart';
-
 import 'package:uni_hub/src/plugins/collections/data/collections_repository.dart';
 import 'package:uni_hub/src/plugins/collections/domain/consumption_status.dart';
-import 'package:uni_hub/src/plugins/collections/services/enrichment_job_service.dart';
 import 'package:uni_hub/src/plugins/collections/providers/collections_providers.dart';
+import 'package:uni_hub/src/plugins/collections/services/enrichment_job_service.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import 'saved_item_action_result.dart';
 import 'saved_item_undo_snapshot.dart';

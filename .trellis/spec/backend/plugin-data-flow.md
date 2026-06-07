@@ -200,7 +200,87 @@ UI Widget → Application Provider → QueueController → Service → Repositor
 
 ---
 
-## 8. 测试要求
+## 9. Capability 接口架构
+
+> 自 2026-06-07 起，插件能力拆分为多个独立 interface，参见 `plugin_interface.dart`。
+
+### 9.1 能力接口列表
+
+| 接口 | 贡献内容 | 方法 |
+|------|---------|------|
+| `RouteContributor` | GoRouter 路由 | `routes` |
+| `NavContributor` | 侧边栏导航条目 | `navEntries` |
+| `DatabaseContributor` | Drift 表声明 + schemaVersion | `tables`, `schemaVersion` |
+| `DashboardContributor` | 首页 Dashboard 面板 | `getRecentItems`, `getPinnedItems`, `getStat` |
+| `QuickCaptureHandler` | 快速创建（URL/文本分流） | `canHandleQuickCreate`, `quickCreate` |
+| `SearchProvider` | 全局搜索 | `search` |
+
+### 9.2 `UniHubPlugin` 保持兼容
+
+`UniHubPlugin` 现在同时实现以上全部 6 个接口：
+
+```dart
+abstract class UniHubPlugin
+    implements
+        RouteContributor,
+        NavContributor,
+        DatabaseContributor,
+        DashboardContributor,
+        QuickCaptureHandler,
+        SearchProvider {
+  String get id;
+  String get name;
+  Future<void> onInit() async {}
+  Future<void> onDispose() async {}
+}
+```
+
+**约束**：
+- 现有插件继续继承 `UniHubPlugin`，无需修改。
+- 新增插件如果不需要全部能力，可以实现单个 interface 而非继承 `UniHubPlugin`。
+- 但新增插件必须先经过架构评审，确认不需要 `id`/`name`/`onInit`/`onDispose`。
+
+### 9.3 PluginRegistry 按能力聚合
+
+`PluginRegistry` 使用 `whereType<T>()` 按能力查询：
+
+```dart
+List<NavEntry> get navEntries => [
+  for (final p in _plugins.whereType<NavContributor>())
+    ...p.navEntries,
+];
+
+List<RouteBase> get mergedRoutes => [
+  for (final p in _plugins.whereType<RouteContributor>())
+    ...p.routes,
+];
+```
+
+Dashboard 聚合、quickCreate 同理。
+
+**优势**：
+- 不实现某能力的插件不会在对应迭代中产生空循环。
+- 未来 Todo/Note/Calendar 插件只需实现自身需要的能力。
+- 单插件抛错不影响其他插件的数据贡献（DashboardContributor 已内置 try-catch）。
+
+### 9.4 快速创建分流规则
+
+```dart
+// Thoughts：非 URL 文本
+bool canHandleQuickCreate(String content) {
+  return content.trim().isNotEmpty && !urlNormalizer.looksLikeUrl(content);
+}
+
+// Collections：URL 链接
+bool canHandleQuickCreate(String content) {
+  return urlNormalizer.looksLikeUrl(content);
+}
+```
+
+两者使用同一个 `UrlNormalizer`（`lib/src/shared/url/url_normalizer.dart`），
+不再各自维护 URL 判断逻辑。
+
+## 10. 测试要求
 
 新增插件数据层至少覆盖：
 

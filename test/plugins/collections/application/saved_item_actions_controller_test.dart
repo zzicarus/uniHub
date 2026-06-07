@@ -3,10 +3,10 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:uni_hub/src/core/database/app_database.dart';
 import 'package:uni_hub/src/core/plugin/plugin_registry.dart';
-import 'package:uni_hub/src/plugins/collections/collections_plugin.dart';
-import 'package:uni_hub/src/plugins/collections/application/saved_item_actions_controller.dart';
 import 'package:uni_hub/src/plugins/collections/application/saved_item_action_result.dart';
+import 'package:uni_hub/src/plugins/collections/application/saved_item_actions_controller.dart';
 import 'package:uni_hub/src/plugins/collections/application/saved_item_undo_snapshot.dart';
+import 'package:uni_hub/src/plugins/collections/collections_plugin.dart';
 import 'package:uni_hub/src/plugins/collections/data/collection_boxes_dao.dart';
 import 'package:uni_hub/src/plugins/collections/data/collections_repository.dart';
 import 'package:uni_hub/src/plugins/collections/data/enrichment_jobs_dao.dart';
@@ -142,7 +142,6 @@ void main() {
       expect(await repository.getSavedItem(item.id), isNotNull);
       final result = await controller.deleteItem(
         item.id,
-        mode: DeleteMode.fullDelete,
       );
 
       expect(result.success, isTrue);
@@ -156,7 +155,6 @@ void main() {
 
       final deleteResult = await controller.deleteItem(
         item.id,
-        mode: DeleteMode.fullDelete,
       );
       expect(deleteResult.success, isTrue);
 
@@ -181,7 +179,6 @@ void main() {
 
       final deleteResult = await controller.deleteItem(
         item.id,
-        mode: DeleteMode.fullDelete,
       );
       expect(deleteResult.success, isTrue);
 

@@ -17,8 +17,6 @@ class ThoughtSelectedTagsBar extends ConsumerWidget {
 
     return AppSelectedTagsBar(
       selectedTags: selectedTags,
-      label: '已选标签：',
-      clearLabel: '清除标签',
       onRemove: (tag) {
         final current = ref.read(selectedTagFiltersProvider);
         ref.read(selectedTagFiltersProvider.notifier).state =

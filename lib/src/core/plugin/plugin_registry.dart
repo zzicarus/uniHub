@@ -11,8 +11,18 @@ class PluginRegistry {
   }
 
   List<UniHubPlugin> get plugins => List.unmodifiable(_plugins);
-  List<NavEntry> get navEntries => [for (final p in _plugins) ...p.navEntries];
-  List<GoRoute> get mergedRoutes => [for (final p in _plugins) ...p.routes];
+
+  /// 按能力收集：只遍历实现了 [NavContributor] 的插件。
+  List<NavEntry> get navEntries => [
+    for (final p in _plugins.whereType<NavContributor>())
+      ...p.navEntries,
+  ];
+
+  /// 按能力收集：只遍历实现了 [RouteContributor] 的插件。
+  List<GoRoute> get mergedRoutes => [
+    for (final p in _plugins.whereType<RouteContributor>())
+      ...p.routes,
+  ];
 
   Future<void> initAll() async {
     for (final p in _plugins) {
@@ -30,12 +40,21 @@ class PluginRegistry {
     Ref ref, {
     int count = 4,
   }) async {
-    final items = <DashboardItem>[];
-    for (final p in _plugins) {
-      final pluginItems = await p.getRecentItems(ref, count: count);
-      items.addAll(pluginItems);
-    }
-    items.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+    final contributors = _plugins.whereType<DashboardContributor>();
+    final results = await Future.wait(
+      contributors.map((p) async {
+        try {
+          return await p.getRecentItems(ref, count: count);
+        } catch (_) {
+          // TODO(logging): report plugin dashboard aggregation error
+          return <DashboardItem>[];
+        }
+      }),
+    );
+
+    final items = results.expand((e) => e).toList()
+      ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
+
     return items.take(count).toList();
   }
 
@@ -43,22 +62,39 @@ class PluginRegistry {
     Ref ref, {
     int count = 3,
   }) async {
-    final items = <DashboardItem>[];
-    for (final p in _plugins) {
-      final pluginItems = await p.getPinnedItems(ref, count: count);
-      items.addAll(pluginItems);
-    }
-    items.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+    final contributors = _plugins.whereType<DashboardContributor>();
+    final results = await Future.wait(
+      contributors.map((p) async {
+        try {
+          return await p.getPinnedItems(ref, count: count);
+        } catch (_) {
+          // TODO(logging): report plugin dashboard aggregation error
+          return <DashboardItem>[];
+        }
+      }),
+    );
+
+    final items = results.expand((e) => e).toList()
+      ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
+
     return items.take(count).toList();
   }
 
   Future<List<PluginStat>> getDashboardStats(Ref ref) async {
-    final stats = <PluginStat>[];
-    for (final p in _plugins) {
-      final stat = await p.getStat(ref);
-      if (stat != null) stats.add(stat);
-    }
-    return stats;
+    final contributors = _plugins.whereType<DashboardContributor>();
+    final results = await Future.wait(
+      contributors.map((p) async {
+        try {
+          final stat = await p.getStat(ref);
+          return stat != null ? [stat] : <PluginStat>[];
+        } catch (_) {
+          // TODO(logging): report plugin dashboard aggregation error
+          return <PluginStat>[];
+        }
+      }),
+    );
+
+    return results.expand((e) => e).toList();
   }
 
   Future<DashboardItem?> quickCreate(
@@ -66,8 +102,8 @@ class PluginRegistry {
     required String content,
     String? tags,
   }) async {
-    // #7: 先按 canHandleQuickCreate 过滤，避免非 URL 内容被 Thoughts 优先拦截
-    for (final p in _plugins) {
+    final handlers = _plugins.whereType<QuickCaptureHandler>();
+    for (final p in handlers) {
       if (!p.canHandleQuickCreate(content)) continue;
       final item = await p.quickCreate(ref, content: content, tags: tags);
       if (item != null) return item;
@@ -82,6 +118,11 @@ class PluginRegistry {
     _ensureUniqueTopLevelNavEntries(plugin);
   }
 
+  /// 返回实现了指定 Capability 的插件列表。
+  /// 供外部按能力查询使用。
+  List<T> contributors<T>() =>
+      _plugins.whereType<T>().toList();
+
   void _ensureUniquePluginId(UniHubPlugin plugin) {
     for (final existing in _plugins) {
       if (existing.id == plugin.id) {
@@ -91,13 +132,14 @@ class PluginRegistry {
   }
 
   void _ensureUniqueRoutes(UniHubPlugin plugin) {
+    final routePlugins = _plugins.whereType<RouteContributor>();
     final existingPaths = <String, String>{};
     final existingNames = <String, String>{};
-    for (final existing in _plugins) {
+    for (final existing in routePlugins) {
       for (final route in existing.routes) {
-        existingPaths[route.path] = existing.id;
+        existingPaths[route.path] = (existing as dynamic).id;
         final name = route.name;
-        if (name != null) existingNames[name] = existing.id;
+        if (name != null) existingNames[name] = (existing as dynamic).id;
       }
     }
 
@@ -123,10 +165,11 @@ class PluginRegistry {
   }
 
   void _ensureUniqueTables(UniHubPlugin plugin) {
+    final dbPlugins = _plugins.whereType<DatabaseContributor>();
     final existingTables = <Type, String>{};
-    for (final existing in _plugins) {
+    for (final existing in dbPlugins) {
       for (final table in existing.tables) {
-        existingTables[table] = existing.id;
+        existingTables[table] = (existing as dynamic).id;
       }
     }
 
@@ -142,12 +185,13 @@ class PluginRegistry {
   }
 
   void _ensureUniqueTopLevelNavEntries(UniHubPlugin plugin) {
+    final navPlugins = _plugins.whereType<NavContributor>();
     final existingLabels = <String, String>{};
     final existingTargets = <String, String>{};
-    for (final existing in _plugins) {
+    for (final existing in navPlugins) {
       for (final entry in existing.navEntries) {
-        existingLabels[entry.label] = existing.id;
-        existingTargets[_navEntryTarget(entry)] = existing.id;
+        existingLabels[entry.label] = (existing as dynamic).id;
+        existingTargets[_navEntryTarget(entry)] = (existing as dynamic).id;
       }
     }
 
@@ -183,6 +227,6 @@ class PluginRegistry {
 
 final pluginRegistryProvider = Provider<PluginRegistry>((ref) {
   final registry = PluginRegistry();
-  ref.onDispose(() => registry.disposeAll());
+  ref.onDispose(registry.disposeAll);
   return registry;
 });

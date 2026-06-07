@@ -283,8 +283,7 @@ void main() {
       await env.dao.upsert(
         WebsiteLogoCacheTableCompanion(
           siteKey: Value(key),
-          host: Value('example.com'),
-          remoteLogoUrl: const Value.absent(),
+          host: const Value('example.com'),
           localLogoPath: Value(file.path),
           mimeType: const Value('image/png'),
           status: const Value('success'),
@@ -322,7 +321,7 @@ void main() {
       await env.dao.upsert(
         WebsiteLogoCacheTableCompanion(
           siteKey: Value(key),
-          host: Value('example.com'),
+          host: const Value('example.com'),
           localLogoPath: Value(file.path),
           mimeType: const Value('image/png'),
           status: const Value('success'),
@@ -351,10 +350,9 @@ void main() {
 
       await env.dao.upsert(
         WebsiteLogoCacheTableCompanion(
-          siteKey: Value('example.com'),
-          host: Value('example.com'),
-          remoteLogoUrl: const Value.absent(),
-          localLogoPath: Value('/nonexistent/path/logo.png'),
+          siteKey: const Value('example.com'),
+          host: const Value('example.com'),
+          localLogoPath: const Value('/nonexistent/path/logo.png'),
           mimeType: const Value('image/png'),
           status: const Value('success'),
           fetchedAt: Value(now),
@@ -384,9 +382,8 @@ void main() {
 
         await env.dao.upsert(
           WebsiteLogoCacheTableCompanion(
-            siteKey: Value('example.com'),
-            host: Value('example.com'),
-            remoteLogoUrl: const Value.absent(),
+            siteKey: const Value('example.com'),
+            host: const Value('example.com'),
             localLogoPath: const Value(null),
             mimeType: const Value(null),
             status: const Value('failed'),
@@ -418,9 +415,8 @@ void main() {
 
       await env.dao.upsert(
         WebsiteLogoCacheTableCompanion(
-          siteKey: Value('example.com'),
-          host: Value('example.com'),
-          remoteLogoUrl: const Value.absent(),
+          siteKey: const Value('example.com'),
+          host: const Value('example.com'),
           localLogoPath: const Value(null),
           mimeType: const Value(null),
           status: const Value('failed'),

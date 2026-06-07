@@ -156,7 +156,7 @@ class _MobileBrandHeader extends StatelessWidget {
                   color: Theme.of(context).colorScheme.primary,
                   shape: BoxShape.circle,
                 ),
-                child: SizedBox(width: AppSpacing.xs, height: AppSpacing.xs),
+                child: const SizedBox(width: AppSpacing.xs, height: AppSpacing.xs),
               ),
             ),
           ],
@@ -174,11 +174,12 @@ class _MobileGreeting extends StatelessWidget {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final hour = DateTime.now().hour;
+    // TODO(profile): Replace neutral greeting with profileProvider when user profile is available.
     final greeting = hour >= 6 && hour < 12
-        ? '早上好，Alex'
+        ? '早上好'
         : hour >= 12 && hour < 18
-        ? '下午好，Alex'
-        : '晚上好，Alex';
+        ? '下午好'
+        : '晚上好';
     final icon = hour >= 6 && hour < 12
         ? Icons.wb_sunny_rounded
         : hour >= 12 && hour < 18
@@ -321,7 +322,6 @@ class _MobileQuickCaptureCardState
     return Material(
       color: colorScheme.surface,
       borderRadius: BorderRadius.circular(AppRadius.xl),
-      elevation: 0,
       child: DecoratedBox(
         decoration: BoxDecoration(
           color: colorScheme.surface,
@@ -472,7 +472,6 @@ class _MobileFocusCard extends StatelessWidget {
     return Material(
       color: background,
       borderRadius: BorderRadius.circular(AppRadius.xl),
-      elevation: 0,
       child: DecoratedBox(
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(AppRadius.xl),
@@ -576,7 +575,6 @@ class _MobileThoughtLine extends StatelessWidget {
     return Material(
       color: colorScheme.surface,
       borderRadius: BorderRadius.circular(AppRadius.xl),
-      elevation: 0,
       child: DecoratedBox(
         decoration: BoxDecoration(
           color: colorScheme.surface,
@@ -727,7 +725,6 @@ class _MobileShortcutCard extends StatelessWidget {
     return Material(
       color: background,
       borderRadius: BorderRadius.circular(AppRadius.xl),
-      elevation: 0,
       child: DecoratedBox(
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(AppRadius.xl),

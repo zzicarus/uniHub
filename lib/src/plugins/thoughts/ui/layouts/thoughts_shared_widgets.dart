@@ -138,7 +138,6 @@ class ThoughtIconSquare extends StatelessWidget {
     return Material(
       color: colorScheme.surface,
       borderRadius: BorderRadius.circular(AppRadius.md),
-      elevation: 0,
       child: Container(
         width: 48,
         height: 48,

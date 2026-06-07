@@ -69,7 +69,6 @@ class ResponsivePageHeader extends StatelessWidget {
     final colorScheme = theme.colorScheme;
 
     return Row(
-      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         // Title + subtitle
         Expanded(

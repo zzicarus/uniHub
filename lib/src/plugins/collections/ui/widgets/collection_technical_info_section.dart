@@ -32,7 +32,6 @@ class CollectionTechnicalInfoSection extends ConsumerWidget {
           color: colorScheme.onSurfaceVariant,
         ),
       ),
-      initiallyExpanded: false,
       childrenPadding: const EdgeInsets.fromLTRB(
         AppSpacing.lg,
         0,

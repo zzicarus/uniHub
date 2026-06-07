@@ -22,7 +22,7 @@ void main() {
 
     final registry = PluginRegistry()..register(CollectionsPlugin());
     final db = AppDatabase(NativeDatabase.memory(), registry);
-    addTearDown(() => db.close());
+    addTearDown(db.close);
 
     final createdAt = DateTime(2024, 5, 20, 14, 32);
     final updatedAt = DateTime(2024, 5, 20, 15, 12);
@@ -58,7 +58,6 @@ void main() {
                   entry: SavedItemListEntry(
                     item: item,
                     boxes: const [],
-                    logo: null,
                     selected: false,
                   ),
                 ),
@@ -99,7 +98,7 @@ void main() {
 
     final registry = PluginRegistry()..register(CollectionsPlugin());
     final db = AppDatabase(NativeDatabase.memory(), registry);
-    addTearDown(() => db.close());
+    addTearDown(db.close);
 
     final createdAt = DateTime(2024, 5, 20, 14, 32);
     final updatedAt = DateTime(2024, 5, 20, 15, 12);
@@ -134,7 +133,6 @@ void main() {
                   entry: SavedItemListEntry(
                     item: item,
                     boxes: const [],
-                    logo: null,
                     selected: false,
                   ),
                 ),

@@ -24,7 +24,7 @@ class CollectionsMobileLayout extends ConsumerWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              '内容收藏',
+              '内容库',
               style: Theme.of(context).textTheme.titleLarge?.copyWith(
                 fontWeight: AppFontTokens.bold,
               ),

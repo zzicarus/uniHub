@@ -128,7 +128,7 @@ class ThoughtStateTemplate extends StatelessWidget {
   /// Subtitle: "归档后的想法会显示在这里"
   /// No action button.
   factory ThoughtStateTemplate.archiveEmpty() {
-    return ThoughtStateTemplate(
+    return const ThoughtStateTemplate(
       icon: Icons.archive_outlined,
       title: '暂无归档想法',
       subtitle: '归档后的想法会显示在这里',

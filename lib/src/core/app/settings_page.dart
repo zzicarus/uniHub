@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+
 import '../router/route_names.dart';
-import '../theme/app_tokens.dart';
 import '../theme/app_theme_tokens.dart';
+import '../theme/app_tokens.dart';
 import 'settings/appearance_settings_section.dart';
 
 class SettingsPage extends ConsumerWidget {

@@ -7,8 +7,8 @@ import 'package:go_router/go_router.dart';
 import 'package:uni_hub/src/core/plugin/plugin_interface.dart';
 import 'package:uni_hub/src/core/plugin/plugin_registry.dart';
 import 'package:uni_hub/src/core/router/route_names.dart';
-import 'package:uni_hub/src/shared/widgets/sidebar.dart';
 import 'package:uni_hub/src/core/theme/app_theme_tokens.dart';
+import 'package:uni_hub/src/shared/widgets/sidebar.dart';
 
 void main() {
   PluginRegistry registryWithPluginNav() {
@@ -54,11 +54,6 @@ void main() {
               path: '/calendar',
               name: RouteNames.calendar,
               builder: (_, _) => const Text('日历内容'),
-            ),
-            GoRoute(
-              path: '/favorites',
-              name: RouteNames.favorites,
-              builder: (_, _) => const Text('收藏内容'),
             ),
             GoRoute(
               path: '/settings',
@@ -133,7 +128,7 @@ void main() {
   testWidgets('renders built-in and plugin navigation items', (tester) async {
     await pumpSidebar(tester);
 
-    expect(find.text('uniHub'), findsOneWidget);
+    // 
     expect(find.text('首页'), findsOneWidget);
     expect(find.text('资料库'), findsOneWidget);
     expect(find.text('待办'), findsOneWidget);

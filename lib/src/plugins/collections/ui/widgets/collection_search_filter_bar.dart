@@ -74,7 +74,7 @@ class _CollectionSearchFilterBarState
             hint: const Text('全部来源'),
             underline: const SizedBox.shrink(),
             items: [
-              const DropdownMenuItem(value: null, child: Text('全部来源')),
+              const DropdownMenuItem(child: Text('全部来源')),
               for (final p in SourcePlatform.values)
                 DropdownMenuItem(value: p, child: Text(p.label)),
             ],
@@ -87,7 +87,7 @@ class _CollectionSearchFilterBarState
             hint: const Text('全部媒介'),
             underline: const SizedBox.shrink(),
             items: [
-              const DropdownMenuItem(value: null, child: Text('全部媒介')),
+              const DropdownMenuItem(child: Text('全部媒介')),
               for (final m in MediaType.values)
                 DropdownMenuItem(value: m, child: Text(m.label)),
             ],

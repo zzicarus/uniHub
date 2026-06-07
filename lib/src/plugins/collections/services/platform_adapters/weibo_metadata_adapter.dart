@@ -5,7 +5,6 @@ import 'dart:io';
 import 'package:html/parser.dart' as html_parser;
 
 import '../../domain/collection_models.dart';
-import '../../domain/enrichment_status.dart';
 import '../../services/html_metadata_parser.dart';
 import '../../services/platform_metadata_adapter.dart';
 
@@ -86,7 +85,6 @@ class WeiboMetadataAdapter implements PlatformMetadataAdapter {
         metadataJson: jsonEncode({
           'source': 'weibo_adapter',
         }),
-        status: EnrichmentStatus.success,
       ),
       source: 'weibo_adapter',
     );
@@ -111,7 +109,6 @@ class WeiboMetadataAdapter implements PlatformMetadataAdapter {
           'limited': true,
           'reason': reason,
         }),
-        status: EnrichmentStatus.success,
       ),
       limited: true,
       reason: reason,

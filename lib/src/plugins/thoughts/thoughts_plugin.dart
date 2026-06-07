@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:uni_hub/src/core/database/tables/thoughts_table.dart';
 import 'package:uni_hub/src/core/plugin/plugin_interface.dart';
 import 'package:uni_hub/src/core/router/route_names.dart';
-import 'package:uni_hub/src/core/database/tables/thoughts_table.dart';
 import 'package:uni_hub/src/core/theme/app_tokens.dart';
 import 'package:uni_hub/src/shared/editor/appflowy_document_tools.dart';
 import 'package:uni_hub/src/shared/url/url_normalizer.dart';
+
 import 'data/thought_content_codec.dart';
 import 'providers/thoughts_providers.dart';
 import 'ui/thoughts_list_page.dart';
@@ -21,19 +22,19 @@ class ThoughtsPlugin extends UniHubPlugin {
 
   @override
   List<NavEntry> get navEntries => [
-    NavEntry(
+    const NavEntry(
       label: '想法',
       icon: Icons.lightbulb_outline,
       routeName: RouteNames.thoughts,
       path: '/thoughts',
       children: [
-        const NavEntry(
+        NavEntry(
           label: '所有想法',
           icon: Icons.list,
           routeName: RouteNames.thoughts,
           path: '/thoughts',
         ),
-        const NavEntry(
+        NavEntry(
           label: '归档',
           icon: Icons.archive_outlined,
           routeName: RouteNames.thoughts,

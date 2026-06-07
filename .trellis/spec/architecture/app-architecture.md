@@ -19,6 +19,22 @@
 └─────────────────────────────────────────────────────────┘
 ```
 
+## 插件能力接口（Capability）
+
+自 2026-06-07 起，`UniHubPlugin` 拆分为 6 个独立的能力接口：
+
+- `RouteContributor` — 贡献 GoRouter 路由
+- `NavContributor` — 贡献侧边栏导航
+- `DatabaseContributor` — 贡献 Drift 表
+- `DashboardContributor` — 贡献首页面板
+- `QuickCaptureHandler` — 支持快速创建
+- `SearchProvider` — 支持全局搜索
+
+`UniHubPlugin` 同时实现上述全部接口以保持向后兼容。
+`PluginRegistry` 按 `whereType<T>()` 聚合而非直接遍历所有插件。
+
+详见 `.trellis/spec/backend/plugin-data-flow.md` 第 9 节。
+
 ### 依赖方向（严格单向）
 
 ```

@@ -4,7 +4,6 @@ import 'package:html/dom.dart';
 import 'package:html/parser.dart' as html_parser;
 
 import '../domain/collection_models.dart';
-import '../domain/enrichment_status.dart';
 
 /// DOM-based HTML metadata parser using [package:html].
 ///
@@ -47,7 +46,6 @@ class HtmlMetadataParser {
         coverImage: _resolveUrl(_parseCoverImage()),
         favicon: _parseFavicon(),
         metadataJson: jsonEncode({'source': 'local'}),
-        status: EnrichmentStatus.success,
       );
 
   // ---------------------------------------------------------------------------

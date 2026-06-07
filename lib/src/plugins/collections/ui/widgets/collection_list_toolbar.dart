@@ -52,7 +52,7 @@ class CollectionListToolbar extends ConsumerWidget {
                 value: platform,
                 hint: '全部来源',
                 items: [
-                  const DropdownMenuItem(value: null, child: Text('全部来源')),
+                  const DropdownMenuItem(child: Text('全部来源')),
                   for (final value in SourcePlatform.values)
                     DropdownMenuItem(value: value, child: Text(value.label)),
                 ],
@@ -66,7 +66,7 @@ class CollectionListToolbar extends ConsumerWidget {
                 value: mediaType,
                 hint: '所有类型',
                 items: [
-                  const DropdownMenuItem(value: null, child: Text('所有类型')),
+                  const DropdownMenuItem(child: Text('所有类型')),
                   for (final value in MediaType.values)
                     DropdownMenuItem(value: value, child: Text(value.label)),
                 ],

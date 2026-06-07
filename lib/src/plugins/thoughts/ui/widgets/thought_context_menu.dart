@@ -46,11 +46,11 @@ Future<ThoughtContextAction?> showThoughtContextMenu({
         value: ThoughtContextAction.addTag,
         child: _MenuItem(icon: Icons.sell_outlined, label: '加标签'),
       ),
-      PopupMenuItem(
+      const PopupMenuItem(
         enabled: false,
         child: _MenuItem(icon: Icons.check_box_outlined, label: '转为待办'),
       ),
-      PopupMenuItem(
+      const PopupMenuItem(
         enabled: false,
         child: _MenuItem(icon: Icons.note_outlined, label: '转为笔记'),
       ),

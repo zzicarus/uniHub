@@ -1,8 +1,9 @@
+import 'package:appflowy_editor/appflowy_editor.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
-import 'package:appflowy_editor/appflowy_editor.dart';
 import 'package:flutter_quill/flutter_quill.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 import '../router/app_router.dart';
 import '../theme/app_theme.dart';
 import '../theme/app_tokens.dart';
@@ -21,6 +22,8 @@ class UniHubApp extends ConsumerWidget {
       GlobalMaterialLocalizations.delegate,
       GlobalCupertinoLocalizations.delegate,
       GlobalWidgetsLocalizations.delegate,
+      // TODO(quill-migration): Remove FlutterQuillLocalizations after
+      // RichTextEditor is fully replaced by AppFlowyThoughtEditor.
       FlutterQuillLocalizations.delegate,
       AppFlowyEditorLocalizations.delegate,
     ];

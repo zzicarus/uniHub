@@ -107,6 +107,6 @@ class EnrichmentQueueController {
   Future<void> _drainAfterRetry() async {
     // Small delay so the UI can show the updated state
     await Future.delayed(const Duration(milliseconds: 100));
-    await drainPending(batchSize: 5, maxBatches: 3);
+    await drainPending(maxBatches: 3);
   }
 }

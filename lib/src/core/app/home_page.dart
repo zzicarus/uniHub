@@ -12,16 +12,16 @@ import 'package:uni_hub/src/shared/widgets/app_section_header.dart';
 
 import '../plugin/plugin_interface.dart';
 import '../theme/app_breakpoints.dart';
-import '../theme/app_tokens.dart';
 import '../theme/app_theme_tokens.dart';
+import '../theme/app_tokens.dart';
 import 'dashboard_providers.dart';
 
+part 'home/desktop_quick_capture.dart';
 part 'home/header.dart';
-part 'home/focus_section.dart';
+part 'home/mobile_home.dart';
+// part 'home/focus_section.dart' — removed in PRD 2.4 (fake data cleanup)
 part 'home/recent_section.dart';
 part 'home/right_rail.dart';
-part 'home/mobile_home.dart';
-part 'home/desktop_quick_capture.dart';
 
 class HomePage extends ConsumerWidget {
   const HomePage({super.key});
@@ -56,18 +56,15 @@ class HomePage extends ConsumerWidget {
                             const _HomeHeader(),
                             const SizedBox(height: AppSpacing.xl),
                             const _DesktopQuickCaptureCard(),
-                            const SizedBox(height: AppSpacing.xl),
-                            const _FocusGrid(),
-                            const SizedBox(height: AppSpacing.lg),
-                            _QuickAccessPanel(
-                              onThoughtsTap: () => context.go('/thoughts'),
-                            ),
                             const SizedBox(height: AppSpacing.lg),
                             _RecentThoughtsPanel(
                               onOpen: () => context.go('/thoughts'),
                             ),
-                            const SizedBox(height: AppSpacing.xl),
-                            const _HomeWorkGrid(),
+                            const SizedBox(height: AppSpacing.lg),
+                            _QuickAccessPanel(
+                              onThoughtsTap: () => context.go('/thoughts'),
+                              onCollectionsTap: () => context.go('/collections'),
+                            ),
                           ],
                         ),
                       ),
@@ -146,89 +143,6 @@ class _PillButton extends StatelessWidget {
           Icon(icon, size: 18, color: colorScheme.onSurfaceVariant),
           const SizedBox(width: AppSpacing.xs),
           Text(label, style: theme.textTheme.labelMedium),
-        ],
-      ),
-    );
-  }
-}
-
-class _MetricCard extends StatelessWidget {
-  final String title;
-  final String value;
-  final String note;
-  final Color color;
-  final Color background;
-  final IconData icon;
-
-  const _MetricCard({
-    required this.title,
-    required this.value,
-    required this.note,
-    required this.color,
-    required this.background,
-    required this.icon,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-
-    return AppPanel(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.lg,
-        vertical: 16,
-      ),
-      child: Row(
-        children: [
-          AppIconBubble(
-            icon: icon,
-            color: color,
-            background: background,
-            size: 48,
-            iconSize: 22,
-          ),
-          const SizedBox(width: AppSpacing.md),
-          Expanded(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: theme.textTheme.labelLarge?.copyWith(
-                    color: colorScheme.onSurfaceVariant,
-                    fontWeight: AppFontTokens.semiBold,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  value,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: theme.textTheme.headlineMedium?.copyWith(
-                    fontSize: AppFontTokens.display,
-                    fontWeight: AppFontTokens.extraBold,
-                    color: colorScheme.onSurface,
-                    height: 1.05,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Flexible(
-                  child: Text(
-                    note,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: colorScheme.onSurfaceVariant,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
         ],
       ),
     );
@@ -384,59 +298,6 @@ class _ShortcutCard extends StatelessWidget {
               style: theme.textTheme.labelLarge?.copyWith(
                 fontWeight: AppFontTokens.extraBold,
               ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _ActivityLine extends StatelessWidget {
-  final IconData icon;
-  final Color color;
-  final String title;
-  final String time;
-
-  const _ActivityLine({
-    required this.icon,
-    required this.color,
-    required this.title,
-    required this.time,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-    return Padding(
-      padding: const EdgeInsets.only(bottom: AppSpacing.sm),
-      child: Row(
-        children: [
-          AppIconBubble(
-            icon: icon,
-            color: color,
-            background: color.withValues(alpha: 0.10),
-            size: 34,
-            iconSize: 17,
-            shape: BoxShape.rectangle,
-            radius: AppRadius.sm,
-          ),
-          const SizedBox(width: AppSpacing.sm),
-          Expanded(
-            child: Text(
-              title,
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: colorScheme.onSurface,
-              ),
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
-          const SizedBox(width: AppSpacing.sm),
-          Text(
-            time,
-            style: theme.textTheme.bodySmall?.copyWith(
-              color: colorScheme.outline,
             ),
           ),
         ],

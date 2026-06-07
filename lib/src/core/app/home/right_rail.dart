@@ -57,10 +57,10 @@ class _TodayOverviewPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return AppPanel(
+    return const AppPanel(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        children: const [
+        children: [
           AppSectionHeader(title: '今日概览', icon: Icons.today_outlined),
           SizedBox(height: AppSpacing.md),
           _OverviewLine(
@@ -147,10 +147,10 @@ class _UpcomingSchedulePanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return AppPanel(
+    return const AppPanel(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        children: const [
+        children: [
           AppSectionHeader(title: '近日日程', icon: Icons.event_note_outlined),
           SizedBox(height: AppSpacing.sm),
           AppCompactListItem(
@@ -185,10 +185,10 @@ class _AnniversaryPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return AppPanel(
+    return const AppPanel(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        children: const [
+        children: [
           AppSectionHeader(title: '纪念日提醒', icon: Icons.celebration_outlined),
           SizedBox(height: AppSpacing.sm),
           AppCompactListItem(
@@ -198,12 +198,13 @@ class _AnniversaryPanel extends StatelessWidget {
             title: 'uniHub 启动纪念',
             subtitle: '1 天后',
           ),
+          // TODO(profile): Replace with real user milestones when profile data is available.
           AppCompactListItem(
             icon: Icons.cake_outlined,
             color: AppColors.error,
             background: AppColors.roseSoft,
-            title: 'Alex 生日',
-            subtitle: '146 天后',
+            title: '纪念日',
+            subtitle: '即将支持',
           ),
         ],
       ),
@@ -283,92 +284,3 @@ class _StreakPanel extends StatelessWidget {
   }
 }
 
-// ─── Work Grid Panels ───────────────────────────────────────────────
-
-class _TodoPanel extends StatelessWidget {
-  const _TodoPanel();
-
-  @override
-  Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-    return AppPanel(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const AppSectionHeader(title: '今日待办', icon: Icons.check_box_outlined),
-          const SizedBox(height: AppSpacing.md),
-          AppCompactListItem(
-            icon: Icons.radio_button_unchecked_rounded,
-            color: AppColors.primary,
-            background: AppColors.primarySoft,
-            title: '整理 Dashboard 改造清单',
-            subtitle: '今天 · 高优先级',
-            trailing: Icon(
-              Icons.more_horiz_rounded,
-              color: colorScheme.outline,
-            ),
-          ),
-          AppCompactListItem(
-            icon: Icons.radio_button_unchecked_rounded,
-            color: AppColors.secondary,
-            background: AppColors.greenSoft,
-            title: '复盘本周笔记结构',
-            subtitle: '今天 · 30 分钟',
-            trailing: Icon(
-              Icons.more_horiz_rounded,
-              color: colorScheme.outline,
-            ),
-          ),
-          AppCompactListItem(
-            icon: Icons.check_circle_rounded,
-            color: AppColors.secondary,
-            background: AppColors.greenSoft,
-            title: '同步最近想法',
-            subtitle: '已完成',
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _ActivityPanel extends StatelessWidget {
-  const _ActivityPanel();
-
-  @override
-  Widget build(BuildContext context) {
-    return AppPanel(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: const [
-          AppSectionHeader(title: '最近活动', icon: Icons.trending_up_rounded),
-          SizedBox(height: AppSpacing.md),
-          _ActivityLine(
-            icon: Icons.lightbulb_outline,
-            color: AppColors.purple,
-            title: '创建了 3 条想法',
-            time: '今天 10:24',
-          ),
-          _ActivityLine(
-            icon: Icons.description_outlined,
-            color: AppColors.primary,
-            title: '更新了笔记《设计系统调研》',
-            time: '昨天 20:11',
-          ),
-          _ActivityLine(
-            icon: Icons.check_box_outlined,
-            color: AppColors.secondary,
-            title: '完成了待办《周报整理》',
-            time: '昨天 18:35',
-          ),
-          _ActivityLine(
-            icon: Icons.star_border_rounded,
-            color: AppColors.error,
-            title: '收藏了 1 条内容',
-            time: '5月19日',
-          ),
-        ],
-      ),
-    );
-  }
-}

@@ -59,7 +59,7 @@ void main() {
       final container = ProviderContainer(
         overrides: [pluginRegistryProvider.overrideWithValue(registry)],
       );
-      addTearDown(() => container.dispose());
+      addTearDown(container.dispose);
 
       final stats = await container.read(dashboardStatsProvider.future);
       expect(stats, isEmpty);
@@ -76,7 +76,7 @@ void main() {
       final container = ProviderContainer(
         overrides: [pluginRegistryProvider.overrideWithValue(registry)],
       );
-      addTearDown(() => container.dispose());
+      addTearDown(container.dispose);
 
       final stats = await container.read(dashboardStatsProvider.future);
       expect(stats, hasLength(1));
@@ -91,7 +91,7 @@ void main() {
       final container = ProviderContainer(
         overrides: [pluginRegistryProvider.overrideWithValue(registry)],
       );
-      addTearDown(() => container.dispose());
+      addTearDown(container.dispose);
 
       final stats = await container.read(dashboardStatsProvider.future);
       expect(stats, isEmpty);
@@ -104,7 +104,7 @@ void main() {
       final container = ProviderContainer(
         overrides: [pluginRegistryProvider.overrideWithValue(registry)],
       );
-      addTearDown(() => container.dispose());
+      addTearDown(container.dispose);
 
       final items = await container.read(dashboardItemsProvider.future);
       expect(items, isEmpty);
@@ -123,7 +123,7 @@ void main() {
       final container = ProviderContainer(
         overrides: [pluginRegistryProvider.overrideWithValue(registry)],
       );
-      addTearDown(() => container.dispose());
+      addTearDown(container.dispose);
 
       final items = await container.read(dashboardItemsProvider.future);
       expect(items, hasLength(1));
@@ -171,7 +171,7 @@ void main() {
       final container = ProviderContainer(
         overrides: [pluginRegistryProvider.overrideWithValue(registry)],
       );
-      addTearDown(() => container.dispose());
+      addTearDown(container.dispose);
 
       final pinned = await container.read(dashboardPinnedProvider.future);
       expect(pinned, isEmpty);
@@ -191,7 +191,7 @@ void main() {
       final container = ProviderContainer(
         overrides: [pluginRegistryProvider.overrideWithValue(registry)],
       );
-      addTearDown(() => container.dispose());
+      addTearDown(container.dispose);
 
       final pinned = await container.read(dashboardPinnedProvider.future);
       expect(pinned, hasLength(1));

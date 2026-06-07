@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
+import 'package:flutter_test/flutter_test.dart';
 import 'package:uni_hub/src/core/app/settings_page.dart';
 import 'package:uni_hub/src/core/theme/app_theme.dart';
 import 'package:uni_hub/src/core/theme/app_theme_preset.dart';

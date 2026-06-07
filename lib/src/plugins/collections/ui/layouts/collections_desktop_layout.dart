@@ -37,7 +37,6 @@ class _CollectionsDesktopLayoutState
     // 收藏页进入时主动扫描并消费 pending enrichment jobs
     final controller = ref.read(enrichmentQueueControllerProvider);
     controller.drainPending(
-      batchSize: 5,
       maxBatches: 3,
     );
   }
@@ -81,9 +80,8 @@ class _CollectionsDesktopLayoutState
               builder: (context, constraints) {
                 final isNarrow = constraints.maxWidth < 760;
                 return ResponsivePageHeader(
-                  title: '内容收藏',
+                  title: '内容库',
                   subtitle: '收集网页、视频、公众号、文章与其他值得保存的内容。',
-                  search: null,
                   actions: [
                     if (isNarrow)
                       IconButton(
@@ -117,19 +115,30 @@ class _CollectionsDesktopLayoutState
             Expanded(
               child: LayoutBuilder(
                 builder: (context, constraints) {
-                  final showDetail = constraints.maxWidth >= 960;
-                  final detailWidth = showDetail
-                      ? (constraints.maxWidth * 0.30).clamp(380.0, 440.0)
-                      : 0.0;
+                  final width = constraints.maxWidth;
+                  final showFixedDetail = width >= 1200;
+                  final showNarrowDetail = width >= 960 && width < 1200;
+                  final showSidebar = width >= 760;
+
+                  // PRD 2.2 响应式规则：
+                  // >= 1200px: Box 侧栏 + 列表 + 固定详情 (420px)
+                  // 960-1199px: 列表 + 窄详情 (340px)，侧栏可保留
+                  // < 960px: 无详情面板，点击卡片打开底部抽屉
+                  final detailWidth = showFixedDetail
+                      ? 420.0
+                      : showNarrowDetail
+                          ? 340.0
+                          : 0.0;
 
                   return Row(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      const SizedBox(
-                        width: 220,
-                        child: CollectionFolderSidebar(),
-                      ),
-                      const SizedBox(width: AppSpacing.md),
+                      if (showSidebar)
+                        const SizedBox(
+                          width: 220,
+                          child: CollectionFolderSidebar(),
+                        ),
+                      if (showSidebar) const SizedBox(width: AppSpacing.md),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -141,6 +150,7 @@ class _CollectionsDesktopLayoutState
                                     return const _EmptyState();
                                   }
                                   return _buildEntryList(
+                                    context,
                                     listState.entries,
                                     listState.hasMore,
                                     listState.loadingMore,
@@ -152,6 +162,7 @@ class _CollectionsDesktopLayoutState
                                   if (existing != null &&
                                       existing.entries.isNotEmpty) {
                                     return _buildEntryList(
+                                      context,
                                       existing.entries,
                                       existing.hasMore,
                                       existing.loadingMore,
@@ -167,6 +178,7 @@ class _CollectionsDesktopLayoutState
                                   if (existing != null &&
                                       existing.entries.isNotEmpty) {
                                     return _buildEntryList(
+                                      context,
                                       existing.entries,
                                       existing.hasMore,
                                       existing.loadingMore,
@@ -188,14 +200,11 @@ class _CollectionsDesktopLayoutState
                           ],
                         ),
                       ),
-                      if (showDetail) ...[
+                      if (showFixedDetail || showNarrowDetail) ...[
                         const SizedBox(width: AppSpacing.md),
                         SizedBox(
                           width: detailWidth,
-                          child: _DetailPanel(
-                            entries:
-                                listStateAsync.valueOrNull?.entries ?? [],
-                          ),
+                          child: const _DetailPanel(),
                         ),
                       ],
                     ],
@@ -219,11 +228,15 @@ class _CollectionsDesktopLayoutState
 /// Reusable list builder — used by all [listStateAsync.when] branches so
 /// the entry card rendering logic is written once.
 Widget _buildEntryList(
+  BuildContext context,
   List<SavedItemListEntry> entries,
   bool hasMore,
   bool loadingMore,
   WidgetRef ref,
 ) {
+  final screenWidth = MediaQuery.of(context).size.width;
+  final useBottomSheet = screenWidth < 960;
+
   return ListView.separated(
     itemCount: entries.length + (hasMore ? 1 : 0),
     separatorBuilder: (context, index) =>
@@ -248,35 +261,57 @@ Widget _buildEntryList(
       return SavedItemCard(
         key: ValueKey(entry.item.id),
         entry: entry,
-        onTap: () => ref
-            .read(collectionsListControllerProvider.notifier)
-            .selectItem(entry.item.id),
+        onTap: () {
+          ref
+              .read(collectionsListControllerProvider.notifier)
+              .selectItem(entry.item.id);
+
+          // < 960px: 打开底部详情抽屉代替固定侧栏
+          if (useBottomSheet) {
+            _showDetailBottomSheet(context, entry);
+          }
+        },
       );
     },
   );
 }
 
-/// 详情面板容器：从已列表中查找选中项并展示详情。
-///
-/// 接收完整 entries 列表以确保分页后仍能找到对应的详情数据。
-class _DetailPanel extends ConsumerWidget {
-  const _DetailPanel({required this.entries});
+/// 在窄屏下通过底部抽屉展示详情。
+void _showDetailBottomSheet(
+  BuildContext context,
+  SavedItemListEntry entry,
+) {
+  showModalBottomSheet<void>(
+    context: context,
+    isScrollControlled: true,
+    useSafeArea: true,
+    builder: (context) {
+      return DraggableScrollableSheet(
+        expand: false,
+        initialChildSize: 0.86,
+        minChildSize: 0.5,
+        maxChildSize: 0.96,
+        builder: (context, scrollController) {
+          return SavedItemDetailPanel(
+            entry: entry,
+          );
+        },
+      );
+    },
+  );
+}
 
-  final List<SavedItemListEntry> entries;
+/// 详情面板容器：按 itemId 从 [selectedSavedItemDetailProvider] 加载详情。
+///
+/// 不再依赖当前列表的 entry 状态，分页切换后仍可正常加载。
+class _DetailPanel extends ConsumerWidget {
+  const _DetailPanel();
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final selectedId = ref.watch(selectedSavedItemIdProvider);
 
-    SavedItemListEntry? entry;
-    for (final candidate in entries) {
-      if (candidate.item.id == selectedId) {
-        entry = candidate;
-        break;
-      }
-    }
-
-    if (entry == null) {
+    if (selectedId == null) {
       return Center(
         child: Text(
           '选择一条收藏查看详情',
@@ -286,7 +321,24 @@ class _DetailPanel extends ConsumerWidget {
         ),
       );
     }
-    return SavedItemDetailPanel(entry: entry);
+
+    final detailAsync = ref.watch(selectedSavedItemDetailProvider(selectedId));
+
+    return detailAsync.when(
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (error, _) => Center(
+        child: Text(
+          '无法加载详情',
+          style: TextStyle(color: Theme.of(context).colorScheme.error),
+        ),
+      ),
+      data: (detail) => SavedItemDetailPanel(entry: SavedItemListEntry(
+        item: detail.item,
+        boxes: detail.boxes,
+        logo: detail.logo,
+        selected: true,
+      )),
+    );
   }
 }
 

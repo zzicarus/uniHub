@@ -102,7 +102,6 @@ Widget thoughtColorDotDefaultPreview() {
   return Padding(
     padding: const EdgeInsets.all(8),
     child: ThoughtColorDot(
-      color: null,
       isSelected: false,
       label: '默认',
       onTap: () {},

@@ -104,7 +104,7 @@ void main() {
         tester,
         AppSelectedTagsBar(
           selectedTags: const {'产品', '灵感'},
-          onRemove: (tag) => removed.add(tag),
+          onRemove: removed.add,
           onClear: () {},
         ),
       );

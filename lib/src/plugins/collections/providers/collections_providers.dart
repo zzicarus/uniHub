@@ -6,10 +6,16 @@ import 'package:uni_hub/src/core/database/app_database.dart';
 import 'package:uni_hub/src/core/database/database_provider.dart';
 import 'package:uni_hub/src/core/storage/providers/storage_providers.dart';
 
+import '../application/collections_list_controller.dart';
+import '../application/enrichment_queue_controller.dart';
+import '../application/saved_item_actions_controller.dart';
+import '../application/saved_item_detail_vm.dart';
+import '../application/saved_item_list_entry.dart';
 import '../data/collection_boxes_dao.dart';
 import '../data/collections_repository.dart';
 import '../data/enrichment_jobs_dao.dart';
 import '../data/saved_items_dao.dart';
+import '../data/website_logo_cache_dao.dart';
 import '../domain/collection_folder_counts.dart';
 import '../domain/collection_models.dart';
 import '../domain/consumption_status.dart';
@@ -20,11 +26,6 @@ import '../domain/saved_items_query.dart';
 import '../domain/source_platform.dart';
 import '../domain/url_normalizer.dart';
 import '../services/collection_capture_service.dart';
-import '../data/website_logo_cache_dao.dart';
-import '../application/collections_list_controller.dart';
-import '../application/enrichment_queue_controller.dart';
-import '../application/saved_item_actions_controller.dart';
-import '../application/saved_item_list_entry.dart';
 import '../services/enrichment_job_service.dart';
 import '../services/local_metadata_provider.dart';
 import '../services/metadata_provider.dart';
@@ -190,7 +191,6 @@ final savedItemsPageProvider =
     selectedBoxIds: ref.watch(selectedCollectionBoxIdsProvider),
     searchQuery: searchQuery,
     sort: ref.watch(collectionSortProvider),
-    limit: 50,
     offset: ref.watch(collectionPageOffsetProvider),
   );
 
@@ -319,6 +319,7 @@ final savedItemListEntriesProvider =
 });
 
 /// 当前选中的收藏项的 ViewModel。
+@Deprecated('Use selectedSavedItemDetailProvider(itemId) instead.')
 final selectedSavedItemEntryProvider = Provider<SavedItemListEntry?>((ref) {
   final entriesAsync = ref.watch(savedItemListEntriesProvider);
   final selectedId = ref.watch(selectedSavedItemIdProvider);
@@ -326,6 +327,45 @@ final selectedSavedItemEntryProvider = Provider<SavedItemListEntry?>((ref) {
   return entriesAsync.valueOrNull
       ?.where((e) => e.item.id == selectedId)
       .firstOrNull;
+});
+
+/// 按 itemId 查询收藏项的完整详情，不依赖当前列表状态。
+///
+/// 返回 item、所属 Box 列表以及缓存的 Logo 信息。
+/// 即使该 item 不在当前列表页（例如分页历史项），也能正常加载。
+final selectedSavedItemDetailProvider =
+    FutureProvider.autoDispose.family<SavedItemDetailVm, int>((ref, itemId) async {
+  final savedItemsDao = ref.watch(savedItemsDaoProvider);
+  final boxesDao = ref.watch(collectionBoxesDaoProvider);
+  final logoDao = ref.watch(websiteLogoCacheDaoProvider);
+
+  final item = await savedItemsDao.getById(itemId);
+  if (item == null) {
+    throw StateError('Saved item not found: $itemId');
+  }
+
+  final boxIds = await boxesDao.getBoxIdsForItem(itemId);
+  final allBoxes = await boxesDao.getAll();
+  final boxes = allBoxes.where((b) => boxIds.contains(b.id)).toList();
+
+  final host = Uri.tryParse(item.normalizedUrl)?.host;
+  WebsiteLogoCacheEntry? logo;
+  if (host != null && host.isNotEmpty) {
+    final row = await logoDao.getByHost(host);
+    if (row != null) {
+      logo = WebsiteLogoCacheEntry(
+        siteKey: row.siteKey,
+        localLogoPath: row.localLogoPath,
+        status: row.status,
+      );
+    }
+  }
+
+  return SavedItemDetailVm(
+    item: item,
+    boxes: boxes,
+    logo: logo,
+  );
 });
 
 // ---------------------------------------------------------------------------

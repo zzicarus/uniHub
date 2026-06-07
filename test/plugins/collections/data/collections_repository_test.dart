@@ -66,7 +66,7 @@ void main() {
       await repository.updateStatus(article.id, ConsumptionStatus.done);
 
       final page = await repository.queryItems(
-        SavedItemsQuery(
+        const SavedItemsQuery(
           view: CollectionView.done,
           platform: SourcePlatform.web,
           mediaType: MediaType.article,

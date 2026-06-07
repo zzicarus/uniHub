@@ -684,7 +684,6 @@ class _SavedItemDetailPanelState extends ConsumerState<SavedItemDetailPanel> {
             : _domainOf(item.normalizedUrl),
         typeLabel: platform.label,
         relativeTime: _relativeTime(item.createdAt),
-        localLogoPath: null,
         fallbackIcon: _iconFor(mediaType),
         boxNames: boxNames,
         prefs: prefs,
@@ -735,7 +734,6 @@ class _SavedItemDetailPanelState extends ConsumerState<SavedItemDetailPanel> {
     // Full delete
     final deleteResult = await controller.deleteItem(
       itemId,
-      mode: DeleteMode.fullDelete,
     );
     if (!mounted) return;
     if (deleteResult.undo != null) {
@@ -1224,7 +1222,7 @@ class _BoxSection extends ConsumerWidget {
                       runSpacing: AppSpacing.xs,
                       children: [
                         if (visibleBoxes.isEmpty)
-                          AppPillChip(
+                          const AppPillChip(
                             label: '待整理',
                             selected: true,
                             compact: true,

@@ -2,9 +2,8 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
-import 'package:uni_hub/src/core/theme/app_tokens.dart';
 import 'package:uni_hub/src/core/theme/app_theme_tokens.dart';
+import 'package:uni_hub/src/core/theme/app_tokens.dart';
 import 'package:uni_hub/src/shared/widgets/tags/app_tag_input.dart';
 
 import '../widgets/thought_composer_controller.dart';
@@ -191,20 +190,18 @@ class ThoughtComposer extends ConsumerWidget {
                         selected: composer.isPinned,
                         onTap: composer.togglePin,
                       ),
-                      Tooltip(
+                      const Tooltip(
                         message: '即将推出',
                         child: ThoughtPillButton(
                           icon: Icons.check_box_outlined,
                           label: '转为待办',
-                          onTap: null,
                         ),
                       ),
-                      Tooltip(
+                      const Tooltip(
                         message: '即将推出',
                         child: ThoughtPillButton(
                           icon: Icons.note_alt_outlined,
                           label: '转为笔记',
-                          onTap: null,
                         ),
                       ),
                     ],

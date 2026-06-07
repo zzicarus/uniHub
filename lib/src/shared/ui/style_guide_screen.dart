@@ -198,9 +198,9 @@ class _WindowsStyleSection extends StatelessWidget {
       title: 'Windows 端基础布局',
       child: LayoutBuilder(
         builder: (context, constraints) {
-          final preview = SizedBox(
+          final preview = const SizedBox(
             width: AppDesktopSizes.previewMinWidth,
-            child: const _DesktopShellPreview(),
+            child: _DesktopShellPreview(),
           );
 
           if (constraints.maxWidth >= AppDesktopSizes.previewMinWidth) {
@@ -236,11 +236,11 @@ class _DesktopShellPreview extends StatelessWidget {
           ),
         ],
       ),
-      child: SizedBox(
+      child: const SizedBox(
         height: 560,
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: const [
+          children: [
             _DesktopSidebarPreview(),
             VerticalDivider(width: 1),
             Expanded(child: _DesktopContentPreview()),
@@ -309,8 +309,8 @@ class _DesktopSidebarPreview extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('Alex', style: textTheme.titleSmall),
-                      Text('专注记录', style: textTheme.bodySmall),
+                      Text('uniHub', style: textTheme.titleSmall),
+                      Text('本地优先', style: textTheme.bodySmall),
                     ],
                   ),
                 ),
@@ -392,7 +392,7 @@ class _DesktopContentPreview extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('早上好，Alex ☀', style: textTheme.headlineMedium),
+                      Text('早上好 ☀', style: textTheme.headlineMedium),
                       const SizedBox(height: AppSpacing.xs),
                       Text('快速记录、整理与找回你的信息', style: textTheme.bodyMedium),
                     ],
@@ -920,12 +920,12 @@ class _ChipSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return _Section(
+    return const _Section(
       title: '标签',
       child: Wrap(
         spacing: AppSpacing.xs,
         runSpacing: AppSpacing.xs,
-        children: const [
+        children: [
           Chip(label: Text('课程')),
           Chip(label: Text('社团活动')),
           Chip(label: Text('待处理')),

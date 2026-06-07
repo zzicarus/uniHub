@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:uni_hub/src/core/theme/app_tokens.dart';
 import 'package:uni_hub/src/core/database/app_database.dart';
-import 'package:uni_hub/src/shared/ui/rich_text_editor/rich_text_editor.dart';
+import 'package:uni_hub/src/core/theme/app_tokens.dart';
 import 'package:uni_hub/src/shared/tags/tag_models.dart';
+import 'package:uni_hub/src/shared/ui/rich_text_editor/rich_text_editor.dart';
 import 'package:uni_hub/src/shared/widgets/tags/app_more_tags_popover.dart';
 import 'package:uni_hub/src/shared/widgets/tags/app_selected_tags_bar.dart';
 import 'package:uni_hub/src/shared/widgets/tags/app_tag_chip.dart';
+
 import '../../providers/thought_status_filter.dart';
 import '../../providers/thoughts_providers.dart';
 import '../widgets/thought_card.dart';
@@ -57,12 +58,12 @@ class ThoughtsMobileLayout extends ConsumerWidget {
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       if (!isArchived) ...[
-                        _MobileComposer(),
+                        const _MobileComposer(),
                         const SizedBox(height: AppSpacing.lg),
                       ],
-                      _MobileFilterChips(),
+                      const _MobileFilterChips(),
                       const SizedBox(height: AppSpacing.md),
-                      _SelectedTagBanner(),
+                      const _SelectedTagBanner(),
                       const SizedBox(height: AppSpacing.md),
                       _MobileThoughtGrid(onThoughtTap: onThoughtTap),
                     ],
@@ -195,7 +196,6 @@ class _MobileComposer extends ConsumerWidget {
             .toList();
 
     return ThoughtPanel(
-      padding: const EdgeInsets.all(AppSpacing.lg),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

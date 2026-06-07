@@ -67,7 +67,7 @@ abstract final class TagCodec {
       return const TagValidationResult.invalid('标签不能为空');
     }
     if (normalized.length > 20) {
-      return TagValidationResult.invalid('标签长度不能超过 20 个字符');
+      return const TagValidationResult.invalid('标签长度不能超过 20 个字符');
     }
     final validPattern = RegExp(
       r'^[\u4e00-\u9fff\u3400-\u4dbf\uF900-\uFAFFa-zA-Z0-9_-]+$',

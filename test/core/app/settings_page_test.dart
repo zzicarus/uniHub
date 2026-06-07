@@ -1,8 +1,8 @@
 import 'dart:ui' as ui;
 
-import 'package:flutter_test/flutter_test.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:drift/native.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_test/flutter_test.dart';
 import 'package:uni_hub/src/core/app/app.dart';
 import 'package:uni_hub/src/core/database/app_database.dart';
 import 'package:uni_hub/src/core/database/database_provider.dart';
@@ -19,7 +19,7 @@ void main() {
     final registry = PluginRegistry();
     registry.register(ThoughtsPlugin());
     final testDb = AppDatabase(NativeDatabase.memory(), registry);
-    addTearDown(() => testDb.close());
+    addTearDown(testDb.close);
 
     await tester.pumpWidget(
       ProviderScope(

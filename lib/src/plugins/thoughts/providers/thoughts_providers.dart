@@ -5,6 +5,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uni_hub/src/core/database/app_database.dart';
 import 'package:uni_hub/src/core/database/database_provider.dart';
 import 'package:uni_hub/src/core/storage/providers/storage_providers.dart';
+import 'package:uni_hub/src/shared/tags/tag_codec.dart';
+import 'package:uni_hub/src/shared/tags/tag_filter_logic.dart';
+
 import '../data/file_image_storage.dart';
 import '../data/image_picker_service.dart';
 import '../data/image_storage.dart';
@@ -14,9 +17,6 @@ import '../data/thought_deletion_service.dart';
 import '../data/thought_image_service.dart';
 import '../data/thoughts_dao.dart';
 import '../data/thoughts_repository.dart';
-import 'package:uni_hub/src/shared/tags/tag_codec.dart';
-import 'package:uni_hub/src/shared/tags/tag_filter_logic.dart';
-import 'package:uni_hub/src/shared/tags/tag_models.dart';
 import 'thought_status_filter.dart';
 
 final thoughtsDaoProvider = Provider<ThoughtsDao>((ref) {
@@ -151,7 +151,7 @@ final allThoughtsProvider = FutureProvider<List<ThoughtsTableData>>((
   await ref.watch(thoughtImageMigrationProvider.future);
 
   final repo = ref.watch(thoughtsRepositoryProvider);
-  final active = await repo.getThoughts(archived: false);
+  final active = await repo.getThoughts();
   final archived = await repo.getThoughts(archived: true);
   return [...active, ...archived];
 });
@@ -300,7 +300,6 @@ List<ThoughtsTableData> _filterByTags(
     return TagFilterLogic.matches(
       itemTags: TagCodec.parseCommaSeparated(thought.tags),
       selectedTags: selectedTags,
-      mode: TagMatchMode.all,
     );
   }).toList();
 }

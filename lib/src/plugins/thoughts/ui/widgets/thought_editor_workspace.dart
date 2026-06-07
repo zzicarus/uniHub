@@ -14,19 +14,16 @@
 library;
 
 import 'dart:async';
-import 'dart:math' as math;
 import 'dart:io' show File;
+import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
-import 'package:uni_hub/src/core/theme/app_tokens.dart';
 import 'package:uni_hub/src/core/theme/app_theme_tokens.dart';
-import 'package:uni_hub/src/shared/editor/appflowy_thought_editor.dart';
-
+import 'package:uni_hub/src/core/theme/app_tokens.dart';
 import 'package:uni_hub/src/plugins/thoughts/data/thought_image_block_codec.dart';
-
+import 'package:uni_hub/src/shared/editor/appflowy_thought_editor.dart';
 import 'package:uni_hub/src/shared/widgets/tags/app_tag_input.dart';
 
 import 'thought_color_picker.dart';
@@ -167,7 +164,6 @@ class _ThoughtEditorWorkspaceState
                 child: Material(
                   color: colors.surface,
                   borderRadius: BorderRadius.circular(isCompact ? 0 : 22),
-                  elevation: 0,
                   surfaceTintColor: Colors.transparent,
                   shadowColor: Colors.black26,
                   child: ClipRRect(
@@ -250,7 +246,7 @@ class _WorkspaceHeader extends StatelessWidget {
       decoration: BoxDecoration(
         color: colors.surface,
         border: Border(
-          bottom: BorderSide(color: colors.border, width: 1),
+          bottom: BorderSide(color: colors.border),
         ),
       ),
       child: Row(
@@ -402,7 +398,7 @@ class _MainEditorColumnState extends State<_MainEditorColumn> {
     return Container(
       decoration: BoxDecoration(
         border: Border(
-          right: BorderSide(color: colors.border, width: 1),
+          right: BorderSide(color: colors.border),
         ),
       ),
       child: Column(
@@ -482,8 +478,6 @@ class _MainEditorColumnState extends State<_MainEditorColumn> {
                     key: ValueKey('thought-editor-${widget.ctrl.thoughtId}'),
                     initialJson: widget.ctrl.documentJson,
                     initialText: widget.ctrl.plainText,
-                    placeholder: '开始书写你的想法...',
-                    autofocus: false,
                     controller: widget.ctrl.editorController,
                     onChanged: (value) {
                       widget.ctrl.updateDocument(
@@ -566,7 +560,6 @@ class _TagsCard extends StatelessWidget {
       child: AppTagInput(
         tags: ctrl.tags,
         onChanged: ctrl.setTags,
-        label: null,
         hintText: '添加标签',
       ),
     );
@@ -618,11 +611,11 @@ class _ImagesCard extends StatelessWidget {
             ),
 
           TextButton.icon(
-            onPressed: () => ctrl.insertImageIntoDocument(),
+            onPressed: ctrl.insertImageIntoDocument,
             icon: const Icon(Icons.add_photo_alternate_outlined, size: 16),
             label: Text(
               refs.isEmpty ? '添加图片' : '继续添加',
-              style: TextStyle(fontSize: AppFontTokens.bodyMd),
+              style: const TextStyle(fontSize: AppFontTokens.bodyMd),
             ),
             style: TextButton.styleFrom(
               foregroundColor: colors.primary,
@@ -759,7 +752,6 @@ class _AppearanceCard extends StatelessWidget {
             children: [
               // No-color option
               ThoughtColorDot(
-                color: null,
                 label: '默认',
                 isSelected: ctrl.selectedColor == null,
                 size: 32,
@@ -849,7 +841,7 @@ class _PropertyCard extends StatelessWidget {
       ),
       decoration: BoxDecoration(
         border: Border(
-          bottom: BorderSide(color: colors.border, width: 1),
+          bottom: BorderSide(color: colors.border),
         ),
       ),
       child: Column(
@@ -907,7 +899,6 @@ class _CompactPropertyPanel extends StatelessWidget {
   Widget build(BuildContext context) {
     return ExpansionTile(
       title: const Text('属性'),
-      initiallyExpanded: false,
       children: [
         _TagsCard(ctrl: ctrl),
         _ImagesCard(ctrl: ctrl),
@@ -947,7 +938,7 @@ class _WorkspaceFooter extends StatelessWidget {
       decoration: BoxDecoration(
         color: colors.surface,
         border: Border(
-          top: BorderSide(color: colors.border, width: 1),
+          top: BorderSide(color: colors.border),
         ),
       ),
       child: Row(

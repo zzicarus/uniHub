@@ -4,11 +4,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:uni_hub/src/core/theme/app_tokens.dart';
+import 'package:uni_hub/src/shared/ui/rich_text_editor/rich_text_editor.dart';
+
 import '../providers/thoughts_providers.dart';
 import 'widgets/thought_color_picker.dart';
 import 'widgets/thought_editor_controller.dart';
 import 'widgets/thought_editor_image_strip.dart';
-import 'package:uni_hub/src/shared/ui/rich_text_editor/rich_text_editor.dart';
 
 class ThoughtsEditorPage extends ConsumerStatefulWidget {
   final int thoughtId;
@@ -149,7 +150,6 @@ class _ThoughtsEditorPageState extends ConsumerState<ThoughtsEditorPage> {
                   child: RichTextEditor(
                     controller: ctrl.contentController,
                     minHeight: 360,
-                    placeholder: '记录你的想法...',
                     onChanged: (_) => ctrl.markDirty(),
                     onPickImage: ctrl.onPickImage,
                     onPasteImage: ctrl.onPasteImage,
@@ -182,7 +182,7 @@ class _ThoughtsEditorPageState extends ConsumerState<ThoughtsEditorPage> {
                   ...ctrl.tagChips.map((tag) {
                     return Chip(
                       label: Text(tag),
-                      labelStyle: TextStyle(fontSize: AppFontTokens.labelMd),
+                      labelStyle: const TextStyle(fontSize: AppFontTokens.labelMd),
                       deleteIcon: const Icon(Icons.close, size: 14),
                       onDeleted: () => ctrl.removeChip(tag),
                       materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
@@ -252,7 +252,6 @@ class _ThoughtsEditorPageState extends ConsumerState<ThoughtsEditorPage> {
                 runSpacing: AppSpacing.sm,
                 children: [
                   ThoughtColorDot(
-                    color: null,
                     label: '默认',
                     isSelected: ctrl.selectedColor == null,
                     onTap: () => ctrl.setColor(null),
@@ -260,7 +259,6 @@ class _ThoughtsEditorPageState extends ConsumerState<ThoughtsEditorPage> {
                   ...thoughtAvailableColors(colorScheme).map((c) {
                     return ThoughtColorDot(
                       color: c,
-                      label: null,
                       isSelected: ctrl.selectedColor == thoughtColorToHex(c),
                       onTap: () => ctrl.setColor(thoughtColorToHex(c)),
                     );
@@ -288,7 +286,7 @@ class _ThoughtsEditorPageState extends ConsumerState<ThoughtsEditorPage> {
                 SizedBox(
                   width: double.infinity,
                   child: OutlinedButton.icon(
-                    onPressed: () => ctrl.restore(),
+                    onPressed: ctrl.restore,
                     icon: const Icon(Icons.unarchive_outlined, size: 18),
                     label: const Text('恢复'),
                   ),
@@ -297,7 +295,7 @@ class _ThoughtsEditorPageState extends ConsumerState<ThoughtsEditorPage> {
                 SizedBox(
                   width: double.infinity,
                   child: OutlinedButton.icon(
-                    onPressed: () => ctrl.archive(),
+                    onPressed: ctrl.archive,
                     icon: const Icon(Icons.archive_outlined, size: 18),
                     label: const Text('归档'),
                   ),

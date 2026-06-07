@@ -111,7 +111,6 @@ class _CollectionSearchCaptureFieldState
 
       if (result.wasCreated) {
         unawaited(ref.read(enrichmentQueueControllerProvider).drainPending(
-          batchSize: 5,
           maxBatches: 3,
         ));
       }

@@ -84,8 +84,8 @@ void main() {
       final now = DateTime.now();
       final itemId = await savedItemsDao.insert(
         SavedItemsTableCompanion(
-          originalUrl: Value('https://example.com/box-test'),
-          normalizedUrl: Value('https://example.com/box-test'),
+          originalUrl: const Value('https://example.com/box-test'),
+          normalizedUrl: const Value('https://example.com/box-test'),
           createdAt: Value(now),
           updatedAt: Value(now),
         ),
@@ -126,16 +126,16 @@ void main() {
       final now = DateTime.now();
       final item1 = await savedItemsDao.insert(
         SavedItemsTableCompanion(
-          originalUrl: Value('https://example.com/1'),
-          normalizedUrl: Value('https://example.com/1'),
+          originalUrl: const Value('https://example.com/1'),
+          normalizedUrl: const Value('https://example.com/1'),
           createdAt: Value(now),
           updatedAt: Value(now),
         ),
       );
       final item2 = await savedItemsDao.insert(
         SavedItemsTableCompanion(
-          originalUrl: Value('https://example.com/2'),
-          normalizedUrl: Value('https://example.com/2'),
+          originalUrl: const Value('https://example.com/2'),
+          normalizedUrl: const Value('https://example.com/2'),
           createdAt: Value(now),
           updatedAt: Value(now),
         ),

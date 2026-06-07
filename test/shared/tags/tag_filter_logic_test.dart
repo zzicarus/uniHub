@@ -96,7 +96,6 @@ void main() {
           TagFilterLogic.matches(
             itemTags: ['a', 'b', 'c'],
             selectedTags: {'a', 'b'},
-            mode: TagMatchMode.all,
           ),
           isTrue,
         );
@@ -107,7 +106,6 @@ void main() {
           TagFilterLogic.matches(
             itemTags: ['a', 'b'],
             selectedTags: {'a', 'c'},
-            mode: TagMatchMode.all,
           ),
           isFalse,
         );
@@ -118,7 +116,6 @@ void main() {
           TagFilterLogic.matches(
             itemTags: [' #产品 ', '代码'],
             selectedTags: {'产品', '代码'},
-            mode: TagMatchMode.all,
           ),
           isTrue,
         );
@@ -154,7 +151,6 @@ void main() {
         TagFilterLogic.matches(
           itemTags: ['', '  '],
           selectedTags: {'a'},
-          mode: TagMatchMode.all,
         ),
         isFalse,
       );

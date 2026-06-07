@@ -10,7 +10,6 @@ class _HomeHeader extends StatelessWidget {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     return Row(
-      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         AppIconBubble(
           icon: _greetingIcon(),
@@ -58,10 +57,11 @@ class _HomeHeader extends StatelessWidget {
 
   Widget _buildGreeting(ThemeData theme, ColorScheme colorScheme) {
     final hour = DateTime.now().hour;
+    // TODO(profile): Replace neutral greeting with profileProvider when user profile is available.
     final greeting = switch (hour) {
-      >= 6 && < 12 => '早上好，Alex',
-      >= 12 && < 18 => '下午好，Alex',
-      _ => '晚上好，Alex',
+      >= 6 && < 12 => '早上好',
+      >= 12 && < 18 => '下午好',
+      _ => '晚上好',
     };
     return Text(
       greeting,
@@ -110,7 +110,7 @@ class _NotificationButton extends StatelessWidget {
           child: Container(
             width: AppSpacing.xs,
             height: AppSpacing.xs,
-            decoration: BoxDecoration(
+            decoration: const BoxDecoration(
               color: AppColors.primary,
               shape: BoxShape.circle,
             ),

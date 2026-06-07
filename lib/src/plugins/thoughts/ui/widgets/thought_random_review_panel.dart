@@ -30,7 +30,7 @@ class ThoughtRandomReviewPanel extends ConsumerWidget {
             error: (_, _) => const ThoughtSmallMutedText('加载失败'),
             data: (thought) {
               if (thought == null) {
-                return ThoughtSmallMutedText('没有可回顾的旧想法');
+                return const ThoughtSmallMutedText('没有可回顾的旧想法');
               }
               return Column(
                 crossAxisAlignment: CrossAxisAlignment.start,

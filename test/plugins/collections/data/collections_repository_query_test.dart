@@ -40,7 +40,7 @@ void main() {
       );
 
       final page = await repository.queryItems(
-        const SavedItemsQuery(view: CollectionView.all, limit: 50),
+        const SavedItemsQuery(view: CollectionView.all),
       );
 
       expect(page.items, hasLength(1));
@@ -121,7 +121,7 @@ void main() {
       );
 
       final page = await repository.queryItems(
-        const SavedItemsQuery(view: CollectionView.all, limit: 50),
+        const SavedItemsQuery(view: CollectionView.all),
       );
 
       expect(page.items, hasLength(1));
@@ -153,7 +153,6 @@ void main() {
           view: CollectionView.all,
           platform: SourcePlatform.github,
           mediaType: MediaType.repository,
-          limit: 50,
         ),
       );
 
@@ -188,7 +187,6 @@ void main() {
           view: CollectionView.all,
           selectedBoxIds: {box.id},
           searchQuery: 'Flutter',
-          limit: 50,
         ),
       );
 
@@ -204,14 +202,12 @@ void main() {
         originalUrl: 'https://example.com/inbox',
         normalizedUrl: 'https://example.com/inbox',
         title: 'Inbox Unread',
-        isInInbox: true,
       );
       // Item in inbox, done → should match
       final inboxDone = await repository.createSavedItem(
         originalUrl: 'https://example.com/inbox-done',
         normalizedUrl: 'https://example.com/inbox-done',
         title: 'Inbox Done',
-        isInInbox: true,
       );
       await repository.updateStatus(inboxDone.id, ConsumptionStatus.done);
 
@@ -220,7 +216,6 @@ void main() {
         originalUrl: 'https://example.com/archived',
         normalizedUrl: 'https://example.com/archived',
         title: 'Archived',
-        isInInbox: true,
       );
       await repository.updateStatus(archivedItem.id, ConsumptionStatus.archived);
 
@@ -248,7 +243,7 @@ void main() {
       }
 
       final page = await repository.queryItems(
-        const SavedItemsQuery(view: CollectionView.inbox, limit: 100),
+        const SavedItemsQuery(limit: 100),
       );
 
       final titles = page.items.map((i) => i.title).toSet();

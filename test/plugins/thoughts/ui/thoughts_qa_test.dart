@@ -13,15 +13,15 @@ import 'package:uni_hub/src/core/plugin/plugin_registry.dart';
 import 'package:uni_hub/src/core/storage/app_storage_paths.dart';
 import 'package:uni_hub/src/core/storage/providers/storage_providers.dart';
 import 'package:uni_hub/src/core/theme/app_breakpoints.dart';
-import 'package:uni_hub/src/shared/widgets/adaptive_layout.dart';
 import 'package:uni_hub/src/plugins/thoughts/data/thought_content_codec.dart';
 import 'package:uni_hub/src/plugins/thoughts/providers/thought_status_filter.dart';
 import 'package:uni_hub/src/plugins/thoughts/providers/thoughts_providers.dart';
-import 'package:uni_hub/src/shared/editor/appflowy_document_tools.dart';
 import 'package:uni_hub/src/plugins/thoughts/ui/layouts/thoughts_mobile_layout.dart';
 import 'package:uni_hub/src/plugins/thoughts/ui/thoughts_page.dart';
 import 'package:uni_hub/src/plugins/thoughts/ui/widgets/thought_card.dart';
 import 'package:uni_hub/src/plugins/thoughts/ui/widgets/thought_state_templates.dart';
+import 'package:uni_hub/src/shared/editor/appflowy_document_tools.dart';
+import 'package:uni_hub/src/shared/widgets/adaptive_layout.dart';
 
 class _ThoughtsTablePlugin extends UniHubPlugin {
   @override

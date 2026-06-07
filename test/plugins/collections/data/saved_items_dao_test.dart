@@ -24,8 +24,8 @@ void main() {
     final now = DateTime.now();
     final id = await dao.insert(
       SavedItemsTableCompanion(
-        originalUrl: Value('https://example.com/test'),
-        normalizedUrl: Value('https://example.com/test'),
+        originalUrl: const Value('https://example.com/test'),
+        normalizedUrl: const Value('https://example.com/test'),
         title: const Value('Test Item'),
         createdAt: Value(now),
         updatedAt: Value(now),
@@ -47,8 +47,8 @@ void main() {
     final now = DateTime.now();
     await dao.insert(
       SavedItemsTableCompanion(
-        originalUrl: Value('https://example.com/unique'),
-        normalizedUrl: Value('https://example.com/unique'),
+        originalUrl: const Value('https://example.com/unique'),
+        normalizedUrl: const Value('https://example.com/unique'),
         createdAt: Value(now),
         updatedAt: Value(now),
       ),
@@ -63,16 +63,16 @@ void main() {
     final now = DateTime.now();
     final id1 = await dao.insert(
       SavedItemsTableCompanion(
-        originalUrl: Value('https://example.com/old'),
-        normalizedUrl: Value('https://example.com/old'),
+        originalUrl: const Value('https://example.com/old'),
+        normalizedUrl: const Value('https://example.com/old'),
         createdAt: Value(now),
         updatedAt: Value(now.subtract(const Duration(hours: 2))),
       ),
     );
     final id2 = await dao.insert(
       SavedItemsTableCompanion(
-        originalUrl: Value('https://example.com/new'),
-        normalizedUrl: Value('https://example.com/new'),
+        originalUrl: const Value('https://example.com/new'),
+        normalizedUrl: const Value('https://example.com/new'),
         createdAt: Value(now),
         updatedAt: Value(now),
       ),
@@ -89,8 +89,8 @@ void main() {
     final now = DateTime.now();
     final id = await dao.insert(
       SavedItemsTableCompanion(
-        originalUrl: Value('https://example.com/update'),
-        normalizedUrl: Value('https://example.com/update'),
+        originalUrl: const Value('https://example.com/update'),
+        normalizedUrl: const Value('https://example.com/update'),
         createdAt: Value(now),
         updatedAt: Value(now),
       ),
@@ -112,8 +112,8 @@ void main() {
     final now = DateTime.now();
     final id = await dao.insert(
       SavedItemsTableCompanion(
-        originalUrl: Value('https://example.com/opened'),
-        normalizedUrl: Value('https://example.com/opened'),
+        originalUrl: const Value('https://example.com/opened'),
+        normalizedUrl: const Value('https://example.com/opened'),
         createdAt: Value(now),
         updatedAt: Value(now),
       ),
@@ -132,8 +132,8 @@ void main() {
     final now = DateTime.now();
     final id = await dao.insert(
       SavedItemsTableCompanion(
-        originalUrl: Value('https://example.com/delete-me'),
-        normalizedUrl: Value('https://example.com/delete-me'),
+        originalUrl: const Value('https://example.com/delete-me'),
+        normalizedUrl: const Value('https://example.com/delete-me'),
         createdAt: Value(now),
         updatedAt: Value(now),
       ),

@@ -132,8 +132,12 @@ class _RecentThoughtsGrid extends ConsumerWidget {
 
 class _QuickAccessPanel extends StatelessWidget {
   final VoidCallback? onThoughtsTap;
+  final VoidCallback? onCollectionsTap;
 
-  const _QuickAccessPanel({this.onThoughtsTap});
+  const _QuickAccessPanel({
+    this.onThoughtsTap,
+    this.onCollectionsTap,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -144,7 +148,10 @@ class _QuickAccessPanel extends StatelessWidget {
         children: [
           const AppSectionHeader(title: '快捷入口', icon: Icons.bolt_outlined),
           const SizedBox(height: AppSpacing.md),
-          _ShortcutGrid(onThoughtsTap: onThoughtsTap),
+          _ShortcutGrid(
+            onThoughtsTap: onThoughtsTap,
+            onCollectionsTap: onCollectionsTap,
+          ),
         ],
       ),
     );
@@ -177,50 +184,23 @@ class _RecentThoughtsPanel extends StatelessWidget {
   }
 }
 
-class _HomeWorkGrid extends StatelessWidget {
-  const _HomeWorkGrid();
-
-  @override
-  Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final isTwoColumn = constraints.maxWidth >= AppBreakpoints.tabletMin;
-        final children = const [_TodoPanel(), _ActivityPanel()];
-        if (!isTwoColumn) {
-          return const Column(
-            children: [
-              _TodoPanel(),
-              SizedBox(height: AppSpacing.lg),
-              _ActivityPanel(),
-            ],
-          );
-        }
-        return Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            for (var i = 0; i < children.length; i++) ...[
-              Expanded(child: children[i]),
-              if (i != children.length - 1)
-                const SizedBox(width: AppSpacing.lg),
-            ],
-          ],
-        );
-      },
-    );
-  }
-}
-
 // ─── Shortcut Grid ──────────────────────────────────────────────────
 
 class _ShortcutGrid extends StatelessWidget {
   final VoidCallback? onThoughtsTap;
+  final VoidCallback? onCollectionsTap;
 
-  const _ShortcutGrid({this.onThoughtsTap});
+  const _ShortcutGrid({
+    this.onThoughtsTap,
+    this.onCollectionsTap,
+  });
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-    final items = [
+    // Only show shortcuts with real destinations.
+    // Entries for unimplemented modules (笔记, 待办, 日程) are omitted
+    // per PRD 2.4: placeholder shortcuts should not occupy core positions.
+    final items = <Widget>[
       _ShortcutCard(
         icon: Icons.add_rounded,
         title: '新建想法',
@@ -230,50 +210,29 @@ class _ShortcutGrid extends StatelessWidget {
         onTap: onThoughtsTap,
       ),
       _ShortcutCard(
-        icon: Icons.edit_rounded,
-        title: '新建笔记',
-        subtitle: '沉淀知识',
-        color: AppColors.purple,
-        background: AppColors.purpleSoft,
-      ),
-      _ShortcutCard(
-        icon: Icons.check_box_outlined,
-        title: '添加待办',
-        subtitle: '管理任务',
-        color: AppColors.secondary,
-        background: AppColors.greenSoft,
-      ),
-      _ShortcutCard(
         icon: Icons.bookmark_border_rounded,
         title: '收藏内容',
         subtitle: '稍后查看',
         color: AppColors.error,
         background: AppColors.roseSoft,
-      ),
-      _ShortcutCard(
-        icon: Icons.event_available_outlined,
-        title: '新建日程',
-        subtitle: '安排时间',
-        color: AppColors.accent,
-        background: AppColors.yellowSoft,
-      ),
-      _ShortcutCard(
-        icon: Icons.more_horiz_rounded,
-        title: '更多',
-        subtitle: '查看入口',
-        color: colorScheme.onSurfaceVariant,
-        background: AppColors.surfaceMuted,
+        onTap: onCollectionsTap,
       ),
     ];
+
+    if (items.isEmpty) return const SizedBox.shrink();
+
     return LayoutBuilder(
       builder: (context, constraints) {
         final columns = constraints.maxWidth >= 820 ? 6 : 3;
+        final effectiveColumns = columns > items.length
+            ? items.length
+            : columns;
         return GridView.builder(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
           itemCount: items.length,
           gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: columns,
+            crossAxisCount: effectiveColumns,
             crossAxisSpacing: AppSpacing.md,
             mainAxisSpacing: AppSpacing.md,
             childAspectRatio: 1.6,

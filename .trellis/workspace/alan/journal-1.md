@@ -938,3 +938,39 @@ CollectionsDesktopLayout 的 `listenManual(savedItemListEntriesProvider, ...)` �
 ### 文件
 
 - `lib/src/plugins/collections/ui/layouts/collections_desktop_layout.dart`
+
+---
+
+## 2026-06-07 P0 修复合集（数据库索引 + 编辑器 + Collections + 桌面快速捕捉）
+
+### 5 项修复
+
+**A. 数据库索引创建修复**
+- `_createCustomIndexes()` 提取为私有方法，同时在 `onCreate` 和 `onUpgrade` 中统一调用
+- 8 个自定义索引 via `CREATE INDEX IF NOT EXISTS`（幂等）
+- 新增数据库测试验证 `sqlite_master` 索引存在
+
+**B. 编辑器关闭保存修复**
+- `barrierDismissible: false`，禁止遮罩直接关闭
+- `PopScope` 包裹，统一走 `_close()` 保存再关闭
+- 内部快捷键：`Ctrl+Enter` 保存，`ESC` 保存后关闭
+
+**C. 编辑器中型窗口溢出修复**
+- `cardWidth` 改用 `math.min` + 水平边距，不 clamp(1040, 1180)
+- 新增 `isCompact (<900px)` / `showSideRail (>=1100px)` 布局切换
+- 中等窗口 (900-1099) 属性折叠到 `ExpansionTile`
+- 小窗口 (<900) 全屏 0 圆角
+
+**D. Collections 分页状态 Provider 化**
+- 新增 `CollectionsListState` / `CollectionsListController` (AsyncNotifier)
+- 移除 `_accumulatedEntries`、`_resetPagination()`、8 个 `ref.listenManual`
+- 筛选变化通过 `ref.listen` 自动 `controller.refresh()`
+
+**E. 桌面首页快速捕捉框**
+- `_DesktopQuickCaptureCard`：文本→Thoughts，URL→Collections，`#标签` 解析
+- Ctrl+Enter 提交，保存刷新仪表盘
+
+### 验证
+- `flutter analyze` — No issues found
+- `flutter test` — 680/680 passed
+- `git commit 2ef8ced` + push to main

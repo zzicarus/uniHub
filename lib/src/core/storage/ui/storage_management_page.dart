@@ -2,15 +2,14 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
-import 'package:uni_hub/src/core/storage/providers/storage_providers.dart';
 import 'package:uni_hub/src/core/storage/providers/storage_cleanup_providers.dart';
 import 'package:uni_hub/src/core/storage/providers/storage_orphaned_providers.dart';
+import 'package:uni_hub/src/core/storage/providers/storage_providers.dart';
 import 'package:uni_hub/src/core/storage/storage_area.dart';
 import 'package:uni_hub/src/core/storage/storage_area_report.dart';
 import 'package:uni_hub/src/core/storage/storage_size_utils.dart';
-import 'package:uni_hub/src/core/theme/app_tokens.dart';
 import 'package:uni_hub/src/core/theme/app_theme_tokens.dart';
+import 'package:uni_hub/src/core/theme/app_tokens.dart';
 
 class StorageManagementPage extends ConsumerStatefulWidget {
   const StorageManagementPage({super.key});
@@ -607,7 +606,7 @@ class _StorageManagementPageState
               '这会删除全部想法、收藏、标签、图片附件和缓存。此操作不可恢复。',
             ),
             const SizedBox(height: AppSpacing.md),
-            Text(
+            const Text(
               '输入 RESET 确认重置',
               style: TextStyle(fontWeight: AppFontTokens.semiBold),
             ),

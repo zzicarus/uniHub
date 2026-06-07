@@ -101,7 +101,6 @@ void main() {
           tags: const [AppTagStat(name: '产品', count: 8)],
           selectedTags: const {},
           onTagToggle: (_) {},
-          showCounts: true,
         ),
       );
 
@@ -222,7 +221,6 @@ void main() {
           selectedTags: const {},
           onTagToggle: (_) {},
           onMoreTap: () {},
-          maxVisibleTags: 5,
           horizontalScroll: true,
         ),
       );

@@ -24,7 +24,7 @@ void main() {
   testWidgets('renders with provided color and size', (tester) async {
     await pumpIconBadge(
       tester,
-      const UniIconBadge(icon: Icons.check, color: Colors.green, size: 48),
+      const UniIconBadge(icon: Icons.check, color: Colors.green),
     );
 
     final icon = tester.widget<Icon>(find.byIcon(Icons.check));

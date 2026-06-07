@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../../../core/theme/app_tokens.dart';
 import '../../../core/theme/app_theme_tokens.dart';
+import '../../../core/theme/app_tokens.dart';
 
 /// A reusable tag chip for filtering / displaying tags.
 ///

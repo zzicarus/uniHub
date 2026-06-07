@@ -123,7 +123,7 @@ class CollectionFilterChip<T> extends StatelessWidget {
   void _showMenu(BuildContext context) async {
     final result = await showMenu<T>(
       context: context,
-      position: RelativeRect.fromLTRB(0, 48, 0, 0),
+      position: const RelativeRect.fromLTRB(0, 48, 0, 0),
       initialValue: value,
       items: [
         ...items.map(

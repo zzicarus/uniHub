@@ -83,7 +83,6 @@ void main() {
           tags: const [],
           selectedTags: const {},
           onTagToggle: (_) {},
-          emptyText: '暂无标签',
         ),
       );
 

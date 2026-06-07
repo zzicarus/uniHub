@@ -45,7 +45,6 @@ class UniStatusPanel extends StatelessWidget {
       child: Padding(
         padding: const EdgeInsets.all(AppSpacing.xl),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             UniIconBadge(icon: icon, color: iconColor),
             const SizedBox(height: AppSpacing.md),

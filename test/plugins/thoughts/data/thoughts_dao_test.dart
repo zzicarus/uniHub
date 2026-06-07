@@ -1,8 +1,8 @@
-import 'package:flutter_test/flutter_test.dart';
 // hide avoids ambiguity with `package:test` matchers isNull/isNotNull.
 // Use `package:drift`'s .isNull extension on Expression types when needed.
 import 'package:drift/drift.dart' hide isNull, isNotNull;
 import 'package:drift/native.dart';
+import 'package:flutter_test/flutter_test.dart';
 import 'package:uni_hub/src/core/database/app_database.dart';
 import 'package:uni_hub/src/core/database/tables/thoughts_table.dart';
 import 'package:uni_hub/src/core/plugin/plugin_interface.dart';
@@ -154,7 +154,7 @@ void main() {
           ),
         );
 
-        final activeResults = await dao.getAll(archived: false);
+        final activeResults = await dao.getAll();
         expect(activeResults, hasLength(1));
         expect(activeResults[0].content, 'Active');
 

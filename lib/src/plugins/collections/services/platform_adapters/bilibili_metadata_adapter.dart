@@ -3,7 +3,6 @@ import 'dart:convert';
 import 'dart:io';
 
 import '../../domain/collection_models.dart';
-import '../../domain/enrichment_status.dart';
 import '../../services/collection_debug_logger.dart';
 import '../../services/html_metadata_parser.dart';
 import '../../services/platform_metadata_adapter.dart';
@@ -97,7 +96,6 @@ class BilibiliMetadataAdapter implements PlatformMetadataAdapter {
           'source': 'bilibili_adapter',
           'finalUrl': targetUri.toString(),
         }),
-        status: EnrichmentStatus.success,
       ),
       source: 'bilibili_adapter',
     );
@@ -126,7 +124,6 @@ class BilibiliMetadataAdapter implements PlatformMetadataAdapter {
     return PlatformAdapterResult(
       result: MetadataResult(
         title: uri.toString(),
-        description: null,
         siteName: 'Bilibili',
         favicon: 'https://www.bilibili.com/favicon.ico',
         metadataJson: jsonEncode({
@@ -134,7 +131,6 @@ class BilibiliMetadataAdapter implements PlatformMetadataAdapter {
           'limited': true,
           'reason': reason,
         }),
-        status: EnrichmentStatus.success,
       ),
       limited: true,
       reason: reason,

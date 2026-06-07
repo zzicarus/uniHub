@@ -207,7 +207,7 @@ void main() {
       final stored = _encodeAppFlowy(document: root, plainText: 'Short');
 
       expect(
-        ThoughtContentCodec.titleFromStored(stored, maxLength: 20),
+        ThoughtContentCodec.titleFromStored(stored),
         'Short',
       );
     });

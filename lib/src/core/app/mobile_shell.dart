@@ -69,7 +69,7 @@ class _MobileNavigationBar extends StatelessWidget {
         const NavigationDestination(
           icon: Icon(Icons.bookmark_border_rounded),
           selectedIcon: Icon(Icons.bookmark_rounded),
-          label: '收藏库',
+          label: '内容库',
         ),
       ],
       onDestinationSelected: (index) {

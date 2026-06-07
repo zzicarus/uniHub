@@ -1,12 +1,13 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+
 import '../../shared/ui/style_guide_screen.dart';
-import '../storage/ui/storage_management_page.dart';
 import '../app/adaptive_shell.dart';
 import '../app/home_page.dart';
 import '../app/mobile_placeholder_pages.dart';
 import '../app/settings_page.dart';
 import '../plugin/plugin_registry.dart';
+import '../storage/ui/storage_management_page.dart';
 import 'route_names.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
@@ -41,7 +42,7 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: '/favorites',
             name: RouteNames.favorites,
-            builder: (context, state) => const FavoritesPage(),
+            redirect: (_, _) => '/collections',
           ),
           GoRoute(
             path: '/search',

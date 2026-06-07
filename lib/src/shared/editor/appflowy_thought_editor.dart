@@ -289,7 +289,7 @@ class _AppFlowyThoughtEditorState extends State<AppFlowyThoughtEditor> {
 
   @override
   void dispose() {
-    _subscription?.cancel();
+    unawaited(_subscription?.cancel());
     _editorState.dispose();
     super.dispose();
   }
@@ -303,7 +303,7 @@ class _AppFlowyThoughtEditorState extends State<AppFlowyThoughtEditor> {
     final editorTextStyle = theme.textTheme.bodyMedium?.copyWith(
       fontSize: AppFontTokens.subtitle,
       color: theme.colorScheme.onSurface.withValues(alpha: 0.87),
-    ) ?? TextStyle(fontSize: AppFontTokens.subtitle);
+    ) ?? const TextStyle(fontSize: AppFontTokens.subtitle);
 
     // Customise the slash menu so the built-in image item is removed.
     // All image insertion must go through ThoughtImageService.
@@ -319,7 +319,6 @@ class _AppFlowyThoughtEditorState extends State<AppFlowyThoughtEditor> {
     return AppFlowyEditor(
       editorState: _editorState,
       autoFocus: widget.autofocus,
-      shrinkWrap: false,
       editorStyle: EditorStyle.desktop(
         cursorColor: theme.colorScheme.primary,
         padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -353,7 +352,7 @@ class _AppFlowyThoughtEditorState extends State<AppFlowyThoughtEditor> {
       return EditorState(document: document);
     }
 
-    return EditorState.blank(withInitialText: true);
+    return EditorState.blank();
   }
 
   /// Wraps plain text into an AppFlowy document structure.

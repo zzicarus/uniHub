@@ -362,7 +362,6 @@ void main() {
     test('null content type (no header) is accepted', () async {
       final provider = _provider(
         '<html><head><title>No Content-Type</title></head></html>',
-        contentType: null,
       );
       final result =
           await provider.fetchMetadata('https://example.com/page');

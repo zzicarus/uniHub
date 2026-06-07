@@ -77,16 +77,15 @@ void main() {
 
   group('queryItemsPage - view filter', () {
     test('returns inbox items (isInInbox && not archived)', () async {
-      await insertItem(title: 'Inbox item', isInInbox: true, status: 'unread');
+      await insertItem(title: 'Inbox item');
       await insertItem(title: 'Archived', isInInbox: false, status: 'archived');
       await insertItem(
         title: 'Not in inbox',
         isInInbox: false,
-        status: 'unread',
       );
 
       final result = await dao.queryItemsPage(
-        const SavedItemsQuery(view: CollectionView.inbox, limit: 100),
+        const SavedItemsQuery(limit: 100),
       );
 
       expect(result.map((i) => i.title), contains('Inbox item'));
@@ -106,7 +105,7 @@ void main() {
     });
 
     test('returns unread items', () async {
-      await insertItem(title: 'Unread', status: 'unread');
+      await insertItem(title: 'Unread');
       await insertItem(title: 'Done', status: 'done');
 
       final result = await dao.queryItemsPage(
@@ -130,7 +129,7 @@ void main() {
 
     test('returns done items', () async {
       await insertItem(title: 'Done', status: 'done');
-      await insertItem(title: 'Unread', status: 'unread');
+      await insertItem(title: 'Unread');
 
       final result = await dao.queryItemsPage(
         const SavedItemsQuery(view: CollectionView.done, limit: 100),
@@ -141,7 +140,7 @@ void main() {
 
     test('returns archived items', () async {
       await insertItem(title: 'Archived', status: 'archived');
-      await insertItem(title: 'Unread', status: 'unread');
+      await insertItem(title: 'Unread');
 
       final result = await dao.queryItemsPage(
         const SavedItemsQuery(view: CollectionView.archived, limit: 100),
@@ -153,7 +152,7 @@ void main() {
 
   group('queryItemsPage - status filter', () {
     test('filters by unread status', () async {
-      await insertItem(title: 'Unread', status: 'unread');
+      await insertItem(title: 'Unread');
       await insertItem(title: 'Done', status: 'done');
 
       final result = await dao.queryItemsPage(
@@ -168,7 +167,7 @@ void main() {
     });
 
     test('null status returns all', () async {
-      await insertItem(title: 'A', status: 'unread');
+      await insertItem(title: 'A');
       await insertItem(title: 'B', status: 'done');
       await insertItem(title: 'C', status: 'archived');
 
@@ -348,7 +347,6 @@ void main() {
       final result = await dao.queryItemsPage(
         const SavedItemsQuery(
           view: CollectionView.all,
-          searchQuery: '',
           limit: 100,
         ),
       );
@@ -445,7 +443,7 @@ void main() {
 
     test('respects offset', () async {
       // Insert items with different timestamps for deterministic ordering
-      final base = DateTime(2025, 1, 1);
+      final base = DateTime(2025);
       for (var i = 0; i < 5; i++) {
         await insertItem(
           title: 'Item $i',
@@ -459,7 +457,6 @@ void main() {
           view: CollectionView.all,
           sort: SavedItemsSort.createdAsc,
           limit: 2,
-          offset: 0,
         ),
       );
 
@@ -500,7 +497,6 @@ void main() {
       final result = await dao.queryItemsPage(
         const SavedItemsQuery(
           view: CollectionView.all,
-          sort: SavedItemsSort.updatedDesc,
           limit: 100,
         ),
       );
@@ -534,7 +530,6 @@ void main() {
       await insertItem(
         title: 'Never opened',
         updatedAt: now.subtract(const Duration(hours: 1)),
-        lastOpenedAt: null,
       );
 
       final result = await dao.queryItemsPage(

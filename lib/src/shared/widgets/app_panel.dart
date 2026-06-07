@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:uni_hub/src/core/theme/app_tokens.dart';
 import 'package:uni_hub/src/core/theme/app_theme_tokens.dart';
+import 'package:uni_hub/src/core/theme/app_tokens.dart';
 
 /// UniHub dashboard panel with unified desktop card styling.
 class AppPanel extends StatelessWidget {

@@ -47,7 +47,6 @@ final storageRegistryProvider = Provider<StorageRegistry>((ref) {
       name: '主数据库',
       type: StorageAreaType.database,
       owner: 'core',
-      clearable: false,
       dangerous: true,
       description: '保存想法、收藏、标签、状态等核心数据',
     ),
@@ -56,7 +55,6 @@ final storageRegistryProvider = Provider<StorageRegistry>((ref) {
       name: '想法图片',
       type: StorageAreaType.userAttachment,
       owner: 'thoughts',
-      clearable: false,
       description: '用户插入到想法中的图片附件',
     ),
     const StorageAreaDescriptor(

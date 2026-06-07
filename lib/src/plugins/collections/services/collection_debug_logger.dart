@@ -17,7 +17,6 @@ class CollectionDebugLogger {
   /// 是否启用调试日志。默认关闭，开发时通过 `--dart-define=UNIHUB_COLLECTION_DEBUG=true` 开启。
   static const bool enabled = bool.fromEnvironment(
     'UNIHUB_COLLECTION_DEBUG',
-    defaultValue: false,
   );
 
   /// 普通信息日志。

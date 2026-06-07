@@ -2,8 +2,8 @@ import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:uni_hub/src/core/storage/app_storage_paths.dart';
-import 'package:uni_hub/src/core/storage/storage_area.dart';
 import 'package:uni_hub/src/core/storage/orphaned_file.dart';
+import 'package:uni_hub/src/core/storage/storage_area.dart';
 import 'package:uni_hub/src/core/storage/storage_manager.dart';
 import 'package:uni_hub/src/core/storage/storage_registry.dart';
 
@@ -43,7 +43,6 @@ void main() {
           name: '\u4e3b\u6570\u636e\u5e93',
           type: StorageAreaType.database,
           owner: 'core',
-          clearable: false,
           description: '\u6d4b\u8bd5\u6570\u636e\u5e93',
         ),
         const StorageAreaDescriptor(
@@ -51,7 +50,6 @@ void main() {
           name: '\u60f3\u6cd5\u56fe\u7247',
           type: StorageAreaType.userAttachment,
           owner: 'thoughts',
-          clearable: false,
           description: '\u6d4b\u8bd5\u56fe\u7247',
         ),
         const StorageAreaDescriptor(

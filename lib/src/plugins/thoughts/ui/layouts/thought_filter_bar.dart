@@ -42,7 +42,7 @@ class ThoughtFilterBar extends ConsumerWidget {
             onTap: () => _setFilter(ref, ThoughtStatusFilter.withImages),
           ),
           const SizedBox(width: AppSpacing.sm),
-          Tooltip(
+          const Tooltip(
             message: '待办模块尚未接入',
             child: _StatusChip(label: '待办', selected: false),
           ),

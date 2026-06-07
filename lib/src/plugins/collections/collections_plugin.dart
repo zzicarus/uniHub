@@ -3,9 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:uni_hub/src/core/database/tables/collection_boxes_table.dart';
 import 'package:uni_hub/src/core/database/tables/enrichment_jobs_table.dart';
-import 'package:uni_hub/src/core/database/tables/website_logo_cache_table.dart';
 import 'package:uni_hub/src/core/database/tables/saved_item_boxes_table.dart';
 import 'package:uni_hub/src/core/database/tables/saved_items_table.dart';
+import 'package:uni_hub/src/core/database/tables/website_logo_cache_table.dart';
 import 'package:uni_hub/src/core/plugin/plugin_interface.dart';
 import 'package:uni_hub/src/core/router/route_names.dart';
 import 'package:uni_hub/src/plugins/collections/domain/url_normalizer.dart';
@@ -18,12 +18,12 @@ class CollectionsPlugin extends UniHubPlugin {
   String get id => 'collections';
 
   @override
-  String get name => '收藏库';
+  String get name => '内容库';
 
   @override
   List<NavEntry> get navEntries => [
     const NavEntry(
-      label: '收藏库',
+      label: '内容库',
       icon: Icons.bookmark_border_rounded,
       routeName: RouteNames.collections,
       path: '/collections',

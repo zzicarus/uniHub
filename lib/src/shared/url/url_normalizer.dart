@@ -24,7 +24,7 @@ class UrlNormalizer {
   String? tryNormalize(String input) {
     try {
       return normalize(input);
-    } on Exception {
+    } catch (_) {
       return null;
     }
   }
@@ -48,7 +48,7 @@ class UrlNormalizer {
 
     final withScheme = trimmed.contains('://') ? trimmed : 'https://$trimmed';
     final uri = Uri.parse(withScheme);
-    if (!uri.hasScheme || uri.host.isEmpty) {
+    if (!uri.hasScheme || uri.host.isEmpty || !uri.host.contains('.')) {
       throw FormatException('URL 格式不正确', input);
     }
 

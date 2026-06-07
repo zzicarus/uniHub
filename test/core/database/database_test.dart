@@ -1,6 +1,6 @@
-import 'package:flutter_test/flutter_test.dart';
 import 'package:drift/drift.dart';
 import 'package:drift/native.dart';
+import 'package:flutter_test/flutter_test.dart';
 import 'package:uni_hub/src/core/database/app_database.dart';
 import 'package:uni_hub/src/core/database/tables/thoughts_table.dart';
 import 'package:uni_hub/src/core/plugin/plugin_interface.dart';
@@ -44,7 +44,7 @@ void main() {
 
       final db = AppDatabase(NativeDatabase.memory(), multiRegistry);
       expect(db.schemaVersion, AppDatabase.currentSchemaVersion);
-      addTearDown(() => db.close());
+      addTearDown(db.close);
     });
 
     test('has ThoughtsTable registered', () {

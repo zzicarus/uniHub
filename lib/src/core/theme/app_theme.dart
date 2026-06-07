@@ -84,7 +84,7 @@ abstract final class AppTheme {
           foregroundColor: colorScheme.onPrimary,
           disabledBackgroundColor: colorScheme.surfaceContainerHighest,
           disabledForegroundColor: colors.textPrimary.withValues(alpha: 0.38),
-          textStyle: TextStyle(
+          textStyle: const TextStyle(
             fontSize: AppFontTokens.titleMd,
             height: AppFontTokens.titleMdHeight,
             fontWeight: AppFontTokens.semiBold,
@@ -100,7 +100,7 @@ abstract final class AppTheme {
           foregroundColor: colors.primary,
           disabledForegroundColor: colors.textPrimary.withValues(alpha: 0.38),
           side: BorderSide(color: colors.border),
-          textStyle: TextStyle(
+          textStyle: const TextStyle(
             fontSize: AppFontTokens.titleMd,
             height: AppFontTokens.titleMdHeight,
             fontWeight: AppFontTokens.semiBold,
@@ -114,7 +114,7 @@ abstract final class AppTheme {
         style: TextButton.styleFrom(
           foregroundColor: colors.primary,
           disabledForegroundColor: colors.textPrimary.withValues(alpha: 0.38),
-          textStyle: TextStyle(
+          textStyle: const TextStyle(
             fontSize: AppFontTokens.titleMd,
             height: AppFontTokens.titleMdHeight,
             fontWeight: AppFontTokens.semiBold,

@@ -51,7 +51,7 @@ void main() {
     testWidgets('displays label with # prefix by default', (tester) async {
       await pumpChip(
         tester,
-        const AppTagChip(label: '产品', onTap: null),
+        const AppTagChip(label: '产品'),
       );
 
       // Default showHash = true, so label should show "#产品"
@@ -63,7 +63,7 @@ void main() {
     ) async {
       await pumpChip(
         tester,
-        const AppTagChip(label: '产品', showHash: false, onTap: null),
+        const AppTagChip(label: '产品', showHash: false),
       );
 
       expect(find.text('产品'), findsOneWidget);
@@ -73,7 +73,7 @@ void main() {
     testWidgets('shows count when provided', (tester) async {
       await pumpChip(
         tester,
-        const AppTagChip(label: '产品', count: 8, onTap: null),
+        const AppTagChip(label: '产品', count: 8),
       );
 
       expect(find.text('#产品'), findsOneWidget);
@@ -83,7 +83,7 @@ void main() {
     testWidgets('hides count when null', (tester) async {
       await pumpChip(
         tester,
-        const AppTagChip(label: '产品', onTap: null),
+        const AppTagChip(label: '产品'),
       );
 
       expect(find.text('#产品'), findsOneWidget);
@@ -93,7 +93,7 @@ void main() {
     testWidgets('renders in selected state without error', (tester) async {
       await pumpChip(
         tester,
-        const AppTagChip(label: '产品', selected: true, count: 5, onTap: null),
+        const AppTagChip(label: '产品', selected: true, count: 5),
       );
 
       expect(find.text('#产品'), findsOneWidget);
@@ -117,7 +117,6 @@ void main() {
         const AppTagChip(
           label: '产品',
           leadingIcon: Icons.star,
-          onTap: null,
         ),
       );
 
@@ -127,7 +126,7 @@ void main() {
     testWidgets('renders compact variant without error', (tester) async {
       await pumpChip(
         tester,
-        const AppTagChip(label: '产品', compact: true, onTap: null),
+        const AppTagChip(label: '产品', compact: true),
       );
 
       expect(find.text('#产品'), findsOneWidget);

@@ -2,8 +2,8 @@ import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:uni_hub/src/core/database/app_database.dart';
 import 'package:uni_hub/src/core/plugin/plugin_registry.dart';
-import 'package:uni_hub/src/plugins/collections/collections_plugin.dart';
 import 'package:uni_hub/src/plugins/collections/application/enrichment_queue_controller.dart';
+import 'package:uni_hub/src/plugins/collections/collections_plugin.dart';
 import 'package:uni_hub/src/plugins/collections/data/collection_boxes_dao.dart';
 import 'package:uni_hub/src/plugins/collections/data/collections_repository.dart';
 import 'package:uni_hub/src/plugins/collections/data/enrichment_jobs_dao.dart';
@@ -73,7 +73,7 @@ void main() {
         );
         await repository.enqueueEnrichmentJob(item.id);
 
-        final count = await controller.runOnce(limit: 5);
+        final count = await controller.runOnce();
 
         expect(count, 1);
         final updated = await repository.getSavedItem(item.id);
@@ -83,7 +83,7 @@ void main() {
       test('returns 0 when no pending jobs', () async {
         final controller = createController();
 
-        final count = await controller.runOnce(limit: 5);
+        final count = await controller.runOnce();
 
         expect(count, 0);
       });
@@ -92,9 +92,9 @@ void main() {
         final controller = createController();
 
         // First call starts
-        final firstFuture = controller.runOnce(limit: 5);
+        final firstFuture = controller.runOnce();
         // Second call should return 0 immediately
-        final secondCount = await controller.runOnce(limit: 5);
+        final secondCount = await controller.runOnce();
         expect(secondCount, 0);
 
         await firstFuture;
@@ -116,7 +116,6 @@ void main() {
 
         // drainPending with batchSize=5, maxBatches=2 should process all 8
         final total = await controller.drainPending(
-          batchSize: 5,
           maxBatches: 2,
         );
 
@@ -127,8 +126,7 @@ void main() {
         final controller = createController();
 
         final total = await controller.drainPending(
-          batchSize: 5,
-          maxBatches: 5,
+          
         );
 
         expect(total, 0);
@@ -148,7 +146,6 @@ void main() {
 
         // batchSize=5, maxBatches=2 → max 10 jobs processed
         final total = await controller.drainPending(
-          batchSize: 5,
           maxBatches: 2,
         );
 
@@ -158,8 +155,8 @@ void main() {
       test('isRunning guard prevents concurrent execution', () async {
         final controller = createController();
 
-        final firstFuture = controller.drainPending(batchSize: 5, maxBatches: 2);
-        final secondCount = await controller.drainPending(batchSize: 5, maxBatches: 2);
+        final firstFuture = controller.drainPending(maxBatches: 2);
+        final secondCount = await controller.drainPending(maxBatches: 2);
         expect(secondCount, 0);
 
         await firstFuture;

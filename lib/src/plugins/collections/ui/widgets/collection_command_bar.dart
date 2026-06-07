@@ -29,27 +29,27 @@ class CollectionCommandBar extends ConsumerWidget {
   }
 
   Widget _buildDesktopLayout(BuildContext context, WidgetRef ref) {
-    return _ContainerBox(
+    return const _ContainerBox(
       child: Row(
         children: [
           // Search / capture field (takes ~40% of space)
-          const Expanded(
+          Expanded(
             flex: 5,
             child: CollectionSearchCaptureField(),
           ),
-          const SizedBox(width: 12),
+          SizedBox(width: 12),
           // Filter chips
-          const Flexible(
+          Flexible(
             flex: 4,
             child: SingleChildScrollView(
               scrollDirection: Axis.horizontal,
               child: CollectionFilterChipGroup(),
             ),
           ),
-          const Spacer(),
+          Spacer(),
           // Sort menu
-          const CollectionSortMenu(),
-          const SizedBox(width: 8),
+          CollectionSortMenu(),
+          SizedBox(width: 8),
           // Clear filter button
           _ClearFilterButton(),
         ],
@@ -58,17 +58,17 @@ class CollectionCommandBar extends ConsumerWidget {
   }
 
   Widget _buildMediumLayout(BuildContext context, WidgetRef ref) {
-    return _ContainerBox(
+    return const _ContainerBox(
       child: Row(
         children: [
           // Search / capture field (wider share)
-          const Expanded(
+          Expanded(
             flex: 6,
             child: CollectionSearchCaptureField(),
           ),
-          const SizedBox(width: 8),
+          SizedBox(width: 8),
           // Filter chips (scrollable)
-          const Flexible(
+          Flexible(
             flex: 4,
             child: SingleChildScrollView(
               scrollDirection: Axis.horizontal,
@@ -76,9 +76,9 @@ class CollectionCommandBar extends ConsumerWidget {
             ),
           ),
           // Sort
-          const SizedBox(width: 4),
-          const CollectionSortMenu(),
-          const SizedBox(width: 4),
+          SizedBox(width: 4),
+          CollectionSortMenu(),
+          SizedBox(width: 4),
           // Clear filter (icon-only)
           _ClearFilterButton(compact: true),
         ],
@@ -87,27 +87,27 @@ class CollectionCommandBar extends ConsumerWidget {
   }
 
   Widget _buildCompactLayout(BuildContext context, WidgetRef ref) {
-    return _ContainerBox(
+    return const _ContainerBox(
       height: 112,
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+      padding: EdgeInsets.symmetric(horizontal: 10, vertical: 10),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           // First row: search / capture
-          const CollectionSearchCaptureField(),
-          const SizedBox(height: 8),
+          CollectionSearchCaptureField(),
+          SizedBox(height: 8),
           // Second row: filters + sort + clear
           Row(
             children: [
-              const Expanded(
+              Expanded(
                 child: SingleChildScrollView(
                   scrollDirection: Axis.horizontal,
                   child: CollectionFilterChipGroup(),
                 ),
               ),
-              const SizedBox(width: 4),
-              const CollectionSortMenu(),
-              const SizedBox(width: 4),
+              SizedBox(width: 4),
+              CollectionSortMenu(),
+              SizedBox(width: 4),
               _ClearFilterButton(compact: true),
             ],
           ),
@@ -201,13 +201,18 @@ class _ClearFilterButton extends ConsumerWidget {
   }
 
   bool _hasAnyFilterActive(WidgetRef ref) {
-    return ref.watch(collectionPlatformFilterProvider) != null ||
+    final boxIds = ref.watch(selectedCollectionBoxIdsProvider);
+    return boxIds.isNotEmpty ||
+        ref.watch(collectionPlatformFilterProvider) != null ||
         ref.watch(collectionMediaTypeFilterProvider) != null ||
         ref.watch(collectionStatusFilterProvider) != null ||
         ref.watch(collectionSearchQueryProvider).trim().isNotEmpty;
   }
 
+  /// 清除所有筛选条件，包括 Box 选定状态。
+  /// 保留 [collectionViewProvider]（系统视图：Inbox/全部/归档）不变。
   void _clearAllFilters(WidgetRef ref) {
+    ref.read(selectedCollectionBoxIdsProvider.notifier).state = const {};
     ref.read(collectionPlatformFilterProvider.notifier).state = null;
     ref.read(collectionMediaTypeFilterProvider.notifier).state = null;
     ref.read(collectionStatusFilterProvider.notifier).state = null;

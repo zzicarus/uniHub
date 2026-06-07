@@ -33,7 +33,7 @@ void main() async {
     ProviderScope(
       overrides: [
         pluginRegistryProvider.overrideWith((ref) {
-          ref.onDispose(() => registry.disposeAll());
+          ref.onDispose(registry.disposeAll);
           return registry;
         }),
       ],

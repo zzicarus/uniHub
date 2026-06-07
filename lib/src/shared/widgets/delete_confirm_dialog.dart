@@ -309,7 +309,6 @@ class _DeleteConfirmDialogState extends State<DeleteConfirmDialog> {
             ),
             dense: true,
             contentPadding: EdgeInsets.zero,
-            toggleable: false,
             visualDensity: VisualDensity.compact,
           ),
           RadioListTile<_MultiBoxChoice>(
@@ -324,7 +323,6 @@ class _DeleteConfirmDialogState extends State<DeleteConfirmDialog> {
             ),
             dense: true,
             contentPadding: EdgeInsets.zero,
-            toggleable: false,
             visualDensity: VisualDensity.compact,
           ),
         ],

@@ -76,7 +76,7 @@ void main() {
       );
       await repository.enqueueEnrichmentJob(item.id);
 
-      await service.runPendingJobs(limit: 3);
+      await service.runPendingJobs();
 
       // item 的 enrichment 状态和 metadata 已更新
       final updated = await repository.getSavedItem(item.id);
@@ -106,7 +106,7 @@ void main() {
       );
       await repository.enqueueEnrichmentJob(item.id);
 
-      await service.runPendingJobs(limit: 3);
+      await service.runPendingJobs();
 
       // job 状态为 pending，等待下次重试
       final job = await jobsDao.getById(1);
@@ -135,11 +135,11 @@ void main() {
       await repository.enqueueEnrichmentJob(item.id);
 
       // 第 1 次：attempts → 1，requeue
-      await service.runPendingJobs(limit: 3);
+      await service.runPendingJobs();
       // 第 2 次：attempts → 2，requeue
-      await service.runPendingJobs(limit: 3);
+      await service.runPendingJobs();
       // 第 3 次：attempts → 3，failed
-      await service.runPendingJobs(limit: 3);
+      await service.runPendingJobs();
 
       final job = await jobsDao.getById(1);
       expect(job!.status, 'failed');

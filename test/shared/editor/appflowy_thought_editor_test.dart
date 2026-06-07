@@ -1,8 +1,6 @@
+import 'package:appflowy_editor/appflowy_editor.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-
-import 'package:appflowy_editor/appflowy_editor.dart';
-
 import 'package:uni_hub/src/core/theme/app_theme.dart';
 import 'package:uni_hub/src/core/theme/app_theme_preset.dart';
 import 'package:uni_hub/src/shared/editor/appflowy_thought_editor.dart';

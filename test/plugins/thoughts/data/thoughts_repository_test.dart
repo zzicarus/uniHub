@@ -1,5 +1,5 @@
-import 'package:flutter_test/flutter_test.dart';
 import 'package:drift/native.dart';
+import 'package:flutter_test/flutter_test.dart';
 import 'package:uni_hub/src/core/database/app_database.dart';
 import 'package:uni_hub/src/core/database/tables/thoughts_table.dart';
 import 'package:uni_hub/src/core/plugin/plugin_interface.dart';
@@ -79,7 +79,7 @@ void main() {
         await repo.createThought(content: 'Should be archived');
         await repo.archiveThought(t2.id); // archive t2
 
-        final active = await repo.getThoughts(archived: false);
+        final active = await repo.getThoughts();
         expect(active, hasLength(2));
         expect(active.any((t) => t.id == t1.id), true);
       });
