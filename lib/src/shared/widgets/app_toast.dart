@@ -40,6 +40,7 @@ class AppToast {
     BuildContext context, {
     required String message,
     required FutureOr<void> Function() onUndo,
+    String actionLabel = '撤销',
     AppToastType type = AppToastType.destructive,
     Duration duration = defaultDuration,
   }) {
@@ -48,7 +49,7 @@ class AppToast {
       message: message,
       type: type,
       duration: duration,
-      actionLabel: '撤销',
+      actionLabel: actionLabel,
       onAction: onUndo,
     );
   }

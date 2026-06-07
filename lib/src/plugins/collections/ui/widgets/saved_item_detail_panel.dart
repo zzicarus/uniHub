@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uni_hub/src/core/database/app_database.dart';
 import 'package:uni_hub/src/core/theme/app_tokens.dart';
-import 'package:uni_hub/src/plugins/collections/application/saved_item_list_entry.dart';
+import 'package:uni_hub/src/plugins/collections/application/saved_item_detail_vm.dart';
 import 'package:uni_hub/src/plugins/collections/application/saved_item_undo_snapshot.dart';
 import 'package:uni_hub/src/plugins/collections/domain/consumption_status.dart';
 import 'package:uni_hub/src/plugins/collections/domain/enrichment_status.dart';
@@ -28,16 +28,13 @@ import 'package:uni_hub/src/shared/widgets/website_logo.dart';
 /// D. 内容补充区 — content tabs (weaker visual weight)
 /// E. 技术信息区 — collapsed at bottom
 ///
-/// Uses the [entry]'s pre-aggregated boxes instead of querying
-/// [selectedSavedItemEntryProvider], ensuring data consistency with
-/// the list that opened this panel.
+/// Listens to [selectedSavedItemDetailProvider] internally so both the
+/// desktop detail panel and the mobile bottom sheet always show the
+/// latest data, regardless of how the panel was opened.
 class SavedItemDetailPanel extends ConsumerStatefulWidget {
-  const SavedItemDetailPanel({required this.entry, super.key});
+  const SavedItemDetailPanel({required this.itemId, super.key});
 
-  final SavedItemListEntry entry;
-
-  /// Convenience accessor for the underlying saved item.
-  SavedItemsTableData get item => entry.item;
+  final int itemId;
 
   @override
   ConsumerState<SavedItemDetailPanel> createState() =>
@@ -47,22 +44,30 @@ class SavedItemDetailPanel extends ConsumerStatefulWidget {
 class _SavedItemDetailPanelState extends ConsumerState<SavedItemDetailPanel> {
   static const _inboxBoxValue = -1;
 
-  /// 当前选中项的数据。使用 getter 而非 late final，
-  /// 确保每次 build 都读到最新的 widget.entry，
-  /// 避免点击不同卡片后右侧详情仍显示旧数据。
-  SavedItemsTableData get item => widget.entry.item;
-  List<CollectionBoxesTableData> get boxes => widget.entry.boxes;
-
   @override
   Widget build(BuildContext context) {
-    return _buildDetail(context, ref);
+    final detailAsync = ref.watch(
+      selectedSavedItemDetailProvider(widget.itemId),
+    );
+    return detailAsync.when(
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (error, _) => Center(
+        child: Text(
+          '无法加载详情',
+          style: TextStyle(color: Theme.of(context).colorScheme.error),
+        ),
+      ),
+      data: (detail) => _buildDetail(context, ref, detail),
+    );
   }
 
   // ---------------------------------------------------------------
   // Detail layout — six sections
   // ---------------------------------------------------------------
 
-  Widget _buildDetail(BuildContext context, WidgetRef ref) {
+  Widget _buildDetail(BuildContext context, WidgetRef ref, SavedItemDetailVm detail) {
+    final item = detail.item;
+    final boxes = detail.boxes;
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final mediaType = MediaType.fromValue(item.mediaType);
@@ -96,7 +101,7 @@ class _SavedItemDetailPanelState extends ConsumerState<SavedItemDetailPanel> {
             ),
             _buildTopActionRow(theme, colorScheme, item),
             _plainDivider(colorScheme),
-            _buildOrganizeSection(theme, colorScheme, item),
+            _buildOrganizeSection(theme, colorScheme, item, boxes),
             _sectionDivider(colorScheme),
             _buildNotesBridgeSection(theme, colorScheme),
             _sectionDivider(colorScheme),
@@ -281,6 +286,7 @@ class _SavedItemDetailPanelState extends ConsumerState<SavedItemDetailPanel> {
     ThemeData theme,
     ColorScheme colorScheme,
     SavedItemsTableData item,
+    List<CollectionBoxesTableData> boxes,
   ) {
     return Container(
       width: double.infinity,
@@ -654,13 +660,14 @@ class _SavedItemDetailPanelState extends ConsumerState<SavedItemDetailPanel> {
   }
 
   Future<void> _deleteItem(int itemId) async {
-    final item = this.item;
+    final repository = ref.read(collectionsRepositoryProvider);
+    final item = await repository.getSavedItem(itemId);
+    if (item == null) return;
 
     final prefsAsync = ref.read(deleteConfirmPrefsProvider);
     final prefs = prefsAsync.valueOrNull;
     if (prefs == null) return;
 
-    final repository = ref.read(collectionsRepositoryProvider);
     final controller = ref.read(savedItemActionsControllerProvider);
     final boxIds = await repository.getBoxIdsForItem(itemId);
     final boxes = boxIds.isNotEmpty
@@ -1228,13 +1235,12 @@ class _BoxSection extends ConsumerWidget {
       ),
     );
     if (name == null || name.isEmpty) return;
-    await ref.read(collectionsRepositoryProvider).createBox(name);
-    // Defer invalidation to next frame so the dialog's elements
-    // (e.g. InputDecorator with active tickers) are fully deactivated
-    // before the parent rebuilds. Without this, Flutter asserts
-    // "Tried to build dirty widget in the wrong build scope".
-    WidgetsBinding.instance.addPostFrameCallback((_) {
+    final controller = ref.read(collectionBoxActionsControllerProvider);
+    final result = await controller.createBox(name);
+    if (!context.mounted) return;
+    ref.read(crudFeedbackCoordinatorProvider).handle(context, result);
+    if (result.success) {
       ref.invalidate(collectionBoxesProvider);
-    });
+    }
   }
 }

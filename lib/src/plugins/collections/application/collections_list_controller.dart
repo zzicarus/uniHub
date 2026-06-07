@@ -73,8 +73,31 @@ class CollectionsListState {
 ///   patching (patch/remove/insert) instead of full page reloads.
 class CollectionsListController
     extends AutoDisposeAsyncNotifier<CollectionsListState> {
+  /// Monotonically-increasing sequence counter per item ID for preventing
+  /// stale async patches from overwriting newer state (#4).
+  final _mutationSeqByItemId = <int, int>{};
+
+  /// Timer for debouncing search-query-triggered refreshes.
+  Timer? _searchDebounceTimer;
+
+  /// The most recently settled search query (after debounce).
+  String _debouncedSearchQuery = '';
+
   @override
   Future<CollectionsListState> build() async {
+    // Listen to raw search query changes and debounce internally,
+    // so the controller owns its query state (#5).
+    ref.listen<String>(collectionSearchQueryProvider, (_, next) {
+      _searchDebounceTimer?.cancel();
+      _searchDebounceTimer = Timer(
+        const Duration(milliseconds: 250),
+        () {
+          _debouncedSearchQuery = next.trim();
+          unawaited(refresh());
+        },
+      );
+    });
+
     // Listen to mutation events for local patching.
     ref.listen<CollectionsMutationState>(
       collectionsMutationProvider,
@@ -96,8 +119,7 @@ class CollectionsListController
       platform: ref.read(collectionPlatformFilterProvider),
       mediaType: ref.read(collectionMediaTypeFilterProvider),
       selectedBoxIds: ref.read(selectedCollectionBoxIdsProvider),
-      searchQuery:
-          ref.read(collectionDebouncedSearchQueryProvider).valueOrNull ?? '',
+      searchQuery: _debouncedSearchQuery,
       sort: ref.read(collectionSortProvider),
       offset: offset,
     );
@@ -111,40 +133,12 @@ class CollectionsListController
     final query = _buildQuery(offset);
     final page = await repository.queryItems(query);
 
-    // ── Box lookup ──────────────────────────────────────────────────────────
-    final boxes = await ref.read(collectionBoxesProvider.future);
-    final boxById = {for (final box in boxes) box.id: box};
-
-    // ── Logo lookup ─────────────────────────────────────────────────────────
-    final logoDao = ref.read(websiteLogoCacheDaoProvider);
-    final siteKeys = page.items
-        .map((item) => WebsiteLogoCacheService.siteKey(item.originalUrl));
-    final logoRows = await logoDao.getLogosBySiteKeys(siteKeys);
-    final logos = <String, WebsiteLogoCacheEntry?>{};
-    for (final entry in logoRows.entries) {
-      final row = entry.value;
-      logos[entry.key] = row != null
-          ? WebsiteLogoCacheEntry(
-              siteKey: row.siteKey,
-              localLogoPath: row.localLogoPath,
-              status: row.status,
-            )
-          : null;
-    }
-
-    // ── Build entries ───────────────────────────────────────────────────────
-    final entries = [
-      for (final item in page.items)
-        SavedItemListEntry(
-          item: item,
-          boxes: [
-            for (final boxId in page.boxIdsByItemId[item.id] ?? const <int>[])
-              if (boxById[boxId] != null) boxById[boxId]!,
-          ],
-          logo: logos[WebsiteLogoCacheService.siteKey(item.originalUrl)],
-          selected: false,
-        ),
-    ];
+    // ── Build entries via factory ──────────────────────────────────────────
+    final factory = ref.read(savedItemEntryFactoryProvider);
+    final entries = await factory.buildEntries(
+      page.items,
+      page.boxIdsByItemId,
+    );
 
     return CollectionsListState(
       entries: entries,
@@ -237,13 +231,20 @@ class CollectionsListController
 
   /// Patch the entry for [itemId] in-place by re-fetching from the repository.
   ///
-  /// If the item no longer matches the current query, it is removed.
+  /// Uses a monotonically-increasing sequence counter to prevent stale async
+  /// patches from overwriting newer state (#4).  If the item no longer matches
+  /// the current query, it is removed.
   Future<void> _patchChangedItem(int itemId) async {
+    final seq = (_mutationSeqByItemId[itemId] ?? 0) + 1;
+    _mutationSeqByItemId[itemId] = seq;
+
     final current = state.valueOrNull;
     if (current == null) return;
 
     final repository = ref.read(collectionsRepositoryProvider);
     final item = await repository.getSavedItem(itemId);
+
+    if (_mutationSeqByItemId[itemId] != seq) return;
 
     if (item == null) {
       _removeDeletedItem(itemId);
@@ -253,6 +254,8 @@ class CollectionsListController
     final boxIds = await repository.getBoxIdsForItem(itemId);
     final boxIdSet = boxIds.toSet();
     final shouldRemainVisible = _matchesCurrentQuery(item, boxIdSet);
+
+    if (_mutationSeqByItemId[itemId] != seq) return;
 
     if (!shouldRemainVisible) {
       _removeDeletedItem(itemId);
@@ -266,11 +269,11 @@ class CollectionsListController
       selected: current.selectedId == itemId,
     );
 
+    if (_mutationSeqByItemId[itemId] != seq) return;
+
     final index = current.entries.indexWhere((e) => e.item.id == itemId);
 
     if (index == -1) {
-      // Item not in current list — insert at the top (simple strategy;
-      // a production implementation could sort by the current sort order).
       state = AsyncData(
         current.copyWith(entries: [updatedEntry, ...current.entries]),
       );
@@ -385,8 +388,7 @@ class CollectionsListController
     final platform = ref.read(collectionPlatformFilterProvider);
     final mediaType = ref.read(collectionMediaTypeFilterProvider);
     final selectedBoxIds = ref.read(selectedCollectionBoxIdsProvider);
-    final searchQuery =
-        ref.read(collectionDebouncedSearchQueryProvider).valueOrNull ?? '';
+    final searchQuery = _debouncedSearchQuery;
 
     if (!_matchesView(item, view)) return false;
 

@@ -1,3 +1,5 @@
+import 'package:uni_hub/src/shared/crud/crud.dart';
+
 import '../data/collections_repository.dart';
 import '../domain/collection_models.dart';
 import '../domain/platform_detector.dart';
@@ -17,54 +19,75 @@ class CollectionCaptureService {
   final UrlNormalizer _urlNormalizer;
   final PlatformDetector _platformDetector;
 
-  Future<CaptureResult> captureUrl(String input, {int? boxId}) async {
-    final normalizedUrl = _urlNormalizer.normalize(input);
-    CollectionDebugLogger.log(
-      'captureUrl input=$input normalized=$normalizedUrl boxId=$boxId',
-    );
-
-    final existing = await _repository.findByNormalizedUrl(normalizedUrl);
-    if (existing != null) {
+  Future<CrudResult<CaptureResult>> captureUrl(String input, {int? boxId}) async {
+    try {
+      final normalizedUrl = _urlNormalizer.normalize(input);
       CollectionDebugLogger.log(
-        'captureUrl already exists id=${existing.id} boxId=$boxId',
+        'captureUrl input=$input normalized=$normalizedUrl boxId=$boxId',
       );
-      if (boxId != null) {
-        final currentIds = await _repository.getBoxIdsForItem(existing.id);
-        await _repository.setItemBoxes(
-          existing.id,
-          {...currentIds, boxId},
-        );
-        await _repository.updateInboxState(existing.id, false);
+
+      final existing = await _repository.findByNormalizedUrl(normalizedUrl);
+      if (existing != null) {
         CollectionDebugLogger.log(
-          'captureUrl added existing item to boxId=$boxId',
+          'captureUrl already exists id=${existing.id} boxId=$boxId',
+        );
+        if (boxId != null) {
+          final currentIds = await _repository.getBoxIdsForItem(existing.id);
+          await _repository.setItemBoxes(
+            existing.id,
+            {...currentIds, boxId},
+          );
+          await _repository.updateInboxState(existing.id, false);
+          CollectionDebugLogger.log(
+            'captureUrl added existing item to boxId=$boxId',
+          );
+        }
+        return CrudResult<CaptureResult>.success(
+          data: CaptureResult(itemId: existing.id, wasCreated: false),
+          message: '已存在，已定位到该收藏',
+          sideEffects: [
+            ViewExistingEffect(CrudEntityType.savedItem, existing.id),
+          ],
         );
       }
-      return CaptureResult(itemId: existing.id, wasCreated: false);
-    }
 
-    final detection = _platformDetector.detect(normalizedUrl);
-    final item = await _repository.createSavedItem(
-      originalUrl: input.trim(),
-      normalizedUrl: normalizedUrl,
-      title: normalizedUrl,
-      mediaType: detection.mediaType,
-      sourcePlatform: detection.platform,
-      isInInbox: boxId == null,
-    );
-    CollectionDebugLogger.log(
-      'captureUrl created id=${item.id} platform=${detection.platform.name} mediaType=${detection.mediaType.name}',
-    );
-
-    if (boxId != null) {
-      await _repository.setItemBoxes(item.id, {boxId});
+      final detection = _platformDetector.detect(normalizedUrl);
+      final item = await _repository.createSavedItem(
+        originalUrl: input.trim(),
+        normalizedUrl: normalizedUrl,
+        title: normalizedUrl,
+        mediaType: detection.mediaType,
+        sourcePlatform: detection.platform,
+        isInInbox: boxId == null,
+      );
       CollectionDebugLogger.log(
-        'captureUrl set boxes itemId=${item.id} boxId=$boxId',
+        'captureUrl created id=${item.id} platform=${detection.platform.name} mediaType=${detection.mediaType.name}',
+      );
+
+      if (boxId != null) {
+        await _repository.setItemBoxes(item.id, {boxId});
+        CollectionDebugLogger.log(
+          'captureUrl set boxes itemId=${item.id} boxId=$boxId',
+        );
+      }
+      final jobId = await _repository.enqueueEnrichmentJob(item.id);
+      CollectionDebugLogger.log(
+        'captureUrl enqueued enrichment id=$jobId itemId=${item.id}',
+      );
+      return CrudResult<CaptureResult>.success(
+        data: CaptureResult(itemId: item.id, wasCreated: true),
+        message: '已收藏',
+        suppressFeedback: true,
+      );
+    } catch (error, stackTrace) {
+      return CrudResult<CaptureResult>.failure(
+        failure: AppFailure(
+          code: AppFailureCode.database,
+          message: '收藏失败',
+          cause: error,
+          stackTrace: stackTrace,
+        ),
       );
     }
-    final jobId = await _repository.enqueueEnrichmentJob(item.id);
-    CollectionDebugLogger.log(
-      'captureUrl enqueued enrichment id=$jobId itemId=${item.id}',
-    );
-    return CaptureResult(itemId: item.id, wasCreated: true);
   }
 }

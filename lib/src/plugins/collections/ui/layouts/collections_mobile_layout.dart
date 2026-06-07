@@ -58,7 +58,7 @@ class CollectionsMobileLayout extends ConsumerWidget {
                             builder: (_) {
                               return FractionallySizedBox(
                                 heightFactor: 0.92,
-                                child: SavedItemDetailPanel(entry: entry),
+                                child: SavedItemDetailPanel(itemId: entry.item.id),
                               );
                             },
                           );

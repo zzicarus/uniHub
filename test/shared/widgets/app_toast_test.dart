@@ -59,4 +59,32 @@ void main() {
     expect(find.text('已删除'), findsOneWidget);
     expect(find.text('撤销'), findsOneWidget);
   });
+
+  testWidgets('undo accepts custom actionLabel', (tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Builder(
+          builder: (context) => Scaffold(
+            body: TextButton(
+              onPressed: () {
+                AppToast.undo(
+                  context,
+                  message: 'URL 已存在',
+                  actionLabel: '查看',
+                  onUndo: () {},
+                );
+              },
+              child: const Text('custom'),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('custom'));
+    await tester.pump();
+
+    expect(find.text('URL 已存在'), findsOneWidget);
+    expect(find.text('查看'), findsOneWidget);
+  });
 }

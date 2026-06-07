@@ -25,7 +25,12 @@ class CrudFeedbackCoordinator {
       final undo = result.undo;
       final message = result.message;
       if (undo != null && message != null && message.isNotEmpty) {
-        AppToast.undo(context, message: message, onUndo: undo.execute);
+        AppToast.undo(
+          context,
+          message: message,
+          actionLabel: undo.label,
+          onUndo: undo.execute,
+        );
         return;
       }
       if (message != null && message.isNotEmpty) {

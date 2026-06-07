@@ -43,11 +43,15 @@ void main() {
       'https://github.com/flutter/flutter/',
     );
 
-    expect(first.wasCreated, true);
-    expect(second.wasCreated, false);
-    expect(second.itemId, first.itemId);
+    expect(first.success, isTrue);
+    final firstResult = first.data!;
+    expect(second.success, isTrue);
+    final secondResult = second.data!;
+    expect(firstResult.wasCreated, isTrue);
+    expect(secondResult.wasCreated, isFalse);
+    expect(secondResult.itemId, firstResult.itemId);
 
-    final item = await repository.getSavedItem(first.itemId);
+    final item = await repository.getSavedItem(firstResult.itemId);
     expect(item!.sourcePlatform, SourcePlatform.github.value);
     expect(item.mediaType, MediaType.repository.value);
   });
@@ -61,26 +65,30 @@ void main() {
       boxId: box.id,
     );
 
-    expect(result.wasCreated, true);
+    expect(result.success, isTrue);
+    final capResult = result.data!;
+    expect(capResult.wasCreated, isTrue);
 
-    final item = await repository.getSavedItem(result.itemId);
+    final item = await repository.getSavedItem(capResult.itemId);
     expect(item, isNotNull);
     expect(item!.isInInbox, false);
 
-    final boxIds = await repository.getBoxIdsForItem(result.itemId);
+    final boxIds = await repository.getBoxIdsForItem(capResult.itemId);
     expect(boxIds, [box.id]);
   });
 
   test('capture without boxId keeps isInInbox=true', () async {
     final result = await service.captureUrl('https://example.com/inbox-item');
 
-    expect(result.wasCreated, true);
+    expect(result.success, isTrue);
+    final capResult = result.data!;
+    expect(capResult.wasCreated, isTrue);
 
-    final item = await repository.getSavedItem(result.itemId);
+    final item = await repository.getSavedItem(capResult.itemId);
     expect(item, isNotNull);
     expect(item!.isInInbox, true);
 
-    final boxIds = await repository.getBoxIdsForItem(result.itemId);
+    final boxIds = await repository.getBoxIdsForItem(capResult.itemId);
     expect(boxIds, isEmpty);
   });
 }

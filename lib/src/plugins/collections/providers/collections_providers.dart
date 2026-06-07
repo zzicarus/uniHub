@@ -6,6 +6,7 @@ import 'package:uni_hub/src/core/database/app_database.dart';
 import 'package:uni_hub/src/core/database/database_provider.dart';
 import 'package:uni_hub/src/core/storage/providers/storage_providers.dart';
 
+import '../application/collection_box_actions_controller.dart';
 import '../application/collections_list_controller.dart';
 import '../application/collections_mutation_notifier.dart';
 import '../application/collections_refresh_coordinator.dart';
@@ -98,10 +99,9 @@ final enrichmentJobServiceProvider = Provider<EnrichmentJobService>((ref) {
     jobsDao: ref.watch(enrichmentJobsDaoProvider),
     metadataProvider: ref.watch(metadataProviderProvider),
     logoCacheService: ref.watch(websiteLogoCacheServiceProvider).valueOrNull,
-    onLogoCached: () {
-      // Increment the refresh counter after logo cache write completes,
-      // so UI re-reads the cached logo from the database.
-      ref.read(websiteLogoRefreshProvider.notifier).state++;
+    onLogoCached: (itemId) {
+      // Trigger precise per-item logo patch instead of global refresh.
+      ref.read(collectionsRefreshCoordinatorProvider).logoChanged(itemId);
     },
   );
 });
@@ -113,6 +113,13 @@ final savedItemActionsControllerProvider =
     enrichmentJobService: ref.watch(enrichmentJobServiceProvider),
     refreshCoordinator: ref.watch(collectionsRefreshCoordinatorProvider),
     enrichmentQueueController: ref.watch(enrichmentQueueControllerProvider),
+  );
+});
+
+final collectionBoxActionsControllerProvider =
+    Provider<CollectionBoxActionsController>((ref) {
+  return CollectionBoxActionsController(
+    repository: ref.watch(collectionsRepositoryProvider),
   );
 });
 

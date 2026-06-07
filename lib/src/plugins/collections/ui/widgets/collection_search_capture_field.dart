@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uni_hub/src/core/theme/app_tokens.dart';
 import 'package:uni_hub/src/plugins/collections/providers/collections_providers.dart';
-import 'package:uni_hub/src/shared/widgets/app_toast.dart';
+import 'package:uni_hub/src/shared/crud/crud.dart';
 
 /// Dual-mode input field: search or URL capture.
 ///
@@ -107,35 +107,40 @@ class _CollectionSearchCaptureFieldState
 
       if (!mounted) return;
 
-      ref.invalidate(savedItemsPageProvider);
-      ref.invalidate(collectionFolderCountsProvider);
+      ref.read(crudFeedbackCoordinatorProvider).handle(context, result);
 
-      if (result.wasCreated) {
-        unawaited(ref.read(enrichmentQueueControllerProvider).drainPending(
-          maxBatches: 3,
-        ));
+      if (result.success && result.data != null) {
+        final captureResult = result.data!;
+
+        ref.invalidate(savedItemsPageProvider);
+        ref.invalidate(collectionFolderCountsProvider);
+
+        if (captureResult.wasCreated) {
+          unawaited(ref.read(enrichmentQueueControllerProvider).drainPending(
+            maxBatches: 3,
+          ));
+        }
+
+        ref.read(selectedSavedItemIdProvider.notifier).state =
+            captureResult.itemId;
+
+        _controller.clear();
+        setState(() => _isUrl = false);
+
+        ref.read(collectionSearchQueryProvider.notifier).state = '';
       }
-
-      ref.read(selectedSavedItemIdProvider.notifier).state = result.itemId;
-
-      _controller.clear();
-      setState(() => _isUrl = false);
-
-      ref.read(collectionSearchQueryProvider.notifier).state = '';
-
-      if (!mounted) return;
-
-      AppToast.show(
-        context,
-        message: result.wasCreated ? '已收藏' : '已存在，已定位到该收藏',
-      );
     } catch (error) {
       if (!mounted) return;
 
-      AppToast.show(
+      ref.read(crudFeedbackCoordinatorProvider).handle(
         context,
-        message: '收藏失败，请检查链接',
-        type: AppToastType.error,
+        CrudResult<void>.failure(
+          failure: AppFailure(
+            code: AppFailureCode.unknown,
+            message: '收藏失败，请检查链接',
+            cause: error,
+          ),
+        ),
       );
     } finally {
       if (mounted) {

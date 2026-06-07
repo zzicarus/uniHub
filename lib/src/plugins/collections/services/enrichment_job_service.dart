@@ -1,6 +1,5 @@
 import 'dart:async';
 
-import 'package:flutter/foundation.dart';
 import 'package:uni_hub/src/core/database/app_database.dart';
 
 import '../data/collections_repository.dart';
@@ -28,9 +27,9 @@ class EnrichmentJobService {
   final WebsiteLogoCacheService? _logoCacheService;
   static const int _maxAttempts = 3;
 
-  /// Called after every successful logo cache write.
-  /// Used to trigger UI refresh of cached logo lookups.
-  final VoidCallback? onLogoCached;
+  /// Called after every successful logo cache write with the item ID.
+  /// Used to trigger a precise per-item UI refresh of the cached logo.
+  final void Function(int itemId)? onLogoCached;
 
   /// 消费 pending job 队列，每轮最多处理 [limit] 个。
   ///
@@ -124,8 +123,8 @@ class EnrichmentJobService {
                 CollectionDebugLogger.log(
                   'logo cached itemId=${item.id} siteKey=${entry?.siteKey} path=${entry?.localLogoPath} status=${entry?.status}',
                 );
-                onLogoCached?.call();
-                CollectionDebugLogger.log('websiteLogoRefreshProvider increment');
+                onLogoCached?.call(item.id);
+                CollectionDebugLogger.log('websiteLogoRefreshProvider increment itemId=${item.id}');
               })
               .catchError((error, stackTrace) {
                 CollectionDebugLogger.error(

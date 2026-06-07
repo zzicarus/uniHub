@@ -51,15 +51,24 @@ void main() {
       const result = CrudResult<int>.success(
         data: 42,
         message: '已创建',
-        sideEffects: [CrudSideEffect.selectEntity, CrudSideEffect.refreshList],
+        sideEffects: [
+          SelectEntityEffect(CrudEntityType.savedItem, 42),
+          RefreshListEffect(CrudEntityType.savedItem),
+        ],
       );
 
       final cast = result.cast<num>();
 
       expect(cast.success, isTrue);
       expect(cast.data, 42);
-      expect(cast.sideEffects, contains(CrudSideEffect.selectEntity));
-      expect(cast.sideEffects, contains(CrudSideEffect.refreshList));
+      expect(
+        cast.sideEffects,
+        contains(const SelectEntityEffect(CrudEntityType.savedItem, 42)),
+      );
+      expect(
+        cast.sideEffects,
+        contains(const RefreshListEffect(CrudEntityType.savedItem)),
+      );
     });
   });
 

@@ -75,10 +75,13 @@ class CollectionsPlugin extends UniHubPlugin {
         .read(collectionCaptureServiceProvider)
         .captureUrl(trimmed);
 
+    final captureResult = result.data;
+    if (captureResult == null) return null;
+
     // 从数据库查询创建后的真实数据
     final item = await ref
         .read(collectionsRepositoryProvider)
-        .getSavedItem(result.itemId);
+        .getSavedItem(captureResult.itemId);
 
     if (item == null) return null;
 

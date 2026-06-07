@@ -53,6 +53,54 @@ class SavedItemEntryFactory {
     );
   }
 
+  /// Batch version of [buildEntry].
+  ///
+  /// Resolves box and logo lookups once for all [items] instead of N times
+  /// individually, avoiding the N+1 query problem.
+  Future<List<SavedItemListEntry>> buildEntries(
+    List<SavedItemsTableData> items,
+    Map<int, List<int>> boxIdsByItemId,
+  ) async {
+    if (items.isEmpty) return const [];
+
+    // ── Load all boxes once ─────────────────────────────────────────────────
+    final allBoxes = await ref.read(collectionBoxesProvider.future);
+    final boxById = {for (final box in allBoxes) box.id: box};
+
+    // ── Load all logos once ─────────────────────────────────────────────────
+    final logoDao = ref.read(websiteLogoCacheDaoProvider);
+    final siteKeys = items.map((item) {
+      final lookupUrl = _logoLookupUrlForSavedItem(item);
+      return WebsiteLogoCacheService.siteKey(lookupUrl);
+    });
+    final logoRows = await logoDao.getLogosBySiteKeys(siteKeys);
+
+    // ── Build all entries ───────────────────────────────────────────────────
+    return [
+      for (final item in items)
+        SavedItemListEntry(
+          item: item,
+          boxes: [
+            for (final boxId in boxIdsByItemId[item.id] ?? const <int>[])
+              if (boxById[boxId] != null) boxById[boxId]!,
+          ],
+          logo: _logoEntry(logoRows[WebsiteLogoCacheService.siteKey(
+            _logoLookupUrlForSavedItem(item),
+          )]),
+          selected: false,
+        ),
+    ];
+  }
+
+  WebsiteLogoCacheEntry? _logoEntry(WebsiteLogoCacheTableData? row) {
+    if (row == null) return null;
+    return WebsiteLogoCacheEntry(
+      siteKey: row.siteKey,
+      localLogoPath: row.localLogoPath,
+      status: row.status,
+    );
+  }
+
   /// Determine the URL to use for logo site-key lookups.
   ///
   /// Prefers [item.normalizedUrl] over [item.originalUrl] because the

@@ -64,9 +64,7 @@ class _CollectionsDesktopLayoutState
     ref.listen(collectionSortProvider, (_, _) {
       ref.read(collectionsListControllerProvider.notifier).refresh();
     });
-    ref.listen(collectionSearchQueryProvider, (_, _) {
-      ref.read(collectionsListControllerProvider.notifier).refresh();
-    });
+
 
     // ── Controller state ──────────────────────────────────────────────────
     final listStateAsync = ref.watch(collectionsListControllerProvider);
@@ -270,7 +268,7 @@ Widget _buildEntryList(
 
           // < 960px: 打开底部详情抽屉代替固定侧栏
           if (useBottomSheet) {
-            _showDetailBottomSheet(context, entry);
+            _showDetailBottomSheet(context, entry.item.id);
           }
         },
       );
@@ -281,7 +279,7 @@ Widget _buildEntryList(
 /// 在窄屏下通过底部抽屉展示详情。
 void _showDetailBottomSheet(
   BuildContext context,
-  SavedItemListEntry entry,
+  int itemId,
 ) {
   showModalBottomSheet<void>(
     context: context,
@@ -295,7 +293,7 @@ void _showDetailBottomSheet(
         maxChildSize: 0.96,
         builder: (context, scrollController) {
           return SavedItemDetailPanel(
-            entry: entry,
+            itemId: itemId,
           );
         },
       );
@@ -324,23 +322,7 @@ class _DetailPanel extends ConsumerWidget {
       );
     }
 
-    final detailAsync = ref.watch(selectedSavedItemDetailProvider(selectedId));
-
-    return detailAsync.when(
-      loading: () => const Center(child: CircularProgressIndicator()),
-      error: (error, _) => Center(
-        child: Text(
-          '无法加载详情',
-          style: TextStyle(color: Theme.of(context).colorScheme.error),
-        ),
-      ),
-      data: (detail) => SavedItemDetailPanel(entry: SavedItemListEntry(
-        item: detail.item,
-        boxes: detail.boxes,
-        logo: detail.logo,
-        selected: true,
-      )),
-    );
+    return SavedItemDetailPanel(itemId: selectedId);
   }
 }
 

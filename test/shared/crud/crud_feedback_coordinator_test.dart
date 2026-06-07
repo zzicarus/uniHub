@@ -21,7 +21,9 @@ void main() {
     );
   }
 
-  testWidgets('shows success message and undo action', (tester) async {
+  testWidgets('shows success message and undo action with default label', (
+    tester,
+  ) async {
     await pumpHost(tester, (context) {
       const CrudFeedbackCoordinator().handle(
         context,
@@ -37,6 +39,24 @@ void main() {
 
     expect(find.text('已删除项目'), findsOneWidget);
     expect(find.text('撤销'), findsOneWidget);
+  });
+
+  testWidgets('passes CrudUndoAction.label as actionLabel', (tester) async {
+    await pumpHost(tester, (context) {
+      const CrudFeedbackCoordinator().handle(
+        context,
+        const CrudResult<void>.success(
+          message: 'URL 已存在',
+          undo: CrudUndoAction(label: '查看', execute: _noop),
+        ),
+      );
+    });
+
+    await tester.tap(find.text('run'));
+    await tester.pump();
+
+    expect(find.text('URL 已存在'), findsOneWidget);
+    expect(find.text('查看'), findsOneWidget);
   });
 
   testWidgets('suppresses handled validation field errors', (tester) async {

@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uni_hub/src/core/theme/app_tokens.dart';
 import 'package:uni_hub/src/plugins/collections/providers/collections_providers.dart';
-import 'package:uni_hub/src/shared/widgets/app_toast.dart';
+import 'package:uni_hub/src/shared/crud/crud.dart';
 
 class CollectionCaptureBar extends ConsumerStatefulWidget {
   const CollectionCaptureBar({super.key});
@@ -34,26 +34,30 @@ class _CollectionCaptureBarState extends ConsumerState<CollectionCaptureBar> {
       final service = ref.read(collectionCaptureServiceProvider);
       final result = await service.captureUrl(url);
       if (!mounted) return;
-      _controller.clear();
-      ref.invalidate(savedItemsPageProvider);
-      ref.invalidate(collectionFolderCountsProvider);
-      if (result.wasCreated) {
-        unawaited(ref.read(enrichmentQueueControllerProvider).drainPending(
-          maxBatches: 3,
-        ));
+      ref.read(crudFeedbackCoordinatorProvider).handle(context, result);
+      if (result.success && result.data != null) {
+        final captureResult = result.data!;
+        _controller.clear();
+        ref.invalidate(savedItemsPageProvider);
+        ref.invalidate(collectionFolderCountsProvider);
+        if (captureResult.wasCreated) {
+          unawaited(ref.read(enrichmentQueueControllerProvider).drainPending(
+            maxBatches: 3,
+          ));
+        }
+        ref.invalidate(collectionBoxesProvider);
       }
-      ref.invalidate(collectionBoxesProvider);
-      final message = result.wasCreated ? '已添加到收藏' : '已存在，已跳转到该收藏';
-      AppToast.show(
-        context,
-        message: message,
-      );
     } catch (error) {
       if (!mounted) return;
-      AppToast.show(
+      ref.read(crudFeedbackCoordinatorProvider).handle(
         context,
-        message: '收藏失败：$error',
-        type: AppToastType.error,
+        CrudResult<void>.failure(
+          failure: AppFailure(
+            code: AppFailureCode.unknown,
+            message: '收藏失败',
+            cause: error,
+          ),
+        ),
       );
     } finally {
       if (mounted) setState(() => _isSubmitting = false);

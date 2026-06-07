@@ -6,6 +6,7 @@ import 'package:uni_hub/src/plugins/collections/domain/collection_folder_counts.
 import 'package:uni_hub/src/plugins/collections/domain/collection_models.dart';
 import 'package:uni_hub/src/plugins/collections/providers/collections_providers.dart';
 import 'package:uni_hub/src/plugins/collections/ui/widgets/create_collection_folder_dialog.dart';
+import 'package:uni_hub/src/shared/crud/crud.dart';
 import 'package:uni_hub/src/shared/widgets/app_toast.dart';
 
 /// Sidebar listing default views and custom collection folders.
@@ -190,23 +191,13 @@ class CollectionFolderSidebar extends ConsumerWidget {
     // InputDecorator tickers) are fully torn down before touching providers.
     await WidgetsBinding.instance.endOfFrame;
 
-    try {
-      await ref.read(collectionsRepositoryProvider).createBox(name);
+    final controller = ref.read(collectionBoxActionsControllerProvider);
+    final result = await controller.createBox(name);
+    if (!context.mounted) return;
+    ref.read(crudFeedbackCoordinatorProvider).handle(context, result);
+    if (result.success) {
       ref.invalidate(collectionBoxesProvider);
       ref.invalidate(collectionFolderCountsProvider);
-      if (!context.mounted) return;
-      AppToast.show(
-        context,
-        message: '已创建收藏夹「$name」',
-        type: AppToastType.success,
-      );
-    } catch (error) {
-      if (!context.mounted) return;
-      AppToast.show(
-        context,
-        message: '创建收藏夹失败：$error',
-        type: AppToastType.error,
-      );
     }
   }
 

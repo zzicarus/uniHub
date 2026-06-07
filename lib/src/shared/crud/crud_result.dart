@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'app_failure.dart';
+import 'crud_entity_policy.dart';
 
 class CrudUndoAction {
   const CrudUndoAction({this.label = '撤销', required this.execute});
@@ -12,13 +13,58 @@ class CrudUndoAction {
   String toString() => 'CrudUndoAction(label: $label)';
 }
 
-enum CrudSideEffect {
-  selectEntity,
-  closeDetail,
-  clearSelection,
-  refreshList,
-  retry,
-  viewExisting,
+sealed class CrudSideEffect {
+  const CrudSideEffect();
+}
+
+class SelectEntityEffect extends CrudSideEffect {
+  const SelectEntityEffect(this.entityType, this.entityId);
+
+  final CrudEntityType entityType;
+  final Object entityId;
+
+  @override
+  String toString() => 'SelectEntityEffect($entityType, $entityId)';
+}
+
+class CloseDetailEffect extends CrudSideEffect {
+  const CloseDetailEffect();
+
+  @override
+  String toString() => 'CloseDetailEffect()';
+}
+
+class ClearSelectionEffect extends CrudSideEffect {
+  const ClearSelectionEffect();
+
+  @override
+  String toString() => 'ClearSelectionEffect()';
+}
+
+class RefreshListEffect extends CrudSideEffect {
+  const RefreshListEffect([this.entityType]);
+
+  final CrudEntityType? entityType;
+
+  @override
+  String toString() => 'RefreshListEffect($entityType)';
+}
+
+class RetryEffect extends CrudSideEffect {
+  const RetryEffect();
+
+  @override
+  String toString() => 'RetryEffect()';
+}
+
+class ViewExistingEffect extends CrudSideEffect {
+  const ViewExistingEffect(this.entityType, this.entityId);
+
+  final CrudEntityType entityType;
+  final Object entityId;
+
+  @override
+  String toString() => 'ViewExistingEffect($entityType, $entityId)';
 }
 
 class CrudResult<T> {

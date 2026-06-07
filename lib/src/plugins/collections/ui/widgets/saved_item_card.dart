@@ -676,27 +676,21 @@ class _CompactBoxButton extends ConsumerWidget {
 
     if (selection == null || !context.mounted) return;
 
+    Set<int> next;
     if (selection == _inboxValue) {
-      await repository.setItemBoxes(itemId, const {});
-      await repository.updateInboxState(itemId, true);
+      next = const {};
     } else if (currentSet.contains(selection)) {
-      final next = {...currentSet}..remove(selection);
-      await repository.setItemBoxes(itemId, next);
-      if (next.isEmpty) {
-        await repository.updateInboxState(itemId, true);
-      }
+      next = {...currentSet}..remove(selection);
     } else {
-      final next = {...currentSet, selection};
-      await repository.setItemBoxes(itemId, next);
-      await repository.updateInboxState(itemId, false);
+      next = {...currentSet, selection};
     }
 
     if (!context.mounted) return;
-    // Defer invalidation to next frame so showMenu's popup elements
-    // are fully deactivated before the parent rebuilds.
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.invalidate(savedItemsPageProvider);
-    });
+    final controller = ref.read(savedItemActionsControllerProvider);
+    final coordinator = ref.read(crudFeedbackCoordinatorProvider);
+    final result = await controller.assignBoxes(itemId, next);
+    if (!context.mounted) return;
+    coordinator.handle(context, result);
   }
 }
 

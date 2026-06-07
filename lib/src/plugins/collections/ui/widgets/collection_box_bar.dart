@@ -100,43 +100,12 @@ class CollectionBoxBar extends ConsumerWidget {
     // InputDecorator tickers) are fully torn down before touching providers.
     await WidgetsBinding.instance.endOfFrame;
 
-    try {
-      await ref.read(collectionsRepositoryProvider).createBox(name);
+    final controller = ref.read(collectionBoxActionsControllerProvider);
+    final result = await controller.createBox(name);
+    if (!context.mounted) return;
+    ref.read(crudFeedbackCoordinatorProvider).handle(context, result);
+    if (result.success) {
       ref.invalidate(collectionBoxesProvider);
-      if (!context.mounted) return;
-      ref
-          .read(crudFeedbackCoordinatorProvider)
-          .handle(context, CrudResult<void>.success(message: '已创建收藏夹「$name」'));
-    } on ArgumentError catch (error) {
-      if (!context.mounted) return;
-      ref
-          .read(crudFeedbackCoordinatorProvider)
-          .handle(
-            context,
-            CrudResult<void>.failure(
-              failure: AppFailure(
-                code: AppFailureCode.validation,
-                message: error.message.toString(),
-                field: 'name',
-                cause: error,
-              ),
-            ),
-          );
-    } on StateError catch (error) {
-      if (!context.mounted) return;
-      ref
-          .read(crudFeedbackCoordinatorProvider)
-          .handle(
-            context,
-            CrudResult<void>.failure(
-              failure: AppFailure(
-                code: AppFailureCode.duplicate,
-                message: error.message,
-                field: 'name',
-                cause: error,
-              ),
-            ),
-          );
     }
   }
 }
