@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uni_hub/src/core/theme/app_tokens.dart';
 import 'package:uni_hub/src/plugins/collections/providers/collections_providers.dart';
+import 'package:uni_hub/src/shared/widgets/app_toast.dart';
 
 /// Dual-mode input field: search or URL capture.
 ///
@@ -124,16 +125,17 @@ class _CollectionSearchCaptureFieldState
 
       if (!mounted) return;
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(result.wasCreated ? '已收藏' : '已存在，已定位到该收藏'),
-        ),
+      AppToast.show(
+        context,
+        message: result.wasCreated ? '已收藏' : '已存在，已定位到该收藏',
       );
     } catch (error) {
       if (!mounted) return;
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('收藏失败，请检查链接')),
+      AppToast.show(
+        context,
+        message: '收藏失败，请检查链接',
+        type: AppToastType.error,
       );
     } finally {
       if (mounted) {

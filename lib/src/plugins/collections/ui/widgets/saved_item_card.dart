@@ -1,4 +1,4 @@
-import 'dart:math' as math;
+import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -12,6 +12,7 @@ import 'package:uni_hub/src/plugins/collections/domain/media_type.dart';
 import 'package:uni_hub/src/plugins/collections/domain/source_platform.dart';
 import 'package:uni_hub/src/plugins/collections/providers/collections_providers.dart';
 import 'package:uni_hub/src/shared/preferences/delete_confirm_prefs_provider.dart';
+import 'package:uni_hub/src/shared/widgets/app_toast.dart';
 import 'package:uni_hub/src/shared/widgets/delete_confirm_dialog.dart';
 import 'package:uni_hub/src/shared/widgets/website_logo.dart';
 
@@ -219,9 +220,10 @@ class SavedItemCard extends ConsumerWidget {
                   );
                   final result = await controller.retryEnrichment(item.id);
                   if (context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text(result.message ?? '')),
-                    );
+                    AppToast.show(
+                        context,
+                        message: result.message ?? '',
+                      );
                   }
                 },
               ),
@@ -371,9 +373,10 @@ class SavedItemCard extends ConsumerWidget {
                   foregroundColor: colorScheme.onSurfaceVariant,
                 ),
                 onPressed: () {
-                  ScaffoldMessenger.of(
+                  AppToast.show(
                     context,
-                  ).showSnackBar(const SnackBar(content: Text('星标功能稍后接入')));
+                    message: '星标功能稍后接入',
+                  );
                 },
               ),
             ),
@@ -445,16 +448,19 @@ class _CardMoreMenu extends ConsumerWidget {
               final controller = ref.read(savedItemActionsControllerProvider);
               final result = await controller.openItem(item.id);
               if (!context.mounted || result.message == null) return;
-              ScaffoldMessenger.of(
+              AppToast.show(
                 context,
-              ).showSnackBar(SnackBar(content: Text(result.message!)));
+                message: result.message!,
+              );
             case _CardAction.copy:
               final controller = ref.read(savedItemActionsControllerProvider);
               await controller.copyUrl(item.id);
               if (!context.mounted) return;
-              ScaffoldMessenger.of(
+              AppToast.show(
                 context,
-              ).showSnackBar(const SnackBar(content: Text('链接已复制到剪贴板')));
+                message: '链接已复制到剪贴板',
+                type: AppToastType.success,
+              );
             case _CardAction.folder:
               await _CompactBoxButton(
                 itemId: item.id,
@@ -620,72 +626,13 @@ class _CardMoreMenu extends ConsumerWidget {
   static void _showUndoSnackBar(
     BuildContext context,
     String message,
-    VoidCallback onUndo,
+    FutureOr<void> Function() onUndo,
   ) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-    final screenWidth = MediaQuery.sizeOf(context).width;
-
-    const toastWidth = 420.0;
-    final leftMargin = math.max(16.0, screenWidth - toastWidth - 24.0);
-
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(
-        SnackBar(
-          behavior: SnackBarBehavior.floating,
-          duration: const Duration(seconds: 5),
-          elevation: 8,
-          backgroundColor: colorScheme.inverseSurface,
-          margin: EdgeInsets.only(
-            left: leftMargin,
-            right: 24,
-            bottom: 24,
-          ),
-          padding: const EdgeInsets.symmetric(
-            horizontal: 14,
-            vertical: 10,
-          ),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppRadius.lg),
-          ),
-          content: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 28,
-                height: 28,
-                decoration: BoxDecoration(
-                  color: colorScheme.errorContainer.withValues(alpha: 0.20),
-                  borderRadius: BorderRadius.circular(AppRadius.full),
-                ),
-                child: Icon(
-                  Icons.delete_outline_rounded,
-                  size: 16,
-                  color: colorScheme.inversePrimary,
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Text(
-                  message,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    color: colorScheme.onInverseSurface,
-                    fontWeight: AppFontTokens.medium,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          action: SnackBarAction(
-            label: '撤销',
-            textColor: colorScheme.inversePrimary,
-            onPressed: onUndo,
-          ),
-        ),
-      );
+    AppToast.undo(
+      context,
+      message: message,
+      onUndo: onUndo,
+    );
   }
 }
 

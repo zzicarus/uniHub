@@ -4,6 +4,7 @@ import 'package:uni_hub/src/shared/widgets/app_compact_list_item.dart';
 import 'package:uni_hub/src/shared/widgets/app_icon_bubble.dart';
 import 'package:uni_hub/src/shared/widgets/app_panel.dart';
 import 'package:uni_hub/src/shared/widgets/app_search_box.dart';
+import 'package:uni_hub/src/shared/widgets/app_toast.dart';
 
 /// Desktop-style white card with thin border and light shadow.
 /// Matches `_Panel` in home_page.dart.
@@ -119,9 +120,10 @@ class ThoughtSearchBox extends StatelessWidget {
       width: 320,
       hintText: 'Ctrl + K 全局搜索',
       onTap: () {
-        ScaffoldMessenger.of(
+        AppToast.show(
           context,
-        ).showSnackBar(const SnackBar(content: Text('全局搜索即将上线')));
+          message: '全局搜索即将上线',
+        );
       },
     );
   }

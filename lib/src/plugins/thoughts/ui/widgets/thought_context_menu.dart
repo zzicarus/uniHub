@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uni_hub/src/core/theme/app_tokens.dart';
+import 'package:uni_hub/src/shared/widgets/app_toast.dart';
 import '../../providers/thoughts_providers.dart';
 
 enum ThoughtContextAction {
@@ -110,8 +111,10 @@ Future<void> showThoughtTagDialog({
         .updateTags(thoughtId, tagsString);
     ref.invalidate(allThoughtsProvider);
     if (context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('标签已更新'), duration: Duration(seconds: 1)),
+      AppToast.show(
+        context,
+        message: '标签已更新',
+        type: AppToastType.success,
       );
     }
   }

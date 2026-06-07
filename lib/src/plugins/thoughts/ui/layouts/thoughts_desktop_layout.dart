@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uni_hub/src/core/database/app_database.dart';
 import 'package:uni_hub/src/core/theme/app_breakpoints.dart';
 import 'package:uni_hub/src/core/theme/app_tokens.dart';
+import 'package:uni_hub/src/shared/widgets/app_toast.dart';
 
 import '../../providers/thoughts_providers.dart';
 import '../widgets/thought_card.dart';
@@ -295,11 +296,9 @@ class _ThoughtGrid extends ConsumerWidget {
             .togglePin(thought.id, !thought.isPinned);
         ref.invalidate(allThoughtsProvider);
         if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(thought.isPinned ? '已取消置顶' : '已置顶'),
-              duration: const Duration(seconds: 1),
-            ),
+          AppToast.show(
+            context,
+            message: thought.isPinned ? '已取消置顶' : '已置顶',
           );
         }
       case ThoughtContextAction.addTag:
@@ -312,16 +311,19 @@ class _ThoughtGrid extends ConsumerWidget {
         if (thought.archivedAt != null) {
           await ref.read(thoughtsRepositoryProvider).restoreThought(thought.id);
           if (context.mounted) {
-            ScaffoldMessenger.of(
+            AppToast.show(
               context,
-            ).showSnackBar(const SnackBar(content: Text('想法已恢复')));
+              message: '想法已恢复',
+              type: AppToastType.success,
+            );
           }
         } else {
           await ref.read(thoughtsRepositoryProvider).archiveThought(thought.id);
           if (context.mounted) {
-            ScaffoldMessenger.of(
+            AppToast.show(
               context,
-            ).showSnackBar(const SnackBar(content: Text('想法已归档')));
+              message: '想法已归档',
+            );
           }
         }
         ref.invalidate(allThoughtsProvider);
@@ -331,9 +333,10 @@ class _ThoughtGrid extends ConsumerWidget {
           await ref.read(thoughtsRepositoryProvider).deleteThought(thought.id);
           ref.invalidate(allThoughtsProvider);
           if (context.mounted) {
-            ScaffoldMessenger.of(
+            AppToast.show(
               context,
-            ).showSnackBar(const SnackBar(content: Text('想法已删除')));
+              message: '想法已删除',
+            );
           }
         }
       case ThoughtContextAction.convertToTodo:

@@ -5,6 +5,7 @@ import 'package:uni_hub/src/plugins/collections/domain/media_type.dart';
 import 'package:uni_hub/src/plugins/collections/domain/source_platform.dart';
 import 'package:uni_hub/src/plugins/collections/providers/collections_providers.dart';
 import 'package:uni_hub/src/shared/widgets/app_pill_chip.dart';
+import 'package:uni_hub/src/shared/widgets/app_toast.dart';
 
 class CollectionContentTypeChips extends ConsumerWidget {
   const CollectionContentTypeChips({super.key});
@@ -61,9 +62,10 @@ class CollectionContentTypeChips extends ConsumerWidget {
             icon: Icons.more_horiz_rounded,
             selected: false,
             onTap: () {
-              ScaffoldMessenger.of(
+              AppToast.show(
                 context,
-              ).showSnackBar(const SnackBar(content: Text('更多类型稍后接入')));
+                message: '更多类型稍后接入',
+              );
             },
           ),
         ],

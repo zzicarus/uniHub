@@ -44,9 +44,10 @@ class _HomeHeader extends StatelessWidget {
           width: 380,
           hintText: '搜索想法、笔记、待办...',
           onTap: () {
-            ScaffoldMessenger.of(
+            AppToast.show(
               context,
-            ).showSnackBar(const SnackBar(content: Text('全局搜索即将上线')));
+              message: '全局搜索即将上线',
+            );
           },
         ),
         const SizedBox(width: AppSpacing.md),

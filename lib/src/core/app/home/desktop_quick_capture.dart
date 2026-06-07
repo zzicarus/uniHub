@@ -77,8 +77,10 @@ class _DesktopQuickCaptureCardState
       if (!mounted) return;
 
       if (item == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('无法识别内容')),
+        AppToast.show(
+          context,
+          message: '无法识别内容',
+          type: AppToastType.warning,
         );
         return;
       }
@@ -95,8 +97,9 @@ class _DesktopQuickCaptureCardState
         _ => '已记录',
       };
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(message)),
+      AppToast.show(
+        context,
+        message: message,
       );
     } finally {
       if (mounted) setState(() => _submitting = false);

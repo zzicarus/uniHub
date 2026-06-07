@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uni_hub/src/core/theme/app_tokens.dart';
@@ -6,6 +8,7 @@ import 'package:uni_hub/src/plugins/collections/domain/media_type.dart';
 import 'package:uni_hub/src/plugins/collections/domain/source_platform.dart';
 import 'package:uni_hub/src/plugins/collections/providers/collections_providers.dart';
 import 'package:uni_hub/src/shared/preferences/delete_confirm_prefs_provider.dart';
+import 'package:uni_hub/src/shared/widgets/app_toast.dart';
 import 'package:uni_hub/src/shared/widgets/delete_confirm_dialog.dart';
 
 /// A floating toolbar-style bulk action bar shown below the item list.
@@ -404,13 +407,11 @@ IconData _iconFor(MediaType mediaType) {
 void _showUndoSnackBar(
   BuildContext context,
   String message,
-  VoidCallback onUndo,
+  FutureOr<void> Function() onUndo,
 ) {
-  ScaffoldMessenger.of(context).showSnackBar(
-    SnackBar(
-      content: Text(message),
-      duration: const Duration(seconds: 5),
-      action: SnackBarAction(label: '撤销', onPressed: onUndo),
-    ),
+  AppToast.undo(
+    context,
+    message: message,
+    onUndo: onUndo,
   );
 }

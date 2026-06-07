@@ -10,6 +10,7 @@ import 'package:uni_hub/src/core/storage/storage_area_report.dart';
 import 'package:uni_hub/src/core/storage/storage_size_utils.dart';
 import 'package:uni_hub/src/core/theme/app_theme_tokens.dart';
 import 'package:uni_hub/src/core/theme/app_tokens.dart';
+import 'package:uni_hub/src/shared/widgets/app_toast.dart';
 
 class StorageManagementPage extends ConsumerStatefulWidget {
   const StorageManagementPage({super.key});
@@ -790,11 +791,9 @@ class _StorageManagementPageState
 
   void _showSnackBar(String message) {
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        duration: const Duration(seconds: 3),
-      ),
+    AppToast.show(
+      context,
+      message: message,
     );
   }
 

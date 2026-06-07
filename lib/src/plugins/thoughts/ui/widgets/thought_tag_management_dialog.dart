@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uni_hub/src/core/theme/app_tokens.dart';
+import 'package:uni_hub/src/shared/widgets/app_toast.dart';
 
 import '../../providers/thoughts_providers.dart';
 
@@ -53,20 +54,25 @@ Future<void> showThoughtTagManagementDialog({
                       });
               });
               if (context.mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('已重命名 $affected 条想法中的标签')),
+                AppToast.show(
+                  context,
+                  message: '已重命名 $affected 条想法中的标签',
                 );
               }
             } on StateError catch (error) {
               if (context.mounted) {
-                ScaffoldMessenger.of(
+                AppToast.show(
                   context,
-                ).showSnackBar(SnackBar(content: Text(error.message)));
+                  message: error.message,
+                  type: AppToastType.error,
+                );
               }
             } on ArgumentError catch (error) {
               if (context.mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text(error.message.toString())),
+                AppToast.show(
+                  context,
+                  message: error.message.toString(),
+                  type: AppToastType.error,
                 );
               }
             }
@@ -85,9 +91,10 @@ Future<void> showThoughtTagManagementDialog({
               entries = entries.where((entry) => entry.key != tag).toList();
             });
             if (context.mounted) {
-              ScaffoldMessenger.of(
+              AppToast.show(
                 context,
-              ).showSnackBar(SnackBar(content: Text('已从 $affected 条想法中删除标签')));
+                message: '已从 $affected 条想法中删除标签',
+              );
             }
           }
 

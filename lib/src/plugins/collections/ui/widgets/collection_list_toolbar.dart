@@ -4,6 +4,7 @@ import 'package:uni_hub/src/core/theme/app_tokens.dart';
 import 'package:uni_hub/src/plugins/collections/domain/media_type.dart';
 import 'package:uni_hub/src/plugins/collections/domain/source_platform.dart';
 import 'package:uni_hub/src/plugins/collections/providers/collections_providers.dart';
+import 'package:uni_hub/src/shared/widgets/app_toast.dart';
 
 class CollectionListToolbar extends ConsumerWidget {
   const CollectionListToolbar({super.key});
@@ -91,9 +92,10 @@ class CollectionListToolbar extends ConsumerWidget {
               IconButton(
                 tooltip: '切换视图',
                 onPressed: () {
-                  ScaffoldMessenger.of(
+                  AppToast.show(
                     context,
-                  ).showSnackBar(const SnackBar(content: Text('视图切换稍后接入')));
+                    message: '视图切换稍后接入',
+                  );
                 },
                 icon: const Icon(Icons.grid_view_rounded),
               ),

@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uni_hub/src/core/theme/app_tokens.dart';
 import 'package:uni_hub/src/plugins/collections/providers/collections_providers.dart';
+import 'package:uni_hub/src/shared/widgets/app_toast.dart';
 
 class CollectionCaptureBar extends ConsumerStatefulWidget {
   const CollectionCaptureBar({super.key});
@@ -43,14 +44,17 @@ class _CollectionCaptureBarState extends ConsumerState<CollectionCaptureBar> {
       }
       ref.invalidate(collectionBoxesProvider);
       final message = result.wasCreated ? '已添加到收藏' : '已存在，已跳转到该收藏';
-      ScaffoldMessenger.of(
+      AppToast.show(
         context,
-      ).showSnackBar(SnackBar(content: Text(message)));
+        message: message,
+      );
     } catch (error) {
       if (!mounted) return;
-      ScaffoldMessenger.of(
+      AppToast.show(
         context,
-      ).showSnackBar(SnackBar(content: Text('收藏失败：$error')));
+        message: '收藏失败：$error',
+        type: AppToastType.error,
+      );
     } finally {
       if (mounted) setState(() => _isSubmitting = false);
     }

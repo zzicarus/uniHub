@@ -6,6 +6,7 @@ import 'package:uni_hub/src/plugins/collections/domain/collection_folder_counts.
 import 'package:uni_hub/src/plugins/collections/domain/collection_models.dart';
 import 'package:uni_hub/src/plugins/collections/providers/collections_providers.dart';
 import 'package:uni_hub/src/plugins/collections/ui/widgets/create_collection_folder_dialog.dart';
+import 'package:uni_hub/src/shared/widgets/app_toast.dart';
 
 /// Sidebar listing default views and custom collection folders.
 ///
@@ -194,21 +195,26 @@ class CollectionFolderSidebar extends ConsumerWidget {
       ref.invalidate(collectionBoxesProvider);
       ref.invalidate(collectionFolderCountsProvider);
       if (!context.mounted) return;
-      ScaffoldMessenger.of(
+      AppToast.show(
         context,
-      ).showSnackBar(SnackBar(content: Text('已创建收藏夹「$name」')));
+        message: '已创建收藏夹「$name」',
+        type: AppToastType.success,
+      );
     } catch (error) {
       if (!context.mounted) return;
-      ScaffoldMessenger.of(
+      AppToast.show(
         context,
-      ).showSnackBar(SnackBar(content: Text('创建收藏夹失败：$error')));
+        message: '创建收藏夹失败：$error',
+        type: AppToastType.error,
+      );
     }
   }
 
   void _showComingSoon(BuildContext context, String message) {
-    ScaffoldMessenger.of(
+    AppToast.show(
       context,
-    ).showSnackBar(SnackBar(content: Text(message)));
+      message: message,
+    );
   }
 }
 

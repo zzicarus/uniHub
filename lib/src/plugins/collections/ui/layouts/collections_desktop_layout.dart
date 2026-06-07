@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uni_hub/src/core/theme/app_tokens.dart';
 import 'package:uni_hub/src/plugins/collections/application/saved_item_list_entry.dart';
 import 'package:uni_hub/src/plugins/collections/providers/collections_providers.dart';
+import 'package:uni_hub/src/shared/widgets/app_toast.dart';
 import 'package:uni_hub/src/shared/widgets/responsive_page_header.dart';
 
 import '../widgets/collection_command_bar.dart';
@@ -219,8 +220,9 @@ class _CollectionsDesktopLayoutState
   }
 
   void _showImportSoon(BuildContext context) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('导入功能稍后接入')),
+    AppToast.show(
+      context,
+      message: '导入功能稍后接入',
     );
   }
 }

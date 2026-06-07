@@ -142,9 +142,10 @@ class _MobileBrandHeader extends StatelessWidget {
           children: [
             IconButton(
               onPressed: () {
-                ScaffoldMessenger.of(
+                AppToast.show(
                   context,
-                ).showSnackBar(const SnackBar(content: Text('通知功能暂未实现')));
+                  message: '通知功能暂未实现',
+                );
               },
               icon: const Icon(Icons.notifications_none_rounded),
             ),
@@ -290,8 +291,10 @@ class _MobileQuickCaptureCardState
       if (!mounted) return;
 
       if (item == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('无法识别内容')),
+        AppToast.show(
+          context,
+          message: '无法识别内容',
+          type: AppToastType.warning,
         );
         return;
       }
@@ -307,8 +310,9 @@ class _MobileQuickCaptureCardState
       ref.invalidate(dashboardPinnedProvider);
       ref.invalidate(dashboardStatsProvider);
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(message)),
+      AppToast.show(
+        context,
+        message: message,
       );
     } finally {
       if (mounted) setState(() => _submitting = false);

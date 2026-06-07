@@ -1007,3 +1007,18 @@ CollectionsDesktopLayout 的 `listenManual(savedItemListEntriesProvider, ...)` �
 ### Next Steps
 
 - None - task complete
+
+
+## Session 26: 全局 AppToast 统一提示系统
+
+**Date**: 2026-06-07
+
+### Summary
+
+创建全局 `AppToast` 组件，统一全仓库 45+ 处 SnackBar 调用。新增 `lib/src/shared/widgets/app_toast.dart`，支持 5 种类型（info/success/warning/error/destructive）、撤销操作、桌面端右对齐布局。替换 20 个文件的直接 SnackBar 调用，添加 `SnackBarThemeData` 兜底。更新 component-guidelines.md 和 uiux-guidelines.md 文档约束。
+
+### Validation
+- `flutter analyze` — 0 error, 0 warning
+- `flutter test` — 711/711 passed
+- `dart fix --dry-run` — Nothing to fix
+- 全仓库无业务代码直接 `new SnackBar(content: Text(...))`

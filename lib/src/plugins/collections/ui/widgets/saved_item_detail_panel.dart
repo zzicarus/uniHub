@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uni_hub/src/core/database/app_database.dart';
@@ -11,6 +13,7 @@ import 'package:uni_hub/src/plugins/collections/domain/source_platform.dart';
 import 'package:uni_hub/src/plugins/collections/providers/collections_providers.dart';
 import 'package:uni_hub/src/shared/preferences/delete_confirm_prefs_provider.dart';
 import 'package:uni_hub/src/shared/widgets/app_pill_chip.dart';
+import 'package:uni_hub/src/shared/widgets/app_toast.dart';
 import 'package:uni_hub/src/shared/widgets/delete_confirm_dialog.dart';
 import 'package:uni_hub/src/shared/widgets/website_logo.dart';
 
@@ -819,28 +822,22 @@ class _SavedItemDetailPanelState extends ConsumerState<SavedItemDetailPanel> {
   }
 
   void _showSnackBar(String message) {
-    ScaffoldMessenger.of(
+    AppToast.show(
       context,
-    ).showSnackBar(SnackBar(content: Text(message)));
+      message: message,
+    );
   }
 
-  /// Show a 5-second SnackBar with undo action.
+  /// Show a 5-second undo Toast with AppToast.
   static void _showUndoSnackBar(
     BuildContext context,
     String message,
-    VoidCallback onUndo,
+    FutureOr<void> Function() onUndo,
   ) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        duration: const Duration(seconds: 5),
-        action: SnackBarAction(
-          label: '撤销',
-          onPressed: () {
-            onUndo();
-          },
-        ),
-      ),
+    AppToast.undo(
+      context,
+      message: message,
+      onUndo: onUndo,
     );
   }
 }
@@ -1009,9 +1006,10 @@ class _EnrichmentStatusSection extends ConsumerWidget {
               final controller = ref.read(savedItemActionsControllerProvider);
               final result = await controller.retryEnrichment(item.id);
               if (!context.mounted) return;
-              ScaffoldMessenger.of(
+              AppToast.show(
                 context,
-              ).showSnackBar(SnackBar(content: Text(result.message ?? '')));
+                message: result.message ?? '',
+              );
             },
             child: Row(
               mainAxisSize: MainAxisSize.min,
@@ -1120,8 +1118,9 @@ class _TagsSection extends ConsumerWidget {
                           compact: true,
                           icon: Icons.add_rounded,
                           onTap: () {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('标签功能稍后接入')),
+                            AppToast.show(
+                              context,
+                              message: '标签功能稍后接入',
                             );
                           },
                         ),

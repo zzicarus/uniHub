@@ -173,6 +173,16 @@ abstract final class AppTheme {
         thickness: 1,
         space: 1,
       ),
+      snackBarTheme: SnackBarThemeData(
+        behavior: SnackBarBehavior.floating,
+        elevation: 8,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppRadius.lg),
+        ),
+        contentTextStyle: const TextStyle(
+          fontWeight: AppFontTokens.medium,
+        ),
+      ),
       iconTheme: IconThemeData(color: colors.textSecondary, size: 22),
     );
   }

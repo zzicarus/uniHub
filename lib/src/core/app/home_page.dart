@@ -9,6 +9,7 @@ import 'package:uni_hub/src/shared/widgets/app_icon_bubble.dart';
 import 'package:uni_hub/src/shared/widgets/app_panel.dart';
 import 'package:uni_hub/src/shared/widgets/app_search_box.dart';
 import 'package:uni_hub/src/shared/widgets/app_section_header.dart';
+import 'package:uni_hub/src/shared/widgets/app_toast.dart';
 
 import '../plugin/plugin_interface.dart';
 import '../theme/app_breakpoints.dart';

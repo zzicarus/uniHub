@@ -89,6 +89,40 @@ class ThoughtCard extends ConsumerWidget {
 - 回调使用 `VoidCallback` / `ValueChanged<T>` 类型
 - 数据对象通过构造器传入（不在 Widget 中查询数据库）
 
+### AppToast 全局提示
+
+全局浮动 Toast 组件，统一项目中所有临时消息提示。
+
+**文件**：`lib/src/shared/widgets/app_toast.dart`
+
+**用法**：
+
+```dart
+// 普通提示
+AppToast.show(context, message: '已收藏');
+
+// 成功
+AppToast.show(context, message: '链接已复制', type: AppToastType.success);
+
+// 错误
+AppToast.show(context, message: '收藏失败', type: AppToastType.error);
+
+// 带有撤销操作的删除提示
+AppToast.undo(context, message: '已删除「文档」', onUndo: () async {
+  await deleteResult.undo!.execute();
+});
+```
+
+**类型枚举**：`AppToastType.info`（默认）、`success`、`warning`、`error`、`destructive`
+
+**布局**：桌面端（≥600px）右对齐固定在右下角，宽度 420px；移动端底部居中全宽。
+
+**约束**：
+- 全仓库禁止业务代码直接 `new SnackBar(content: Text(...))`
+- 所有临时提示必须通过 `AppToast.show` / `AppToast.undo`
+- 删除/移除等可撤销操作使用 `AppToast.undo`（type 自动设为 `destructive`）
+- 默认持续 5 秒
+
 ---
 
 ## Props 约定
