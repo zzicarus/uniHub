@@ -974,3 +974,36 @@ CollectionsDesktopLayout 的 `listenManual(savedItemListEntriesProvider, ...)` �
 - `flutter analyze` — No issues found
 - `flutter test` — 680/680 passed
 - `git commit 2ef8ced` + push to main
+
+
+## Session 25: P1/P2 产品体验、架构与工程质量优化
+
+**Date**: 2026-06-07
+**Task**: P1/P2 产品体验、架构与工程质量优化
+**Branch**: `main`
+
+### Summary
+
+按 PRD 完成 12 项任务：Phase 1 产品体验（清除筛选+Box、响应式详情、硬编码 Alex、首页假数据、命名统一），Phase 2 架构优化（URL Normalizer、Capability 接口、Dashboard 并发、selected detail provider），Phase 3 工程质量（Quill 收敛 Phase 1、lint 规则、关键测试）。验证：flutter analyze 0 error 0 warning, 711/711 tests passed.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `175e02b` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
