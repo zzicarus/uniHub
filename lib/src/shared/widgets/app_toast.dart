@@ -4,13 +4,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:uni_hub/src/core/theme/app_tokens.dart';
 
-enum AppToastType {
-  info,
-  success,
-  warning,
-  error,
-  destructive,
-}
+enum AppToastType { info, success, warning, error, destructive }
 
 class AppToast {
   const AppToast._();
@@ -24,12 +18,21 @@ class AppToast {
     required String message,
     AppToastType type = AppToastType.info,
     Duration duration = defaultDuration,
+    String? actionLabel,
+    FutureOr<void> Function()? onAction,
   }) {
+    assert(
+      (actionLabel == null && onAction == null) ||
+          (actionLabel != null && onAction != null),
+      'actionLabel and onAction must be provided together.',
+    );
     _show(
       context,
       message: message,
       type: type,
       duration: duration,
+      actionLabel: actionLabel,
+      onAction: onAction,
     );
   }
 
@@ -84,10 +87,7 @@ class AppToast {
         right: rightMargin,
         bottom: bottomMargin,
       ),
-      padding: const EdgeInsets.symmetric(
-        horizontal: 14,
-        vertical: 10,
-      ),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(AppRadius.lg),
       ),
@@ -101,11 +101,7 @@ class AppToast {
               color: iconBg,
               borderRadius: BorderRadius.circular(AppRadius.full),
             ),
-            child: Icon(
-              icon,
-              size: 16,
-              color: iconColor,
-            ),
+            child: Icon(icon, size: 16, color: iconColor),
           ),
           const SizedBox(width: 10),
           Expanded(
@@ -160,13 +156,16 @@ class AppToast {
   static Color _iconBackground(AppToastType type, ColorScheme colorScheme) {
     return switch (type) {
       AppToastType.info => colorScheme.primaryContainer.withValues(alpha: 0.22),
-      AppToastType.success =>
-        colorScheme.tertiaryContainer.withValues(alpha: 0.26),
-      AppToastType.warning =>
-        colorScheme.secondaryContainer.withValues(alpha: 0.26),
+      AppToastType.success => colorScheme.tertiaryContainer.withValues(
+        alpha: 0.26,
+      ),
+      AppToastType.warning => colorScheme.secondaryContainer.withValues(
+        alpha: 0.26,
+      ),
       AppToastType.error => colorScheme.errorContainer.withValues(alpha: 0.26),
-      AppToastType.destructive =>
-        colorScheme.errorContainer.withValues(alpha: 0.26),
+      AppToastType.destructive => colorScheme.errorContainer.withValues(
+        alpha: 0.26,
+      ),
     };
   }
 }

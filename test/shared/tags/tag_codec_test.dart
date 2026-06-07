@@ -46,25 +46,16 @@ void main() {
     test(
       'parses comma-separated tags, strips #, trims whitespace, deduplicates',
       () {
-        expect(
-          TagCodec.parseCommaSeparated('产品, 灵感, #代码'),
-          ['产品', '灵感', '代码'],
-        );
+        expect(TagCodec.parseCommaSeparated('产品, 灵感, #代码'), ['产品', '灵感', '代码']);
       },
     );
 
     test('deduplicates repeated tags', () {
-      expect(
-        TagCodec.parseCommaSeparated('a, b, a, c, b'),
-        ['a', 'b', 'c'],
-      );
+      expect(TagCodec.parseCommaSeparated('a, b, a, c, b'), ['a', 'b', 'c']);
     });
 
     test('filters out empty segments', () {
-      expect(
-        TagCodec.parseCommaSeparated('a, , b,,'),
-        ['a', 'b'],
-      );
+      expect(TagCodec.parseCommaSeparated('a, , b,,'), ['a', 'b']);
     });
   });
 
@@ -74,24 +65,15 @@ void main() {
     });
 
     test('normalizes and joins tags', () {
-      expect(
-        TagCodec.encodeCommaSeparated([' 产品 ', '#灵感', '代码']),
-        '产品,灵感,代码',
-      );
+      expect(TagCodec.encodeCommaSeparated([' 产品 ', '#灵感', '代码']), '产品,灵感,代码');
     });
 
     test('deduplicates while preserving first occurrence order', () {
-      expect(
-        TagCodec.encodeCommaSeparated(['a', 'b', 'a', 'c']),
-        'a,b,c',
-      );
+      expect(TagCodec.encodeCommaSeparated(['a', 'b', 'a', 'c']), 'a,b,c');
     });
 
     test('skips empty tags', () {
-      expect(
-        TagCodec.encodeCommaSeparated(['a', '', '  ', 'b']),
-        'a,b',
-      );
+      expect(TagCodec.encodeCommaSeparated(['a', '', '  ', 'b']), 'a,b');
     });
   });
 
@@ -112,14 +94,14 @@ void main() {
       expect(result.isValid, isTrue);
     });
 
-    test('tag with 21 characters is invalid', () {
-      final result = TagCodec.validate('a' * 21);
+    test('tag with 25 characters is invalid', () {
+      final result = TagCodec.validate('a' * 25);
       expect(result.isValid, isFalse);
-      expect(result.message, contains('20'));
+      expect(result.message, contains('24'));
     });
 
-    test('tag with exactly 20 characters is valid', () {
-      final result = TagCodec.validate('a' * 20);
+    test('tag with exactly 24 characters is valid', () {
+      final result = TagCodec.validate('a' * 24);
       expect(result.isValid, isTrue);
     });
 
@@ -142,10 +124,19 @@ void main() {
       expect(TagCodec.validate('my_tag').isValid, isTrue);
     });
 
+    test('whitespace inside tag is invalid with specific message', () {
+      final space = TagCodec.validate('tag space');
+      final newline = TagCodec.validate('tag\nspace');
+
+      expect(space.isValid, isFalse);
+      expect(space.message, '标签不能包含空格或换行');
+      expect(newline.isValid, isFalse);
+      expect(newline.message, '标签不能包含空格或换行');
+    });
+
     test('special characters are invalid', () {
       expect(TagCodec.validate('tag!').isValid, isFalse);
       expect(TagCodec.validate('tag@').isValid, isFalse);
-      expect(TagCodec.validate('tag space').isValid, isFalse);
       expect(TagCodec.validate('tag.dot').isValid, isFalse);
     });
   });

@@ -6,10 +6,12 @@ import 'tag_models.dart';
 /// - Trim leading/trailing whitespace.
 /// - Strip a leading `#` so that user input `#产品` is stored as `产品`.
 /// - Empty tags are rejected.
-/// - Maximum tag length is 20 characters.
+/// - Maximum tag length is 24 characters.
 /// - Allowed characters: Chinese, English letters, digits, short dashes (`-`), underscores (`_`).
 /// - Repeated tags are deduplicated.
 abstract final class TagCodec {
+  static const int maxTagLength = 24;
+
   /// Normalize a raw tag string.
   ///
   /// Returns the cleaned tag, or an empty string if the input is invalid.
@@ -66,16 +68,17 @@ abstract final class TagCodec {
     if (normalized.isEmpty) {
       return const TagValidationResult.invalid('标签不能为空');
     }
-    if (normalized.length > 20) {
-      return const TagValidationResult.invalid('标签长度不能超过 20 个字符');
+    if (normalized.length > maxTagLength) {
+      return const TagValidationResult.invalid('标签长度不能超过 24 个字符');
+    }
+    if (normalized.contains(RegExp(r'\s'))) {
+      return const TagValidationResult.invalid('标签不能包含空格或换行');
     }
     final validPattern = RegExp(
       r'^[\u4e00-\u9fff\u3400-\u4dbf\uF900-\uFAFFa-zA-Z0-9_-]+$',
     );
     if (!validPattern.hasMatch(normalized)) {
-      return const TagValidationResult.invalid(
-        '标签只能包含中文、英文、数字、短横线和下划线',
-      );
+      return const TagValidationResult.invalid('标签只能包含中文、英文、数字、短横线和下划线');
     }
     return const TagValidationResult.valid();
   }
