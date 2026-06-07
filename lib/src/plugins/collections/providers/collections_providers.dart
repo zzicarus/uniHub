@@ -21,6 +21,7 @@ import '../domain/source_platform.dart';
 import '../domain/url_normalizer.dart';
 import '../services/collection_capture_service.dart';
 import '../data/website_logo_cache_dao.dart';
+import '../application/collections_list_controller.dart';
 import '../application/enrichment_queue_controller.dart';
 import '../application/saved_item_actions_controller.dart';
 import '../application/saved_item_list_entry.dart';
@@ -326,3 +327,11 @@ final selectedSavedItemEntryProvider = Provider<SavedItemListEntry?>((ref) {
       ?.where((e) => e.item.id == selectedId)
       .firstOrNull;
 });
+
+// ---------------------------------------------------------------------------
+// Collections List Controller
+// ---------------------------------------------------------------------------
+
+final collectionsListControllerProvider =
+    AutoDisposeAsyncNotifierProvider<CollectionsListController,
+        CollectionsListState>(CollectionsListController.new);

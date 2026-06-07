@@ -14,9 +14,11 @@
 library;
 
 import 'dart:async';
+import 'dart:math' as math;
 import 'dart:io' show File;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:uni_hub/src/core/theme/app_tokens.dart';
@@ -57,7 +59,7 @@ class ThoughtEditorWorkspace extends ConsumerStatefulWidget {
   static void show(BuildContext context, {required int thoughtId}) {
     showDialog<void>(
       context: context,
-      barrierDismissible: true,
+      barrierDismissible: false,
       barrierColor: Colors.black.withAlpha(100),
       builder: (_) => ThoughtEditorWorkspace(
         thoughtId: thoughtId,
@@ -104,6 +106,27 @@ class _ThoughtEditorWorkspaceState
     widget.onClose?.call();
   }
 
+  KeyEventResult _handleKeyEvent(FocusNode node, KeyEvent event) {
+    if (event is! KeyDownEvent) return KeyEventResult.ignored;
+
+    final isCtrlEnter =
+        event.logicalKey == LogicalKeyboardKey.enter &&
+        HardwareKeyboard.instance.isControlPressed;
+
+    if (isCtrlEnter) {
+      unawaited(_ctrl.save());
+      return KeyEventResult.handled;
+    }
+
+    final isEscape = event.logicalKey == LogicalKeyboardKey.escape;
+    if (isEscape) {
+      unawaited(_close());
+      return KeyEventResult.handled;
+    }
+
+    return KeyEventResult.ignored;
+  }
+
   // ---------------------------------------------------------------------------
   // Build
   // ---------------------------------------------------------------------------
@@ -112,47 +135,72 @@ class _ThoughtEditorWorkspaceState
   Widget build(BuildContext context) {
     final colors = context.appColors;
 
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final cardWidth = constraints.maxWidth.clamp(1040.0, 1180.0);
-        final availHeight = constraints.maxHeight;
-        final cardHeight = (availHeight * 0.90)
-            .clamp(availHeight * 0.86, availHeight * 0.92);
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) async {
+        if (didPop) return;
+        await _close();
+      },
+      child: Focus(
+        autofocus: true,
+        onKeyEvent: _handleKeyEvent,
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final horizontalMargin = constraints.maxWidth < 900 ? 0.0 : 32.0;
+            final cardWidth = math.min(
+              constraints.maxWidth - horizontalMargin,
+              1180.0,
+            );
+            final cardHeight = constraints.maxWidth < 900
+                ? constraints.maxHeight
+                : (constraints.maxHeight * 0.90).clamp(
+                    constraints.maxHeight * 0.86,
+                    constraints.maxHeight * 0.92,
+                  );
+            final isCompact = constraints.maxWidth < 900;
+            final showSideRail = constraints.maxWidth >= 1100;
 
-        return Center(
-          child: SizedBox(
-            width: cardWidth,
-            height: cardHeight,
-            child: Material(
-              color: colors.surface,
-              borderRadius: BorderRadius.circular(22),
-              elevation: 0,
-              surfaceTintColor: Colors.transparent,
-              shadowColor: Colors.black26,
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(22),
-                child: Column(
-                  children: [
-                    _WorkspaceHeader(
-                      isLoaded: _ctrl.isLoaded,
-                      isDirty: _ctrl.isDirty,
-                      onClose: _close,
+            return Center(
+              child: SizedBox(
+                width: cardWidth,
+                height: cardHeight,
+                child: Material(
+                  color: colors.surface,
+                  borderRadius: BorderRadius.circular(isCompact ? 0 : 22),
+                  elevation: 0,
+                  surfaceTintColor: Colors.transparent,
+                  shadowColor: Colors.black26,
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(isCompact ? 0 : 22),
+                    child: Column(
+                      children: [
+                        _WorkspaceHeader(
+                          isLoaded: _ctrl.isLoaded,
+                          isDirty: _ctrl.isDirty,
+                          onClose: _close,
+                        ),
+                        Expanded(
+                          child: _WorkspaceBody(
+                            ctrl: _ctrl,
+                            showSideRail: showSideRail,
+                          ),
+                        ),
+                        if (!showSideRail && !isCompact)
+                          _CompactPropertyPanel(ctrl: _ctrl),
+                        _WorkspaceFooter(
+                          onDelete: _onDelete,
+                          onClose: _close,
+                          onSave: _onSave,
+                        ),
+                      ],
                     ),
-                    Expanded(
-                      child: _WorkspaceBody(ctrl: _ctrl),
-                    ),
-                    _WorkspaceFooter(
-                      onDelete: _onDelete,
-                      onClose: _close,
-                      onSave: _onSave,
-                    ),
-                  ],
+                  ),
                 ),
               ),
-            ),
-          ),
-        );
-      },
+            );
+          },
+        ),
+      ),
     );
   }
 
@@ -259,9 +307,13 @@ class _WorkspaceHeader extends StatelessWidget {
 // ===========================================================================
 
 class _WorkspaceBody extends StatelessWidget {
-  const _WorkspaceBody({required this.ctrl});
+  const _WorkspaceBody({
+    required this.ctrl,
+    required this.showSideRail,
+  });
 
   final ThoughtEditorController ctrl;
+  final bool showSideRail;
 
   @override
   Widget build(BuildContext context) {
@@ -269,7 +321,7 @@ class _WorkspaceBody extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Expanded(child: _MainEditorColumn(ctrl: ctrl)),
-        _PropertyRail(ctrl: ctrl),
+        if (showSideRail) _PropertyRail(ctrl: ctrl),
       ],
     );
   }
@@ -838,6 +890,30 @@ class _PropertyCard extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+// ===========================================================================
+// _CompactPropertyPanel
+// ===========================================================================
+
+class _CompactPropertyPanel extends StatelessWidget {
+  const _CompactPropertyPanel({required this.ctrl});
+
+  final ThoughtEditorController ctrl;
+
+  @override
+  Widget build(BuildContext context) {
+    return ExpansionTile(
+      title: const Text('属性'),
+      initiallyExpanded: false,
+      children: [
+        _TagsCard(ctrl: ctrl),
+        _ImagesCard(ctrl: ctrl),
+        _AppearanceCard(ctrl: ctrl),
+        _StatusCard(ctrl: ctrl),
+      ],
     );
   }
 }

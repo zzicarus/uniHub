@@ -59,6 +59,21 @@ void main() {
       expect(database.migration, isA<MigrationStrategy>());
     });
 
+    test('fresh database creates custom indexes', () async {
+      final indexes = await database.customSelect(
+        "SELECT name FROM sqlite_master WHERE type = 'index'",
+      ).get();
+      final names = indexes.map((r) => r.read<String>('name')).toSet();
+      expect(names, contains('idx_thoughts_archive_pinned_created'));
+      expect(names, contains('idx_thoughts_updated'));
+      expect(names, contains('idx_saved_items_status_updated'));
+      expect(names, contains('idx_saved_items_inbox_updated'));
+      expect(names, contains('idx_saved_items_platform_updated'));
+      expect(names, contains('idx_saved_items_media_type_updated'));
+      expect(names, contains('idx_saved_items_updated_created'));
+      expect(names, contains('idx_saved_item_boxes_box_item'));
+    });
+
     test('asserts when plugin table is missing from annotation', () {
       final badRegistry = PluginRegistry();
       badRegistry.register(_MissingTablePlugin());

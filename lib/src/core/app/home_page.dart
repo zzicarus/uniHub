@@ -1,4 +1,7 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:uni_hub/src/shared/widgets/app_compact_list_item.dart';
@@ -18,6 +21,7 @@ part 'home/focus_section.dart';
 part 'home/recent_section.dart';
 part 'home/right_rail.dart';
 part 'home/mobile_home.dart';
+part 'home/desktop_quick_capture.dart';
 
 class HomePage extends ConsumerWidget {
   const HomePage({super.key});
@@ -50,6 +54,8 @@ class HomePage extends ConsumerWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             const _HomeHeader(),
+                            const SizedBox(height: AppSpacing.xl),
+                            const _DesktopQuickCaptureCard(),
                             const SizedBox(height: AppSpacing.xl),
                             const _FocusGrid(),
                             const SizedBox(height: AppSpacing.lg),

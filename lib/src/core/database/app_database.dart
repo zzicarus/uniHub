@@ -60,6 +60,7 @@ class AppDatabase extends _$AppDatabase {
   MigrationStrategy get migration => MigrationStrategy(
     onCreate: (Migrator m) async {
       await m.createAll();
+      await _createCustomIndexes();
     },
     onUpgrade: (Migrator m, int from, int to) async {
       if (from < 2) {
@@ -74,45 +75,46 @@ class AppDatabase extends _$AppDatabase {
       if (from < 4) {
         await m.createTable(websiteLogoCacheTable);
       }
-      if (from < 6) {
-        // #12: thoughts_table 查询索引（archived_at 过滤 + pinned 排序）
-        await customStatement(
-          'CREATE INDEX IF NOT EXISTS idx_thoughts_archive_pinned_created '
-          'ON thoughts_table(archived_at, is_pinned, created_at DESC)',
-        );
-        await customStatement(
-          'CREATE INDEX IF NOT EXISTS idx_thoughts_updated '
-          'ON thoughts_table(updated_at DESC)',
-        );
-      }
-      if (from < 5) {
-        await customStatement(
-          'CREATE INDEX IF NOT EXISTS idx_saved_items_status_updated '
-          'ON saved_items(status, updated_at DESC)',
-        );
-        await customStatement(
-          'CREATE INDEX IF NOT EXISTS idx_saved_items_inbox_updated '
-          'ON saved_items(is_in_inbox, updated_at DESC)',
-        );
-        await customStatement(
-          'CREATE INDEX IF NOT EXISTS idx_saved_items_platform_updated '
-          'ON saved_items(source_platform, updated_at DESC)',
-        );
-        await customStatement(
-          'CREATE INDEX IF NOT EXISTS idx_saved_items_media_type_updated '
-          'ON saved_items(media_type, updated_at DESC)',
-        );
-        await customStatement(
-          'CREATE INDEX IF NOT EXISTS idx_saved_items_updated_created '
-          'ON saved_items(updated_at DESC, created_at DESC)',
-        );
-        await customStatement(
-          'CREATE INDEX IF NOT EXISTS idx_saved_item_boxes_box_item '
-          'ON saved_item_boxes(box_id, item_id)',
-        );
-      }
+      // Custom indexes are idempotent via CREATE INDEX IF NOT EXISTS,
+      // so a single call at the end handles all upgrade paths.
+      await _createCustomIndexes();
     },
   );
+
+  Future<void> _createCustomIndexes() async {
+    await customStatement(
+      'CREATE INDEX IF NOT EXISTS idx_thoughts_archive_pinned_created '
+      'ON thoughts_table(archived_at, is_pinned, created_at DESC)',
+    );
+    await customStatement(
+      'CREATE INDEX IF NOT EXISTS idx_thoughts_updated '
+      'ON thoughts_table(updated_at DESC)',
+    );
+    await customStatement(
+      'CREATE INDEX IF NOT EXISTS idx_saved_items_status_updated '
+      'ON saved_items(status, updated_at DESC)',
+    );
+    await customStatement(
+      'CREATE INDEX IF NOT EXISTS idx_saved_items_inbox_updated '
+      'ON saved_items(is_in_inbox, updated_at DESC)',
+    );
+    await customStatement(
+      'CREATE INDEX IF NOT EXISTS idx_saved_items_platform_updated '
+      'ON saved_items(source_platform, updated_at DESC)',
+    );
+    await customStatement(
+      'CREATE INDEX IF NOT EXISTS idx_saved_items_media_type_updated '
+      'ON saved_items(media_type, updated_at DESC)',
+    );
+    await customStatement(
+      'CREATE INDEX IF NOT EXISTS idx_saved_items_updated_created '
+      'ON saved_items(updated_at DESC, created_at DESC)',
+    );
+    await customStatement(
+      'CREATE INDEX IF NOT EXISTS idx_saved_item_boxes_box_item '
+      'ON saved_item_boxes(box_id, item_id)',
+    );
+  }
 
   /// 验证插件声明的表类型与数据库实际注册表一致。
   ///

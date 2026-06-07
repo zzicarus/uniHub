@@ -2,11 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uni_hub/src/core/theme/app_tokens.dart';
 import 'package:uni_hub/src/plugins/collections/application/saved_item_list_entry.dart';
-import 'package:uni_hub/src/plugins/collections/domain/collection_models.dart';
-import 'package:uni_hub/src/plugins/collections/domain/consumption_status.dart';
-import 'package:uni_hub/src/plugins/collections/domain/media_type.dart';
-import 'package:uni_hub/src/plugins/collections/domain/saved_items_query.dart';
-import 'package:uni_hub/src/plugins/collections/domain/source_platform.dart';
 import 'package:uni_hub/src/plugins/collections/providers/collections_providers.dart';
 import 'package:uni_hub/src/shared/widgets/responsive_page_header.dart';
 
@@ -25,110 +20,16 @@ class CollectionsDesktopLayout extends ConsumerStatefulWidget {
 
 class _CollectionsDesktopLayoutState
     extends ConsumerState<CollectionsDesktopLayout> {
-  final List<SavedItemListEntry> _accumulatedEntries = [];
-
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _drainPendingEnrichment();
     });
-    // #3: 持续监听列表数据就绪，自动选中第一条（替代 post-frame 一次性读取）
-    ref.listenManual<AsyncValue<List<SavedItemListEntry>>>(
-      savedItemListEntriesProvider,
-      (prev, next) {
-        final entries = next.valueOrNull;
-        if (entries == null) return;
-
-        final offset = ref.read(collectionPageOffsetProvider);
-
-        // 先维护列表数据，不受 selected 影响
-        if (offset == 0) {
-          _accumulatedEntries
-            ..clear()
-            ..addAll(entries);
-        } else {
-          final existingIds = _accumulatedEntries.map((e) => e.item.id).toSet();
-          for (final entry in entries) {
-            if (!existingIds.contains(entry.item.id)) {
-              _accumulatedEntries.add(entry);
-            }
-          }
-        }
-
-        // 检查当前选中项是否仍然可见，不可见时自动选中第一条
-        final selected = ref.read(selectedSavedItemIdProvider);
-        final selectedStillVisible =
-            selected != null && _accumulatedEntries.any((e) => e.item.id == selected);
-
-        if (!selectedStillVisible && _accumulatedEntries.isNotEmpty && mounted) {
-          ref.read(selectedSavedItemIdProvider.notifier).state =
-              _accumulatedEntries.first.item.id;
-        } else if (selected == null && entries.isNotEmpty && mounted) {
-          // 初始无选中时自动选第一条
-          ref.read(selectedSavedItemIdProvider.notifier).state =
-              entries.first.item.id;
-        }
-
-        if (mounted) {
-          setState(() {});
-        }
-      },
-    );
-    // #4: 筛选条件变化时重置分页
-    ref.listenManual<CollectionView>(
-      collectionViewProvider,
-      (_, _) => _resetPagination(),
-    );
-    ref.listenManual<ConsumptionStatus?>(
-      collectionStatusFilterProvider,
-      (_, _) => _resetPagination(),
-    );
-    ref.listenManual<SourcePlatform?>(
-      collectionPlatformFilterProvider,
-      (_, _) => _resetPagination(),
-    );
-    ref.listenManual<MediaType?>(
-      collectionMediaTypeFilterProvider,
-      (_, _) => _resetPagination(),
-    );
-    ref.listenManual<Set<int>>(
-      selectedCollectionBoxIdsProvider,
-      (_, _) => _resetPagination(),
-    );
-    ref.listenManual<SavedItemsSort>(
-      collectionSortProvider,
-      (_, _) => _resetPagination(),
-    );
-    // #5: 搜索内容变化时重置分页
-    ref.listenManual<String>(
-      collectionSearchQueryProvider,
-      (_, _) => _resetPagination(),
-    );
-  }
-
-  void _resetPagination() {
-    ref.read(collectionPageOffsetProvider.notifier).state = 0;
-    if (mounted) {
-      setState(() {
-        _accumulatedEntries.clear();
-      });
-    } else {
-      _accumulatedEntries.clear();
-    }
   }
 
   void _refreshList() {
-    if (mounted) {
-      setState(() {
-        _accumulatedEntries.clear();
-      });
-    } else {
-      _accumulatedEntries.clear();
-    }
-    ref.read(collectionPageOffsetProvider.notifier).state = 0;
-    ref.invalidate(savedItemsPageProvider);
-    ref.invalidate(savedItemListEntriesProvider);
+    ref.read(collectionsListControllerProvider.notifier).refresh();
     ref.invalidate(collectionFolderCountsProvider);
   }
 
@@ -143,8 +44,32 @@ class _CollectionsDesktopLayoutState
 
   @override
   Widget build(BuildContext context) {
-    final entriesAsync = ref.watch(savedItemListEntriesProvider);
-    final hasMore = ref.watch(collectionHasMoreProvider);
+    // ── Filter listeners ──────────────────────────────────────────────────
+    // Every time a filter / view / sort / search changes, reload from page 0.
+    ref.listen(collectionViewProvider, (_, _) {
+      ref.read(collectionsListControllerProvider.notifier).refresh();
+    });
+    ref.listen(collectionStatusFilterProvider, (_, _) {
+      ref.read(collectionsListControllerProvider.notifier).refresh();
+    });
+    ref.listen(collectionPlatformFilterProvider, (_, _) {
+      ref.read(collectionsListControllerProvider.notifier).refresh();
+    });
+    ref.listen(collectionMediaTypeFilterProvider, (_, _) {
+      ref.read(collectionsListControllerProvider.notifier).refresh();
+    });
+    ref.listen(selectedCollectionBoxIdsProvider, (_, _) {
+      ref.read(collectionsListControllerProvider.notifier).refresh();
+    });
+    ref.listen(collectionSortProvider, (_, _) {
+      ref.read(collectionsListControllerProvider.notifier).refresh();
+    });
+    ref.listen(collectionSearchQueryProvider, (_, _) {
+      ref.read(collectionsListControllerProvider.notifier).refresh();
+    });
+
+    // ── Controller state ──────────────────────────────────────────────────
+    final listStateAsync = ref.watch(collectionsListControllerProvider);
 
     return SafeArea(
       child: Padding(
@@ -152,8 +77,6 @@ class _CollectionsDesktopLayoutState
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Responsive header — uses outer LayoutBuilder to determine
-            // narrow mode so that import/refresh buttons can be icon-only.
             LayoutBuilder(
               builder: (context, constraints) {
                 final isNarrow = constraints.maxWidth < 760;
@@ -212,116 +135,52 @@ class _CollectionsDesktopLayoutState
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Expanded(
-                              child: entriesAsync.when(
-                                data: (_) {
-                                  if (_accumulatedEntries.isEmpty) {
+                              child: listStateAsync.when(
+                                data: (listState) {
+                                  if (listState.entries.isEmpty) {
                                     return const _EmptyState();
                                   }
-                                  return ListView.separated(
-                                    itemCount: _accumulatedEntries.length +
-                                        (hasMore ? 1 : 0),
-                                    separatorBuilder: (context, index) =>
-                                        const SizedBox(height: AppSpacing.sm),
-                                    itemBuilder: (context, index) {
-                                      // #4: 加载更多按钮（列表末尾）
-                                      if (hasMore &&
-                                          index ==
-                                              _accumulatedEntries.length) {
-                                        return Center(
-                                          child: TextButton.icon(
-                                            onPressed: () {
-                                              ref
-                                                  .read(
-                                                    collectionPageOffsetProvider
-                                                        .notifier,
-                                                  )
-                                                  .update((o) => o + 50);
-                                            },
-                                            icon: const Icon(
-                                              Icons.expand_more_rounded,
-                                              size: 18,
-                                            ),
-                                            label: const Text('加载更多'),
-                                          ),
-                                        );
-                                      }
-                                      final entry =
-                                          _accumulatedEntries[index];
-                                      return SavedItemCard(
-                                        key: ValueKey(entry.item.id),
-                                        entry: entry,
-                                        onTap: () {
-                                          ref
-                                              .read(
-                                                selectedSavedItemIdProvider
-                                                    .notifier,
-                                              )
-                                              .state = entry.item.id;
-                                        },
-                                      );
-                                    },
+                                  return _buildEntryList(
+                                    listState.entries,
+                                    listState.hasMore,
+                                    listState.loadingMore,
+                                    ref,
                                   );
                                 },
                                 loading: () {
-                                  if (_accumulatedEntries.isNotEmpty) {
-                                    return ListView.separated(
-                                      itemCount: _accumulatedEntries.length,
-                                      separatorBuilder: (context, index) =>
-                                          const SizedBox(
-                                        height: AppSpacing.sm,
-                                      ),
-                                      itemBuilder: (context, index) {
-                                        final entry =
-                                            _accumulatedEntries[index];
-                                        return SavedItemCard(
-                                          key: ValueKey(entry.item.id),
-                                          entry: entry,
-                                          onTap: () {
-                                            ref
-                                                .read(
-                                                  selectedSavedItemIdProvider
-                                                      .notifier,
-                                                )
-                                                .state = entry.item.id;
-                                          },
-                                        );
-                                      },
+                                  final existing = listStateAsync.valueOrNull;
+                                  if (existing != null &&
+                                      existing.entries.isNotEmpty) {
+                                    return _buildEntryList(
+                                      existing.entries,
+                                      existing.hasMore,
+                                      existing.loadingMore,
+                                      ref,
                                     );
                                   }
                                   return const Center(
                                     child: CircularProgressIndicator(),
                                   );
                                 },
-                                error: (error, stackTrace) {
-                                  if (_accumulatedEntries.isNotEmpty) {
-                                    return ListView.separated(
-                                      itemCount: _accumulatedEntries.length,
-                                      separatorBuilder: (context, index) =>
-                                          const SizedBox(
-                                        height: AppSpacing.sm,
-                                      ),
-                                      itemBuilder: (context, index) {
-                                        final entry =
-                                            _accumulatedEntries[index];
-                                        return SavedItemCard(
-                                          key: ValueKey(entry.item.id),
-                                          entry: entry,
-                                          onTap: () {
-                                            ref
-                                                .read(
-                                                  selectedSavedItemIdProvider
-                                                      .notifier,
-                                                )
-                                                .state = entry.item.id;
-                                          },
-                                        );
-                                      },
+                                error: (error, _) {
+                                  final existing = listStateAsync.valueOrNull;
+                                  if (existing != null &&
+                                      existing.entries.isNotEmpty) {
+                                    return _buildEntryList(
+                                      existing.entries,
+                                      existing.hasMore,
+                                      existing.loadingMore,
+                                      ref,
                                     );
                                   }
                                   return _ErrorState(
                                     error: error,
-                                    onRetry: () =>
-                                        ref.invalidate(savedItemsPageProvider),
+                                    onRetry: () => ref
+                                        .read(
+                                          collectionsListControllerProvider
+                                              .notifier,
+                                        )
+                                        .refresh(),
                                   );
                                 },
                               ),
@@ -334,7 +193,8 @@ class _CollectionsDesktopLayoutState
                         SizedBox(
                           width: detailWidth,
                           child: _DetailPanel(
-                            entries: List.unmodifiable(_accumulatedEntries),
+                            entries:
+                                listStateAsync.valueOrNull?.entries ?? [],
                           ),
                         ),
                       ],
@@ -356,10 +216,49 @@ class _CollectionsDesktopLayoutState
   }
 }
 
-/// 详情面板容器：从已累积列表中查找选中项并展示详情。
+/// Reusable list builder — used by all [listStateAsync.when] branches so
+/// the entry card rendering logic is written once.
+Widget _buildEntryList(
+  List<SavedItemListEntry> entries,
+  bool hasMore,
+  bool loadingMore,
+  WidgetRef ref,
+) {
+  return ListView.separated(
+    itemCount: entries.length + (hasMore ? 1 : 0),
+    separatorBuilder: (context, index) =>
+        const SizedBox(height: AppSpacing.sm),
+    itemBuilder: (context, index) {
+      // 加载更多按钮（列表末尾）
+      if (hasMore && index == entries.length) {
+        return Center(
+          child: TextButton.icon(
+            onPressed: loadingMore
+                ? null
+                : () => ref
+                    .read(collectionsListControllerProvider.notifier)
+                    .loadMore(),
+            icon: const Icon(Icons.expand_more_rounded, size: 18),
+            label: Text(loadingMore ? '加载中' : '加载更多'),
+          ),
+        );
+      }
+
+      final entry = entries[index];
+      return SavedItemCard(
+        key: ValueKey(entry.item.id),
+        entry: entry,
+        onTap: () => ref
+            .read(collectionsListControllerProvider.notifier)
+            .selectItem(entry.item.id),
+      );
+    },
+  );
+}
+
+/// 详情面板容器：从已列表中查找选中项并展示详情。
 ///
-/// 不依赖 [selectedSavedItemEntryProvider]，确保分页后
-/// 历史条目的详情仍然可以正确显示。
+/// 接收完整 entries 列表以确保分页后仍能找到对应的详情数据。
 class _DetailPanel extends ConsumerWidget {
   const _DetailPanel({required this.entries});
 
