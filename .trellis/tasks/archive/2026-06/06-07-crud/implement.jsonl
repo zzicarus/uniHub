@@ -1,0 +1,6 @@
+{"_example": "Fill with {\"file\": \"<path>\", \"reason\": \"<why>\"}. Put spec/research files only — no code paths. Run `python3 .trellis/scripts/get_context.py --mode packages` to list available specs. Delete this line once real entries are added."}
+{"file": ".trellis/spec/frontend/component-guidelines.md", "reason": "Flutter UI 组件、设计令牌、Typography 与反馈组件约束"}
+{"file": ".trellis/spec/frontend/state-management.md", "reason": "Riverpod 状态与刷新机制设计约束"}
+{"file": ".trellis/spec/backend/error-handling.md", "reason": "结构化错误与异常边界约束"}
+{"file": ".trellis/spec/backend/plugin-data-flow.md", "reason": "插件数据流与 controller/repository 分层约束"}
+{"file": ".trellis/spec/architecture/app-architecture.md", "reason": "全局 core/shared/plugins 分层与依赖方向"}
