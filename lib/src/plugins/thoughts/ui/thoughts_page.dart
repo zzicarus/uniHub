@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -29,7 +31,7 @@ class _ThoughtsPageState extends ConsumerState<ThoughtsPage> {
         if (event is KeyDownEvent &&
             event.logicalKey == LogicalKeyboardKey.enter &&
             HardwareKeyboard.instance.isControlPressed) {
-          ref.read(composerProvider).submit();
+          unawaited(ref.read(composerProvider).submit());
           return KeyEventResult.handled;
         }
         return KeyEventResult.ignored;

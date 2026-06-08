@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:uni_hub/src/core/theme/app_theme_tokens.dart';
@@ -160,12 +162,12 @@ void main() {
                 body: Center(
                   child: FilledButton(
                     onPressed: () {
-                      showAppMoreTagsPopover(
+                      unawaited(showAppMoreTagsPopover(
                         context: context,
                         tags: _tags,
                         selectedTags: const <String>{},
                         onTagToggle: (_) {},
-                      );
+                      ));
                     },
                     child: const Text('打开更多标签'),
                   ),

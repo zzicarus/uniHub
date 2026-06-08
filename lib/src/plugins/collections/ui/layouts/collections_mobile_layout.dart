@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uni_hub/src/core/theme/app_tokens.dart';
@@ -51,7 +53,7 @@ class CollectionsMobileLayout extends ConsumerWidget {
                           ref
                               .read(selectedSavedItemIdProvider.notifier)
                               .state = entry.item.id;
-                          showModalBottomSheet<void>(
+                          unawaited(showModalBottomSheet<void>(
                             context: context,
                             isScrollControlled: true,
                             useSafeArea: true,
@@ -61,7 +63,7 @@ class CollectionsMobileLayout extends ConsumerWidget {
                                 child: SavedItemDetailPanel(itemId: entry.item.id),
                               );
                             },
-                          );
+                          ));
                         },
                       );
                     },

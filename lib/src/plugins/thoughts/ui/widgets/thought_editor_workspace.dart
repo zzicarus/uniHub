@@ -54,7 +54,7 @@ class ThoughtEditorWorkspace extends ConsumerStatefulWidget {
 
   /// 以覆盖层方式打开编辑工作台。
   static void show(BuildContext context, {required int thoughtId}) {
-    showDialog<void>(
+    unawaited(showDialog<void>(
       context: context,
       barrierDismissible: false,
       barrierColor: Colors.black.withAlpha(100),
@@ -62,7 +62,7 @@ class ThoughtEditorWorkspace extends ConsumerStatefulWidget {
         thoughtId: thoughtId,
         onClose: () => Navigator.of(context, rootNavigator: true).pop(),
       ),
-    );
+    ));
   }
 
   @override

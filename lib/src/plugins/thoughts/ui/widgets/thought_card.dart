@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uni_hub/src/core/theme/app_tokens.dart';
+import 'package:uni_hub/src/shared/tags/providers/tags_providers.dart';
 import 'package:uni_hub/src/shared/tags/tag_models.dart';
 import 'package:uni_hub/src/shared/widgets/tags/app_tag_chip.dart';
+
 import '../../data/thought_content_codec.dart';
 import '../../data/thought_image_service.dart';
-import 'package:uni_hub/src/shared/tags/providers/tags_providers.dart';
 
 /// A thought card in the thoughts list.
 ///

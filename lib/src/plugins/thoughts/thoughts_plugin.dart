@@ -6,8 +6,8 @@ import 'package:uni_hub/src/core/plugin/plugin_interface.dart';
 import 'package:uni_hub/src/core/router/route_names.dart';
 import 'package:uni_hub/src/core/theme/app_tokens.dart';
 import 'package:uni_hub/src/shared/editor/appflowy_document_tools.dart';
-import 'package:uni_hub/src/shared/tags/tag_codec.dart';
 import 'package:uni_hub/src/shared/tags/providers/tags_providers.dart';
+import 'package:uni_hub/src/shared/tags/tag_codec.dart';
 import 'package:uni_hub/src/shared/url/url_normalizer.dart';
 
 import 'data/thought_content_codec.dart';

@@ -431,8 +431,6 @@ class _CardMoreMenu extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return AppContextMenu(
-      icon: Icons.more_horiz_rounded,
-      tooltip: '更多操作',
       items: [
         AppContextMenuAction(
           label: '打开内容',
@@ -651,7 +649,6 @@ class _CompactBoxButton extends ConsumerWidget {
         selectedIds: currentBoxIds.toSet(),
         itemLabel: (b) => b.name,
         itemId: (b) => b.id,
-        allowCreate: true,
         onToggle: (box, selected) async {
           final current = await repository.getBoxIdsForItem(itemId);
           final next = Set<int>.from(current);

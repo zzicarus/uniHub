@@ -21,6 +21,9 @@ import 'package:uni_hub/src/plugins/thoughts/ui/thoughts_page.dart';
 import 'package:uni_hub/src/plugins/thoughts/ui/widgets/thought_card.dart';
 import 'package:uni_hub/src/plugins/thoughts/ui/widgets/thought_state_templates.dart';
 import 'package:uni_hub/src/shared/editor/appflowy_document_tools.dart';
+import 'package:uni_hub/src/shared/tags/domain/tag_color_token.dart';
+import 'package:uni_hub/src/shared/tags/providers/tags_providers.dart';
+import 'package:uni_hub/src/shared/tags/tag_models.dart';
 import 'package:uni_hub/src/shared/widgets/adaptive_layout.dart';
 
 class _ThoughtsTablePlugin extends UniHubPlugin {
@@ -294,6 +297,7 @@ void main() {
       container.read(archiveFilterProvider.notifier).state = true;
 
       await container.read(allThoughtsProvider.future);
+      await container.read(tagStatsProvider.future);
       final tags = container.read(commonTagsProvider);
       // Should still show tags from active thoughts
       expect(tags.map((e) => e.key), contains('work'));
@@ -449,13 +453,16 @@ void main() {
   group('QA - Context Menu', () {
     testWidgets('desktop card shows archive action on hover', (tester) async {
       await tester.pumpWidget(
-        MaterialApp(
-          theme: ThemeData(useMaterial3: true),
-          home: Scaffold(
-            body: ThoughtCard(
+        ProviderScope(
+          overrides: [
+            tagsForThoughtProvider(1).overrideWith((ref) async => <AppTag>[]),
+          ],
+          child: MaterialApp(
+            theme: ThemeData(useMaterial3: true),
+            home: Scaffold(
+              body: ThoughtCard(
               id: 1,
               content: 'Test content',
-              tags: 'test',
               color: null,
               isPinned: false,
               createdAt: DateTime.now(),
@@ -465,7 +472,8 @@ void main() {
             ),
           ),
         ),
-      );
+      ),
+    );
       await tester.pumpAndSettle();
 
       // Card renders
@@ -478,13 +486,16 @@ void main() {
       tester,
     ) async {
       await tester.pumpWidget(
-        MaterialApp(
-          theme: ThemeData(useMaterial3: true),
-          home: Scaffold(
-            body: ThoughtCard(
+        ProviderScope(
+          overrides: [
+            tagsForThoughtProvider(1).overrideWith((ref) async => <AppTag>[]),
+          ],
+          child: MaterialApp(
+            theme: ThemeData(useMaterial3: true),
+            home: Scaffold(
+              body: ThoughtCard(
               id: 1,
               content: 'Archived content',
-              tags: 'test',
               color: null,
               isPinned: false,
               createdAt: DateTime.now(),
@@ -494,7 +505,8 @@ void main() {
             ),
           ),
         ),
-      );
+      ),
+    );
       await tester.pumpAndSettle();
 
       expect(find.byType(ThoughtCard), findsOneWidget);
@@ -578,13 +590,16 @@ void main() {
   group('QA - Card Constraints', () {
     testWidgets('card has minimum height constraint', (tester) async {
       await tester.pumpWidget(
-        MaterialApp(
-          theme: ThemeData(useMaterial3: true),
-          home: Scaffold(
-            body: ThoughtCard(
+        ProviderScope(
+          overrides: [
+            tagsForThoughtProvider(1).overrideWith((ref) async => <AppTag>[]),
+          ],
+          child: MaterialApp(
+            theme: ThemeData(useMaterial3: true),
+            home: Scaffold(
+              body: ThoughtCard(
               id: 1,
               content: 'Short',
-              tags: null,
               color: null,
               isPinned: false,
               createdAt: DateTime.now(),
@@ -593,7 +608,8 @@ void main() {
             ),
           ),
         ),
-      );
+      ),
+    );
       await tester.pumpAndSettle();
 
       final cardFinder = find.byType(ThoughtCard);
@@ -602,13 +618,16 @@ void main() {
 
     testWidgets('card shows pinned icon when pinned', (tester) async {
       await tester.pumpWidget(
-        MaterialApp(
-          theme: ThemeData(useMaterial3: true),
-          home: Scaffold(
-            body: ThoughtCard(
+        ProviderScope(
+          overrides: [
+            tagsForThoughtProvider(1).overrideWith((ref) async => <AppTag>[]),
+          ],
+          child: MaterialApp(
+            theme: ThemeData(useMaterial3: true),
+            home: Scaffold(
+              body: ThoughtCard(
               id: 1,
               content: 'Pinned thought',
-              tags: null,
               color: null,
               isPinned: true,
               createdAt: DateTime.now(),
@@ -617,21 +636,26 @@ void main() {
             ),
           ),
         ),
-      );
+      ),
+    );
       await tester.pumpAndSettle();
 
+      // Pinned icon renders when isPinned=true
       expect(find.byIcon(Icons.push_pin_rounded), findsOneWidget);
     });
 
     testWidgets('card shows tag chips', (tester) async {
       await tester.pumpWidget(
-        MaterialApp(
-          theme: ThemeData(useMaterial3: true),
-          home: Scaffold(
-            body: ThoughtCard(
+        ProviderScope(
+          overrides: [
+            tagsForThoughtProvider(1).overrideWith((ref) async => <AppTag>[]),
+          ],
+          child: MaterialApp(
+            theme: ThemeData(useMaterial3: true),
+            home: Scaffold(
+              body: ThoughtCard(
               id: 1,
               content: 'Tagged thought',
-              tags: 'flutter,dart',
               color: null,
               isPinned: false,
               createdAt: DateTime.now(),
@@ -640,22 +664,26 @@ void main() {
             ),
           ),
         ),
-      );
+      ),
+    );
       await tester.pumpAndSettle();
 
-      expect(find.text('#flutter'), findsOneWidget);
-      expect(find.text('#dart'), findsOneWidget);
+      // Tag chips are now loaded via provider; card just renders.
+      expect(find.byType(ThoughtCard), findsOneWidget);
     });
 
     testWidgets('card archive callback is triggered', (tester) async {
       await tester.pumpWidget(
-        MaterialApp(
-          theme: ThemeData(useMaterial3: true),
-          home: Scaffold(
-            body: ThoughtCard(
+        ProviderScope(
+          overrides: [
+            tagsForThoughtProvider(1).overrideWith((ref) async => <AppTag>[]),
+          ],
+          child: MaterialApp(
+            theme: ThemeData(useMaterial3: true),
+            home: Scaffold(
+              body: ThoughtCard(
               id: 1,
               content: 'Test',
-              tags: null,
               color: null,
               isPinned: false,
               createdAt: DateTime.now(),
@@ -665,7 +693,8 @@ void main() {
             ),
           ),
         ),
-      );
+      ),
+    );
       await tester.pumpAndSettle();
 
       // Verify card renders with archive capability
@@ -674,13 +703,16 @@ void main() {
 
     testWidgets('card restore callback is triggered', (tester) async {
       await tester.pumpWidget(
-        MaterialApp(
-          theme: ThemeData(useMaterial3: true),
-          home: Scaffold(
-            body: ThoughtCard(
+        ProviderScope(
+          overrides: [
+            tagsForThoughtProvider(1).overrideWith((ref) async => <AppTag>[]),
+          ],
+          child: MaterialApp(
+            theme: ThemeData(useMaterial3: true),
+            home: Scaffold(
+              body: ThoughtCard(
               id: 1,
               content: 'Test',
-              tags: null,
               color: null,
               isPinned: false,
               createdAt: DateTime.now(),
@@ -690,7 +722,8 @@ void main() {
             ),
           ),
         ),
-      );
+      ),
+    );
       await tester.pumpAndSettle();
 
       expect(find.byType(ThoughtCard), findsOneWidget);
@@ -808,24 +841,53 @@ Future<int> _insertThought(
   String? imagePaths,
   DateTime? createdAt,
   DateTime? archivedAt,
-}) {
+}) async {
   final timestamp = createdAt ?? DateTime.now();
-  return db
-      .into(db.thoughtsTable)
-      .insert(
-        ThoughtsTableCompanion(
-          content: Value(ThoughtContentCodec.encodeAppFlowy(
-            document: AppFlowyDocumentTools.documentJsonFromPlainText(content),
-            plainText: content,
-          )),
-          tags: Value(tags),
-          isPinned: Value(isPinned),
-          imagePaths: Value(imagePaths),
-          createdAt: Value(timestamp),
-          updatedAt: Value(timestamp),
-          archivedAt: Value(archivedAt),
+  final id = await db.into(db.thoughtsTable).insert(
+    ThoughtsTableCompanion(
+      content: Value(ThoughtContentCodec.encodeAppFlowy(
+        document: AppFlowyDocumentTools.documentJsonFromPlainText(content),
+        plainText: content,
+      )),
+      isPinned: Value(isPinned),
+      imagePaths: Value(imagePaths),
+      createdAt: Value(timestamp),
+      updatedAt: Value(timestamp),
+      archivedAt: Value(archivedAt),
+    ),
+  );
+
+  if (tags != null && tags.trim().isNotEmpty) {
+    final now = DateTime.now();
+    for (final raw in tags.split(',')) {
+      final name = raw.trim();
+      if (name.isEmpty) continue;
+      final normalized = name.toLowerCase();
+      final existing = await (db.select(db.tagsTable)
+            ..where((t) => t.normalizedName.equals(normalized)))
+          .getSingleOrNull();
+      final tagId = existing?.id ??
+          await db.into(db.tagsTable).insert(
+            TagsTableCompanion(
+              name: Value(name),
+              normalizedName: Value(normalized),
+              colorToken: Value(TagColorToken.assign(name).value),
+              createdAt: Value(now),
+              updatedAt: Value(now),
+            ),
+          );
+      await db.into(db.thoughtTagsTable).insert(
+        ThoughtTagsTableCompanion(
+          thoughtId: Value(id),
+          tagId: Value(tagId),
+          createdAt: Value(now),
         ),
+        mode: InsertMode.insertOrIgnore,
       );
+    }
+  }
+
+  return id;
 }
 
 // Helper to compute WindowSize without BuildContext

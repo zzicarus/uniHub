@@ -122,4 +122,4 @@ UniHub 是一个 **桌面端优先** 的 Flutter 个人工具箱，基于插件�
 | `.trellis/spec/backend/database-guidelines.md` | 数据库规范（drift/SQLite、DAO/Repository 模式、迁移、测试生命周期） |
 | `.trellis/workflow.md` | 完整 Trellis 开发流程规范（Plan → Execute → Finish） |
 
-> 最后核对日期：2026-05-25 | 当前无阻塞级别的已知问题。
+> 最后核对日期：2026-06-08 | 当前无阻塞级别的已知问题。

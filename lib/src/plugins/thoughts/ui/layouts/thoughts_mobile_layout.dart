@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uni_hub/src/core/database/app_database.dart';
@@ -540,7 +542,7 @@ class _MoreTagsButton extends ConsumerWidget {
         .toList();
     final selectedTags = ref.read(selectedTagFiltersProvider);
 
-    showModalBottomSheet(
+    unawaited(showModalBottomSheet(
       context: context,
       builder: (ctx) {
         return SafeArea(
@@ -562,7 +564,7 @@ class _MoreTagsButton extends ConsumerWidget {
           ),
         );
       },
-    );
+    ));
   }
 }
 

@@ -22,8 +22,8 @@ class UniHubApp extends ConsumerWidget {
       GlobalMaterialLocalizations.delegate,
       GlobalCupertinoLocalizations.delegate,
       GlobalWidgetsLocalizations.delegate,
-      // TODO(quill-migration): Remove FlutterQuillLocalizations after
-      // RichTextEditor is fully replaced by AppFlowyThoughtEditor.
+      // FlutterQuillLocalizations still needed while RichTextEditor (flutter_quill)
+      // is used in thoughts_editor_page and thoughts_mobile_layout (migration in progress).
       FlutterQuillLocalizations.delegate,
       AppFlowyEditorLocalizations.delegate,
     ];

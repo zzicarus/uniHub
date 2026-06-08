@@ -338,24 +338,36 @@ Future<List<ThoughtsTableData>> _filterByTags(
   for (final thought in thoughts) {
     final tags = await tagsDao.getTagsForThought(thought.id);
     final tagNames = tags.map((t) => t.name).toSet();
-    if (selectedTags.every((st) => tagNames.contains(st))) {
+    if (selectedTags.every(tagNames.contains)) {
       result.add(thought);
     }
   }
   return result;
 }
 
-List<ThoughtsTableData> _filterBySearch(
+Future<List<ThoughtsTableData>> _filterBySearch(
   List<ThoughtsTableData> thoughts,
   String query,
   TagsDao tagsDao,
-) {
+) async {
   if (query.isEmpty) return thoughts;
   final normalizedQuery = query.toLowerCase();
-  return thoughts.where((thought) {
+  final result = <ThoughtsTableData>[];
+  for (final thought in thoughts) {
+    // Check content
     final content = ThoughtContentCodec.plainTextFromStored(
       thought.content,
     ).toLowerCase();
-    return content.contains(normalizedQuery);
-  }).toList();
+    if (content.contains(normalizedQuery)) {
+      result.add(thought);
+      continue;
+    }
+    // Check tags
+    final tags = await tagsDao.getTagsForThought(thought.id);
+    final tagNames = tags.map((t) => t.name.toLowerCase());
+    if (tagNames.any((name) => name.contains(normalizedQuery))) {
+      result.add(thought);
+    }
+  }
+  return result;
 }

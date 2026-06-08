@@ -46,15 +46,6 @@ void main() {
         expect(thought.archivedAt, isNull);
       });
 
-      test('creates a thought with tags', () async {
-        final thought = await repo.createThought(
-          content: 'Tagged',
-          tags: 'flutter,dart,riverpod',
-        );
-
-        expect(thought.tags, 'flutter,dart,riverpod');
-      });
-
       test('creates a pinned thought', () async {
         // createThought doesn't accept isPinned,
         // so create then pin
@@ -102,12 +93,6 @@ void main() {
         expect(updated!.content, 'Updated');
       });
 
-      test('updates tags', () async {
-        final thought = await repo.createThought(content: 'Taggable');
-        await repo.updateThought(thought.id, tags: 'new,tag');
-        final updated = await repo.getThought(thought.id);
-        expect(updated!.tags, 'new,tag');
-      });
     });
 
     group('deleteThought', () {

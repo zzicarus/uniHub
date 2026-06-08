@@ -134,14 +134,14 @@ class CollectionFilterChipGroup extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    return Row(
+    return const Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        const PlatformFilterDropdown(),
-        const SizedBox(width: AppSpacing.xs),
-        const MediaTypeFilterDropdown(),
-        const SizedBox(width: AppSpacing.xs),
-        const StatusFilterDropdown(),
+        PlatformFilterDropdown(),
+        SizedBox(width: AppSpacing.xs),
+        MediaTypeFilterDropdown(),
+        SizedBox(width: AppSpacing.xs),
+        StatusFilterDropdown(),
       ],
     );
   }

@@ -305,7 +305,7 @@ class TagActionsController {
   // ---------------------------------------------------------------------------
 
   void dispose() {
-    _eventController.close();
+    unawaited(_eventController.close());
   }
 
   // ---------------------------------------------------------------------------

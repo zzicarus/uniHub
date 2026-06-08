@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../../../core/theme/app_tokens.dart';
@@ -226,7 +228,7 @@ class _AppEntityPickerState<T> extends State<AppEntityPicker<T>> {
                 onChanged: (v) => setState(() => _query = v),
                 onSubmitted: (_) {
                   if (!hasMatch && widget.allowCreate && _query.trim().isNotEmpty) {
-                    _createEntity();
+                    unawaited(_createEntity());
                   }
                 },
                 decoration: InputDecoration(

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -27,9 +29,9 @@ void main() {
       final container = ProviderContainer();
       addTearDown(container.dispose);
 
-      container
+      unawaited(container
           .read(themeSettingsProvider.notifier)
-          .setPreset(AppThemePreset.forest);
+          .setPreset(AppThemePreset.forest));
       expect(
         container.read(themeSettingsProvider).preset,
         AppThemePreset.forest,
@@ -40,9 +42,9 @@ void main() {
       final container = ProviderContainer();
       addTearDown(container.dispose);
 
-      container
+      unawaited(container
           .read(themeSettingsProvider.notifier)
-          .setMode(ThemeMode.dark);
+          .setMode(ThemeMode.dark));
       expect(container.read(themeSettingsProvider).mode, ThemeMode.dark);
     });
 
@@ -52,9 +54,9 @@ void main() {
       addTearDown(containerA.dispose);
       addTearDown(containerB.dispose);
 
-      containerA
+      unawaited(containerA
           .read(themeSettingsProvider.notifier)
-          .setPreset(AppThemePreset.sakura);
+          .setPreset(AppThemePreset.sakura));
 
       expect(
         containerA.read(themeSettingsProvider).preset,

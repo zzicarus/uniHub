@@ -117,7 +117,7 @@ context.appColors.textSecondary
 - **app_theme_tokens.dart（新增）** — `UniHubThemeColors` 继承 `ThemeExtension`，定义 21 个产品级语义颜色（background、sidebarBackground、panelBackground、textPrimary 等）；提供 `context.appColors` 扩展
 - **app_theme_preset.dart（新增）** — `AppThemePreset` 枚举：uniBlue / paper / forest / sakura / amber / graphite
 - **app_theme_registry.dart（新增）** — `AppThemeRegistry.colorsOf(preset, brightness)` 统一管理 6 个预设 × 2 种亮度 = 12 套色板
-- **theme_settings_provider.dart（新增）** — `ThemeSettingsController` Notifier，支持运行时切换 preset 和 ThemeMode
+- **theme_settings_provider.dart** — `ThemeSettingsController` Notifier，支持运行时切换 preset 和 ThemeMode；自动通过 SharedPreferences 持久化，重启后恢复
 - **app_theme.dart** — 重写为 `AppTheme.build(preset, brightness)` 工厂方法，`light`/`dark` getter 改为兼容入口；`cardTheme` 暗色模式自适应移除卡片边框
 - **home_page.dart / right_rail.dart / sidebar.dart / app_panel.dart** — 从 `colorScheme` 迁移至 `context.appColors`，消除 `AppColors` 常量的直接使用
 - **app.dart** — `MaterialApp.router` 接入 `themeSettingsProvider`，theme/darkTheme 改为 `AppTheme.build()` 调用

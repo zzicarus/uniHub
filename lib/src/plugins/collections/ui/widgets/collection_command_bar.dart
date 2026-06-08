@@ -56,27 +56,27 @@ class _DesktopToolbar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return _ContainerBox(
+    return const _ContainerBox(
       child: Row(
         children: [
           // Search / capture field (takes ~40% of space)
-          const Expanded(
+          Expanded(
             flex: 5,
             child: CollectionSearchCaptureField(),
           ),
-          const SizedBox(width: 12),
+          SizedBox(width: 12),
           // Filter dropdowns
-          const Flexible(
+          Flexible(
             flex: 4,
             child: SingleChildScrollView(
               scrollDirection: Axis.horizontal,
               child: _FilterDropdownRow(),
             ),
           ),
-          const Spacer(),
+          Spacer(),
           // Sort
-          const CollectionSortMenu(),
-          const SizedBox(width: 12),
+          CollectionSortMenu(),
+          SizedBox(width: 12),
           // Clear filter button
           _ClearFilterButton(),
         ],
@@ -94,24 +94,24 @@ class _MediumToolbar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return _ContainerBox(
+    return const _ContainerBox(
       child: Row(
         children: [
           // Search / capture field (wider share)
-          const Expanded(
+          Expanded(
             flex: 6,
             child: CollectionSearchCaptureField(),
           ),
-          const SizedBox(width: 8),
+          SizedBox(width: 8),
           // Filter + sort
-          const Flexible(
+          Flexible(
             flex: 5,
             child: SingleChildScrollView(
               scrollDirection: Axis.horizontal,
               child: _FilterDropdownRow(),
             ),
           ),
-          const SizedBox(width: 4),
+          SizedBox(width: 4),
           _ClearFilterButton(compact: true),
         ],
       ),
@@ -128,15 +128,15 @@ class _CompactToolbar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return _ContainerBox(
+    return const _ContainerBox(
       height: 112,
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+      padding: EdgeInsets.symmetric(horizontal: 10, vertical: 10),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           // First row: search / capture
-          const CollectionSearchCaptureField(),
-          const SizedBox(height: 8),
+          CollectionSearchCaptureField(),
+          SizedBox(height: 8),
           // Second row: filters + sort + clear
           Row(
             children: [
@@ -146,18 +146,18 @@ class _CompactToolbar extends StatelessWidget {
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const PlatformFilterDropdown(),
-                      const SizedBox(width: AppSpacing.xxs),
-                      const MediaTypeFilterDropdown(),
-                      const SizedBox(width: AppSpacing.xxs),
-                      const StatusFilterDropdown(),
-                      const SizedBox(width: AppSpacing.xxs),
-                      const CollectionSortMenu(),
+                      PlatformFilterDropdown(),
+                      SizedBox(width: AppSpacing.xxs),
+                      MediaTypeFilterDropdown(),
+                      SizedBox(width: AppSpacing.xxs),
+                      StatusFilterDropdown(),
+                      SizedBox(width: AppSpacing.xxs),
+                      CollectionSortMenu(),
                     ],
                   ),
                 ),
               ),
-              const SizedBox(width: 4),
+              SizedBox(width: 4),
               _ClearFilterButton(compact: true),
             ],
           ),
@@ -176,14 +176,14 @@ class _FilterDropdownRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
+    return const Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        const PlatformFilterDropdown(),
-        const SizedBox(width: AppSpacing.xs),
-        const MediaTypeFilterDropdown(),
-        const SizedBox(width: AppSpacing.xs),
-        const StatusFilterDropdown(),
+        PlatformFilterDropdown(),
+        SizedBox(width: AppSpacing.xs),
+        MediaTypeFilterDropdown(),
+        SizedBox(width: AppSpacing.xs),
+        StatusFilterDropdown(),
       ],
     );
   }

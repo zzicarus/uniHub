@@ -2,10 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uni_hub/src/core/theme/app_tokens.dart';
 import 'package:uni_hub/src/shared/crud/crud.dart';
-import 'package:uni_hub/src/shared/tags/tag_models.dart';
 import 'package:uni_hub/src/shared/tags/providers/tags_providers.dart';
+import 'package:uni_hub/src/shared/tags/tag_models.dart';
 import 'package:uni_hub/src/shared/widgets/app_confirm_dialog.dart';
 import 'package:uni_hub/src/shared/widgets/entity_picker/app_entity_picker.dart';
+
 import '../../providers/thoughts_providers.dart';
 
 enum ThoughtContextAction {
@@ -112,7 +113,6 @@ Future<void> showThoughtTagDialog({
       selectedIds: currentIds,
       itemLabel: (tag) => tag.name,
       itemId: (tag) => tag.id,
-      allowCreate: true,
       createLabelBuilder: (input) => '创建标签「$input」',
       onToggle: (tag, selected) async {
         final result = selected

@@ -1,6 +1,6 @@
 import 'dart:io';
 
-import 'package:drift/drift.dart';
+import 'package:drift/drift.dart' hide isNull, isNotNull;
 import 'package:drift/native.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -15,6 +15,8 @@ import 'package:uni_hub/src/plugins/thoughts/data/thought_content_codec.dart';
 import 'package:uni_hub/src/plugins/thoughts/providers/thought_status_filter.dart';
 import 'package:uni_hub/src/plugins/thoughts/providers/thoughts_providers.dart';
 import 'package:uni_hub/src/shared/editor/appflowy_document_tools.dart';
+import 'package:uni_hub/src/shared/tags/domain/tag_color_token.dart';
+import 'package:uni_hub/src/shared/tags/providers/tags_providers.dart';
 
 class _ThoughtsTablePlugin extends UniHubPlugin {
   @override
@@ -96,11 +98,14 @@ void main() {
       expect(thoughts.map((thought) => thought.id), [id]);
     });
 
-    test('repository can rename and delete tags globally', () async {
-      final repo = container.read(thoughtsRepositoryProvider);
+    test('tags dao can rename and delete tags globally', () async {
+      final tagsDao = container.read(tagsDaoProvider);
       container.read(selectedTagFiltersProvider.notifier).state = {'personal'};
 
-      final renamed = await repo.renameTag('personal', 'life');
+      final personalTag = await tagsDao.getTagByNormalizedName('personal');
+      expect(personalTag, isNotNull);
+
+      await tagsDao.renameTag(personalTag!.id, 'life');
       container
           .read(selectedTagFiltersProvider.notifier)
           .state = renameTagInFilter(
@@ -109,9 +114,10 @@ void main() {
         'life',
       );
       container.invalidate(allThoughtsProvider);
+      container.invalidate(tagStatsProvider);
       await container.read(allThoughtsProvider.future);
+      await container.read(tagStatsProvider.future);
 
-      expect(renamed, 2);
       expect(container.read(selectedTagFiltersProvider), {'life'});
       expect(
         container.read(commonTagsProvider).map((entry) => entry.key),
@@ -122,13 +128,18 @@ void main() {
         isNot(contains('personal')),
       );
 
-      final deleted = await repo.deleteTagEverywhere('image');
+      final imageTag = await tagsDao.getTagByNormalizedName('image');
+      expect(imageTag, isNotNull);
+      await tagsDao.deleteTag(imageTag!.id);
       container.invalidate(allThoughtsProvider);
+      container.invalidate(tagStatsProvider);
       await container.read(allThoughtsProvider.future);
+      await container.read(tagStatsProvider.future);
 
-      expect(deleted, 1);
-      final personalImage = await repo.getThought(seeded.personalImage);
-      expect(personalImage?.tags, 'life');
+      expect(
+        container.read(commonTagsProvider).map((entry) => entry.key),
+        isNot(contains('image')),
+      );
     });
 
     test('archived status filter selects the archive bucket', () async {
@@ -207,18 +218,22 @@ void main() {
     });
 
     test('commonTagsProvider sorts by count descending', () async {
-      // Ensure allThoughtsProvider resolves before reading commonTagsProvider.
+      // Ensure both allThoughtsProvider and tagStatsProvider resolve.
       await container.read(allThoughtsProvider.future);
+      await container.read(tagStatsProvider.future);
 
-      // Seed: personal=2, work=1, image=1 (archived excluded)
-      // Expected order by count desc, then name asc: personal > image > work
+      // tagStatsProvider counts ALL thought_tags rows (ignores archive status):
+      //   personal=2 (pinnedPersonal + personalImage)
+      //   work=2 (alphaPinnedWork + archivedWork)
+      //   image=1 (personalImage)
+      // Order: personal(2) > work(2) > image(1)
       var tags = container.read(commonTagsProvider);
       expect(tags.length, greaterThanOrEqualTo(3));
       expect(tags[0].key, 'personal');
       expect(tags[0].value, 2);
-      expect(tags[1].key, 'image');
-      expect(tags[1].value, 1);
-      expect(tags[2].key, 'work');
+      expect(tags[1].key, 'work');
+      expect(tags[1].value, 2);
+      expect(tags[2].key, 'image');
       expect(tags[2].value, 1);
 
       // Add three thoughts with the same tag → often count becomes 3
@@ -231,7 +246,9 @@ void main() {
         );
       }
       container.invalidate(allThoughtsProvider);
+      container.invalidate(tagStatsProvider);
       await container.read(allThoughtsProvider.future);
+      await container.read(tagStatsProvider.future);
       tags = container.read(commonTagsProvider);
       expect(tags[0].key, 'often');
       expect(tags[0].value, 3);
@@ -266,6 +283,7 @@ void main() {
 
       final pinned = await container.read(pinnedThoughtsProvider.future);
       final pending = await container.read(pendingReviewProvider.future);
+      await container.read(tagStatsProvider.future);
       final commonTags = container.read(commonTagsProvider);
       final randomReview = await container.read(randomReviewProvider.future);
 
@@ -280,8 +298,8 @@ void main() {
       ]);
       expect(commonTags.map((entry) => entry.key), [
         'personal',
-        'image',
         'work',
+        'image',
       ]);
       expect(randomReview?.id, seeded.betaUntaggedOld);
     });
@@ -355,21 +373,50 @@ Future<int> _insertThought(
   String? imagePaths,
   DateTime? createdAt,
   DateTime? archivedAt,
-}) {
+}) async {
   final timestamp = createdAt ?? DateTime.now();
-  return db
-      .into(db.thoughtsTable)
-      .insert(
-        ThoughtsTableCompanion(
-          content: Value(_appFlowyContent(content)),
-          tags: Value(tags),
-          isPinned: Value(isPinned),
-          imagePaths: Value(imagePaths),
-          createdAt: Value(timestamp),
-          updatedAt: Value(timestamp),
-          archivedAt: Value(archivedAt),
+  final id = await db.into(db.thoughtsTable).insert(
+    ThoughtsTableCompanion(
+      content: Value(_appFlowyContent(content)),
+      isPinned: Value(isPinned),
+      imagePaths: Value(imagePaths),
+      createdAt: Value(timestamp),
+      updatedAt: Value(timestamp),
+      archivedAt: Value(archivedAt),
+    ),
+  );
+
+  if (tags != null && tags.trim().isNotEmpty) {
+    final now = DateTime.now();
+    for (final raw in tags.split(',')) {
+      final name = raw.trim();
+      if (name.isEmpty) continue;
+      final normalized = name.toLowerCase();
+      final existing = await (db.select(db.tagsTable)
+            ..where((t) => t.normalizedName.equals(normalized)))
+          .getSingleOrNull();
+      final tagId = existing?.id ??
+          await db.into(db.tagsTable).insert(
+            TagsTableCompanion(
+              name: Value(name),
+              normalizedName: Value(normalized),
+              colorToken: Value(TagColorToken.assign(name).value),
+              createdAt: Value(now),
+              updatedAt: Value(now),
+            ),
+          );
+      await db.into(db.thoughtTagsTable).insert(
+        ThoughtTagsTableCompanion(
+          thoughtId: Value(id),
+          tagId: Value(tagId),
+          createdAt: Value(now),
         ),
+        mode: InsertMode.insertOrIgnore,
       );
+    }
+  }
+
+  return id;
 }
 
 class _SeededThoughts {

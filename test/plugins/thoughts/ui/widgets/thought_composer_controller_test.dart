@@ -16,6 +16,7 @@ import 'package:uni_hub/src/core/storage/providers/storage_providers.dart';
 import 'package:uni_hub/src/plugins/thoughts/providers/thoughts_providers.dart';
 import 'package:uni_hub/src/plugins/thoughts/ui/thoughts_page.dart';
 import 'package:uni_hub/src/plugins/thoughts/ui/widgets/thought_composer_controller.dart';
+import 'package:uni_hub/src/shared/tags/providers/tags_providers.dart';
 
 import '../../data/fake_image_picker.dart';
 import '../../data/fake_image_storage.dart';
@@ -197,11 +198,17 @@ void main() {
       controller.togglePin();
 
       await controller.submit();
+      // Let unawaited tag save futures complete.
+      await Future.delayed(Duration.zero);
 
       final thoughts = await container.read(thoughtsRepositoryProvider).getThoughts();
       expect(thoughts, hasLength(1));
-      expect(thoughts.single.tags, 'work');
       expect(thoughts.single.isPinned, isTrue);
+
+      // Verify tags saved via the tag system
+      final tagsDao = container.read(tagsDaoProvider);
+      final savedTags = await tagsDao.getTagsForThought(thoughts.single.id);
+      expect(savedTags.map((t) => t.name), ['work']);
       expect(controller.tagChips, isEmpty);
       expect(controller.pendingImages, isEmpty);
       expect(controller.isPinned, isFalse);

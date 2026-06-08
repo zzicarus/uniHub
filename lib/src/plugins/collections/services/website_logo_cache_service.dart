@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
@@ -113,7 +114,7 @@ class WebsiteLogoCacheService {
     );
 
     _inFlight[key] = future;
-    future.whenComplete(() => _inFlight.remove(key));
+    unawaited(future.whenComplete(() => _inFlight.remove(key)));
     return future;
   }
 

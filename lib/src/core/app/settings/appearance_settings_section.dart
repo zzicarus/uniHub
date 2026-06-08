@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -105,7 +107,7 @@ class _ThemeModeSelector extends ConsumerWidget {
             ],
             selected: {settings.mode},
             onSelectionChanged: (values) {
-              ref.read(themeSettingsProvider.notifier).setMode(values.first);
+              unawaited(ref.read(themeSettingsProvider.notifier).setMode(values.first));
             },
             showSelectedIcon: false,
           ),
@@ -169,9 +171,9 @@ class _ThemePresetGrid extends ConsumerWidget {
                         isSelected: settings.preset == preset,
                         previewColors:
                             AppThemeRegistry.colorsOf(preset, brightness),
-                        onTap: () => ref
+                        onTap: () => unawaited(ref
                             .read(themeSettingsProvider.notifier)
-                            .setPreset(preset),
+                            .setPreset(preset)),
                       ),
                     ),
                 ],

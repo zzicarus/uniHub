@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'plugin_interface.dart';
@@ -45,8 +46,8 @@ class PluginRegistry {
       contributors.map((p) async {
         try {
           return await p.getRecentItems(ref, count: count);
-        } catch (_) {
-          // TODO(logging): report plugin dashboard aggregation error
+        } catch (e) {
+          debugPrint('[PluginRegistry] getDashboardItems failed for ${(p as UniHubPlugin).id}: $e');
           return <DashboardItem>[];
         }
       }),
@@ -67,8 +68,8 @@ class PluginRegistry {
       contributors.map((p) async {
         try {
           return await p.getPinnedItems(ref, count: count);
-        } catch (_) {
-          // TODO(logging): report plugin dashboard aggregation error
+        } catch (e) {
+          debugPrint('[PluginRegistry] getDashboardPinned failed for ${(p as UniHubPlugin).id}: $e');
           return <DashboardItem>[];
         }
       }),
@@ -87,8 +88,8 @@ class PluginRegistry {
         try {
           final stat = await p.getStat(ref);
           return stat != null ? [stat] : <PluginStat>[];
-        } catch (_) {
-          // TODO(logging): report plugin dashboard aggregation error
+        } catch (e) {
+          debugPrint('[PluginRegistry] getDashboardStats failed for ${(p as UniHubPlugin).id}: $e');
           return <PluginStat>[];
         }
       }),

@@ -16,10 +16,10 @@ import 'package:uni_hub/src/shared/crud/crud.dart';
 import 'package:uni_hub/src/shared/preferences/delete_confirm_prefs_provider.dart';
 import 'package:uni_hub/src/shared/tags/providers/tags_providers.dart';
 import 'package:uni_hub/src/shared/tags/tag_models.dart';
-import 'package:uni_hub/src/shared/widgets/entity_picker/app_entity_picker.dart';
 import 'package:uni_hub/src/shared/widgets/app_pill_chip.dart';
 import 'package:uni_hub/src/shared/widgets/app_toast.dart';
 import 'package:uni_hub/src/shared/widgets/delete_confirm_dialog.dart';
+import 'package:uni_hub/src/shared/widgets/entity_picker/app_entity_picker.dart';
 import 'package:uni_hub/src/shared/widgets/tags/app_tag_chip.dart';
 import 'package:uni_hub/src/shared/widgets/website_logo.dart';
 
@@ -778,7 +778,6 @@ class _SavedItemDetailPanelState extends ConsumerState<SavedItemDetailPanel> {
         selectedIds: currentBoxIds.toSet(),
         itemLabel: (b) => b.name,
         itemId: (b) => b.id,
-        allowCreate: true,
         onToggle: (box, selected) async {
           final current = await repository.getBoxIdsForItem(itemId);
           final next = Set<int>.from(current);
@@ -1141,7 +1140,6 @@ class _AddTagButton extends ConsumerWidget {
         selectedIds: currentIds,
         itemLabel: (tag) => tag.name,
         itemId: (tag) => tag.id,
-        allowCreate: true,
         createLabelBuilder: (input) => '创建标签「$input」',
         onToggle: (tag, selected) async {
           final result = selected

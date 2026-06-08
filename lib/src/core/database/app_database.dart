@@ -1,13 +1,14 @@
 import 'package:drift/drift.dart';
+
 import '../plugin/plugin_registry.dart';
 import 'tables/collection_boxes_table.dart';
 import 'tables/enrichment_jobs_table.dart';
 import 'tables/saved_item_boxes_table.dart';
-import 'tables/saved_items_table.dart';
-import 'tables/thoughts_table.dart';
 import 'tables/saved_item_tags_table.dart';
+import 'tables/saved_items_table.dart';
 import 'tables/tags_table.dart';
 import 'tables/thought_tags_table.dart';
+import 'tables/thoughts_table.dart';
 import 'tables/website_logo_cache_table.dart';
 
 part 'app_database.g.dart';
@@ -150,7 +151,6 @@ class AppDatabase extends _$AppDatabase {
       final tagsRaw = row.read<String?>('tags');
       if (tagsRaw == null || tagsRaw.trim().isEmpty) continue;
       final id = row.read<int>('id');
-      if (id == null) continue;
 
       final parsed = <String>{};
       for (final raw in tagsRaw.split(',')) {

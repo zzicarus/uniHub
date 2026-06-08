@@ -50,27 +50,10 @@ void main() {
         final result = await dao.getById(id);
         expect(result, isNotNull);
         expect(result!.content, 'Test thought');
-        expect(result.tags, isNull);
         expect(result.isPinned, false);
         expect(result.archivedAt, isNull);
       });
 
-      test('inserts a thought with tags and color', () async {
-        final now = DateTime.now();
-        final id = await dao.insert(
-          ThoughtsTableCompanion(
-            content: const Value('Tagged thought'),
-            tags: const Value('flutter,dart'),
-            color: const Value('#2563EB'),
-            createdAt: Value(now),
-            updatedAt: Value(now),
-          ),
-        );
-
-        final result = await dao.getById(id);
-        expect(result!.tags, 'flutter,dart');
-        expect(result.color, '#2563EB');
-      });
 
       test('getById returns null for non-existent id', () async {
         final result = await dao.getById(999);
@@ -201,14 +184,12 @@ void main() {
           id,
           ThoughtsTableCompanion(
             content: const Value('Updated'),
-            tags: const Value('new,tags'),
             updatedAt: Value(DateTime.now()),
           ),
         );
 
         final result = await dao.getById(id);
         expect(result!.content, 'Updated');
-        expect(result.tags, 'new,tags');
       });
     });
 

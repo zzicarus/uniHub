@@ -104,7 +104,7 @@ class _ThoughtsEditorPageState extends ConsumerState<ThoughtsEditorPage> {
                 onSelected: (value) {
                   switch (value) {
                     case 'delete':
-                      ctrl.delete(context);
+                      unawaited(ctrl.delete(context));
                       break;
                   }
                 },

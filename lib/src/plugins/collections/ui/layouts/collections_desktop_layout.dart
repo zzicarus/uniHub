@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uni_hub/src/core/theme/app_tokens.dart';
@@ -30,16 +32,16 @@ class _CollectionsDesktopLayoutState
   }
 
   void _refreshList() {
-    ref.read(collectionsListControllerProvider.notifier).refresh();
+    unawaited(ref.read(collectionsListControllerProvider.notifier).refresh());
     ref.invalidate(collectionFolderCountsProvider);
   }
 
   void _drainPendingEnrichment() {
     // 收藏页进入时主动扫描并消费 pending enrichment jobs
     final controller = ref.read(enrichmentQueueControllerProvider);
-    controller.drainPending(
+    unawaited(controller.drainPending(
       maxBatches: 3,
-    );
+    ));
   }
 
   @override
@@ -47,22 +49,22 @@ class _CollectionsDesktopLayoutState
     // ── Filter listeners ──────────────────────────────────────────────────
     // Every time a filter / view / sort / search changes, reload from page 0.
     ref.listen(collectionViewProvider, (_, _) {
-      ref.read(collectionsListControllerProvider.notifier).refresh();
+      unawaited(ref.read(collectionsListControllerProvider.notifier).refresh());
     });
     ref.listen(collectionStatusFilterProvider, (_, _) {
-      ref.read(collectionsListControllerProvider.notifier).refresh();
+      unawaited(ref.read(collectionsListControllerProvider.notifier).refresh());
     });
     ref.listen(collectionPlatformFilterProvider, (_, _) {
-      ref.read(collectionsListControllerProvider.notifier).refresh();
+      unawaited(ref.read(collectionsListControllerProvider.notifier).refresh());
     });
     ref.listen(collectionMediaTypeFilterProvider, (_, _) {
-      ref.read(collectionsListControllerProvider.notifier).refresh();
+      unawaited(ref.read(collectionsListControllerProvider.notifier).refresh());
     });
     ref.listen(selectedCollectionBoxIdsProvider, (_, _) {
-      ref.read(collectionsListControllerProvider.notifier).refresh();
+      unawaited(ref.read(collectionsListControllerProvider.notifier).refresh());
     });
     ref.listen(collectionSortProvider, (_, _) {
-      ref.read(collectionsListControllerProvider.notifier).refresh();
+      unawaited(ref.read(collectionsListControllerProvider.notifier).refresh());
     });
 
 
@@ -281,7 +283,7 @@ void _showDetailBottomSheet(
   BuildContext context,
   int itemId,
 ) {
-  showModalBottomSheet<void>(
+  unawaited(showModalBottomSheet<void>(
     context: context,
     isScrollControlled: true,
     useSafeArea: true,
@@ -298,7 +300,7 @@ void _showDetailBottomSheet(
         },
       );
     },
-  );
+  ));
 }
 
 /// 详情面板容器：按 itemId 从 [selectedSavedItemDetailProvider] 加载详情。
