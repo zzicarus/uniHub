@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
@@ -6,6 +7,7 @@ import 'package:flutter_quill/flutter_quill.dart'
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uni_hub/src/shared/crud/crud.dart';
 import 'package:uni_hub/src/shared/editor/appflowy_document_tools.dart';
+import 'package:uni_hub/src/shared/tags/providers/tags_providers.dart';
 import 'package:uni_hub/src/shared/tags/tag_codec.dart';
 
 import '../../data/picked_image.dart';
@@ -149,18 +151,24 @@ class ThoughtComposerController extends ChangeNotifier {
       final svc = await ref.read(thoughtImageServiceProvider.future);
 
       // Encode tags.
-      final tags = TagCodec.encodeCommaSeparated(_tags);
-
       // Merge pending image paths.
       final mergedPaths = _pendingImagePaths.where(svc.existsSync).toList();
       final imagePaths = ThoughtImageService.encodeImagePaths(mergedPaths);
 
       final created = await repo.createThought(
         content: encoded,
-        tags: tags,
         isPinned: _isPinned,
         imagePaths: imagePaths,
       );
+
+      // Save tags via the new tag system.
+      final tagActions = ref.read(tagActionsControllerProvider);
+      for (final tagName in _tags) {
+        unawaited(tagActions.addTagToThought(
+          thoughtId: created.id,
+          tagName: tagName,
+        ));
+      }
 
       ref
           .read(crudMutationProvider.notifier)

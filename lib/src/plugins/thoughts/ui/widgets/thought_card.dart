@@ -1,13 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uni_hub/src/core/theme/app_tokens.dart';
+import 'package:uni_hub/src/shared/tags/tag_models.dart';
+import 'package:uni_hub/src/shared/widgets/tags/app_tag_chip.dart';
 import '../../data/thought_content_codec.dart';
 import '../../data/thought_image_service.dart';
+import 'package:uni_hub/src/shared/tags/providers/tags_providers.dart';
 
+/// A thought card in the thoughts list.
+///
+/// Tags are loaded reactively from [tagsForThoughtProvider] so they always
+/// show the correct colours and names regardless of where the tag was
+/// created or edited.
 class ThoughtCard extends ConsumerStatefulWidget {
   final int id;
   final String content;
-  final String? tags;
   final String? color;
   final bool isPinned;
   final DateTime createdAt;
@@ -19,7 +26,6 @@ class ThoughtCard extends ConsumerStatefulWidget {
   const ThoughtCard({
     required this.id,
     required this.content,
-    required this.tags,
     required this.color,
     required this.isPinned,
     required this.createdAt,
@@ -39,11 +45,11 @@ class _ThoughtCardState extends ConsumerState<ThoughtCard> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    final tagList = (widget.tags ?? '')
-        .split(',')
-        .map((s) => s.trim())
-        .where((s) => s.isNotEmpty)
-        .toList();
+
+    // Load tags from the new tag relation table.
+    final tagsAsync = ref.watch(tagsForThoughtProvider(widget.id));
+    final tagList = tagsAsync.valueOrNull ?? const <AppTag>[];
+
     final accent = widget.color != null
         ? _hexToColor(widget.color!)
         : _cardAccent(widget.id, colorScheme);
@@ -76,7 +82,7 @@ class _ThoughtCardState extends ConsumerState<ThoughtCard> {
               const SizedBox(height: AppSpacing.xxs),
               Expanded(child: _buildBody(theme, colorScheme, body)),
               if (tagList.isNotEmpty || images.isNotEmpty)
-                _buildTagsSection(theme, colorScheme, tagList, images, accent),
+                _buildTagsSection(theme, tagList, images, accent),
             ],
           ),
         ),
@@ -121,7 +127,9 @@ class _ThoughtCardState extends ConsumerState<ThoughtCard> {
       title,
       maxLines: 1,
       overflow: TextOverflow.ellipsis,
-      style: theme.textTheme.titleSmall?.copyWith(fontWeight: AppFontTokens.bold),
+      style: theme.textTheme.titleSmall?.copyWith(
+        fontWeight: AppFontTokens.bold,
+      ),
     );
   }
 
@@ -137,10 +145,13 @@ class _ThoughtCardState extends ConsumerState<ThoughtCard> {
     );
   }
 
+  // ---------------------------------------------------------------
+  // Tags section — uses AppTagChip.fromTag for stable colour tokens
+  // ---------------------------------------------------------------
+
   Widget _buildTagsSection(
     ThemeData theme,
-    ColorScheme colorScheme,
-    List<String> tagList,
+    List<AppTag> tagList,
     List<String> images,
     Color accent,
   ) {
@@ -151,7 +162,7 @@ class _ThoughtCardState extends ConsumerState<ThoughtCard> {
           child: Wrap(
             spacing: AppSpacing.xxs,
             runSpacing: AppSpacing.xxs,
-            children: _buildTagChips(tagList, theme, accent),
+            children: _buildTagChips(tagList),
           ),
         ),
         if (images.isNotEmpty) ...[
@@ -159,41 +170,26 @@ class _ThoughtCardState extends ConsumerState<ThoughtCard> {
           Icon(
             Icons.image_outlined,
             size: 16,
-            color: colorScheme.onSurfaceVariant,
+            color: theme.colorScheme.onSurfaceVariant,
           ),
         ],
       ],
     );
   }
 
-  List<Widget> _buildTagChips(
-    List<String> tagList,
-    ThemeData theme,
-    Color accent,
-  ) {
+  List<Widget> _buildTagChips(List<AppTag> tags) {
     const maxVisible = 3;
-    final visible = tagList.take(maxVisible).toList();
-    final overflow = tagList.length - maxVisible;
+    final visible = tags.take(maxVisible).toList();
+    final overflow = tags.length - maxVisible;
 
     return [
-      ...visible.map((tag) {
-        return ActionChip(
-          label: Text(
-            '#$tag',
-            style: theme.textTheme.labelMedium?.copyWith(
-              color: accent,
-              fontWeight: AppFontTokens.extraBold,
-              fontSize: AppFontTokens.caption,
-            ),
-          ),
-          onPressed: () => widget.onTagTap(tag),
-          backgroundColor: accent.withValues(alpha: 0.10),
-          side: BorderSide.none,
-          materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-          visualDensity: VisualDensity.compact,
-          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xs - 2),
-        );
-      }),
+      ...visible.map(
+        (tag) => AppTagChip.fromTag(
+          tag: tag,
+          compact: true,
+          onTap: () => widget.onTagTap(tag.name),
+        ),
+      ),
       if (overflow > 0)
         Container(
           padding: const EdgeInsets.symmetric(
@@ -201,13 +197,13 @@ class _ThoughtCardState extends ConsumerState<ThoughtCard> {
             vertical: 2,
           ),
           decoration: BoxDecoration(
-            color: theme.colorScheme.surfaceContainerHigh,
+            color: Theme.of(context).colorScheme.surfaceContainerHigh,
             borderRadius: BorderRadius.circular(AppRadius.full),
           ),
           child: Text(
             '+$overflow',
-            style: theme.textTheme.labelMedium?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
+            style: Theme.of(context).textTheme.labelMedium?.copyWith(
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
               fontWeight: AppFontTokens.semiBold,
               fontSize: AppFontTokens.caption,
             ),

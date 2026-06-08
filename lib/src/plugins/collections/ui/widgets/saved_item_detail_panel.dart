@@ -14,9 +14,13 @@ import 'package:uni_hub/src/plugins/collections/providers/collections_providers.
 import 'package:uni_hub/src/plugins/collections/ui/widgets/create_collection_folder_dialog.dart';
 import 'package:uni_hub/src/shared/crud/crud.dart';
 import 'package:uni_hub/src/shared/preferences/delete_confirm_prefs_provider.dart';
+import 'package:uni_hub/src/shared/tags/providers/tags_providers.dart';
+import 'package:uni_hub/src/shared/tags/tag_models.dart';
+import 'package:uni_hub/src/shared/widgets/entity_picker/app_entity_picker.dart';
 import 'package:uni_hub/src/shared/widgets/app_pill_chip.dart';
 import 'package:uni_hub/src/shared/widgets/app_toast.dart';
 import 'package:uni_hub/src/shared/widgets/delete_confirm_dialog.dart';
+import 'package:uni_hub/src/shared/widgets/tags/app_tag_chip.dart';
 import 'package:uni_hub/src/shared/widgets/website_logo.dart';
 
 /// Full detail panel for a selected saved item entry.
@@ -42,8 +46,6 @@ class SavedItemDetailPanel extends ConsumerStatefulWidget {
 }
 
 class _SavedItemDetailPanelState extends ConsumerState<SavedItemDetailPanel> {
-  static const _inboxBoxValue = -1;
-
   @override
   Widget build(BuildContext context) {
     final detailAsync = ref.watch(
@@ -300,7 +302,7 @@ class _SavedItemDetailPanelState extends ConsumerState<SavedItemDetailPanel> {
           _sectionDivider(colorScheme),
           _BoxSection(item: item, currentBoxes: boxes),
           _sectionDivider(colorScheme),
-          _TagsSection(item: item, boxes: boxes),
+          _TagsSection(item: item),
           _sectionDivider(colorScheme),
           _EnrichmentStatusSection(item: item),
         ],
@@ -417,7 +419,15 @@ class _SavedItemDetailPanelState extends ConsumerState<SavedItemDetailPanel> {
                     final controller = ref.read(
                       savedItemActionsControllerProvider,
                     );
-                    await controller.updateStatus(item.id, status);
+                    final result = await controller.updateStatus(
+                      item.id,
+                      status,
+                    );
+                    if (!mounted) return;
+                    ref.read(crudFeedbackCoordinatorProvider).handle(
+                      context,
+                      result,
+                    );
                   },
                   compact: true,
                 );
@@ -751,59 +761,47 @@ class _SavedItemDetailPanelState extends ConsumerState<SavedItemDetailPanel> {
   }
 
   Future<void> _showBoxMenu(int itemId) async {
-    final repository = ref.read(collectionsRepositoryProvider);
     final controller = ref.read(savedItemActionsControllerProvider);
+    final coordinator = ref.read(crudFeedbackCoordinatorProvider);
+    final repository = ref.read(collectionsRepositoryProvider);
+
     final boxes = await repository.getBoxes();
     final currentBoxIds = await repository.getBoxIdsForItem(itemId);
-    final currentSet = currentBoxIds.toSet();
-
     if (!mounted) return;
 
-    final selection = await showMenu<int>(
+    await showDialog<void>(
       context: context,
-      position: const RelativeRect.fromLTRB(1000, 80, 1000, 80),
-      items: [
-        PopupMenuItem<int>(
-          value: _inboxBoxValue,
-          child: Row(
-            children: [
-              Icon(currentSet.isEmpty ? Icons.check : null, size: 18),
-              const SizedBox(width: AppSpacing.xs),
-              const Text('待整理（不分配到收藏夹）'),
-            ],
-          ),
-        ),
-        if (boxes.isNotEmpty) const PopupMenuDivider(),
-        for (final box in boxes)
-          PopupMenuItem<int>(
-            value: box.id,
-            child: Row(
-              children: [
-                Icon(
-                  currentSet.contains(box.id)
-                      ? Icons.check_box_rounded
-                      : Icons.check_box_outline_blank_rounded,
-                  size: 18,
-                ),
-                const SizedBox(width: AppSpacing.xs),
-                Text(box.name),
-              ],
-            ),
-          ),
-      ],
+      builder: (_) => AppEntityPicker<CollectionBoxesTableData>(
+        title: '添加到收藏夹',
+        searchHint: '搜索收藏夹',
+        items: boxes,
+        selectedIds: currentBoxIds.toSet(),
+        itemLabel: (b) => b.name,
+        itemId: (b) => b.id,
+        allowCreate: true,
+        onToggle: (box, selected) async {
+          final current = await repository.getBoxIdsForItem(itemId);
+          final next = Set<int>.from(current);
+          if (selected) {
+            next.add(box.id);
+          } else {
+            next.remove(box.id);
+          }
+          final result = await controller.assignBoxes(itemId, next);
+          if (mounted) {
+            coordinator.handle(context, result);
+          }
+        },
+        onCreate: (name) async {
+          final boxCtrl = ref.read(collectionBoxActionsControllerProvider);
+          final result = await boxCtrl.createBox(name);
+          if (mounted) {
+            coordinator.handle(context, result);
+          }
+          return result;
+        },
+      ),
     );
-
-    if (selection == null || !mounted) return;
-
-    if (selection == _inboxBoxValue) {
-      await controller.assignBoxes(itemId, const {});
-    } else if (currentSet.contains(selection)) {
-      final next = {...currentSet}..remove(selection);
-      await controller.assignBoxes(itemId, next);
-    } else {
-      final next = {...currentSet, selection};
-      await controller.assignBoxes(itemId, next);
-    }
   }
 
   void _showToast(String message) {
@@ -1009,17 +1007,16 @@ class _EnrichmentStatusSection extends ConsumerWidget {
 // ===============================================================
 
 class _TagsSection extends ConsumerWidget {
-  const _TagsSection({required this.item, this.boxes = const []});
+  const _TagsSection({required this.item});
 
   final SavedItemsTableData item;
-  final List<CollectionBoxesTableData> boxes;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    final mediaType = MediaType.fromValue(item.mediaType);
-    final platform = SourcePlatform.fromValue(item.sourcePlatform);
+    final tagsAsync = ref.watch(tagsForSavedItemProvider(item.id));
+    final tags = tagsAsync.valueOrNull ?? const [];
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(
@@ -1042,57 +1039,134 @@ class _TagsSection extends ConsumerWidget {
             ),
           ),
           Expanded(
-            child: Builder(
-              builder: (context) {
-                final rawLabels = <String>[
-                  for (final box in boxes) box.name,
-                  mediaType.label,
-                  platform.label,
-                ];
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final maxVisible = constraints.maxWidth < 260 ? 4 : 6;
+                final visible = tags.take(maxVisible).toList();
 
-                final labels = <String>[];
-                for (final label in rawLabels) {
-                  final normalized = label.trim();
-                  if (normalized.isEmpty) continue;
-                  if (normalized == '未知') continue;
-                  if (labels.contains(normalized)) continue;
-                  labels.add(normalized);
-                }
-
-                return LayoutBuilder(
-                  builder: (context, constraints) {
-                    final maxVisibleLabels = constraints.maxWidth < 260 ? 3 : 4;
-                    final visibleLabels = labels
-                        .take(maxVisibleLabels)
-                        .toList();
-
-                    return Wrap(
-                      spacing: AppSpacing.xs,
-                      runSpacing: AppSpacing.xs,
-                      children: [
-                        for (final label in visibleLabels)
-                          AppPillChip(
-                            label: label,
-                            selected: false,
-                            compact: true,
-                          ),
-                        AppPillChip(
-                          label: '+ 添加标签',
-                          selected: false,
-                          compact: true,
-                          icon: Icons.add_rounded,
-                          onTap: () {
-                            AppToast.show(context, message: '标签功能稍后接入');
-                          },
+                return Wrap(
+                  spacing: AppSpacing.xs,
+                  runSpacing: AppSpacing.xs,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  children: [
+                    for (final tag in visible)
+                      AppTagChip.fromTag(
+                        tag: tag,
+                        compact: true,
+                        onTap: () => _removeTag(context, ref, tag.id),
+                      ),
+                    if (tags.length > maxVisible)
+                      Text(
+                        '+${tags.length - maxVisible}',
+                        style: theme.textTheme.labelSmall?.copyWith(
+                          color: colorScheme.onSurfaceVariant,
                         ),
-                      ],
-                    );
-                  },
+                      ),
+                    _AddTagButton(itemId: item.id),
+                  ],
                 );
               },
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  void _removeTag(BuildContext context, WidgetRef ref, int tagId) async {
+    final controller = ref.read(tagActionsControllerProvider);
+    final coordinator = ref.read(crudFeedbackCoordinatorProvider);
+    final result = await controller.removeTagFromSavedItem(
+      savedItemId: item.id,
+      tagId: tagId,
+    );
+    if (!context.mounted) return;
+    coordinator.handle(context, result);
+  }
+}
+
+/// Add-tag button inside [_TagsSection].
+class _AddTagButton extends ConsumerWidget {
+  const _AddTagButton({required this.itemId});
+
+  final int itemId;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return GestureDetector(
+      onTap: () => _openPicker(context, ref),
+      child: Container(
+        height: 24,
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
+        decoration: BoxDecoration(
+          color: colorScheme.surfaceContainerLow,
+          borderRadius: BorderRadius.circular(AppRadius.full),
+          border: Border.all(color: colorScheme.outlineVariant),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.add_rounded, size: 14, color: colorScheme.onSurfaceVariant),
+            const SizedBox(width: 2),
+            Text(
+              '添加标签',
+              style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                color: colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _openPicker(BuildContext context, WidgetRef ref) async {
+    final tagsDao = ref.read(tagsDaoProvider);
+    final controller = ref.read(tagActionsControllerProvider);
+    final coordinator = ref.read(crudFeedbackCoordinatorProvider);
+
+    final allTags = await tagsDao.getAllTags();
+    final currentTags = await tagsDao.getTagsForSavedItem(itemId);
+    final currentIds = currentTags.map((t) => t.id as Object).toSet();
+    if (!context.mounted) return;
+
+    await showDialog<void>(
+      context: context,
+      builder: (_) => AppEntityPicker<AppTag>(
+        title: '添加标签',
+        searchHint: '搜索标签或创建新标签',
+        items: allTags,
+        selectedIds: currentIds,
+        itemLabel: (tag) => tag.name,
+        itemId: (tag) => tag.id,
+        allowCreate: true,
+        createLabelBuilder: (input) => '创建标签「$input」',
+        onToggle: (tag, selected) async {
+          final result = selected
+              ? await controller.addTagToSavedItem(
+                  savedItemId: itemId,
+                  tagName: tag.name,
+                )
+              : await controller.removeTagFromSavedItem(
+                  savedItemId: itemId,
+                  tagId: tag.id,
+                );
+          if (context.mounted) {
+            coordinator.handle(context, result);
+          }
+        },
+        onCreate: (name) async {
+          final result = await controller.createTag(name);
+          if (context.mounted) {
+            coordinator.handle(context, result);
+          }
+          if (result.success && result.data != null) {
+            return result.data;
+          }
+          return null;
+        },
       ),
     );
   }

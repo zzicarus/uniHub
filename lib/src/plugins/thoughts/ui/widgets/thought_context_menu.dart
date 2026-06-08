@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uni_hub/src/core/theme/app_tokens.dart';
-import 'package:uni_hub/src/shared/tags/tag_codec.dart';
+import 'package:uni_hub/src/shared/crud/crud.dart';
+import 'package:uni_hub/src/shared/tags/tag_models.dart';
+import 'package:uni_hub/src/shared/tags/providers/tags_providers.dart';
 import 'package:uni_hub/src/shared/widgets/app_confirm_dialog.dart';
-import 'package:uni_hub/src/shared/widgets/app_toast.dart';
+import 'package:uni_hub/src/shared/widgets/entity_picker/app_entity_picker.dart';
 import '../../providers/thoughts_providers.dart';
 
 enum ThoughtContextAction {
@@ -81,7 +83,10 @@ Future<ThoughtContextAction?> showThoughtContextMenu({
   );
 }
 
-/// Shows a tag editing dialog for the given thought.
+/// Shows a tag picker dialog for adding/removing tags on a thought.
+///
+/// Uses [AppEntityPicker] for a consistent search-and-tap experience.
+/// Each toggle immediately adds or removes the tag via [TagActionsController].
 Future<void> showThoughtTagDialog({
   required BuildContext context,
   required WidgetRef ref,
@@ -89,33 +94,56 @@ Future<void> showThoughtTagDialog({
 }) async {
   if (!context.mounted) return;
 
-  final thought = await ref.read(thoughtProvider(thoughtId).future);
+  final tagsDao = ref.read(tagsDaoProvider);
+  final controller = ref.read(tagActionsControllerProvider);
+  final coordinator = ref.read(crudFeedbackCoordinatorProvider);
+
+  final allTags = await tagsDao.getAllTags();
+  final currentTags = await tagsDao.getTagsForThought(thoughtId);
+  final currentIds = currentTags.map((t) => t.id as Object).toSet();
   if (!context.mounted) return;
 
-  final currentTags = (thought?.tags ?? '')
-      .split(',')
-      .map((s) => s.trim())
-      .where((s) => s.isNotEmpty)
-      .toList();
-
-  final controller = TextEditingController(text: '');
-
-  final newTags = await showDialog<List<String>>(
+  await showDialog<void>(
     context: context,
-    builder: (ctx) =>
-        _TagDialog(currentTags: currentTags, controller: controller),
+    builder: (_) => AppEntityPicker<AppTag>(
+      title: '添加标签',
+      searchHint: '搜索标签或创建新标签',
+      items: allTags,
+      selectedIds: currentIds,
+      itemLabel: (tag) => tag.name,
+      itemId: (tag) => tag.id,
+      allowCreate: true,
+      createLabelBuilder: (input) => '创建标签「$input」',
+      onToggle: (tag, selected) async {
+        final result = selected
+            ? await controller.addTagToThought(
+                thoughtId: thoughtId,
+                tagName: tag.name,
+              )
+            : await controller.removeTagFromThought(
+                thoughtId: thoughtId,
+                tagId: tag.id,
+              );
+        if (context.mounted) {
+          coordinator.handle(context, result);
+        }
+        if (result.success) {
+          ref.invalidate(allThoughtsProvider);
+          ref.invalidate(tagsForThoughtProvider(thoughtId));
+        }
+      },
+      onCreate: (name) async {
+        final result = await controller.createTag(name);
+        if (context.mounted) {
+          coordinator.handle(context, result);
+        }
+        if (result.success) {
+          return result.data;
+        }
+        return null;
+      },
+    ),
   );
-
-  if (newTags != null && context.mounted) {
-    final tagsString = newTags.isEmpty ? null : newTags.join(',');
-    await ref
-        .read(thoughtsRepositoryProvider)
-        .updateTags(thoughtId, tagsString);
-    ref.invalidate(allThoughtsProvider);
-    if (context.mounted) {
-      AppToast.show(context, message: '标签已更新', type: AppToastType.success);
-    }
-  }
 }
 
 /// Shows a delete confirmation dialog. Returns true if confirmed.
@@ -163,128 +191,6 @@ class _MenuItem extends StatelessWidget {
           ),
         ),
       ],
-    );
-  }
-}
-
-class _TagDialog extends StatefulWidget {
-  final List<String> currentTags;
-  final TextEditingController controller;
-
-  const _TagDialog({required this.currentTags, required this.controller});
-
-  @override
-  State<_TagDialog> createState() => _TagDialogState();
-}
-
-class _TagDialogState extends State<_TagDialog> {
-  late List<String> _tags;
-  String? _errorText;
-
-  @override
-  void initState() {
-    super.initState();
-    _tags = List.from(widget.currentTags);
-  }
-
-  void _removeTag(String tag) {
-    setState(() => _tags.remove(tag));
-  }
-
-  void _save() {
-    final input = widget.controller.text.trim();
-    if (input.isNotEmpty) {
-      final added = input
-          .split(RegExp(r'[,\s]+'))
-          .map(TagCodec.normalize)
-          .where((s) => s.isNotEmpty)
-          .toList();
-      for (final tag in added) {
-        final validation = TagCodec.validate(tag);
-        if (!validation.isValid) {
-          setState(() => _errorText = validation.message);
-          return;
-        }
-        if (!_tags.contains(tag)) {
-          _tags.add(tag);
-        }
-      }
-    }
-    Navigator.of(context).pop(_tags);
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-    return Dialog(
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(AppRadius.xl),
-      ),
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 420),
-        child: Padding(
-          padding: const EdgeInsets.all(AppSpacing.xl),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                '添加标签',
-                style: theme.textTheme.titleLarge?.copyWith(
-                  color: colorScheme.onSurface,
-                  fontWeight: AppFontTokens.bold,
-                ),
-              ),
-              const SizedBox(height: AppSpacing.md),
-              if (_tags.isNotEmpty) ...[
-                Text('当前标签', style: Theme.of(context).textTheme.labelMedium),
-                const SizedBox(height: AppSpacing.xs),
-                Wrap(
-                  spacing: AppSpacing.xxs,
-                  runSpacing: AppSpacing.xxs,
-                  children: _tags.map((tag) {
-                    return Chip(
-                      label: Text(tag),
-                      deleteIcon: const Icon(Icons.close, size: 14),
-                      onDeleted: () => _removeTag(tag),
-                      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                      visualDensity: VisualDensity.compact,
-                    );
-                  }).toList(),
-                ),
-                const SizedBox(height: AppSpacing.md),
-              ],
-              TextField(
-                controller: widget.controller,
-                decoration: InputDecoration(
-                  hintText: '输入新标签（空格/逗号分隔）',
-                  helperText: '最多 24 个字符，仅支持中文、英文、数字、-、_',
-                  errorText: _errorText,
-                  isDense: true,
-                ),
-                autofocus: true,
-                onChanged: (_) {
-                  if (_errorText != null) setState(() => _errorText = null);
-                },
-                onSubmitted: (_) => _save(),
-              ),
-              const SizedBox(height: AppSpacing.xl),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  TextButton(
-                    onPressed: () => Navigator.of(context).pop(),
-                    child: const Text('取消'),
-                  ),
-                  const SizedBox(width: AppSpacing.sm),
-                  FilledButton(onPressed: _save, child: const Text('保存')),
-                ],
-              ),
-            ],
-          ),
-        ),
-      ),
     );
   }
 }

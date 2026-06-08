@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uni_hub/src/core/theme/app_tokens.dart';
+import 'package:uni_hub/src/shared/crud/crud.dart';
+import 'package:uni_hub/src/shared/tags/providers/tags_providers.dart';
 import 'package:uni_hub/src/shared/tags/tag_codec.dart';
 import 'package:uni_hub/src/shared/widgets/app_confirm_dialog.dart';
 import 'package:uni_hub/src/shared/widgets/app_toast.dart';
@@ -34,9 +36,15 @@ Future<void> showThoughtTagManagementDialog({
             );
             if (newTag == null || newTag.trim() == oldTag) return;
             try {
-              final affected = await ref
-                  .read(thoughtsRepositoryProvider)
-                  .renameTag(oldTag, newTag);
+              final tagsDao = ref.read(tagsDaoProvider);
+              final tagToRename = await tagsDao.getTagByNormalizedName(oldTag);
+              if (tagToRename != null) {
+                final result = await ref
+                    .read(tagActionsControllerProvider)
+                    .renameTag(tagToRename.id, newTag);
+                if (!context.mounted) return;
+                ref.read(crudFeedbackCoordinatorProvider).handle(context, result);
+              }
               ref
                   .read(selectedTagFiltersProvider.notifier)
                   .state = renameTagInFilter(
@@ -59,28 +67,9 @@ Future<void> showThoughtTagManagementDialog({
                         return byCount != 0 ? byCount : a.key.compareTo(b.key);
                       });
               });
+            } on Exception catch (e) {
               if (context.mounted) {
-                AppToast.show(
-                  context,
-                  message: '已重命名 $affected 条想法中的标签',
-                  type: AppToastType.success,
-                );
-              }
-            } on StateError catch (error) {
-              if (context.mounted) {
-                AppToast.show(
-                  context,
-                  message: error.message,
-                  type: AppToastType.error,
-                );
-              }
-            } on ArgumentError catch (error) {
-              if (context.mounted) {
-                AppToast.show(
-                  context,
-                  message: error.message.toString(),
-                  type: AppToastType.error,
-                );
+                AppToast.show(context, message: e.toString());
               }
             }
           }
@@ -88,9 +77,16 @@ Future<void> showThoughtTagManagementDialog({
           Future<void> deleteTag(String tag) async {
             final confirmed = await _confirmDeleteTag(context, tag);
             if (!confirmed) return;
-            final affected = await ref
-                .read(thoughtsRepositoryProvider)
-                .deleteTagEverywhere(tag);
+            final tagsDao = ref.read(tagsDaoProvider);
+            final tagToDelete = await tagsDao.getTagByNormalizedName(tag);
+            if (tagToDelete != null) {
+              final result = await ref
+                  .read(tagActionsControllerProvider)
+                  .deleteTag(tagToDelete.id);
+              if (context.mounted) {
+                ref.read(crudFeedbackCoordinatorProvider).handle(context, result);
+              }
+            }
             ref.read(selectedTagFiltersProvider.notifier).state =
                 removeTagFromFilter(ref.read(selectedTagFiltersProvider), tag);
             ref.invalidate(allThoughtsProvider);
@@ -100,7 +96,7 @@ Future<void> showThoughtTagManagementDialog({
             if (context.mounted) {
               AppToast.show(
                 context,
-                message: '已从 $affected 条想法中删除标签',
+                message: '标签已删除',
                 type: AppToastType.success,
               );
             }

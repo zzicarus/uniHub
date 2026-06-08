@@ -250,7 +250,6 @@ class _ThoughtGrid extends ConsumerWidget {
             return ThoughtCard(
               id: thought.id,
               content: thought.content,
-              tags: thought.tags,
               color: thought.color,
               isPinned: thought.isPinned,
               createdAt: thought.createdAt,

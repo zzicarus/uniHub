@@ -5,6 +5,9 @@ import 'tables/enrichment_jobs_table.dart';
 import 'tables/saved_item_boxes_table.dart';
 import 'tables/saved_items_table.dart';
 import 'tables/thoughts_table.dart';
+import 'tables/saved_item_tags_table.dart';
+import 'tables/tags_table.dart';
+import 'tables/thought_tags_table.dart';
 import 'tables/website_logo_cache_table.dart';
 
 part 'app_database.g.dart';
@@ -31,6 +34,9 @@ part 'app_database.g.dart';
     CollectionBoxesTable,
     SavedItemBoxesTable,
     EnrichmentJobsTable,
+    SavedItemTagsTable,
+    TagsTable,
+    ThoughtTagsTable,
     WebsiteLogoCacheTable,
   ],
 )
@@ -50,7 +56,7 @@ class AppDatabase extends _$AppDatabase {
   ///
   /// 不再由插件最大版本号动态计算。版本迁移统一在此文件中维护。
   /// 插件中的 schemaVersion 仅作声明信息，不驱动 Drift 数据库版本。
-  static const int currentSchemaVersion = 6;
+  static const int currentSchemaVersion = 7;
 
   @override
   int get schemaVersion => currentSchemaVersion;
@@ -74,6 +80,13 @@ class AppDatabase extends _$AppDatabase {
       }
       if (from < 4) {
         await m.createTable(websiteLogoCacheTable);
+      }
+      if (from < 7) {
+        await m.createTable(tagsTable);
+        await m.createTable(thoughtTagsTable);
+        await m.createTable(savedItemTagsTable);
+        await _migrateTagsFromThoughts();
+        await m.dropColumn(thoughtsTable, 'tags');
       }
       // Custom indexes are idempotent via CREATE INDEX IF NOT EXISTS,
       // so a single call at the end handles all upgrade paths.
@@ -114,6 +127,82 @@ class AppDatabase extends _$AppDatabase {
       'CREATE INDEX IF NOT EXISTS idx_saved_item_boxes_box_item '
       'ON saved_item_boxes(box_id, item_id)',
     );
+  }
+
+  /// Migrate tags from the legacy `thoughts.tags` comma-separated column
+  /// into the new normalized [tagsTable] + [thoughtTagsTable].
+  ///
+  /// Reads every thought row, parses its tags string, normalises via
+  /// [TagCodec], deduplicates across all thoughts, inserts into
+  /// [tagsTable] with a stable color token, and links each thought to
+  /// its tags in [thoughtTagsTable].
+  ///
+  /// This runs synchronously inside the [onUpgrade] callback so the
+  /// database lock is held and no concurrent writes can race.
+  Future<void> _migrateTagsFromThoughts() async {
+    // Read the old tags column via raw SQL (it still exists in the DB
+    // during upgrade even though the Drift table definition no longer has it).
+    final tagSet = <String>{};
+    final thoughtTags = <int, Set<String>>{};
+
+    final rawRows = await customSelect('SELECT id, tags FROM thoughts_table').get();
+    for (final row in rawRows) {
+      final tagsRaw = row.read<String?>('tags');
+      if (tagsRaw == null || tagsRaw.trim().isEmpty) continue;
+      final id = row.read<int>('id');
+      if (id == null) continue;
+
+      final parsed = <String>{};
+      for (final raw in tagsRaw.split(',')) {
+        final normalized = raw.trim();
+        if (normalized.isEmpty) continue;
+        tagSet.add(normalized);
+        parsed.add(normalized);
+      }
+      if (parsed.isNotEmpty) {
+        thoughtTags[id] = parsed;
+      }
+    }
+
+    if (tagSet.isEmpty) return;
+    final now = DateTime.now();
+    final normalizedList = tagSet.toList()..sort();
+    final tagIdMap = <String, int>{};
+
+    for (final tagName in normalizedList) {
+      final id = await into(tagsTable).insert(
+        TagsTableCompanion(
+          name: Value(tagName),
+          normalizedName: Value(tagName.toLowerCase()),
+          colorToken: Value(_assignColorToken(tagName)),
+          createdAt: Value(now),
+          updatedAt: Value(now),
+        ),
+      );
+      tagIdMap[tagName] = id;
+    }
+
+    // 3. Link thoughts to tags.
+    for (final entry in thoughtTags.entries) {
+      for (final tagName in entry.value) {
+        final tagId = tagIdMap[tagName];
+        if (tagId == null) continue;
+        await into(thoughtTagsTable).insert(
+          ThoughtTagsTableCompanion(
+            thoughtId: Value(entry.key),
+            tagId: Value(tagId),
+            createdAt: Value(now),
+          ),
+          mode: InsertMode.insertOrIgnore,
+        );
+      }
+    }
+  }
+
+  /// Assign a stable [TagColorToken] based on the hash of [name].
+  int _assignColorToken(String name) {
+    final int hash = name.toLowerCase().hashCode.abs();
+    return hash % 7; // 7 = TagColorToken.values.length
   }
 
   /// 验证插件声明的表类型与数据库实际注册表一致。

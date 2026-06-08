@@ -180,9 +180,12 @@ class CollectionFolderSidebar extends ConsumerWidget {
     BuildContext context,
     WidgetRef ref,
   ) async {
+    final boxes = ref.read(collectionBoxesProvider).valueOrNull ?? const [];
     final name = await showDialog<String>(
       context: context,
-      builder: (_) => const CreateCollectionFolderDialog(),
+      builder: (_) => CreateCollectionFolderDialog(
+        existingNames: boxes.map((box) => box.name),
+      ),
     );
 
     if (name == null || name.isEmpty) return;

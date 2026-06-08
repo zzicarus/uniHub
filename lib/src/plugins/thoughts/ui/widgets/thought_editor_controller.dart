@@ -23,6 +23,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uni_hub/src/shared/crud/crud.dart';
 import 'package:uni_hub/src/shared/editor/appflowy_document_tools.dart';
 import 'package:uni_hub/src/shared/editor/appflowy_thought_editor.dart';
+import 'package:uni_hub/src/shared/tags/providers/tags_providers.dart';
 import 'package:uni_hub/src/shared/tags/tag_codec.dart';
 import 'package:uni_hub/src/shared/widgets/app_confirm_dialog.dart';
 
@@ -183,8 +184,10 @@ class ThoughtEditorController {
     plainText = ThoughtContentCodec.plainTextFromStored(thought.content);
     documentJson ??= AppFlowyDocumentTools.emptyDocumentJson();
 
-    // 加载标签。
-    _tags = TagCodec.parseCommaSeparated(thought.tags).toSet();
+    // 加载标签（从新标签关系表）。
+    final tagsDao = ref.read(tagsDaoProvider);
+    final appTags = await tagsDao.getTagsForThought(thoughtId);
+    _tags = appTags.map((t) => t.name).toSet();
 
     // 图片：从 document JSON 提取 imageRefs（唯一真相源）。
     imageRefs = ThoughtImageBlockCodec.extractImageRefs(documentJson!);
@@ -209,22 +212,45 @@ class ThoughtEditorController {
     if (!isDirty || !isLoaded) return;
 
     final repo = ref.read(thoughtsRepositoryProvider);
-    final tags = TagCodec.encodeCommaSeparated(_tags);
 
     // imagePaths 从 imageRefs（文档中的 image block）派生。
     final paths = imageRefs.map((e) => e.path).toList();
 
+    // Save the thought content.
     await repo.updateThought(
       thoughtId,
       content: ThoughtContentCodec.encodeAppFlowy(
         document: documentJson ?? AppFlowyDocumentTools.emptyDocumentJson(),
         plainText: plainText,
       ),
-      tags: tags,
       color: selectedColor,
       isPinned: isPinned,
       imagePaths: ThoughtImageService.encodeImagePaths(paths),
     );
+
+    // Sync tags via the new tag system.
+    final tagActions = ref.read(tagActionsControllerProvider);
+    final tagsDao = ref.read(tagsDaoProvider);
+    final currentTags = await tagsDao.getTagsForThought(thoughtId);
+    final currentSet = currentTags.map((t) => t.name).toSet();
+    final newSet = _tags;
+
+    // Add new tags.
+    for (final tagName in newSet.difference(currentSet)) {
+      unawaited(tagActions.addTagToThought(
+        thoughtId: thoughtId,
+        tagName: tagName,
+      ));
+    }
+    // Remove de-selected tags.
+    for (final existingTag in currentTags.where(
+      (t) => !newSet.contains(t.name),
+    )) {
+      unawaited(tagActions.removeTagFromThought(
+        thoughtId: thoughtId,
+        tagId: existingTag.id,
+      ));
+    }
 
     ref.invalidate(thoughtProvider(thoughtId));
     ref.invalidate(allThoughtsProvider);

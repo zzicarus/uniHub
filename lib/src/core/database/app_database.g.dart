@@ -33,15 +33,6 @@ class $ThoughtsTableTable extends ThoughtsTable
     type: DriftSqlType.string,
     requiredDuringInsert: true,
   );
-  static const VerificationMeta _tagsMeta = const VerificationMeta('tags');
-  @override
-  late final GeneratedColumn<String> tags = GeneratedColumn<String>(
-    'tags',
-    aliasedName,
-    true,
-    type: DriftSqlType.string,
-    requiredDuringInsert: false,
-  );
   static const VerificationMeta _colorMeta = const VerificationMeta('color');
   @override
   late final GeneratedColumn<String> color = GeneratedColumn<String>(
@@ -114,7 +105,6 @@ class $ThoughtsTableTable extends ThoughtsTable
   List<GeneratedColumn> get $columns => [
     id,
     content,
-    tags,
     color,
     isPinned,
     createdAt,
@@ -144,12 +134,6 @@ class $ThoughtsTableTable extends ThoughtsTable
       );
     } else if (isInserting) {
       context.missing(_contentMeta);
-    }
-    if (data.containsKey('tags')) {
-      context.handle(
-        _tagsMeta,
-        tags.isAcceptableOrUnknown(data['tags']!, _tagsMeta),
-      );
     }
     if (data.containsKey('color')) {
       context.handle(
@@ -208,10 +192,6 @@ class $ThoughtsTableTable extends ThoughtsTable
         DriftSqlType.string,
         data['${effectivePrefix}content'],
       )!,
-      tags: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}tags'],
-      ),
       color: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}color'],
@@ -249,7 +229,6 @@ class ThoughtsTableData extends DataClass
     implements Insertable<ThoughtsTableData> {
   final int id;
   final String content;
-  final String? tags;
   final String? color;
   final bool isPinned;
   final DateTime createdAt;
@@ -259,7 +238,6 @@ class ThoughtsTableData extends DataClass
   const ThoughtsTableData({
     required this.id,
     required this.content,
-    this.tags,
     this.color,
     required this.isPinned,
     required this.createdAt,
@@ -272,9 +250,6 @@ class ThoughtsTableData extends DataClass
     final map = <String, Expression>{};
     map['id'] = Variable<int>(id);
     map['content'] = Variable<String>(content);
-    if (!nullToAbsent || tags != null) {
-      map['tags'] = Variable<String>(tags);
-    }
     if (!nullToAbsent || color != null) {
       map['color'] = Variable<String>(color);
     }
@@ -294,7 +269,6 @@ class ThoughtsTableData extends DataClass
     return ThoughtsTableCompanion(
       id: Value(id),
       content: Value(content),
-      tags: tags == null && nullToAbsent ? const Value.absent() : Value(tags),
       color: color == null && nullToAbsent
           ? const Value.absent()
           : Value(color),
@@ -318,7 +292,6 @@ class ThoughtsTableData extends DataClass
     return ThoughtsTableData(
       id: serializer.fromJson<int>(json['id']),
       content: serializer.fromJson<String>(json['content']),
-      tags: serializer.fromJson<String?>(json['tags']),
       color: serializer.fromJson<String?>(json['color']),
       isPinned: serializer.fromJson<bool>(json['isPinned']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
@@ -333,7 +306,6 @@ class ThoughtsTableData extends DataClass
     return <String, dynamic>{
       'id': serializer.toJson<int>(id),
       'content': serializer.toJson<String>(content),
-      'tags': serializer.toJson<String?>(tags),
       'color': serializer.toJson<String?>(color),
       'isPinned': serializer.toJson<bool>(isPinned),
       'createdAt': serializer.toJson<DateTime>(createdAt),
@@ -346,7 +318,6 @@ class ThoughtsTableData extends DataClass
   ThoughtsTableData copyWith({
     int? id,
     String? content,
-    Value<String?> tags = const Value.absent(),
     Value<String?> color = const Value.absent(),
     bool? isPinned,
     DateTime? createdAt,
@@ -356,7 +327,6 @@ class ThoughtsTableData extends DataClass
   }) => ThoughtsTableData(
     id: id ?? this.id,
     content: content ?? this.content,
-    tags: tags.present ? tags.value : this.tags,
     color: color.present ? color.value : this.color,
     isPinned: isPinned ?? this.isPinned,
     createdAt: createdAt ?? this.createdAt,
@@ -368,7 +338,6 @@ class ThoughtsTableData extends DataClass
     return ThoughtsTableData(
       id: data.id.present ? data.id.value : this.id,
       content: data.content.present ? data.content.value : this.content,
-      tags: data.tags.present ? data.tags.value : this.tags,
       color: data.color.present ? data.color.value : this.color,
       isPinned: data.isPinned.present ? data.isPinned.value : this.isPinned,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
@@ -387,7 +356,6 @@ class ThoughtsTableData extends DataClass
     return (StringBuffer('ThoughtsTableData(')
           ..write('id: $id, ')
           ..write('content: $content, ')
-          ..write('tags: $tags, ')
           ..write('color: $color, ')
           ..write('isPinned: $isPinned, ')
           ..write('createdAt: $createdAt, ')
@@ -402,7 +370,6 @@ class ThoughtsTableData extends DataClass
   int get hashCode => Object.hash(
     id,
     content,
-    tags,
     color,
     isPinned,
     createdAt,
@@ -416,7 +383,6 @@ class ThoughtsTableData extends DataClass
       (other is ThoughtsTableData &&
           other.id == this.id &&
           other.content == this.content &&
-          other.tags == this.tags &&
           other.color == this.color &&
           other.isPinned == this.isPinned &&
           other.createdAt == this.createdAt &&
@@ -428,7 +394,6 @@ class ThoughtsTableData extends DataClass
 class ThoughtsTableCompanion extends UpdateCompanion<ThoughtsTableData> {
   final Value<int> id;
   final Value<String> content;
-  final Value<String?> tags;
   final Value<String?> color;
   final Value<bool> isPinned;
   final Value<DateTime> createdAt;
@@ -438,7 +403,6 @@ class ThoughtsTableCompanion extends UpdateCompanion<ThoughtsTableData> {
   const ThoughtsTableCompanion({
     this.id = const Value.absent(),
     this.content = const Value.absent(),
-    this.tags = const Value.absent(),
     this.color = const Value.absent(),
     this.isPinned = const Value.absent(),
     this.createdAt = const Value.absent(),
@@ -449,7 +413,6 @@ class ThoughtsTableCompanion extends UpdateCompanion<ThoughtsTableData> {
   ThoughtsTableCompanion.insert({
     this.id = const Value.absent(),
     required String content,
-    this.tags = const Value.absent(),
     this.color = const Value.absent(),
     this.isPinned = const Value.absent(),
     required DateTime createdAt,
@@ -462,7 +425,6 @@ class ThoughtsTableCompanion extends UpdateCompanion<ThoughtsTableData> {
   static Insertable<ThoughtsTableData> custom({
     Expression<int>? id,
     Expression<String>? content,
-    Expression<String>? tags,
     Expression<String>? color,
     Expression<bool>? isPinned,
     Expression<DateTime>? createdAt,
@@ -473,7 +435,6 @@ class ThoughtsTableCompanion extends UpdateCompanion<ThoughtsTableData> {
     return RawValuesInsertable({
       if (id != null) 'id': id,
       if (content != null) 'content': content,
-      if (tags != null) 'tags': tags,
       if (color != null) 'color': color,
       if (isPinned != null) 'is_pinned': isPinned,
       if (createdAt != null) 'created_at': createdAt,
@@ -486,7 +447,6 @@ class ThoughtsTableCompanion extends UpdateCompanion<ThoughtsTableData> {
   ThoughtsTableCompanion copyWith({
     Value<int>? id,
     Value<String>? content,
-    Value<String?>? tags,
     Value<String?>? color,
     Value<bool>? isPinned,
     Value<DateTime>? createdAt,
@@ -497,7 +457,6 @@ class ThoughtsTableCompanion extends UpdateCompanion<ThoughtsTableData> {
     return ThoughtsTableCompanion(
       id: id ?? this.id,
       content: content ?? this.content,
-      tags: tags ?? this.tags,
       color: color ?? this.color,
       isPinned: isPinned ?? this.isPinned,
       createdAt: createdAt ?? this.createdAt,
@@ -515,9 +474,6 @@ class ThoughtsTableCompanion extends UpdateCompanion<ThoughtsTableData> {
     }
     if (content.present) {
       map['content'] = Variable<String>(content.value);
-    }
-    if (tags.present) {
-      map['tags'] = Variable<String>(tags.value);
     }
     if (color.present) {
       map['color'] = Variable<String>(color.value);
@@ -545,7 +501,6 @@ class ThoughtsTableCompanion extends UpdateCompanion<ThoughtsTableData> {
     return (StringBuffer('ThoughtsTableCompanion(')
           ..write('id: $id, ')
           ..write('content: $content, ')
-          ..write('tags: $tags, ')
           ..write('color: $color, ')
           ..write('isPinned: $isPinned, ')
           ..write('createdAt: $createdAt, ')
@@ -3073,6 +3028,1022 @@ class EnrichmentJobsTableCompanion
   }
 }
 
+class $SavedItemTagsTableTable extends SavedItemTagsTable
+    with TableInfo<$SavedItemTagsTableTable, SavedItemTagsTableData> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $SavedItemTagsTableTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+    'id',
+    aliasedName,
+    false,
+    hasAutoIncrement: true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'PRIMARY KEY AUTOINCREMENT',
+    ),
+  );
+  static const VerificationMeta _savedItemIdMeta = const VerificationMeta(
+    'savedItemId',
+  );
+  @override
+  late final GeneratedColumn<int> savedItemId = GeneratedColumn<int>(
+    'saved_item_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _tagIdMeta = const VerificationMeta('tagId');
+  @override
+  late final GeneratedColumn<int> tagId = GeneratedColumn<int>(
+    'tag_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+    'created_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [id, savedItemId, tagId, createdAt];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'saved_item_tags';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<SavedItemTagsTableData> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('saved_item_id')) {
+      context.handle(
+        _savedItemIdMeta,
+        savedItemId.isAcceptableOrUnknown(
+          data['saved_item_id']!,
+          _savedItemIdMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_savedItemIdMeta);
+    }
+    if (data.containsKey('tag_id')) {
+      context.handle(
+        _tagIdMeta,
+        tagId.isAcceptableOrUnknown(data['tag_id']!, _tagIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_tagIdMeta);
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_createdAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  List<Set<GeneratedColumn>> get uniqueKeys => [
+    {savedItemId, tagId},
+  ];
+  @override
+  SavedItemTagsTableData map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return SavedItemTagsTableData(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}id'],
+      )!,
+      savedItemId: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}saved_item_id'],
+      )!,
+      tagId: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}tag_id'],
+      )!,
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}created_at'],
+      )!,
+    );
+  }
+
+  @override
+  $SavedItemTagsTableTable createAlias(String alias) {
+    return $SavedItemTagsTableTable(attachedDatabase, alias);
+  }
+}
+
+class SavedItemTagsTableData extends DataClass
+    implements Insertable<SavedItemTagsTableData> {
+  final int id;
+  final int savedItemId;
+  final int tagId;
+  final DateTime createdAt;
+  const SavedItemTagsTableData({
+    required this.id,
+    required this.savedItemId,
+    required this.tagId,
+    required this.createdAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['saved_item_id'] = Variable<int>(savedItemId);
+    map['tag_id'] = Variable<int>(tagId);
+    map['created_at'] = Variable<DateTime>(createdAt);
+    return map;
+  }
+
+  SavedItemTagsTableCompanion toCompanion(bool nullToAbsent) {
+    return SavedItemTagsTableCompanion(
+      id: Value(id),
+      savedItemId: Value(savedItemId),
+      tagId: Value(tagId),
+      createdAt: Value(createdAt),
+    );
+  }
+
+  factory SavedItemTagsTableData.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return SavedItemTagsTableData(
+      id: serializer.fromJson<int>(json['id']),
+      savedItemId: serializer.fromJson<int>(json['savedItemId']),
+      tagId: serializer.fromJson<int>(json['tagId']),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'savedItemId': serializer.toJson<int>(savedItemId),
+      'tagId': serializer.toJson<int>(tagId),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+    };
+  }
+
+  SavedItemTagsTableData copyWith({
+    int? id,
+    int? savedItemId,
+    int? tagId,
+    DateTime? createdAt,
+  }) => SavedItemTagsTableData(
+    id: id ?? this.id,
+    savedItemId: savedItemId ?? this.savedItemId,
+    tagId: tagId ?? this.tagId,
+    createdAt: createdAt ?? this.createdAt,
+  );
+  SavedItemTagsTableData copyWithCompanion(SavedItemTagsTableCompanion data) {
+    return SavedItemTagsTableData(
+      id: data.id.present ? data.id.value : this.id,
+      savedItemId: data.savedItemId.present
+          ? data.savedItemId.value
+          : this.savedItemId,
+      tagId: data.tagId.present ? data.tagId.value : this.tagId,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('SavedItemTagsTableData(')
+          ..write('id: $id, ')
+          ..write('savedItemId: $savedItemId, ')
+          ..write('tagId: $tagId, ')
+          ..write('createdAt: $createdAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(id, savedItemId, tagId, createdAt);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is SavedItemTagsTableData &&
+          other.id == this.id &&
+          other.savedItemId == this.savedItemId &&
+          other.tagId == this.tagId &&
+          other.createdAt == this.createdAt);
+}
+
+class SavedItemTagsTableCompanion
+    extends UpdateCompanion<SavedItemTagsTableData> {
+  final Value<int> id;
+  final Value<int> savedItemId;
+  final Value<int> tagId;
+  final Value<DateTime> createdAt;
+  const SavedItemTagsTableCompanion({
+    this.id = const Value.absent(),
+    this.savedItemId = const Value.absent(),
+    this.tagId = const Value.absent(),
+    this.createdAt = const Value.absent(),
+  });
+  SavedItemTagsTableCompanion.insert({
+    this.id = const Value.absent(),
+    required int savedItemId,
+    required int tagId,
+    required DateTime createdAt,
+  }) : savedItemId = Value(savedItemId),
+       tagId = Value(tagId),
+       createdAt = Value(createdAt);
+  static Insertable<SavedItemTagsTableData> custom({
+    Expression<int>? id,
+    Expression<int>? savedItemId,
+    Expression<int>? tagId,
+    Expression<DateTime>? createdAt,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (savedItemId != null) 'saved_item_id': savedItemId,
+      if (tagId != null) 'tag_id': tagId,
+      if (createdAt != null) 'created_at': createdAt,
+    });
+  }
+
+  SavedItemTagsTableCompanion copyWith({
+    Value<int>? id,
+    Value<int>? savedItemId,
+    Value<int>? tagId,
+    Value<DateTime>? createdAt,
+  }) {
+    return SavedItemTagsTableCompanion(
+      id: id ?? this.id,
+      savedItemId: savedItemId ?? this.savedItemId,
+      tagId: tagId ?? this.tagId,
+      createdAt: createdAt ?? this.createdAt,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (savedItemId.present) {
+      map['saved_item_id'] = Variable<int>(savedItemId.value);
+    }
+    if (tagId.present) {
+      map['tag_id'] = Variable<int>(tagId.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('SavedItemTagsTableCompanion(')
+          ..write('id: $id, ')
+          ..write('savedItemId: $savedItemId, ')
+          ..write('tagId: $tagId, ')
+          ..write('createdAt: $createdAt')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $TagsTableTable extends TagsTable
+    with TableInfo<$TagsTableTable, TagsTableData> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $TagsTableTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+    'id',
+    aliasedName,
+    false,
+    hasAutoIncrement: true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'PRIMARY KEY AUTOINCREMENT',
+    ),
+  );
+  static const VerificationMeta _nameMeta = const VerificationMeta('name');
+  @override
+  late final GeneratedColumn<String> name = GeneratedColumn<String>(
+    'name',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _normalizedNameMeta = const VerificationMeta(
+    'normalizedName',
+  );
+  @override
+  late final GeneratedColumn<String> normalizedName = GeneratedColumn<String>(
+    'normalized_name',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways('UNIQUE'),
+  );
+  static const VerificationMeta _colorTokenMeta = const VerificationMeta(
+    'colorToken',
+  );
+  @override
+  late final GeneratedColumn<int> colorToken = GeneratedColumn<int>(
+    'color_token',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+    'created_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
+    'updatedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
+    'updated_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    name,
+    normalizedName,
+    colorToken,
+    createdAt,
+    updatedAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'tags';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<TagsTableData> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('name')) {
+      context.handle(
+        _nameMeta,
+        name.isAcceptableOrUnknown(data['name']!, _nameMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_nameMeta);
+    }
+    if (data.containsKey('normalized_name')) {
+      context.handle(
+        _normalizedNameMeta,
+        normalizedName.isAcceptableOrUnknown(
+          data['normalized_name']!,
+          _normalizedNameMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_normalizedNameMeta);
+    }
+    if (data.containsKey('color_token')) {
+      context.handle(
+        _colorTokenMeta,
+        colorToken.isAcceptableOrUnknown(data['color_token']!, _colorTokenMeta),
+      );
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_createdAtMeta);
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(
+        _updatedAtMeta,
+        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_updatedAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  TagsTableData map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return TagsTableData(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}id'],
+      )!,
+      name: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}name'],
+      )!,
+      normalizedName: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}normalized_name'],
+      )!,
+      colorToken: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}color_token'],
+      )!,
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}created_at'],
+      )!,
+      updatedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}updated_at'],
+      )!,
+    );
+  }
+
+  @override
+  $TagsTableTable createAlias(String alias) {
+    return $TagsTableTable(attachedDatabase, alias);
+  }
+}
+
+class TagsTableData extends DataClass implements Insertable<TagsTableData> {
+  final int id;
+  final String name;
+  final String normalizedName;
+  final int colorToken;
+  final DateTime createdAt;
+  final DateTime updatedAt;
+  const TagsTableData({
+    required this.id,
+    required this.name,
+    required this.normalizedName,
+    required this.colorToken,
+    required this.createdAt,
+    required this.updatedAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['name'] = Variable<String>(name);
+    map['normalized_name'] = Variable<String>(normalizedName);
+    map['color_token'] = Variable<int>(colorToken);
+    map['created_at'] = Variable<DateTime>(createdAt);
+    map['updated_at'] = Variable<DateTime>(updatedAt);
+    return map;
+  }
+
+  TagsTableCompanion toCompanion(bool nullToAbsent) {
+    return TagsTableCompanion(
+      id: Value(id),
+      name: Value(name),
+      normalizedName: Value(normalizedName),
+      colorToken: Value(colorToken),
+      createdAt: Value(createdAt),
+      updatedAt: Value(updatedAt),
+    );
+  }
+
+  factory TagsTableData.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return TagsTableData(
+      id: serializer.fromJson<int>(json['id']),
+      name: serializer.fromJson<String>(json['name']),
+      normalizedName: serializer.fromJson<String>(json['normalizedName']),
+      colorToken: serializer.fromJson<int>(json['colorToken']),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+      updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'name': serializer.toJson<String>(name),
+      'normalizedName': serializer.toJson<String>(normalizedName),
+      'colorToken': serializer.toJson<int>(colorToken),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+      'updatedAt': serializer.toJson<DateTime>(updatedAt),
+    };
+  }
+
+  TagsTableData copyWith({
+    int? id,
+    String? name,
+    String? normalizedName,
+    int? colorToken,
+    DateTime? createdAt,
+    DateTime? updatedAt,
+  }) => TagsTableData(
+    id: id ?? this.id,
+    name: name ?? this.name,
+    normalizedName: normalizedName ?? this.normalizedName,
+    colorToken: colorToken ?? this.colorToken,
+    createdAt: createdAt ?? this.createdAt,
+    updatedAt: updatedAt ?? this.updatedAt,
+  );
+  TagsTableData copyWithCompanion(TagsTableCompanion data) {
+    return TagsTableData(
+      id: data.id.present ? data.id.value : this.id,
+      name: data.name.present ? data.name.value : this.name,
+      normalizedName: data.normalizedName.present
+          ? data.normalizedName.value
+          : this.normalizedName,
+      colorToken: data.colorToken.present
+          ? data.colorToken.value
+          : this.colorToken,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('TagsTableData(')
+          ..write('id: $id, ')
+          ..write('name: $name, ')
+          ..write('normalizedName: $normalizedName, ')
+          ..write('colorToken: $colorToken, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode =>
+      Object.hash(id, name, normalizedName, colorToken, createdAt, updatedAt);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is TagsTableData &&
+          other.id == this.id &&
+          other.name == this.name &&
+          other.normalizedName == this.normalizedName &&
+          other.colorToken == this.colorToken &&
+          other.createdAt == this.createdAt &&
+          other.updatedAt == this.updatedAt);
+}
+
+class TagsTableCompanion extends UpdateCompanion<TagsTableData> {
+  final Value<int> id;
+  final Value<String> name;
+  final Value<String> normalizedName;
+  final Value<int> colorToken;
+  final Value<DateTime> createdAt;
+  final Value<DateTime> updatedAt;
+  const TagsTableCompanion({
+    this.id = const Value.absent(),
+    this.name = const Value.absent(),
+    this.normalizedName = const Value.absent(),
+    this.colorToken = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+  });
+  TagsTableCompanion.insert({
+    this.id = const Value.absent(),
+    required String name,
+    required String normalizedName,
+    this.colorToken = const Value.absent(),
+    required DateTime createdAt,
+    required DateTime updatedAt,
+  }) : name = Value(name),
+       normalizedName = Value(normalizedName),
+       createdAt = Value(createdAt),
+       updatedAt = Value(updatedAt);
+  static Insertable<TagsTableData> custom({
+    Expression<int>? id,
+    Expression<String>? name,
+    Expression<String>? normalizedName,
+    Expression<int>? colorToken,
+    Expression<DateTime>? createdAt,
+    Expression<DateTime>? updatedAt,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (name != null) 'name': name,
+      if (normalizedName != null) 'normalized_name': normalizedName,
+      if (colorToken != null) 'color_token': colorToken,
+      if (createdAt != null) 'created_at': createdAt,
+      if (updatedAt != null) 'updated_at': updatedAt,
+    });
+  }
+
+  TagsTableCompanion copyWith({
+    Value<int>? id,
+    Value<String>? name,
+    Value<String>? normalizedName,
+    Value<int>? colorToken,
+    Value<DateTime>? createdAt,
+    Value<DateTime>? updatedAt,
+  }) {
+    return TagsTableCompanion(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      normalizedName: normalizedName ?? this.normalizedName,
+      colorToken: colorToken ?? this.colorToken,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (name.present) {
+      map['name'] = Variable<String>(name.value);
+    }
+    if (normalizedName.present) {
+      map['normalized_name'] = Variable<String>(normalizedName.value);
+    }
+    if (colorToken.present) {
+      map['color_token'] = Variable<int>(colorToken.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<DateTime>(updatedAt.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('TagsTableCompanion(')
+          ..write('id: $id, ')
+          ..write('name: $name, ')
+          ..write('normalizedName: $normalizedName, ')
+          ..write('colorToken: $colorToken, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $ThoughtTagsTableTable extends ThoughtTagsTable
+    with TableInfo<$ThoughtTagsTableTable, ThoughtTagsTableData> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $ThoughtTagsTableTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+    'id',
+    aliasedName,
+    false,
+    hasAutoIncrement: true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'PRIMARY KEY AUTOINCREMENT',
+    ),
+  );
+  static const VerificationMeta _thoughtIdMeta = const VerificationMeta(
+    'thoughtId',
+  );
+  @override
+  late final GeneratedColumn<int> thoughtId = GeneratedColumn<int>(
+    'thought_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _tagIdMeta = const VerificationMeta('tagId');
+  @override
+  late final GeneratedColumn<int> tagId = GeneratedColumn<int>(
+    'tag_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+    'created_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [id, thoughtId, tagId, createdAt];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'thought_tags';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<ThoughtTagsTableData> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('thought_id')) {
+      context.handle(
+        _thoughtIdMeta,
+        thoughtId.isAcceptableOrUnknown(data['thought_id']!, _thoughtIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_thoughtIdMeta);
+    }
+    if (data.containsKey('tag_id')) {
+      context.handle(
+        _tagIdMeta,
+        tagId.isAcceptableOrUnknown(data['tag_id']!, _tagIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_tagIdMeta);
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_createdAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  List<Set<GeneratedColumn>> get uniqueKeys => [
+    {thoughtId, tagId},
+  ];
+  @override
+  ThoughtTagsTableData map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return ThoughtTagsTableData(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}id'],
+      )!,
+      thoughtId: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}thought_id'],
+      )!,
+      tagId: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}tag_id'],
+      )!,
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}created_at'],
+      )!,
+    );
+  }
+
+  @override
+  $ThoughtTagsTableTable createAlias(String alias) {
+    return $ThoughtTagsTableTable(attachedDatabase, alias);
+  }
+}
+
+class ThoughtTagsTableData extends DataClass
+    implements Insertable<ThoughtTagsTableData> {
+  final int id;
+  final int thoughtId;
+  final int tagId;
+  final DateTime createdAt;
+  const ThoughtTagsTableData({
+    required this.id,
+    required this.thoughtId,
+    required this.tagId,
+    required this.createdAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['thought_id'] = Variable<int>(thoughtId);
+    map['tag_id'] = Variable<int>(tagId);
+    map['created_at'] = Variable<DateTime>(createdAt);
+    return map;
+  }
+
+  ThoughtTagsTableCompanion toCompanion(bool nullToAbsent) {
+    return ThoughtTagsTableCompanion(
+      id: Value(id),
+      thoughtId: Value(thoughtId),
+      tagId: Value(tagId),
+      createdAt: Value(createdAt),
+    );
+  }
+
+  factory ThoughtTagsTableData.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return ThoughtTagsTableData(
+      id: serializer.fromJson<int>(json['id']),
+      thoughtId: serializer.fromJson<int>(json['thoughtId']),
+      tagId: serializer.fromJson<int>(json['tagId']),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'thoughtId': serializer.toJson<int>(thoughtId),
+      'tagId': serializer.toJson<int>(tagId),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+    };
+  }
+
+  ThoughtTagsTableData copyWith({
+    int? id,
+    int? thoughtId,
+    int? tagId,
+    DateTime? createdAt,
+  }) => ThoughtTagsTableData(
+    id: id ?? this.id,
+    thoughtId: thoughtId ?? this.thoughtId,
+    tagId: tagId ?? this.tagId,
+    createdAt: createdAt ?? this.createdAt,
+  );
+  ThoughtTagsTableData copyWithCompanion(ThoughtTagsTableCompanion data) {
+    return ThoughtTagsTableData(
+      id: data.id.present ? data.id.value : this.id,
+      thoughtId: data.thoughtId.present ? data.thoughtId.value : this.thoughtId,
+      tagId: data.tagId.present ? data.tagId.value : this.tagId,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ThoughtTagsTableData(')
+          ..write('id: $id, ')
+          ..write('thoughtId: $thoughtId, ')
+          ..write('tagId: $tagId, ')
+          ..write('createdAt: $createdAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(id, thoughtId, tagId, createdAt);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is ThoughtTagsTableData &&
+          other.id == this.id &&
+          other.thoughtId == this.thoughtId &&
+          other.tagId == this.tagId &&
+          other.createdAt == this.createdAt);
+}
+
+class ThoughtTagsTableCompanion extends UpdateCompanion<ThoughtTagsTableData> {
+  final Value<int> id;
+  final Value<int> thoughtId;
+  final Value<int> tagId;
+  final Value<DateTime> createdAt;
+  const ThoughtTagsTableCompanion({
+    this.id = const Value.absent(),
+    this.thoughtId = const Value.absent(),
+    this.tagId = const Value.absent(),
+    this.createdAt = const Value.absent(),
+  });
+  ThoughtTagsTableCompanion.insert({
+    this.id = const Value.absent(),
+    required int thoughtId,
+    required int tagId,
+    required DateTime createdAt,
+  }) : thoughtId = Value(thoughtId),
+       tagId = Value(tagId),
+       createdAt = Value(createdAt);
+  static Insertable<ThoughtTagsTableData> custom({
+    Expression<int>? id,
+    Expression<int>? thoughtId,
+    Expression<int>? tagId,
+    Expression<DateTime>? createdAt,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (thoughtId != null) 'thought_id': thoughtId,
+      if (tagId != null) 'tag_id': tagId,
+      if (createdAt != null) 'created_at': createdAt,
+    });
+  }
+
+  ThoughtTagsTableCompanion copyWith({
+    Value<int>? id,
+    Value<int>? thoughtId,
+    Value<int>? tagId,
+    Value<DateTime>? createdAt,
+  }) {
+    return ThoughtTagsTableCompanion(
+      id: id ?? this.id,
+      thoughtId: thoughtId ?? this.thoughtId,
+      tagId: tagId ?? this.tagId,
+      createdAt: createdAt ?? this.createdAt,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (thoughtId.present) {
+      map['thought_id'] = Variable<int>(thoughtId.value);
+    }
+    if (tagId.present) {
+      map['tag_id'] = Variable<int>(tagId.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ThoughtTagsTableCompanion(')
+          ..write('id: $id, ')
+          ..write('thoughtId: $thoughtId, ')
+          ..write('tagId: $tagId, ')
+          ..write('createdAt: $createdAt')
+          ..write(')'))
+        .toString();
+  }
+}
+
 class $WebsiteLogoCacheTableTable extends WebsiteLogoCacheTable
     with TableInfo<$WebsiteLogoCacheTableTable, WebsiteLogoCacheTableData> {
   @override
@@ -3820,6 +4791,12 @@ abstract class _$AppDatabase extends GeneratedDatabase {
       $SavedItemBoxesTableTable(this);
   late final $EnrichmentJobsTableTable enrichmentJobsTable =
       $EnrichmentJobsTableTable(this);
+  late final $SavedItemTagsTableTable savedItemTagsTable =
+      $SavedItemTagsTableTable(this);
+  late final $TagsTableTable tagsTable = $TagsTableTable(this);
+  late final $ThoughtTagsTableTable thoughtTagsTable = $ThoughtTagsTableTable(
+    this,
+  );
   late final $WebsiteLogoCacheTableTable websiteLogoCacheTable =
       $WebsiteLogoCacheTableTable(this);
   @override
@@ -3832,6 +4809,9 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     collectionBoxesTable,
     savedItemBoxesTable,
     enrichmentJobsTable,
+    savedItemTagsTable,
+    tagsTable,
+    thoughtTagsTable,
     websiteLogoCacheTable,
   ];
 }
@@ -3840,7 +4820,6 @@ typedef $$ThoughtsTableTableCreateCompanionBuilder =
     ThoughtsTableCompanion Function({
       Value<int> id,
       required String content,
-      Value<String?> tags,
       Value<String?> color,
       Value<bool> isPinned,
       required DateTime createdAt,
@@ -3852,7 +4831,6 @@ typedef $$ThoughtsTableTableUpdateCompanionBuilder =
     ThoughtsTableCompanion Function({
       Value<int> id,
       Value<String> content,
-      Value<String?> tags,
       Value<String?> color,
       Value<bool> isPinned,
       Value<DateTime> createdAt,
@@ -3877,11 +4855,6 @@ class $$ThoughtsTableTableFilterComposer
 
   ColumnFilters<String> get content => $composableBuilder(
     column: $table.content,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<String> get tags => $composableBuilder(
-    column: $table.tags,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -3935,11 +4908,6 @@ class $$ThoughtsTableTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
-  ColumnOrderings<String> get tags => $composableBuilder(
-    column: $table.tags,
-    builder: (column) => ColumnOrderings(column),
-  );
-
   ColumnOrderings<String> get color => $composableBuilder(
     column: $table.color,
     builder: (column) => ColumnOrderings(column),
@@ -3985,9 +4953,6 @@ class $$ThoughtsTableTableAnnotationComposer
 
   GeneratedColumn<String> get content =>
       $composableBuilder(column: $table.content, builder: (column) => column);
-
-  GeneratedColumn<String> get tags =>
-      $composableBuilder(column: $table.tags, builder: (column) => column);
 
   GeneratedColumn<String> get color =>
       $composableBuilder(column: $table.color, builder: (column) => column);
@@ -4049,7 +5014,6 @@ class $$ThoughtsTableTableTableManager
               ({
                 Value<int> id = const Value.absent(),
                 Value<String> content = const Value.absent(),
-                Value<String?> tags = const Value.absent(),
                 Value<String?> color = const Value.absent(),
                 Value<bool> isPinned = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
@@ -4059,7 +5023,6 @@ class $$ThoughtsTableTableTableManager
               }) => ThoughtsTableCompanion(
                 id: id,
                 content: content,
-                tags: tags,
                 color: color,
                 isPinned: isPinned,
                 createdAt: createdAt,
@@ -4071,7 +5034,6 @@ class $$ThoughtsTableTableTableManager
               ({
                 Value<int> id = const Value.absent(),
                 required String content,
-                Value<String?> tags = const Value.absent(),
                 Value<String?> color = const Value.absent(),
                 Value<bool> isPinned = const Value.absent(),
                 required DateTime createdAt,
@@ -4081,7 +5043,6 @@ class $$ThoughtsTableTableTableManager
               }) => ThoughtsTableCompanion.insert(
                 id: id,
                 content: content,
-                tags: tags,
                 color: color,
                 isPinned: isPinned,
                 createdAt: createdAt,
@@ -5381,6 +6342,598 @@ typedef $$EnrichmentJobsTableTableProcessedTableManager =
       EnrichmentJobsTableData,
       PrefetchHooks Function()
     >;
+typedef $$SavedItemTagsTableTableCreateCompanionBuilder =
+    SavedItemTagsTableCompanion Function({
+      Value<int> id,
+      required int savedItemId,
+      required int tagId,
+      required DateTime createdAt,
+    });
+typedef $$SavedItemTagsTableTableUpdateCompanionBuilder =
+    SavedItemTagsTableCompanion Function({
+      Value<int> id,
+      Value<int> savedItemId,
+      Value<int> tagId,
+      Value<DateTime> createdAt,
+    });
+
+class $$SavedItemTagsTableTableFilterComposer
+    extends Composer<_$AppDatabase, $SavedItemTagsTableTable> {
+  $$SavedItemTagsTableTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get savedItemId => $composableBuilder(
+    column: $table.savedItemId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get tagId => $composableBuilder(
+    column: $table.tagId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$SavedItemTagsTableTableOrderingComposer
+    extends Composer<_$AppDatabase, $SavedItemTagsTableTable> {
+  $$SavedItemTagsTableTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get savedItemId => $composableBuilder(
+    column: $table.savedItemId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get tagId => $composableBuilder(
+    column: $table.tagId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$SavedItemTagsTableTableAnnotationComposer
+    extends Composer<_$AppDatabase, $SavedItemTagsTableTable> {
+  $$SavedItemTagsTableTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<int> get savedItemId => $composableBuilder(
+    column: $table.savedItemId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get tagId =>
+      $composableBuilder(column: $table.tagId, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+}
+
+class $$SavedItemTagsTableTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $SavedItemTagsTableTable,
+          SavedItemTagsTableData,
+          $$SavedItemTagsTableTableFilterComposer,
+          $$SavedItemTagsTableTableOrderingComposer,
+          $$SavedItemTagsTableTableAnnotationComposer,
+          $$SavedItemTagsTableTableCreateCompanionBuilder,
+          $$SavedItemTagsTableTableUpdateCompanionBuilder,
+          (
+            SavedItemTagsTableData,
+            BaseReferences<
+              _$AppDatabase,
+              $SavedItemTagsTableTable,
+              SavedItemTagsTableData
+            >,
+          ),
+          SavedItemTagsTableData,
+          PrefetchHooks Function()
+        > {
+  $$SavedItemTagsTableTableTableManager(
+    _$AppDatabase db,
+    $SavedItemTagsTableTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$SavedItemTagsTableTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$SavedItemTagsTableTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$SavedItemTagsTableTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<int> savedItemId = const Value.absent(),
+                Value<int> tagId = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+              }) => SavedItemTagsTableCompanion(
+                id: id,
+                savedItemId: savedItemId,
+                tagId: tagId,
+                createdAt: createdAt,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                required int savedItemId,
+                required int tagId,
+                required DateTime createdAt,
+              }) => SavedItemTagsTableCompanion.insert(
+                id: id,
+                savedItemId: savedItemId,
+                tagId: tagId,
+                createdAt: createdAt,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$SavedItemTagsTableTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $SavedItemTagsTableTable,
+      SavedItemTagsTableData,
+      $$SavedItemTagsTableTableFilterComposer,
+      $$SavedItemTagsTableTableOrderingComposer,
+      $$SavedItemTagsTableTableAnnotationComposer,
+      $$SavedItemTagsTableTableCreateCompanionBuilder,
+      $$SavedItemTagsTableTableUpdateCompanionBuilder,
+      (
+        SavedItemTagsTableData,
+        BaseReferences<
+          _$AppDatabase,
+          $SavedItemTagsTableTable,
+          SavedItemTagsTableData
+        >,
+      ),
+      SavedItemTagsTableData,
+      PrefetchHooks Function()
+    >;
+typedef $$TagsTableTableCreateCompanionBuilder =
+    TagsTableCompanion Function({
+      Value<int> id,
+      required String name,
+      required String normalizedName,
+      Value<int> colorToken,
+      required DateTime createdAt,
+      required DateTime updatedAt,
+    });
+typedef $$TagsTableTableUpdateCompanionBuilder =
+    TagsTableCompanion Function({
+      Value<int> id,
+      Value<String> name,
+      Value<String> normalizedName,
+      Value<int> colorToken,
+      Value<DateTime> createdAt,
+      Value<DateTime> updatedAt,
+    });
+
+class $$TagsTableTableFilterComposer
+    extends Composer<_$AppDatabase, $TagsTableTable> {
+  $$TagsTableTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get name => $composableBuilder(
+    column: $table.name,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get normalizedName => $composableBuilder(
+    column: $table.normalizedName,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get colorToken => $composableBuilder(
+    column: $table.colorToken,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$TagsTableTableOrderingComposer
+    extends Composer<_$AppDatabase, $TagsTableTable> {
+  $$TagsTableTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get name => $composableBuilder(
+    column: $table.name,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get normalizedName => $composableBuilder(
+    column: $table.normalizedName,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get colorToken => $composableBuilder(
+    column: $table.colorToken,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$TagsTableTableAnnotationComposer
+    extends Composer<_$AppDatabase, $TagsTableTable> {
+  $$TagsTableTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get name =>
+      $composableBuilder(column: $table.name, builder: (column) => column);
+
+  GeneratedColumn<String> get normalizedName => $composableBuilder(
+    column: $table.normalizedName,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get colorToken => $composableBuilder(
+    column: $table.colorToken,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+}
+
+class $$TagsTableTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $TagsTableTable,
+          TagsTableData,
+          $$TagsTableTableFilterComposer,
+          $$TagsTableTableOrderingComposer,
+          $$TagsTableTableAnnotationComposer,
+          $$TagsTableTableCreateCompanionBuilder,
+          $$TagsTableTableUpdateCompanionBuilder,
+          (
+            TagsTableData,
+            BaseReferences<_$AppDatabase, $TagsTableTable, TagsTableData>,
+          ),
+          TagsTableData,
+          PrefetchHooks Function()
+        > {
+  $$TagsTableTableTableManager(_$AppDatabase db, $TagsTableTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$TagsTableTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$TagsTableTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$TagsTableTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<String> name = const Value.absent(),
+                Value<String> normalizedName = const Value.absent(),
+                Value<int> colorToken = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+                Value<DateTime> updatedAt = const Value.absent(),
+              }) => TagsTableCompanion(
+                id: id,
+                name: name,
+                normalizedName: normalizedName,
+                colorToken: colorToken,
+                createdAt: createdAt,
+                updatedAt: updatedAt,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                required String name,
+                required String normalizedName,
+                Value<int> colorToken = const Value.absent(),
+                required DateTime createdAt,
+                required DateTime updatedAt,
+              }) => TagsTableCompanion.insert(
+                id: id,
+                name: name,
+                normalizedName: normalizedName,
+                colorToken: colorToken,
+                createdAt: createdAt,
+                updatedAt: updatedAt,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$TagsTableTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $TagsTableTable,
+      TagsTableData,
+      $$TagsTableTableFilterComposer,
+      $$TagsTableTableOrderingComposer,
+      $$TagsTableTableAnnotationComposer,
+      $$TagsTableTableCreateCompanionBuilder,
+      $$TagsTableTableUpdateCompanionBuilder,
+      (
+        TagsTableData,
+        BaseReferences<_$AppDatabase, $TagsTableTable, TagsTableData>,
+      ),
+      TagsTableData,
+      PrefetchHooks Function()
+    >;
+typedef $$ThoughtTagsTableTableCreateCompanionBuilder =
+    ThoughtTagsTableCompanion Function({
+      Value<int> id,
+      required int thoughtId,
+      required int tagId,
+      required DateTime createdAt,
+    });
+typedef $$ThoughtTagsTableTableUpdateCompanionBuilder =
+    ThoughtTagsTableCompanion Function({
+      Value<int> id,
+      Value<int> thoughtId,
+      Value<int> tagId,
+      Value<DateTime> createdAt,
+    });
+
+class $$ThoughtTagsTableTableFilterComposer
+    extends Composer<_$AppDatabase, $ThoughtTagsTableTable> {
+  $$ThoughtTagsTableTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get thoughtId => $composableBuilder(
+    column: $table.thoughtId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get tagId => $composableBuilder(
+    column: $table.tagId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$ThoughtTagsTableTableOrderingComposer
+    extends Composer<_$AppDatabase, $ThoughtTagsTableTable> {
+  $$ThoughtTagsTableTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get thoughtId => $composableBuilder(
+    column: $table.thoughtId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get tagId => $composableBuilder(
+    column: $table.tagId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$ThoughtTagsTableTableAnnotationComposer
+    extends Composer<_$AppDatabase, $ThoughtTagsTableTable> {
+  $$ThoughtTagsTableTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<int> get thoughtId =>
+      $composableBuilder(column: $table.thoughtId, builder: (column) => column);
+
+  GeneratedColumn<int> get tagId =>
+      $composableBuilder(column: $table.tagId, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+}
+
+class $$ThoughtTagsTableTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $ThoughtTagsTableTable,
+          ThoughtTagsTableData,
+          $$ThoughtTagsTableTableFilterComposer,
+          $$ThoughtTagsTableTableOrderingComposer,
+          $$ThoughtTagsTableTableAnnotationComposer,
+          $$ThoughtTagsTableTableCreateCompanionBuilder,
+          $$ThoughtTagsTableTableUpdateCompanionBuilder,
+          (
+            ThoughtTagsTableData,
+            BaseReferences<
+              _$AppDatabase,
+              $ThoughtTagsTableTable,
+              ThoughtTagsTableData
+            >,
+          ),
+          ThoughtTagsTableData,
+          PrefetchHooks Function()
+        > {
+  $$ThoughtTagsTableTableTableManager(
+    _$AppDatabase db,
+    $ThoughtTagsTableTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$ThoughtTagsTableTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$ThoughtTagsTableTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$ThoughtTagsTableTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<int> thoughtId = const Value.absent(),
+                Value<int> tagId = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+              }) => ThoughtTagsTableCompanion(
+                id: id,
+                thoughtId: thoughtId,
+                tagId: tagId,
+                createdAt: createdAt,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                required int thoughtId,
+                required int tagId,
+                required DateTime createdAt,
+              }) => ThoughtTagsTableCompanion.insert(
+                id: id,
+                thoughtId: thoughtId,
+                tagId: tagId,
+                createdAt: createdAt,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$ThoughtTagsTableTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $ThoughtTagsTableTable,
+      ThoughtTagsTableData,
+      $$ThoughtTagsTableTableFilterComposer,
+      $$ThoughtTagsTableTableOrderingComposer,
+      $$ThoughtTagsTableTableAnnotationComposer,
+      $$ThoughtTagsTableTableCreateCompanionBuilder,
+      $$ThoughtTagsTableTableUpdateCompanionBuilder,
+      (
+        ThoughtTagsTableData,
+        BaseReferences<
+          _$AppDatabase,
+          $ThoughtTagsTableTable,
+          ThoughtTagsTableData
+        >,
+      ),
+      ThoughtTagsTableData,
+      PrefetchHooks Function()
+    >;
 typedef $$WebsiteLogoCacheTableTableCreateCompanionBuilder =
     WebsiteLogoCacheTableCompanion Function({
       Value<int> id,
@@ -5745,6 +7298,12 @@ class $AppDatabaseManager {
       $$SavedItemBoxesTableTableTableManager(_db, _db.savedItemBoxesTable);
   $$EnrichmentJobsTableTableTableManager get enrichmentJobsTable =>
       $$EnrichmentJobsTableTableTableManager(_db, _db.enrichmentJobsTable);
+  $$SavedItemTagsTableTableTableManager get savedItemTagsTable =>
+      $$SavedItemTagsTableTableTableManager(_db, _db.savedItemTagsTable);
+  $$TagsTableTableTableManager get tagsTable =>
+      $$TagsTableTableTableManager(_db, _db.tagsTable);
+  $$ThoughtTagsTableTableTableManager get thoughtTagsTable =>
+      $$ThoughtTagsTableTableTableManager(_db, _db.thoughtTagsTable);
   $$WebsiteLogoCacheTableTableTableManager get websiteLogoCacheTable =>
       $$WebsiteLogoCacheTableTableTableManager(_db, _db.websiteLogoCacheTable);
 }

@@ -6,6 +6,8 @@ import 'package:uni_hub/src/core/plugin/plugin_interface.dart';
 import 'package:uni_hub/src/core/router/route_names.dart';
 import 'package:uni_hub/src/core/theme/app_tokens.dart';
 import 'package:uni_hub/src/shared/editor/appflowy_document_tools.dart';
+import 'package:uni_hub/src/shared/tags/tag_codec.dart';
+import 'package:uni_hub/src/shared/tags/providers/tags_providers.dart';
 import 'package:uni_hub/src/shared/url/url_normalizer.dart';
 
 import 'data/thought_content_codec.dart';
@@ -84,57 +86,56 @@ class ThoughtsPlugin extends UniHubPlugin {
   @override
   Future<List<DashboardItem>> getRecentItems(Ref ref, {int count = 4}) async {
     final repo = ref.read(thoughtsRepositoryProvider);
-    // #11: 使用 DAO 层 LIMIT 查询，避免全量读取后内存过滤
+    final tagsDao = ref.read(tagsDaoProvider);
     final recent = await repo.getRecent(limit: count);
-    return recent
-        .map(
-          (t) => DashboardItem(
-            pluginId: id,
-            itemId: t.id.toString(),
-            content: ThoughtContentCodec.plainTextFromStored(t.content),
-            tags: _parseTags(t.tags),
-            colorHex: t.color,
-            isPinned: t.isPinned,
-            createdAt: t.createdAt,
-            routePath: '/thoughts/${t.id}',
-          ),
-        )
-        .toList();
+    final items = <DashboardItem>[];
+    for (final t in recent) {
+      final tags = await tagsDao.getTagsForThought(t.id);
+      items.add(DashboardItem(
+        pluginId: id,
+        itemId: t.id.toString(),
+        content: ThoughtContentCodec.plainTextFromStored(t.content),
+        tags: tags.map((tag) => tag.name).toList(),
+        colorHex: t.color,
+        isPinned: t.isPinned,
+        createdAt: t.createdAt,
+        routePath: '/thoughts/${t.id}',
+      ));
+    }
+    return items;
   }
 
   @override
   Future<List<DashboardItem>> getPinnedItems(Ref ref, {int count = 3}) async {
     final repo = ref.read(thoughtsRepositoryProvider);
-    // #11: 使用 DAO 层 LIMIT 查询，避免全量读取后内存过滤
+    final tagsDao = ref.read(tagsDaoProvider);
     final pinned = await repo.getPinned(limit: count);
-    return pinned
-        .map(
-          (t) => DashboardItem(
-            pluginId: id,
-            itemId: t.id.toString(),
-            content: ThoughtContentCodec.plainTextFromStored(t.content),
-            tags: _parseTags(t.tags),
-            colorHex: t.color,
-            isPinned: true,
-            createdAt: t.createdAt,
-            routePath: '/thoughts/${t.id}',
-          ),
-        )
-        .toList();
+    final items = <DashboardItem>[];
+    for (final t in pinned) {
+      final tags = await tagsDao.getTagsForThought(t.id);
+      items.add(DashboardItem(
+        pluginId: id,
+        itemId: t.id.toString(),
+        content: ThoughtContentCodec.plainTextFromStored(t.content),
+        tags: tags.map((tag) => tag.name).toList(),
+        colorHex: t.color,
+        isPinned: true,
+        createdAt: t.createdAt,
+        routePath: '/thoughts/${t.id}',
+      ));
+    }
+    return items;
   }
 
   @override
   Future<PluginStat?> getStat(Ref ref) async {
     final repo = ref.read(thoughtsRepositoryProvider);
-    // #11: 使用 DAO 层 COUNT 查询，避免全量读取
     final count = await repo.countActive();
     return PluginStat(pluginId: id, label: '想法', count: count);
   }
 
   @override
   bool canHandleQuickCreate(String content) {
-    // #7: Thoughts 处理非 URL 的普通文本
-    // 使用 shared UrlNormalizer 与 Collections 保持一致
     final trimmed = content.trim();
     if (trimmed.isEmpty) return false;
     return const UrlNormalizer().tryNormalize(trimmed) == null;
@@ -147,6 +148,7 @@ class ThoughtsPlugin extends UniHubPlugin {
     String? tags,
   }) async {
     final repo = ref.read(thoughtsRepositoryProvider);
+    final tagActions = ref.read(tagActionsControllerProvider);
     final plainText = content.trim();
     final document = AppFlowyDocumentTools.documentJsonFromPlainText(plainText);
     final created = await repo.createThought(
@@ -154,34 +156,31 @@ class ThoughtsPlugin extends UniHubPlugin {
         document: document,
         plainText: plainText,
       ),
-      tags: tags,
     );
+    final tagNames = TagCodec.parseCommaSeparated(tags);
+    final savedNames = <String>[];
+    for (final tagName in tagNames) {
+      final result = await tagActions.addTagToThought(
+        thoughtId: created.id,
+        tagName: tagName,
+      );
+      if (result.success) savedNames.add(tagName);
+    }
     return DashboardItem(
       pluginId: id,
       itemId: created.id.toString(),
       content: ThoughtContentCodec.plainTextFromStored(created.content),
-      tags: _parseTags(created.tags),
+      tags: savedNames,
       colorHex: created.color,
       isPinned: created.isPinned,
       createdAt: created.createdAt,
       routePath: '/thoughts/${created.id}',
     );
   }
-
-  List<String> _parseTags(String? tags) {
-    if (tags == null || tags.isEmpty) return [];
-    return tags
-        .split(',')
-        .map((s) => s.trim())
-        .where((s) => s.isNotEmpty)
-        .toList();
-  }
 }
 
-/// Route host for `/thoughts/:id`.
-///
-/// Keeps the user-facing route on the AppFlowy workspace while leaving the
-/// legacy Quill editor page available only as migration code.
+// ─── Route widgets ──────────────────────────────────────────────
+
 class _ThoughtEditorRoutePage extends ConsumerWidget {
   const _ThoughtEditorRoutePage({required this.thoughtId});
 
@@ -276,7 +275,6 @@ class _ThoughtEditorRouteMessage extends StatelessWidget {
   }
 }
 
-/// Wrapper that sets the archive filter provider when navigated to with filter param.
 class _ThoughtsListPageWithFilter extends ConsumerStatefulWidget {
   final bool isArchived;
 

@@ -1,11 +1,13 @@
 import 'dart:async';
 import 'dart:math';
 
+import 'package:drift/drift.dart' show Variable;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uni_hub/src/core/database/app_database.dart';
 import 'package:uni_hub/src/core/database/database_provider.dart';
 import 'package:uni_hub/src/core/storage/providers/storage_providers.dart';
-import 'package:uni_hub/src/shared/tags/tag_codec.dart';
+import 'package:uni_hub/src/shared/tags/data/tags_dao.dart';
+import 'package:uni_hub/src/shared/tags/providers/tags_providers.dart';
 import 'package:uni_hub/src/shared/tags/tag_filter_logic.dart';
 
 import '../data/file_image_storage.dart';
@@ -46,9 +48,6 @@ final thoughtImageServiceProvider = FutureProvider<ThoughtImageService>((ref) as
   );
 });
 
-/// 安全删除想法及其附件的协调服务。
-///
-/// 返回 null 当 [thoughtImageServiceProvider] 尚未完成初始化时。
 final thoughtDeletionServiceProvider = Provider<ThoughtDeletionService?>((ref) {
   final imageService = ref.watch(thoughtImageServiceProvider).valueOrNull;
   if (imageService == null) return null;
@@ -60,11 +59,6 @@ final thoughtDeletionServiceProvider = Provider<ThoughtDeletionService?>((ref) {
   );
 });
 
-/// 启动时迁移：若 [AppStoragePaths] 在构造期重命名了旧的
-/// `thought_images` 目录，则将 DB 中所有 imagePaths 的前缀
-/// 从旧路径替换为新路径。
-///
-/// 无迁移需求时不执行任何操作。
 final thoughtImageMigrationProvider = FutureProvider<void>((ref) async {
   final paths = await ref.watch(appStoragePathsProvider.future);
   final migrations = paths.thoughtImageMigrations;
@@ -140,14 +134,10 @@ final thoughtStatusFilterProvider = StateProvider<ThoughtStatusFilter>(
   (ref) => ThoughtStatusFilter.all,
 );
 
-/// All thoughts without UI filters. Filtering is composed in [thoughtsListProvider].
-///
-/// Depends on [thoughtImageMigrationProvider] to ensure path migration
-/// completes before any thought data is loaded.
+/// All thoughts without UI filters.
 final allThoughtsProvider = FutureProvider<List<ThoughtsTableData>>((
   ref,
 ) async {
-  // Ensure path migration completes before loading data.
   await ref.watch(thoughtImageMigrationProvider.future);
 
   final repo = ref.watch(thoughtsRepositoryProvider);
@@ -156,17 +146,31 @@ final allThoughtsProvider = FutureProvider<List<ThoughtsTableData>>((
   return [...active, ...archived];
 });
 
-final tagStatsProvider = Provider<Map<String, int>>((ref) {
-  final thoughtsAsync = ref.watch(allThoughtsProvider);
-  final showArchived = ref.watch(archiveFilterProvider);
-  final thoughts = thoughtsAsync.valueOrNull ?? const <ThoughtsTableData>[];
-  return _tagCounts(_filterByArchive(thoughts, showArchived));
+/// Tag usage statistics (tagName → count across all active thoughts).
+final tagStatsProvider = FutureProvider<Map<String, int>>((ref) async {
+  final dao = ref.watch(tagsDaoProvider);
+  final db = ref.read(appDatabaseProvider);
+  final allTags = await dao.getAllTags();
+  if (allTags.isEmpty) return const {};
+
+  // Count tag usage from thought_tags table.
+  final counts = <String, int>{};
+  for (final tag in allTags) {
+    final result = await db.customSelect(
+      'SELECT COUNT(*) AS cnt FROM thought_tags WHERE tag_id = ?',
+      variables: [Variable.withInt(tag.id)],
+    ).get();
+    final cnt = result.isNotEmpty ? result.first.read<int>('cnt') : 0;
+    counts[tag.name] = cnt;
+  }
+  return counts;
 });
 
 final thoughtsListProvider = FutureProvider<List<ThoughtsTableData>>((
   ref,
 ) async {
   final thoughts = await ref.watch(allThoughtsProvider.future);
+  final tagsDao = ref.watch(tagsDaoProvider);
   final statusFilter = ref.watch(thoughtStatusFilterProvider);
   final selectedTags = ref.watch(selectedTagFiltersProvider);
   final searchQuery = await ref.watch(thoughtSearchDebouncedProvider.future);
@@ -182,9 +186,17 @@ final thoughtsListProvider = FutureProvider<List<ThoughtsTableData>>((
   }
 
   final archiveFiltered = _filterByArchive(thoughts, archived);
-  final statusFiltered = _filterByStatus(archiveFiltered, statusFilter);
-  final tagFiltered = _filterByTags(statusFiltered, selectedTags);
-  return _filterBySearch(tagFiltered, searchQuery);
+  final statusFiltered = await _filterByStatus(
+    archiveFiltered,
+    statusFilter,
+    tagsDao,
+  );
+  final tagFiltered = await _filterByTags(
+    statusFiltered,
+    selectedTags,
+    tagsDao,
+  );
+  return _filterBySearch(tagFiltered, searchQuery, tagsDao);
 });
 
 final thoughtsCountProvider = Provider<int>((ref) {
@@ -206,16 +218,20 @@ final pendingReviewProvider = FutureProvider<List<ThoughtsTableData>>((
   ref,
 ) async {
   final thoughts = await ref.watch(allThoughtsProvider.future);
-  return _filterByArchive(
-    thoughts,
-    false,
-  ).where((thought) => _parseTags(thought.tags).isEmpty).toList();
+  final tagsDao = ref.watch(tagsDaoProvider);
+  final active = _filterByArchive(thoughts, false);
+  final result = <ThoughtsTableData>[];
+  for (final thought in active) {
+    final tags = await tagsDao.getTagsForThought(thought.id);
+    if (tags.isEmpty) result.add(thought);
+  }
+  return result;
 });
 
 final commonTagsProvider = Provider<List<MapEntry<String, int>>>((ref) {
-  final thoughtsAsync = ref.watch(allThoughtsProvider);
-  final thoughts = thoughtsAsync.valueOrNull ?? const <ThoughtsTableData>[];
-  final counts = _tagCounts(_filterByArchive(thoughts, false));
+  final statsAsync = ref.watch(tagStatsProvider);
+  final counts = statsAsync.valueOrNull ?? const <String, int>{};
+  if (counts.isEmpty) return const [];
   final stats = TagFilterLogic.sortStats(counts);
   return stats
       .map((s) => MapEntry(s.name, s.count))
@@ -259,6 +275,10 @@ final thoughtProvider = FutureProvider.family<ThoughtsTableData?, int>((
   return repo.getThought(id);
 });
 
+// ---------------------------------------------------------------------------
+// Filter helpers
+// ---------------------------------------------------------------------------
+
 List<ThoughtsTableData> _filterByArchive(
   List<ThoughtsTableData> thoughts,
   bool archived,
@@ -268,14 +288,30 @@ List<ThoughtsTableData> _filterByArchive(
   }).toList();
 }
 
-List<ThoughtsTableData> _filterByStatus(
+Future<List<ThoughtsTableData>> _filterByStatus(
+  List<ThoughtsTableData> thoughts,
+  ThoughtStatusFilter filter,
+  TagsDao tagsDao,
+) async {
+  if (filter != ThoughtStatusFilter.unorganized) {
+    return _filterByStatusSync(thoughts, filter);
+  }
+  // Unorganized: thoughts with no tags.
+  final result = <ThoughtsTableData>[];
+  for (final thought in thoughts) {
+    final tags = await tagsDao.getTagsForThought(thought.id);
+    if (tags.isEmpty) result.add(thought);
+  }
+  return result;
+}
+
+List<ThoughtsTableData> _filterByStatusSync(
   List<ThoughtsTableData> thoughts,
   ThoughtStatusFilter filter,
 ) {
   return switch (filter) {
     ThoughtStatusFilter.all || ThoughtStatusFilter.archived => thoughts,
-    ThoughtStatusFilter.unorganized =>
-      thoughts.where((thought) => _parseTags(thought.tags).isEmpty).toList(),
+    ThoughtStatusFilter.unorganized => thoughts, // handled by async branch
     ThoughtStatusFilter.pinned =>
       thoughts.where((thought) => thought.isPinned).toList(),
     ThoughtStatusFilter.withImages =>
@@ -291,22 +327,28 @@ List<ThoughtsTableData> _filterByStatus(
   };
 }
 
-List<ThoughtsTableData> _filterByTags(
+Future<List<ThoughtsTableData>> _filterByTags(
   List<ThoughtsTableData> thoughts,
   Set<String> selectedTags,
-) {
+  TagsDao tagsDao,
+) async {
   if (selectedTags.isEmpty) return thoughts;
-  return thoughts.where((thought) {
-    return TagFilterLogic.matches(
-      itemTags: TagCodec.parseCommaSeparated(thought.tags),
-      selectedTags: selectedTags,
-    );
-  }).toList();
+
+  final result = <ThoughtsTableData>[];
+  for (final thought in thoughts) {
+    final tags = await tagsDao.getTagsForThought(thought.id);
+    final tagNames = tags.map((t) => t.name).toSet();
+    if (selectedTags.every((st) => tagNames.contains(st))) {
+      result.add(thought);
+    }
+  }
+  return result;
 }
 
 List<ThoughtsTableData> _filterBySearch(
   List<ThoughtsTableData> thoughts,
   String query,
+  TagsDao tagsDao,
 ) {
   if (query.isEmpty) return thoughts;
   final normalizedQuery = query.toLowerCase();
@@ -314,17 +356,6 @@ List<ThoughtsTableData> _filterBySearch(
     final content = ThoughtContentCodec.plainTextFromStored(
       thought.content,
     ).toLowerCase();
-    final tags = _parseTags(thought.tags).join(' ').toLowerCase();
-    return content.contains(normalizedQuery) || tags.contains(normalizedQuery);
+    return content.contains(normalizedQuery);
   }).toList();
-}
-
-Map<String, int> _tagCounts(List<ThoughtsTableData> thoughts) {
-  return TagFilterLogic.countTags(
-    thoughts.map((t) => TagCodec.parseCommaSeparated(t.tags)),
-  );
-}
-
-List<String> _parseTags(String? tags) {
-  return TagCodec.parseCommaSeparated(tags);
 }

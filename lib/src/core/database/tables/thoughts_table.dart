@@ -3,7 +3,6 @@ import 'package:drift/drift.dart';
 class ThoughtsTable extends Table {
   IntColumn get id => integer().autoIncrement()();
   TextColumn get content => text()();
-  TextColumn get tags => text().nullable()();
   TextColumn get color => text().nullable()();
   BoolColumn get isPinned => boolean().withDefault(const Constant(false))();
   DateTimeColumn get createdAt => dateTime()();

@@ -686,7 +686,6 @@ class _MobileThoughtCard extends ConsumerWidget {
       child: ThoughtCard(
         id: thought.id,
         content: thought.content,
-        tags: thought.tags,
         color: thought.color,
         isPinned: thought.isPinned,
         createdAt: thought.createdAt,

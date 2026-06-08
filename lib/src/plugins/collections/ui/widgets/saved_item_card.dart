@@ -13,6 +13,8 @@ import 'package:uni_hub/src/shared/crud/crud.dart';
 import 'package:uni_hub/src/shared/preferences/delete_confirm_prefs_provider.dart';
 import 'package:uni_hub/src/shared/widgets/app_toast.dart';
 import 'package:uni_hub/src/shared/widgets/delete_confirm_dialog.dart';
+import 'package:uni_hub/src/shared/widgets/entity_picker/app_entity_picker.dart';
+import 'package:uni_hub/src/shared/widgets/menu/app_context_menu.dart';
 import 'package:uni_hub/src/shared/widgets/website_logo.dart';
 
 /// Content-style saved-item card for the collection list.
@@ -318,7 +320,9 @@ class SavedItemCard extends ConsumerWidget {
             initialValue: status,
             onSelected: (next) async {
               final controller = ref.read(savedItemActionsControllerProvider);
-              await controller.updateStatus(item.id, next);
+              final result = await controller.updateStatus(item.id, next);
+              if (!context.mounted) return;
+              ref.read(crudFeedbackCoordinatorProvider).handle(context, result);
             },
             itemBuilder: (context) => [
               for (final value in ConsumptionStatus.values)
@@ -426,58 +430,59 @@ class _CardMoreMenu extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final colorScheme = Theme.of(context).colorScheme;
-
-    return SizedBox(
-      width: 28,
-      height: 28,
-      child: PopupMenuButton<_CardAction>(
-        tooltip: '更多操作',
-        padding: EdgeInsets.zero,
-        icon: const Icon(Icons.more_horiz_rounded, size: 16),
-        iconColor: colorScheme.onSurfaceVariant,
-        onSelected: (action) async {
-          switch (action) {
-            case _CardAction.open:
-              final controller = ref.read(savedItemActionsControllerProvider);
-              final result = await controller.openItem(item.id);
-              if (!context.mounted) return;
-              ref.read(crudFeedbackCoordinatorProvider).handle(context, result);
-            case _CardAction.copy:
-              final controller = ref.read(savedItemActionsControllerProvider);
-              final result = await controller.copyUrl(item.id);
-              if (!context.mounted) return;
-              ref.read(crudFeedbackCoordinatorProvider).handle(context, result);
-            case _CardAction.folder:
-              await _CompactBoxButton(
-                itemId: item.id,
-              )._showBoxMenu(context, ref);
-            case _CardAction.archive:
-              final ctrl = ref.read(savedItemActionsControllerProvider);
-              final result = await ctrl.archiveItem(item.id);
-              if (!context.mounted) return;
-              ref.read(crudFeedbackCoordinatorProvider).handle(context, result);
-            case _CardAction.delete:
-              await _handleDelete(context, ref, item);
-          }
-        },
-        itemBuilder: (context) => [
-          const PopupMenuItem(value: _CardAction.open, child: Text('打开内容')),
-          const PopupMenuItem(value: _CardAction.folder, child: Text('分配收藏夹')),
-          const PopupMenuItem(value: _CardAction.copy, child: Text('复制链接')),
-          const PopupMenuItem(value: _CardAction.archive, child: Text('归档')),
-          const PopupMenuDivider(),
-          PopupMenuItem(
-            value: _CardAction.delete,
-            child: Text(
-              '删除',
-              style: Theme.of(
-                context,
-              ).textTheme.bodyMedium?.copyWith(color: colorScheme.error),
-            ),
-          ),
-        ],
-      ),
+    return AppContextMenu(
+      icon: Icons.more_horiz_rounded,
+      tooltip: '更多操作',
+      items: [
+        AppContextMenuAction(
+          label: '打开内容',
+          icon: Icons.open_in_new_rounded,
+          onPressed: () async {
+            final controller = ref.read(savedItemActionsControllerProvider);
+            final result = await controller.openItem(item.id);
+            if (!context.mounted) return;
+            ref.read(crudFeedbackCoordinatorProvider).handle(context, result);
+          },
+        ),
+        AppContextMenuAction(
+          label: '分配收藏夹',
+          icon: Icons.folder_outlined,
+          onPressed: () async {
+            await _CompactBoxButton(
+              itemId: item.id,
+            )._showBoxPicker(context, ref);
+          },
+        ),
+        AppContextMenuAction(
+          label: '复制链接',
+          icon: Icons.content_copy_rounded,
+          onPressed: () async {
+            final controller = ref.read(savedItemActionsControllerProvider);
+            final result = await controller.copyUrl(item.id);
+            if (!context.mounted) return;
+            ref.read(crudFeedbackCoordinatorProvider).handle(context, result);
+          },
+        ),
+        AppContextMenuAction(
+          label: '归档',
+          icon: Icons.archive_outlined,
+          onPressed: () async {
+            final ctrl = ref.read(savedItemActionsControllerProvider);
+            final result = await ctrl.archiveItem(item.id);
+            if (!context.mounted) return;
+            ref.read(crudFeedbackCoordinatorProvider).handle(context, result);
+          },
+        ),
+        const AppContextMenuDivider(),
+        AppContextMenuAction(
+          label: '删除',
+          icon: Icons.delete_outline_rounded,
+          destructive: true,
+          onPressed: () async {
+            await _handleDelete(context, ref, item);
+          },
+        ),
+      ],
     );
   }
 
@@ -600,8 +605,6 @@ class _CardMoreMenu extends ConsumerWidget {
   }
 }
 
-enum _CardAction { open, folder, copy, archive, delete }
-
 /// Compact box assignment icon button for the card right column.
 class _CompactBoxButton extends ConsumerWidget {
   const _CompactBoxButton({required this.itemId});
@@ -625,72 +628,53 @@ class _CompactBoxButton extends ConsumerWidget {
           tapTargetSize: MaterialTapTargetSize.shrinkWrap,
           foregroundColor: colorScheme.onSurfaceVariant,
         ),
-        onPressed: () => _showBoxMenu(context, ref),
+        onPressed: () => _showBoxPicker(context, ref),
       ),
     );
   }
 
-  static const _inboxValue = -1;
-
-  Future<void> _showBoxMenu(BuildContext context, WidgetRef ref) async {
-    final repository = ref.read(collectionsRepositoryProvider);
-    final boxes = await repository.getBoxes();
-    final currentBoxIds = await repository.getBoxIdsForItem(itemId);
-    final currentSet = currentBoxIds.toSet();
-
-    if (!context.mounted) return;
-
-    final selection = await showMenu<int>(
-      context: context,
-      position: const RelativeRect.fromLTRB(1000, 80, 1000, 80),
-      items: [
-        PopupMenuItem<int>(
-          value: _inboxValue,
-          child: Row(
-            children: [
-              Icon(currentSet.isEmpty ? Icons.check : null, size: 18),
-              const SizedBox(width: 8),
-              const Text('待整理（不分配到收藏夹）'),
-            ],
-          ),
-        ),
-        if (boxes.isNotEmpty) const PopupMenuDivider(),
-        for (final box in boxes)
-          PopupMenuItem<int>(
-            value: box.id,
-            child: Row(
-              children: [
-                Icon(
-                  currentSet.contains(box.id)
-                      ? Icons.check_box_rounded
-                      : Icons.check_box_outline_blank_rounded,
-                  size: 18,
-                ),
-                const SizedBox(width: 8),
-                Text(box.name),
-              ],
-            ),
-          ),
-      ],
-    );
-
-    if (selection == null || !context.mounted) return;
-
-    Set<int> next;
-    if (selection == _inboxValue) {
-      next = const {};
-    } else if (currentSet.contains(selection)) {
-      next = {...currentSet}..remove(selection);
-    } else {
-      next = {...currentSet, selection};
-    }
-
-    if (!context.mounted) return;
+  Future<void> _showBoxPicker(BuildContext context, WidgetRef ref) async {
     final controller = ref.read(savedItemActionsControllerProvider);
     final coordinator = ref.read(crudFeedbackCoordinatorProvider);
-    final result = await controller.assignBoxes(itemId, next);
+    final repository = ref.read(collectionsRepositoryProvider);
+
+    final boxes = await repository.getBoxes();
+    final currentBoxIds = await repository.getBoxIdsForItem(itemId);
     if (!context.mounted) return;
-    coordinator.handle(context, result);
+
+    await showDialog<void>(
+      context: context,
+      builder: (_) => AppEntityPicker<CollectionBoxesTableData>(
+        title: '添加到收藏夹',
+        searchHint: '搜索收藏夹',
+        items: boxes,
+        selectedIds: currentBoxIds.toSet(),
+        itemLabel: (b) => b.name,
+        itemId: (b) => b.id,
+        allowCreate: true,
+        onToggle: (box, selected) async {
+          final current = await repository.getBoxIdsForItem(itemId);
+          final next = Set<int>.from(current);
+          if (selected) {
+            next.add(box.id);
+          } else {
+            next.remove(box.id);
+          }
+          final result = await controller.assignBoxes(itemId, next);
+          if (context.mounted) {
+            coordinator.handle(context, result);
+          }
+        },
+        onCreate: (name) async {
+          final boxCtrl = ref.read(collectionBoxActionsControllerProvider);
+          final result = await boxCtrl.createBox(name);
+          if (context.mounted) {
+            coordinator.handle(context, result);
+          }
+          return result;
+        },
+      ),
+    );
   }
 }
 
